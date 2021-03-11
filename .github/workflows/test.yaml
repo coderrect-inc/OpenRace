@@ -7,7 +7,8 @@ env:
 
 jobs:
   build:
-    runs-on: coderrect/openrace-env
+    runs-on: ubuntu-latest
+    container: coderrect/openrace-env
 
     steps:
       - uses: actions/checkout@v2
