@@ -14,10 +14,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Build Env
-        run: cmake -E make_directory ${{github.workspace}}/build
+        run: mkdir -p ${{github.workspace}}/build
       
       - name: What is going on
-        run: ls
+        run: |
+          pwd
+          ls
 
       - name: Install Deps
         shell: bash
