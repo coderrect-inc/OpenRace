@@ -1,3 +1,7 @@
+# OpenRace
+
+[![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
+
 # Building
 
 Using conan to manage dependencies. Instructiosn to install conan can be found [here](https://conan.io/downloads.html).
