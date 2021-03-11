@@ -13,31 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Build Env
-        run: mkdir -p ${{github.workspace}}/build
-      
-      - name: What is going on
+      - name: Build and Test
         run: |
-          pwd
-          ls
-
-      - name: Install Deps
-        shell: bash
-        working-directory: ${{github.workspace}}/build
-        run: conan install ..
-      
-      - name: CMake Config
-        shell: bash
-        working-directory: ${{github.workspace}}/build
-        run: cmake -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ .. 
-          
-
-      - name: CMake Config
-        shell: bash
-        working-directory: ${{github.workspace}}/build
-        run: cmake --build . 
-
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ctest
+          mkdir build
+          cd build
+          conan install ..
+          cmake -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ .. 
+          cmake --build .
+          ctest
