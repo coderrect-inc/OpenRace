@@ -112,89 +112,78 @@ struct MemModelHelper {
 
   using Canonicalizer = typename MemModel::Canonicalizer;
 
-  inline static void addPreProcessingPass(
-      llvm::legacy::PassManagerBase &passes) {
+  inline static void addPreProcessingPass(llvm::legacy::PassManagerBase &passes) {
     return MemModel::addPreProcessingPass(passes);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateNullObj(
-      MemModel &model, const llvm::Module *module) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateNullObj(MemModel &model, const llvm::Module *module) {
     return model.template allocNullObj<PT>(module);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateUniObj(
-      MemModel &model, const llvm::Module *module) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateUniObj(MemModel &model, const llvm::Module *module) {
     return model.template allocUniObj<PT>(module);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateFunction(
-      MemModel &model, const llvm::Function *fun) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateFunction(MemModel &model, const llvm::Function *fun) {
     return model.template allocFunction<PT>(fun);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateGlobalVariable(
-      MemModel &model, const llvm::GlobalVariable *gVar,
-      const llvm::DataLayout &DL) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateGlobalVariable(MemModel &model, const llvm::GlobalVariable *gVar,
+                                                                   const llvm::DataLayout &DL) {
     return model.template allocGlobalVariable<PT>(gVar, DL);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateStackObj(
-      MemModel &model, const CtxTy *context, const llvm::AllocaInst *gVar,
-      const llvm::DataLayout &DL) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateStackObj(MemModel &model, const CtxTy *context,
+                                                             const llvm::AllocaInst *gVar, const llvm::DataLayout &DL) {
     return model.template allocStackObj<PT>(context, gVar, DL);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateHeapObj(
-      MemModel &model, const CtxTy *context, const llvm::Instruction *callsite,
-      const llvm::DataLayout &DL, llvm::Type *T) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateHeapObj(MemModel &model, const CtxTy *context,
+                                                            const llvm::Instruction *callsite,
+                                                            const llvm::DataLayout &DL, llvm::Type *T) {
     return model.template allocHeapObj<PT>(context, callsite, DL, T);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *allocateAnonObj(
-      MemModel &model, const CtxTy *context, const llvm::DataLayout &DL,
-      llvm::Type *T, const llvm::Value *tag = nullptr, bool recursive = true) {
+  inline static CGObjNode<CtxTy, ObjectTy> *allocateAnonObj(MemModel &model, const CtxTy *context,
+                                                            const llvm::DataLayout &DL, llvm::Type *T,
+                                                            const llvm::Value *tag = nullptr, bool recursive = true) {
     return model.template allocAnonObj<PT>(context, DL, T, tag, recursive);
   }
 
   template <typename PT>
-  inline static CGObjNode<CtxTy, ObjectTy> *indexObject(
-      MemModel &model, const ObjectTy *obj, const llvm::Instruction *gep) {
+  inline static CGObjNode<CtxTy, ObjectTy> *indexObject(MemModel &model, const ObjectTy *obj,
+                                                        const llvm::Instruction *gep) {
     return model.template indexObject<PT>(obj, gep);
   }
 
   template <typename PT>
-  inline static void handleMemCpy(MemModel &model, const CtxTy *C,
-                                  const llvm::MemCpyInst *memCpy,
-                                  CGPtrNode<CtxTy> *src,
-                                  CGPtrNode<CtxTy> *dst) {
+  inline static void handleMemCpy(MemModel &model, const CtxTy *C, const llvm::MemCpyInst *memCpy,
+                                  CGPtrNode<CtxTy> *src, CGPtrNode<CtxTy> *dst) {
     return model.template handleMemCpy<PT>(C, memCpy, src, dst);
   }
 
   template <typename PT>
-  inline static void initializeGlobal(MemModel &memModel,
-                                      const llvm::GlobalVariable *gVar,
+  inline static void initializeGlobal(MemModel &memModel, const llvm::GlobalVariable *gVar,
                                       const llvm::DataLayout &DL) {
     memModel.template initializeGlobal<PT>(gVar, DL);
   }
 
   // return *true* when the callsite handled by the
   template <typename PT>
-  inline static constexpr bool interceptCallSite(
-      MemModel &memModel, const CtxFunction<CtxTy> *caller,
-      const CtxFunction<CtxTy> *callee, const llvm::Instruction *callSite) {
+  inline static constexpr bool interceptCallSite(MemModel &memModel, const CtxFunction<CtxTy> *caller,
+                                                 const CtxFunction<CtxTy> *callee, const llvm::Instruction *callSite) {
     return memModel.template interceptCallSite<PT>(caller, callee, callSite);
   }
 
-  inline static InterceptResult interceptFunction(
-      MemModel &memModel, const llvm::Function *F,
-      const llvm::Instruction *callSite) {
+  inline static InterceptResult interceptFunction(MemModel &memModel, const llvm::Function *F,
+                                                  const llvm::Instruction *callSite) {
     return memModel.interceptFunction(F, callSite);
   }
 };

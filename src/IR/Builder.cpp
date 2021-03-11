@@ -8,9 +8,9 @@ using namespace race;
 
 namespace {
 bool hasNoAliasMD(const llvm::Instruction *inst) {
-    llvm::AAMDNodes AAMD;
-    inst->getAAMetadata(AAMD);
-    return AAMD.NoAlias != nullptr;
+  llvm::AAMDNodes AAMD;
+  inst->getAAMetadata(AAMD);
+  return AAMD.NoAlias != nullptr;
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
@@ -23,68 +23,68 @@ bool isLLVMDebug(const llvm::StringRef &funcName) { return funcName.equals("llvm
 }  // namespace
 
 RaceFunction race::generateRaceFunction(const llvm::Function *func) {
-    assert(func != nullptr);
-    return generateRaceFunction(*func);
+  assert(func != nullptr);
+  return generateRaceFunction(*func);
 }
 
 RaceFunction race::generateRaceFunction(const llvm::Function &func) {
-    RaceFunction instructions;
+  RaceFunction instructions;
 
-    for (auto const &basicblock : func.getBasicBlockList()) {
-        for (auto BI = basicblock.begin(), BE = basicblock.end(); BI != BE; ++BI) {
-            auto inst = llvm::cast<llvm::Instruction>(BI);
+  for (auto const &basicblock : func.getBasicBlockList()) {
+    for (auto BI = basicblock.begin(), BE = basicblock.end(); BI != BE; ++BI) {
+      auto inst = llvm::cast<llvm::Instruction>(BI);
 
-            // TODO: try switch on inst->getOpCode instead
-            if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-                if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst)) {
-                    continue;
-                }
-                instructions.push_back(std::make_shared<race::LoadInfo>(loadInst));
-            } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-                if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst)) {
-                    continue;
-                }
-                instructions.push_back(std::make_shared<race::StoreInfo>(storeInst));
-            } else if (auto retInst = llvm::dyn_cast<llvm::ReturnInst>(inst)) {
-                // TODO: what should this do?
-            } else if (auto branchInst = llvm::dyn_cast<llvm::BranchInst>(inst)) {
-                // TODO: what should this do?
-            } else if (auto switchInst = llvm::dyn_cast<llvm::SwitchInst>(inst)) {
-                // TODO: what should this do?
-            } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
-                if (callInst->isIndirectCall()) {
-                    // let trace deal with indirect calls
-                    instructions.push_back(std::make_shared<race::CallInfo>(callInst));
-                    continue;
-                }
-
-                auto calledFunc = callInst->getCalledFunction();
-                if (calledFunc == nullptr || !calledFunc->hasName()) {
-                    // TODO: Log warning
-                    llvm::errs() << "could not find called func: " << *callInst << "\n";
-                    continue;
-                }
-
-                // TODO: System for users to register new function recognizers here
-                auto funcName = calledFunc->getName();
-                if (isPthreadCreate(funcName)) {
-                    instructions.push_back(std::make_shared<PthreadCreateInfo>(callInst));
-                } else if (isPthreadJoin(funcName)) {
-                    instructions.push_back(std::make_shared<PthreadJoinInfo>(callInst));
-                } else if (isPthreadMutexLock(funcName)) {
-                    instructions.push_back(std::make_shared<PthreadMutexLockInfo>(callInst));
-                } else if (isPthreadMutexUnlock(funcName)) {
-                    instructions.push_back(std::make_shared<PthreadMutexUnlockInfo>(callInst));
-                } else if (isPrintf(funcName)) {
-                    // TODO: model as read?
-                } else if (isLLVMDebug(funcName)) {
-                    // Skip
-                } else {
-                    instructions.push_back(std::make_shared<CallInfo>(callInst));
-                }
-            }
+      // TODO: try switch on inst->getOpCode instead
+      if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
+        if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst)) {
+          continue;
         }
-    }
+        instructions.push_back(std::make_shared<race::LoadInfo>(loadInst));
+      } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
+        if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst)) {
+          continue;
+        }
+        instructions.push_back(std::make_shared<race::StoreInfo>(storeInst));
+      } else if (auto retInst = llvm::dyn_cast<llvm::ReturnInst>(inst)) {
+        // TODO: what should this do?
+      } else if (auto branchInst = llvm::dyn_cast<llvm::BranchInst>(inst)) {
+        // TODO: what should this do?
+      } else if (auto switchInst = llvm::dyn_cast<llvm::SwitchInst>(inst)) {
+        // TODO: what should this do?
+      } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
+        if (callInst->isIndirectCall()) {
+          // let trace deal with indirect calls
+          instructions.push_back(std::make_shared<race::CallInfo>(callInst));
+          continue;
+        }
 
-    return instructions;
+        auto calledFunc = callInst->getCalledFunction();
+        if (calledFunc == nullptr || !calledFunc->hasName()) {
+          // TODO: Log warning
+          llvm::errs() << "could not find called func: " << *callInst << "\n";
+          continue;
+        }
+
+        // TODO: System for users to register new function recognizers here
+        auto funcName = calledFunc->getName();
+        if (isPthreadCreate(funcName)) {
+          instructions.push_back(std::make_shared<PthreadCreateInfo>(callInst));
+        } else if (isPthreadJoin(funcName)) {
+          instructions.push_back(std::make_shared<PthreadJoinInfo>(callInst));
+        } else if (isPthreadMutexLock(funcName)) {
+          instructions.push_back(std::make_shared<PthreadMutexLockInfo>(callInst));
+        } else if (isPthreadMutexUnlock(funcName)) {
+          instructions.push_back(std::make_shared<PthreadMutexUnlockInfo>(callInst));
+        } else if (isPrintf(funcName)) {
+          // TODO: model as read?
+        } else if (isLLVMDebug(funcName)) {
+          // Skip
+        } else {
+          instructions.push_back(std::make_shared<CallInfo>(callInst));
+        }
+      }
+    }
+  }
+
+  return instructions;
 }

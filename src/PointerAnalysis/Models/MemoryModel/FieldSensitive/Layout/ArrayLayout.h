@@ -23,14 +23,11 @@ class ArrayLayout {
   // the key of the map is the *physical* offset of the subarray
   std::map<size_t, ArrayLayout *> subArrays;
 
-  ArrayLayout(size_t elementNum, size_t elementSize)
-      : elementNum(elementNum), elementSize(elementSize) {}
+  ArrayLayout(size_t elementNum, size_t elementSize) : elementNum(elementNum), elementSize(elementSize) {}
 
-  void mergeSubArrays(const std::map<size_t, ArrayLayout *> &arrays,
-                      size_t offset) {
+  void mergeSubArrays(const std::map<size_t, ArrayLayout *> &arrays, size_t offset) {
     for (auto subArray : arrays) {
-      subArrays.insert(
-          std::make_pair(subArray.first + offset, subArray.second));
+      subArrays.insert(std::make_pair(subArray.first + offset, subArray.second));
     }
   }
 
@@ -58,9 +55,7 @@ class ArrayLayout {
 
   [[nodiscard]] inline bool hasSubArrays() const { return !subArrays.empty(); }
 
-  inline const std::map<size_t, ArrayLayout *> &getSubArrayMap() const {
-    return this->subArrays;
-  }
+  inline const std::map<size_t, ArrayLayout *> &getSubArrayMap() const { return this->subArrays; }
 
   size_t indexPhysicalOffset(size_t &pOffset) const;
 

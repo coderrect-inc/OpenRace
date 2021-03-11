@@ -5,20 +5,17 @@
 using namespace race;
 
 namespace {
-llvm::StringRef getValNameHelper(const llvm::Value *val,
-                                 llvm::StringRef defaultLabel = "UnknownVal") {
+llvm::StringRef getValNameHelper(const llvm::Value *val, llvm::StringRef defaultLabel = "UnknownVal") {
   return (val && val->hasName()) ? val->getName() : defaultLabel;
 }
 }  // namespace
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os,
-                                    const StmtInfo &stmt) {
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const StmtInfo &stmt) {
   stmt.print(os);
   return os;
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os,
-                                    const StmtInfo::Type &type) {
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const StmtInfo::Type &type) {
   switch (type) {
     case StmtInfo::Type::Read:
       os << "READ";

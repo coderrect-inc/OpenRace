@@ -31,13 +31,9 @@ class KOrigin : public KCallSite<K * L> {
 
  public:
   KOrigin() noexcept : super() {}
-  KOrigin(const self *prevCtx, const llvm::Instruction *I)
-      : super(prevCtx, I) {}
+  KOrigin(const self *prevCtx, const llvm::Instruction *I) : super(prevCtx, I) {}
 
-  static void setOriginRules(
-      std::function<bool(const self *, const llvm::Instruction *)> cb) {
-    callback = cb;
-  }
+  static void setOriginRules(std::function<bool(const self *, const llvm::Instruction *)> cb) { callback = cb; }
 
   KOrigin(const self &) = delete;
   KOrigin(self &&) = delete;
@@ -56,8 +52,7 @@ struct CtxTrait<KOrigin<K, L>> {
   static std::unordered_set<KOrigin<K, L>> ctxSet;
 
  public:
-  static const KOrigin<K, L> *contextEvolve(const KOrigin<K, L> *prevCtx,
-                                            const llvm::Instruction *I) {
+  static const KOrigin<K, L> *contextEvolve(const KOrigin<K, L> *prevCtx, const llvm::Instruction *I) {
     if constexpr (L == 1) {
       if (KOrigin<K, L>::callback(prevCtx, I)) {
         auto result = ctxSet.emplace(prevCtx, I);
@@ -76,8 +71,7 @@ struct CtxTrait<KOrigin<K, L>> {
   static const KOrigin<K, L> *getGlobalCtx() { return &globCtx; }
 
   // 3rd, string representation
-  static std::string toString(const KOrigin<K, L> *context,
-                              bool detailed = false) {
+  static std::string toString(const KOrigin<K, L> *context, bool detailed = false) {
     if (context == &globCtx) return "<global>";
     if (context == &initCtx) return "<empty>";
     return context->toString(detailed);
@@ -96,12 +90,11 @@ template <uint32_t K, uint32_t L>
 std::unordered_set<KOrigin<K, L>> CtxTrait<KOrigin<K, L>>::ctxSet{};
 
 template <uint32_t K, uint32_t L>
-std::function<bool(const KOrigin<K, L> *, const llvm::Instruction *)>
-    KOrigin<K, L>::callback =
-        [](const KOrigin<K, L> *, const llvm::Instruction *) {
-          // by default no function is origin
-          return false;
-        };
+std::function<bool(const KOrigin<K, L> *, const llvm::Instruction *)> KOrigin<K, L>::callback =
+    [](const KOrigin<K, L> *, const llvm::Instruction *) {
+      // by default no function is origin
+      return false;
+    };
 
 }  // namespace pta
 
@@ -110,9 +103,7 @@ namespace std {
 // only hash context and value
 template <uint32_t K, uint32_t L>
 struct hash<pta::KOrigin<K, L>> {
-  size_t operator()(const pta::KOrigin<K, L> &origin) const {
-    return hash<pta::KCallSite<K * L>>()(origin);
-  }
+  size_t operator()(const pta::KOrigin<K, L> &origin) const { return hash<pta::KCallSite<K * L>>()(origin); }
 };
 
 }  // namespace std

@@ -25,8 +25,7 @@ class Andersen : public SolverBase<LangModel, Andersen<LangModel>> {
 
  protected:
   void processNode(CGNodeTy *src, WorkListTy &workList) {
-    for (auto it = GT::child_edge_begin(src); it != GT::child_edge_end(src);
-         it++) {
+    for (auto it = GT::child_edge_begin(src); it != GT::child_edge_end(src); it++) {
       // iterate the edges
       Constraints edgeKind = (*it).first;
       CGNodeTy *dst = (*it).second;
@@ -43,9 +42,7 @@ class Andersen : public SolverBase<LangModel, Andersen<LangModel>> {
           if (super::processLoad(src, dst)) {
             // new copy edge added to dst
             // every ptr in pts(src) --COPY--> dst
-            for (auto nit = PT::begin(src->getNodeID()),
-                      eit = PT::end(src->getNodeID());
-                 nit != eit; nit++) {
+            for (auto nit = PT::begin(src->getNodeID()), eit = PT::end(src->getNodeID()); nit != eit; nit++) {
               workList.push((*super::consGraph)[*nit]);
             }
           }
@@ -68,8 +65,7 @@ class Andersen : public SolverBase<LangModel, Andersen<LangModel>> {
     WorkListTy workList;
     auto &consGraph = *super::consGraph;
 
-    for (auto it = GT::nodes_begin(consGraph); it != GT::nodes_end(consGraph);
-         it++) {
+    for (auto it = GT::nodes_begin(consGraph); it != GT::nodes_end(consGraph); it++) {
       workList.push(*it);
     }
 

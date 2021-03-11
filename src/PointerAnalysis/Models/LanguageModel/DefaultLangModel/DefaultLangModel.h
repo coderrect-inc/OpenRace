@@ -17,9 +17,7 @@ namespace pta {
 // this class deals with conventions that specific to different programming
 // language e.g., virtual pointers, the default one uses no convention
 template <typename ctx, typename MemModel, typename PtsTy = BitVectorPTS>
-class DefaultLangModel
-    : public LangModelBase<ctx, MemModel, PtsTy,
-                           DefaultLangModel<ctx, MemModel, PtsTy>> {
+class DefaultLangModel : public LangModelBase<ctx, MemModel, PtsTy, DefaultLangModel<ctx, MemModel, PtsTy>> {
  private:
   DefaultHeapModel heapModel;
 
@@ -40,19 +38,16 @@ class DefaultLangModel
 
  public:
   // determine whether the API is a heap allocation API
-  inline bool isExtHeapAllocAPI(const llvm::Function *F,
-                                const llvm::Instruction *callSite) {
+  inline bool isExtHeapAllocAPI(const llvm::Function *F, const llvm::Instruction *callSite) {
     return heapModel.isHeapAllocFun(F);
   }
 
-  bool isHeapAllocAPI(const llvm::Function *F,
-                      const llvm::Instruction *callSite = nullptr) {
+  bool isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction *callSite = nullptr) {
     return heapModel.isHeapAllocFun(F);
   }
 
   // determine whether the resolved indirect call is compatible
-  inline bool isCompatible(const llvm::Instruction *callsite,
-                           const llvm::Function *target) {
+  inline bool isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) {
     auto call = llvm::cast<llvm::CallBase>(callsite);
     // only pthread will override to indirect call in default language model
     auto pthread = call->getCalledFunction();
@@ -64,38 +59,30 @@ class DefaultLangModel
     }
 
     // pthread's callback's return type does not matter.
-    return target->arg_begin()->getType() ==
-           llvm::Type::getInt8PtrTy(callsite->getContext());
+    return target->arg_begin()->getType() == llvm::Type::getInt8PtrTy(callsite->getContext());
   }
 
   // modelling the heap allocation
-  inline void interceptHeapAllocSite(const CtxFunction<ctx> *caller,
-                                     const CtxFunction<ctx> *callee,
+  inline void interceptHeapAllocSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
                                      const llvm::Instruction *allocSite) {
     llvm::Type *heapObjType = nullptr;
     if constexpr (MMT::NEED_TYPE_INFO) {
-      heapObjType =
-          heapModel.inferHeapAllocType(callee->getFunction(), allocSite);
+      heapObjType = heapModel.inferHeapAllocType(callee->getFunction(), allocSite);
       if (heapObjType != nullptr) {
-        LOG_TRACE("Infer Heap Object type. obj={}, type={}", *allocSite,
-                  *heapObjType);
+        LOG_TRACE("Infer Heap Object type. obj={}, type={}", *allocSite, *heapObjType);
       } else {
-        LOG_TRACE("Infer Heap Object to be field-insensitive. obj={}",
-                  *allocSite);
+        LOG_TRACE("Infer Heap Object to be field-insensitive. obj={}", *allocSite);
       }
     }
 
-    ObjNode *obj =
-        this->allocHeapObj(caller->getContext(), allocSite, heapObjType);
+    ObjNode *obj = this->allocHeapObj(caller->getContext(), allocSite, heapObjType);
     PtrNode *ptr = this->getPtrNode(caller->getContext(), allocSite);
 
     this->consGraph->addConstraints(obj, ptr, Constraints::addr_of);
   }
 
   // determine whether the function need to be modelled
-  inline InterceptResult interceptFunction(const ctx *callerCtx,
-                                           const ctx *calleeCtx,
-                                           const llvm::Function *F,
+  inline InterceptResult interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
                                            const llvm::Instruction *callsite) {
     const llvm::Function *fun = F;
     if (F->isIntrinsic()) {
@@ -107,8 +94,7 @@ class DefaultLangModel
       pta::CallSite CS(callsite);
       assert(CS.isCallOrInvoke());
       const llvm::Value *v = CS.getArgOperand(2);
-      if (auto threadFun =
-              llvm::dyn_cast<llvm::Function>(v->stripPointerCasts())) {
+      if (auto threadFun = llvm::dyn_cast<llvm::Function>(v->stripPointerCasts())) {
         fun = threadFun;  // replace call to pthread_create to the thread
                           // starting routine
       } else {
@@ -123,10 +109,8 @@ class DefaultLangModel
   }
 
   // modelling a callsite
-  inline bool interceptCallSite(const CtxFunction<ctx> *caller,
-                                const CtxFunction<ctx> *callee,
-                                const llvm::Function *originalTarget,
-                                const llvm::Instruction *callsite) {
+  inline bool interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
+                                const llvm::Function *originalTarget, const llvm::Instruction *callsite) {
     // the rule of context evolution should be obeyed.
     pta::CallSite CS(callsite);
     assert(CS.isCallOrInvoke());
@@ -142,10 +126,8 @@ class DefaultLangModel
         assert(callee->getFunction()->arg_size() == 1);
 
         // link the parameter
-        PtrNode *formal = this->getPtrNode(
-            callee->getContext(), &*callee->getFunction()->arg_begin());
-        PtrNode *actual =
-            this->getPtrNode(caller->getContext(), CS.getArgOperand(3));
+        PtrNode *formal = this->getPtrNode(callee->getContext(), &*callee->getFunction()->arg_begin());
+        PtrNode *actual = this->getPtrNode(caller->getContext(), CS.getArgOperand(3));
         this->consGraph->addConstraints(actual, formal, Constraints::copy);
         return true;
       }
@@ -164,8 +146,7 @@ class DefaultLangModel
 // Specialization of LangModelTrait<DefaultModel>
 template <typename ctx, typename MemModel, typename PtsTy>
 class LangModelTrait<DefaultLangModel<ctx, MemModel, PtsTy>>
-    : public LangModelTrait<LangModelBase<
-          ctx, MemModel, PtsTy, DefaultLangModel<ctx, MemModel, PtsTy>>> {};
+    : public LangModelTrait<LangModelBase<ctx, MemModel, PtsTy, DefaultLangModel<ctx, MemModel, PtsTy>>> {};
 
 }  // namespace pta
 

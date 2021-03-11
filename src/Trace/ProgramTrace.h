@@ -14,10 +14,7 @@ class ProgramTrace {
  public:
   const pta::PTA &pta;
 
-  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>>
-      &getThreads() const {
-    return threads;
-  }
+  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
 
   explicit ProgramTrace(const pta::PTA &pta);
   ~ProgramTrace() = default;

@@ -30,51 +30,32 @@ class FIObject {
   }
 
  public:
-  FIObject(const ctx* c, const llvm::Value* v, const AllocKind t)
-      : allocSite(c, v, t){};
+  FIObject(const ctx* c, const llvm::Value* v, const AllocKind t) : allocSite(c, v, t){};
   // can not be moved/copied
   FIObject(const FIObject<ctx>&) = delete;
   FIObject(FIObject<ctx>&&) = delete;
   FIObject<ctx>& operator=(const FIObject<ctx>&) = delete;
   FIObject<ctx>& operator=(FIObject<ctx>&&) = delete;
 
-  [[nodiscard]] inline const AllocSite<ctx>& getAllocSite() const {
-    return this->allocSite;
-  }
+  [[nodiscard]] inline const AllocSite<ctx>& getAllocSite() const { return this->allocSite; }
 
-  [[nodiscard]] inline const ctx* getContext() const {
-    return this->getAllocSite().getContext();
-  }
+  [[nodiscard]] inline const ctx* getContext() const { return this->getAllocSite().getContext(); }
 
-  [[nodiscard]] inline const llvm::Value* getValue() const {
-    return this->getAllocSite().getValue();
-  }
+  [[nodiscard]] inline const llvm::Value* getValue() const { return this->getAllocSite().getValue(); }
 
   [[nodiscard]] inline ObjNode* getObjNode() const { return objNode; }
 
-  [[nodiscard]] inline AllocKind getAllocType() const {
-    return this->getAllocSite().getAllocType();
-  }
+  [[nodiscard]] inline AllocKind getAllocType() const { return this->getAllocSite().getAllocType(); }
 
-  [[nodiscard]] inline bool isFunction() const {
-    return this->getAllocType() == AllocKind::Functions;
-  }
+  [[nodiscard]] inline bool isFunction() const { return this->getAllocType() == AllocKind::Functions; }
 
-  [[nodiscard]] inline const llvm::Type* getType() const {
-    return this->allocSite.getValue()->getType();
-  }
+  [[nodiscard]] inline const llvm::Type* getType() const { return this->allocSite.getValue()->getType(); }
 
-  [[nodiscard]] inline bool isGlobalObj() const {
-    return this->getAllocType() == AllocKind::Globals;
-  }
+  [[nodiscard]] inline bool isGlobalObj() const { return this->getAllocType() == AllocKind::Globals; }
 
-  [[nodiscard]] inline bool isStackObj() const {
-    return this->getAllocType() == AllocKind::Stack;
-  }
+  [[nodiscard]] inline bool isStackObj() const { return this->getAllocType() == AllocKind::Stack; }
 
-  [[nodiscard]] inline bool isHeapObj() const {
-    return this->getAllocType() == AllocKind::Heap;
-  }
+  [[nodiscard]] inline bool isHeapObj() const { return this->getAllocType() == AllocKind::Heap; }
 
   [[nodiscard]] inline std::string toString(bool detailed = true) const {
     if (detailed) {
@@ -96,8 +77,7 @@ class FIObject {
 
 template <typename ctx>
 bool operator==(const FIObject<ctx>& lhs, const FIObject<ctx>& rhs) {
-  return lhs.getValue() == rhs.getValue() &&
-         lhs.getContext() == rhs.getContext();
+  return lhs.getValue() == rhs.getValue() && lhs.getContext() == rhs.getContext();
 }
 
 }  // namespace pta

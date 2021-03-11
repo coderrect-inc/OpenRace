@@ -60,8 +60,7 @@ class PointedByPts {
     return pointsTo[src].intersects(pointsTo[dst]);
   }
 
-  [[nodiscard]] static inline bool intersectWithNoSpecialNode(NodeID src,
-                                                              NodeID dst) {
+  [[nodiscard]] static inline bool intersectWithNoSpecialNode(NodeID src, NodeID dst) {
     assert(src < pointsTo.size() && dst < pointsTo.size());
     auto result = pointsTo[src] & pointsTo[dst];
 

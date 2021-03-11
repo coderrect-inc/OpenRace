@@ -45,43 +45,34 @@ bool AndBools(BOOL cur, BOOLS... remain) {
 }
 
 template <typename T, size_t... N>
-bool isTupleEquelOnIndex(const T &T1, const T &T2,
-                         std::index_sequence<N...> sequence) {
+bool isTupleEquelOnIndex(const T &T1, const T &T2, std::index_sequence<N...> sequence) {
   return AndBools((std::get<N>(T1) == std::get<N>(T2))...);
 }
 
 template <typename... Args>
-bool isTupleEqual(const std::tuple<Args...> &tuple1,
-                  const std::tuple<Args...> &tuple2) {
+bool isTupleEqual(const std::tuple<Args...> &tuple1, const std::tuple<Args...> &tuple2) {
   static_assert(sizeof...(Args) > 0);
 
-  return isTupleEquelOnIndex(tuple1, tuple2,
-                             std::index_sequence_for<Args...>{});
+  return isTupleEquelOnIndex(tuple1, tuple2, std::index_sequence_for<Args...>{});
 }
 
 // instead of compare pointer value, compare they content of them
 template <typename PtrTy, typename Comparator = std::less<PtrTy>>
-class PtrContentComparator
-    : public std::binary_function<PtrTy *, PtrTy *, bool> {
+class PtrContentComparator : public std::binary_function<PtrTy *, PtrTy *, bool> {
   using comp = Comparator;
   comp _M_comp;
 
  public:
-  bool operator()(const PtrTy *__x, const PtrTy *__y) {
-    return _M_comp(*__x, *__y);
-  }
+  bool operator()(const PtrTy *__x, const PtrTy *__y) { return _M_comp(*__x, *__y); }
 };
 
 template <typename PtrTy, typename Comparator = std::less<PtrTy>>
-class UniquePtrContentComparator
-    : public std::binary_function<std::unique_ptr<PtrTy>,
-                                  std::unique_ptr<PtrTy>, bool> {
+class UniquePtrContentComparator : public std::binary_function<std::unique_ptr<PtrTy>, std::unique_ptr<PtrTy>, bool> {
   using comp = Comparator;
   comp _M_comp;
 
  public:
-  bool operator()(const std::unique_ptr<PtrTy> &__x,
-                  const std::unique_ptr<PtrTy> &__y) const {
+  bool operator()(const std::unique_ptr<PtrTy> &__x, const std::unique_ptr<PtrTy> &__y) const {
     return _M_comp(*(__x.get()), *(__y.get()));
   }
 };
@@ -109,8 +100,7 @@ inline llvm::Type *stripArray(llvm::Type *T) {
 }
 
 llvm::Type *isStructWithFlexibleArray(const llvm::StructType *ST);
-llvm::StructType *getConvertedFlexibleArrayType(const llvm::StructType *ST,
-                                                llvm::Type *flexbleArrayTy);
+llvm::StructType *getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexbleArrayTy);
 
 inline llvm::Type *getUnboundedArrayTy(llvm::Type *elemType) {
   if (auto ST = llvm::dyn_cast<llvm::StructType>(elemType)) {
@@ -131,20 +121,16 @@ std::string getSourceDir(const llvm::Value *val);
 void prettyFunctionPrinter(const llvm::Function *func, llvm::raw_ostream &os);
 
 // whether the indirect call site compatible with the target function
-bool isCompatibleCall(const llvm::Instruction *indirectCall,
-                      const llvm::Function *target);
+bool isCompatibleCall(const llvm::Instruction *indirectCall, const llvm::Function *target);
 
 std::string getDemangledName(llvm::StringRef mangledName);
 
 llvm::StringRef stripNumberPostFix(llvm::StringRef originalName);
 
-const llvm::Type *getTypeAtOffset(const llvm::Type *type, size_t offset,
-                                  const llvm::DataLayout &DL,
+const llvm::Type *getTypeAtOffset(const llvm::Type *type, size_t offset, const llvm::DataLayout &DL,
                                   bool stripArray = true);
 
-bool isZeroOffsetTypeInRootType(const llvm::Type *rootType,
-                                const llvm::Type *elemType,
-                                const llvm::DataLayout &);
+bool isZeroOffsetTypeInRootType(const llvm::Type *rootType, const llvm::Type *elemType, const llvm::DataLayout &);
 
 }  // namespace pta
 

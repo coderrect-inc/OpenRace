@@ -24,8 +24,7 @@ Type *DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) {
   }
 
   if (nextInst && isa<BitCastInst>(nextInst)) {
-    Type *destTy =
-        cast<BitCastInst>(nextInst)->getDestTy()->getPointerElementType();
+    Type *destTy = cast<BitCastInst>(nextInst)->getDestTy()->getPointerElementType();
     if (destTy->isSized()) {
       // only when the dest type is sized
       return destTy;
@@ -62,9 +61,8 @@ Type *DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) {
 
 // the signature of calloc is void *calloc(size_t elementNum, size_t
 // elementSize);
-Type *DefaultHeapModel::inferCallocType(const Function *fun,
-                                        const Instruction *allocSite,
-                                        int numArgNo, int sizeArgNo) {
+Type *DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *allocSite, int numArgNo,
+                                        int sizeArgNo) {
   if (auto elemType = getNextBitCastDestType(allocSite)) {
     assert(elemType->isSized());
 
@@ -96,9 +94,7 @@ Type *DefaultHeapModel::inferCallocType(const Function *fun,
 }
 
 // the signature of malloc is void *malloc(size_t elementSize);
-Type *DefaultHeapModel::inferMallocType(const Function *fun,
-                                        const Instruction *allocSite,
-                                        int sizeArgNo) {
+Type *DefaultHeapModel::inferMallocType(const Function *fun, const Instruction *allocSite, int sizeArgNo) {
   if (auto elemType = getNextBitCastDestType(allocSite)) {
     assert(elemType->isSized());
 

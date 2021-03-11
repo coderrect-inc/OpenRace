@@ -69,9 +69,7 @@ class SolverBase {
   // extensibility
   llvm::DenseMap<PtrNodeTy *, PtsTy> handledGEPMap;
 
-  inline void updateFunPtr(NodeID indirectNode) {
-    updatedFunPtrs.set(indirectNode);
-  }
+  inline void updateFunPtr(NodeID indirectNode) { updatedFunPtrs.set(indirectNode); }
 
   inline bool resolveFunPtrs() {
     if (updatedFunPtrs.empty()) {
@@ -90,8 +88,7 @@ class SolverBase {
 
   // TODO: only process diff pts
   template <typename CallBack = Noop>
-  inline bool processOffset(CGNodeTy *src, CGNodeTy *dst,
-                            CallBack callBack = Noop{}) {
+  inline bool processOffset(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
     ProcessedOffset++;
 
@@ -102,8 +99,7 @@ class SolverBase {
 
     // we must be handling a getelemntptr instruction if we are indexing a
     // object
-    auto idx =
-        llvm::cast<const llvm::Instruction>(ptrNode->getPointer()->getValue());
+    auto idx = llvm::cast<const llvm::Instruction>(ptrNode->getPointer()->getValue());
     // assert(gep);
 
     // TODO: the intersection on pts should be done through PtsTrait for better
@@ -138,15 +134,13 @@ class SolverBase {
     // update the cached pts
     for (auto objNode : nodeVec) {
       // this might create new object, thus modify the points-to set
-      auto *fieldObj = llvm::cast_or_null<ObjNodeTy>(
-          LMT::indexObject(this->getLangModel(), objNode, idx));
+      auto *fieldObj = llvm::cast_or_null<ObjNodeTy>(LMT::indexObject(this->getLangModel(), objNode, idx));
       if (fieldObj == nullptr) {
         continue;
       }
       if (DEBUG_PTA)
         llvm::outs() << "processOffset: "
-                     << "src: " << src->getNodeID()
-                     << " fieldObj: " << fieldObj->getNodeID()
+                     << "src: " << src->getNodeID() << " fieldObj: " << fieldObj->getNodeID()
                      << " dst: " << dst->getNodeID() << "\n";
 
       if (!PT::has(ptrNode->getNodeID(), fieldObj->getObjectID())) {
@@ -156,8 +150,7 @@ class SolverBase {
         // constraints remove this but relying on solver to handle it correctly
         // can improve both performance and memory effciency
         // but the visualization of the constraint graph will be affected.
-        this->consGraph->addConstraints(fieldObj, ptrNode,
-                                        Constraints::addr_of);
+        this->consGraph->addConstraints(fieldObj, ptrNode, Constraints::addr_of);
 #endif
 
         // TODO: stop calling callback if the obj offset is non-pointer
@@ -220,7 +213,8 @@ class SolverBase {
         //                    if (nodeVec.size() == 1 ||
         //                    isZeroOffsetTypeInRootType(offsetType,
         //                                                                          ptrElemType,
-        //                                                                          idx->getModule()->getDataLayout())) {
+        //                                                                          idx->getModule()->getDataLayout()))
+        //                                                                          {
         callBack(fieldObj, ptrNode);
         changed = true;
         //                    }
@@ -293,8 +287,7 @@ class SolverBase {
     ProcessedLoad++;
 
     bool changed = false;
-    for (auto it = PT::begin(src->getNodeID()), ie = PT::end(src->getNodeID());
-         it != ie; it++) {
+    for (auto it = PT::begin(src->getNodeID()), ie = PT::end(src->getNodeID()); it != ie; it++) {
       auto node = consGraph->getObjectNode(*it);
       node = node->getSuperNode();
       if (consGraph->addConstraints(node, dst, Constraints::copy)) {
@@ -310,8 +303,7 @@ class SolverBase {
   }
 
   template <typename CallBack = Noop>
-  bool processSpecial(CGNodeTy *src, CGNodeTy *dst,
-                      CallBack callBack = Noop{}) {
+  bool processSpecial(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     // TODO: we should do a cache here as well! as handling special constraints
     // are expensive
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
@@ -320,10 +312,8 @@ class SolverBase {
       CallBack &CB;
       explicit OnNewConstraints(CallBack &CB) : CB(CB) {}
 
-      void onNewConstraint(CGNodeTy *src, CGNodeTy *dst,
-                           Constraints constraint) override {
-        assert(constraint == Constraints::copy &&
-               "special constraints can only add new copy/addr_of constraints");
+      void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
+        assert(constraint == Constraints::copy && "special constraints can only add new copy/addr_of constraints");
         CB(src, dst);
       }
     };
@@ -331,8 +321,7 @@ class SolverBase {
     OnNewConstraints cb(callBack);
     bool changed = false;
     this->consGraph->registerCallBack(&cb);
-    for (auto it = PT::begin(src->getNodeID()), ie = PT::end(src->getNodeID());
-         it != ie; it++) {
+    for (auto it = PT::begin(src->getNodeID()), ie = PT::end(src->getNodeID()); it != ie; it++) {
       auto node = llvm::cast<ObjNodeTy>(consGraph->getObjectNode(*it));
       changed = node->getObject()->processSpecial(src, dst);
     }
@@ -350,8 +339,7 @@ class SolverBase {
 
     ProcessedStore++;
     bool changed = false;
-    for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID());
-         it != ie; it++) {
+    for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID()); it != ie; it++) {
       auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
       auto node = consGraph->getObjectNode(*it);
       node = node->getSuperNode();
@@ -378,9 +366,7 @@ class SolverBase {
     } while (reanalyze);
   }
 
-  [[nodiscard]] inline LangModel *getLangModel() const {
-    return this->langModel.get();
-  }
+  [[nodiscard]] inline LangModel *getLangModel() const { return this->langModel.get(); }
 
   void dumpPointsTo() {
     std::error_code ErrInfo;
@@ -389,30 +375,24 @@ class SolverBase {
       // dump the points to set
 
       // 1st, dump the Object Node Information
-      for (auto it = this->getConsGraph()->begin(),
-                ie = this->getConsGraph()->end();
-           it != ie; it++) {
+      for (auto it = this->getConsGraph()->begin(), ie = this->getConsGraph()->end(); it != ie; it++) {
         CGNodeTy *node = *it;
         if (llvm::isa<ObjNodeTy>(node)) {
           // dump the information
-          F.os() << "Object " << llvm::cast<ObjNodeTy>(node)->getObjectID()
-                 << " : \n";
+          F.os() << "Object " << llvm::cast<ObjNodeTy>(node)->getObjectID() << " : \n";
           F.os() << node->toString() << "\n";
         }
       }
 
       // 2nd, dump the points to set of every node
-      for (auto it = this->getConsGraph()->begin(),
-                ie = this->getConsGraph()->end();
-           it != ie; it++) {
+      for (auto it = this->getConsGraph()->begin(), ie = this->getConsGraph()->end(); it != ie; it++) {
         CGNodeTy *node = *it;
 
         F.os() << node->toString() << " : ";
         F.os() << "{";
         bool isFirst = true;
 
-        for (auto it = PT::begin(node->getSuperNode()->getNodeID()),
-                  ie = PT::end(node->getSuperNode()->getNodeID());
+        for (auto it = PT::begin(node->getSuperNode()->getNodeID()), ie = PT::end(node->getSuperNode()->getNodeID());
              it != ie; it++) {
           if (isFirst) {
             F.os() << *it;
@@ -459,8 +439,7 @@ class SolverBase {
 
     LOG_INFO("Pointer Analysis Finished Solving");
 
-    LOG_DEBUG("PTA constraint graph node number {}, callgraph node number {}",
-              this->getConsGraph()->getNodeNum(),
+    LOG_DEBUG("PTA constraint graph node number {}, callgraph node number {}", this->getConsGraph()->getNodeNum(),
               this->getCallGraph()->getNodeNum());
 
     if (ConfigPrintConstraintGraph) {
@@ -487,11 +466,8 @@ class SolverBase {
   // a mapping between lock variable name (whose pts is empty) and the speical
   // anon obj
   std::map<std::string, ObjNodeTy *> lockStrObjects;
-  void getPointsToForSpecialLockPtr(const ctx *context,
-                                    const llvm::Instruction *I,
-                                    std::string lockStr,
-                                    const llvm::Value *lockPtr,
-                                    std::vector<const ObjTy *> &result) {
+  void getPointsToForSpecialLockPtr(const ctx *context, const llvm::Instruction *I, std::string lockStr,
+                                    const llvm::Value *lockPtr, std::vector<const ObjTy *> &result) {
     // create annonymous object if it does not exist
     if (lockStrObjects.find(lockStr) == lockStrObjects.end()) {
       auto objNode = LMT::allocSpecialAnonObj(langModel.get(), I, lockPtr);
@@ -500,8 +476,7 @@ class SolverBase {
     result.push_back(lockStrObjects.at(lockStr)->getObject());
   }
 
-  void getPointsTo(const ctx *context, const llvm::Value *V,
-                   std::vector<const ObjTy *> &result) const {
+  void getPointsTo(const ctx *context, const llvm::Value *V, std::vector<const ObjTy *> &result) const {
     assert(V->getType()->isPointerTy());
 
     // get the node value
@@ -520,8 +495,7 @@ class SolverBase {
     }
   }
 
-  void getFSPointsTo(const ctx *context, const llvm::Value *V,
-                     std::vector<const ObjTy *> &result) const {
+  void getFSPointsTo(const ctx *context, const llvm::Value *V, std::vector<const ObjTy *> &result) const {
     assert(V->getType()->isPointerTy());
 
     // get the node value
@@ -540,8 +514,7 @@ class SolverBase {
     }
   }
 
-  const llvm::Type *getPointedType(const ctx *context,
-                                   const llvm::Value *V) const {
+  const llvm::Type *getPointedType(const ctx *context, const llvm::Value *V) const {
     std::vector<const ObjTy *> result;
     getPointsTo(context, V, result);
 
@@ -559,26 +532,22 @@ class SolverBase {
   [[nodiscard]] bool isObjectAllocInst(const llvm::Value *inst) {
     if (llvm::isa<llvm::AllocaInst>(inst)) {
       return true;
-    } else if (auto call = llvm::dyn_cast<llvm::CallBase>(inst);
-               call && call->getCalledFunction() != nullptr) {
+    } else if (auto call = llvm::dyn_cast<llvm::CallBase>(inst); call && call->getCalledFunction() != nullptr) {
       return LMT::isHeapAllocAPI(langModel.get(), call->getCalledFunction());
     }
     return false;
   }
-  [[nodiscard]] bool alias(const ctx *c1, const llvm::Value *v1, const ctx *c2,
-                           const llvm::Value *v2) const {
+  [[nodiscard]] bool alias(const ctx *c1, const llvm::Value *v1, const ctx *c2, const llvm::Value *v2) const {
     assert(v1->getType()->isPointerTy() && v2->getType()->isPointerTy());
 
     NodeID n1 = LMT::getSuperNodeIDForValue(langModel.get(), c1, v1);
     NodeID n2 = LMT::getSuperNodeIDForValue(langModel.get(), c2, v2);
 
-    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID &&
-           "can not find node in constraint graph!");
+    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID && "can not find node in constraint graph!");
     return PT::intersectWithNoSpecialNode(n1, n2);
   }
 
-  [[nodiscard]] bool aliasIfExsit(const ctx *c1, const llvm::Value *v1,
-                                  const ctx *c2, const llvm::Value *v2) const {
+  [[nodiscard]] bool aliasIfExsit(const ctx *c1, const llvm::Value *v1, const ctx *c2, const llvm::Value *v2) const {
     assert(v1->getType()->isPointerTy() && v2->getType()->isPointerTy());
 
     NodeID n1 = LMT::getSuperNodeIDForValue(langModel.get(), c1, v1);
@@ -590,68 +559,52 @@ class SolverBase {
     return PT::intersectWithNoSpecialNode(n1, n2);
   }
 
-  [[nodiscard]] bool hasIdenticalPTS(const ctx *c1, const llvm::Value *v1,
-                                     const ctx *c2,
-                                     const llvm::Value *v2) const {
+  [[nodiscard]] bool hasIdenticalPTS(const ctx *c1, const llvm::Value *v1, const ctx *c2, const llvm::Value *v2) const {
     assert(v1->getType()->isPointerTy() && v2->getType()->isPointerTy());
 
     NodeID n1 = LMT::getSuperNodeIDForValue(langModel.get(), c1, v1);
     NodeID n2 = LMT::getSuperNodeIDForValue(langModel.get(), c2, v2);
 
-    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID &&
-           "can not find node in constraint graph!");
+    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID && "can not find node in constraint graph!");
     return PT::equal(n1, n2);
   }
 
-  [[nodiscard]] bool containsPTS(const ctx *c1, const llvm::Value *v1,
-                                 const ctx *c2, const llvm::Value *v2) const {
+  [[nodiscard]] bool containsPTS(const ctx *c1, const llvm::Value *v1, const ctx *c2, const llvm::Value *v2) const {
     assert(v1->getType()->isPointerTy() && v2->getType()->isPointerTy());
 
     NodeID n1 = LMT::getSuperNodeIDForValue(langModel.get(), c1, v1);
     NodeID n2 = LMT::getSuperNodeIDForValue(langModel.get(), c2, v2);
 
-    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID &&
-           "can not find node in constraint graph!");
+    assert(n1 != INVALID_NODE_ID && n2 != INVALID_NODE_ID && "can not find node in constraint graph!");
     return PT::contains(n1, n2);
   }
 
   // Delegator of the language model
-  [[nodiscard]] inline ConsGraphTy *getConsGraph() const {
-    return LMT::getConsGraph(langModel.get());
-  }
+  [[nodiscard]] inline ConsGraphTy *getConsGraph() const { return LMT::getConsGraph(langModel.get()); }
 
-  [[nodiscard]] inline const CallGraphTy *getCallGraph() const {
-    return LMT::getCallGraph(langModel.get());
-  }
+  [[nodiscard]] inline const CallGraphTy *getCallGraph() const { return LMT::getCallGraph(langModel.get()); }
 
-  [[nodiscard]] inline llvm::StringRef getEntryName() const {
-    return LMT::getEntryName(this->getLangModel());
-  }
+  [[nodiscard]] inline llvm::StringRef getEntryName() const { return LMT::getEntryName(this->getLangModel()); }
 
-  [[nodiscard]] inline const llvm::Module *getLLVMModule() const {
-    return LMT::getLLVMModule(this->getLangModel());
-  }
+  [[nodiscard]] inline const llvm::Module *getLLVMModule() const { return LMT::getLLVMModule(this->getLangModel()); }
 
-  [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNode(
-      const ctx *C, const llvm::Function *F) {
+  [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNode(const ctx *C, const llvm::Function *F) {
     return LMT::getDirectNode(this->getLangModel(), C,
                               F);  //->getDirectNode(C, F);
   }
 
-  [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNodeOrNull(
-      const ctx *C, const llvm::Function *F) const {
+  [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNodeOrNull(const ctx *C, const llvm::Function *F) const {
     return LMT::getDirectNodeOrNull(this->getLangModel(), C, F);
   }
 
-  [[nodiscard]] inline const InDirectCallSite<ctx> *getInDirectCallSite(
-      const ctx *C, const llvm::Instruction *I) const {
+  [[nodiscard]] inline const InDirectCallSite<ctx> *getInDirectCallSite(const ctx *C,
+                                                                        const llvm::Instruction *I) const {
     return LMT::getInDirectCallSite(this->getLangModel(), C, I);
   }
 };
 
 template <typename LangModel, typename SubClass>
-constexpr bool SolverBase<LangModel, SubClass>::processAddrOf(
-    CGNodeTy *src, CGNodeTy *dst) const {
+constexpr bool SolverBase<LangModel, SubClass>::processAddrOf(CGNodeTy *src, CGNodeTy *dst) const {
 #ifndef NDEBUG
   // should already been handled
   assert(!PT::insert(dst->getNodeID(), src->getNodeID()));
@@ -661,8 +614,7 @@ constexpr bool SolverBase<LangModel, SubClass>::processAddrOf(
 
 // site. pts(dst) |= pts(src);
 template <typename LangModel, typename SubClass>
-bool SolverBase<LangModel, SubClass>::processCopy(CGNodeTy *src,
-                                                  CGNodeTy *dst) {
+bool SolverBase<LangModel, SubClass>::processCopy(CGNodeTy *src, CGNodeTy *dst) {
   ProcessedCopy++;
   if (PT::unionWith(dst->getNodeID(), src->getNodeID())) {
     if (dst->isFunctionPtr()) {

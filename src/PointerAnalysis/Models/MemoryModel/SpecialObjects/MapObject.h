@@ -53,9 +53,7 @@ class MapObject {
 
   // anonoyous ptr node should never be indexed, just a place holder
   // logically exist, but no corresponding llvm::Value
-  inline PtrNodeTy *createAnonPtrNode() {
-    return this->model.createAnonPtrNode();
-  }
+  inline PtrNodeTy *createAnonPtrNode() { return this->model.createAnonPtrNode(); }
 
   inline PtrNodeTy *getOrCreateElem(const KeyT &key) {
     ConstraintGraph<ctx> *consGraph = model.getConsGraph();
@@ -77,9 +75,7 @@ class MapObject {
 
  public:
   explicit MapObject(LangModel &model)
-      : model(model),
-        allElem(createAnonPtrNode()),
-        unknownIndexElem(createAnonPtrNode()) {}
+      : model(model), allElem(createAnonPtrNode()), unknownIndexElem(createAnonPtrNode()) {}
 
   // insert the key-val pair into a map
   void insert(const KeyT &key, PtrNodeTy *val) {
@@ -98,13 +94,9 @@ class MapObject {
     consGraph->addConstraints(val, unknownIndexElem, Constraints::copy);
   }
 
-  [[nodiscard]] PtrNodeTy *getElem(const KeyT &key) {
-    return getOrCreateElem(key);
-  }
+  [[nodiscard]] PtrNodeTy *getElem(const KeyT &key) { return getOrCreateElem(key); }
 
-  [[nodiscard]] inline PtrNodeTy *getElemWithUnknownKey() {
-    return unknownIndexElem;
-  }
+  [[nodiscard]] inline PtrNodeTy *getElemWithUnknownKey() { return unknownIndexElem; }
 };
 
 }  // namespace pta

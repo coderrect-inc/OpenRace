@@ -29,16 +29,12 @@ void TypeMDinit(const llvm::Module *M);
 // only support looking up composite type, scalar type like int, float or
 // pointer are not supported
 const llvm::DICompositeType *getTypeMetaData(const llvm::StructType *T);
-const llvm::DICompositeType *getTypeMetaData(const llvm::Module *M,
-                                             const llvm::StructType *T);
+const llvm::DICompositeType *getTypeMetaData(const llvm::Module *M, const llvm::StructType *T);
 
 // look up the type metadata of the object allocated
-const llvm::DICompositeType *getTypeMetaData(const llvm::Value *allocSite,
-                                             AllocKind T,
-                                             const llvm::Type *allocType);
+const llvm::DICompositeType *getTypeMetaData(const llvm::Value *allocSite, AllocKind T, const llvm::Type *allocType);
 
-llvm::SmallVector<llvm::DIDerivedType *, 8> getNonStaticDataMember(
-    const llvm::DICompositeType *DI);
+llvm::SmallVector<llvm::DIDerivedType *, 8> getNonStaticDataMember(const llvm::DICompositeType *DI);
 
 void getFieldAccessPath(const llvm::DICompositeType *DI, size_t offsetInByte,
                         llvm::SmallVector<const llvm::DIType *, 8> &result);

@@ -43,13 +43,9 @@ class CRMarkerCallSite : public llvm::CallSite {
  public:
   explicit CRMarkerCallSite(llvm::Instruction *II) : CallSite(II) {}
 
-  [[nodiscard]] inline bool isNoAliasCheck() const {
-    return isFunNameEqualsTo(CHECK_NO_ALIAS_FUN);
-  }
+  [[nodiscard]] inline bool isNoAliasCheck() const { return isFunNameEqualsTo(CHECK_NO_ALIAS_FUN); }
 
-  [[nodiscard]] inline bool isAliasCheck() const {
-    return isFunNameEqualsTo(CHECK_ALIAS_FUN);
-  }
+  [[nodiscard]] inline bool isAliasCheck() const { return isFunNameEqualsTo(CHECK_ALIAS_FUN); }
 };
 
 template <typename Solver>
@@ -69,8 +65,7 @@ class PTAVerificationPass : public llvm::ModulePass {
   }
 
   bool runOnModule(llvm::Module &M) override {
-    this->getAnalysis<PointerAnalysisPass<Solver>>().analyze(&M,
-                                                             "_Z5entry1BPS_");
+    this->getAnalysis<PointerAnalysisPass<Solver>>().analyze(&M, "_Z5entry1BPS_");
 
     auto &pta = *(this->getAnalysis<PointerAnalysisPass<Solver>>().getPTA());
 
@@ -145,7 +140,6 @@ template <typename PTA>
 char pta::PTAVerificationPass<PTA>::ID = 0;
 
 template <typename PTA>
-static llvm::RegisterPass<pta::PTAVerificationPass<PTA>> PVP("", "", true,
-                                                             true);
+static llvm::RegisterPass<pta::PTAVerificationPass<PTA>> PVP("", "", true, true);
 
 #endif

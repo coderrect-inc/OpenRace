@@ -21,9 +21,8 @@ namespace llvm {
 // We operate on opaque instruction classes, so forward declare all instruction
 // types now...
 //
-#define DELEGATE(CLASS_TO_VISIT)                               \
-  return static_cast<SubClass *>(this)->visit##CLASS_TO_VISIT( \
-      static_cast<llvm::CLASS_TO_VISIT &>(I), context)
+#define DELEGATE(CLASS_TO_VISIT) \
+  return static_cast<SubClass *>(this)->visit##CLASS_TO_VISIT(static_cast<llvm::CLASS_TO_VISIT &>(I), context)
 
 /// Base class for instruction visitors
 ///
@@ -82,8 +81,7 @@ class CtxInstVisitor {
   // Generic visit method - Allow visitation to all instructions in a range
   template <class Iterator>
   void visit(Iterator Start, Iterator End, const ctx *context) {
-    while (Start != End)
-      static_cast<SubClass *>(this)->visit(*Start++, context);
+    while (Start != End) static_cast<SubClass *>(this)->visit(*Start++, context);
   }
 
   void visit(const pta::CtxFunction<ctx> *ctxFun) {
@@ -105,17 +103,15 @@ class CtxInstVisitor {
   // visit - Finally, code to visit an instruction...
   //
   RetTy visit(Instruction &I, const ctx *context) {
-    static_assert(std::is_base_of<CtxInstVisitor, SubClass>::value,
-                  "Must pass the derived type to this template!");
+    static_assert(std::is_base_of<CtxInstVisitor, SubClass>::value, "Must pass the derived type to this template!");
 
     switch (I.getOpcode()) {
       default:
         llvm_unreachable("Unknown instruction type encountered!");
         // Build the switch statement using the Instruction.def file...
-#define HANDLE_INST(NUM, OPCODE, CLASS)                  \
-  case Instruction::OPCODE:                              \
-    return static_cast<SubClass *>(this)->visit##OPCODE( \
-        static_cast<llvm::CLASS &>(I), context);
+#define HANDLE_INST(NUM, OPCODE, CLASS) \
+  case Instruction::OPCODE:             \
+    return static_cast<SubClass *>(this)->visit##OPCODE(static_cast<llvm::CLASS &>(I), context);
 #include "llvm/IR/Instruction.def"
     }
   }
@@ -201,168 +197,73 @@ class CtxInstVisitor {
   //    DELEGATE(TerminatorInst);}
   RetTy visitICmpInst(ICmpInst &I, const ctx *context) { DELEGATE(CmpInst); }
   RetTy visitFCmpInst(FCmpInst &I, const ctx *context) { DELEGATE(CmpInst); }
-  RetTy visitAllocaInst(AllocaInst &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitLoadInst(LoadInst &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitStoreInst(StoreInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitAtomicCmpXchgInst(AtomicCmpXchgInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitAtomicRMWInst(AtomicRMWInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitFenceInst(FenceInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitGetElementPtrInst(GetElementPtrInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
+  RetTy visitAllocaInst(AllocaInst &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitLoadInst(LoadInst &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitStoreInst(StoreInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitAtomicCmpXchgInst(AtomicCmpXchgInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitAtomicRMWInst(AtomicRMWInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitFenceInst(FenceInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitGetElementPtrInst(GetElementPtrInst &I, const ctx *context) { DELEGATE(Instruction); }
   RetTy visitPHINode(PHINode &I, const ctx *context) { DELEGATE(Instruction); }
   RetTy visitTruncInst(TruncInst &I, const ctx *context) { DELEGATE(CastInst); }
   RetTy visitZExtInst(ZExtInst &I, const ctx *context) { DELEGATE(CastInst); }
   RetTy visitSExtInst(SExtInst &I, const ctx *context) { DELEGATE(CastInst); }
-  RetTy visitFPTruncInst(FPTruncInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
+  RetTy visitFPTruncInst(FPTruncInst &I, const ctx *context) { DELEGATE(CastInst); }
   RetTy visitFPExtInst(FPExtInst &I, const ctx *context) { DELEGATE(CastInst); }
-  RetTy visitFPToUIInst(FPToUIInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitFPToSIInst(FPToSIInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitUIToFPInst(UIToFPInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitSIToFPInst(SIToFPInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitPtrToIntInst(PtrToIntInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitIntToPtrInst(IntToPtrInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitBitCastInst(BitCastInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitAddrSpaceCastInst(AddrSpaceCastInst &I, const ctx *context) {
-    DELEGATE(CastInst);
-  }
-  RetTy visitSelectInst(SelectInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitVAArgInst(VAArgInst &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitExtractElementInst(ExtractElementInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitInsertElementInst(InsertElementInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitShuffleVectorInst(ShuffleVectorInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitExtractValueInst(ExtractValueInst &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitInsertValueInst(InsertValueInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitLandingPadInst(LandingPadInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitFuncletPadInst(FuncletPadInst &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
-  RetTy visitCleanupPadInst(CleanupPadInst &I, const ctx *context) {
-    DELEGATE(FuncletPadInst);
-  }
-  RetTy visitCatchPadInst(CatchPadInst &I, const ctx *context) {
-    DELEGATE(FuncletPadInst);
-  }
+  RetTy visitFPToUIInst(FPToUIInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitFPToSIInst(FPToSIInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitUIToFPInst(UIToFPInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitSIToFPInst(SIToFPInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitPtrToIntInst(PtrToIntInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitIntToPtrInst(IntToPtrInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitBitCastInst(BitCastInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitAddrSpaceCastInst(AddrSpaceCastInst &I, const ctx *context) { DELEGATE(CastInst); }
+  RetTy visitSelectInst(SelectInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitVAArgInst(VAArgInst &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitExtractElementInst(ExtractElementInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitInsertElementInst(InsertElementInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitShuffleVectorInst(ShuffleVectorInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitExtractValueInst(ExtractValueInst &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitInsertValueInst(InsertValueInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitLandingPadInst(LandingPadInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitFuncletPadInst(FuncletPadInst &I, const ctx *context) { DELEGATE(Instruction); }
+  RetTy visitCleanupPadInst(CleanupPadInst &I, const ctx *context) { DELEGATE(FuncletPadInst); }
+  RetTy visitCatchPadInst(CatchPadInst &I, const ctx *context) { DELEGATE(FuncletPadInst); }
 
   // Handle the special instrinsic instruction classes.
-  RetTy visitDbgDeclareInst(DbgDeclareInst &I, const ctx *context) {
-    DELEGATE(DbgInfoIntrinsic);
-  }
-  RetTy visitDbgValueInst(DbgValueInst &I, const ctx *context) {
-    DELEGATE(DbgInfoIntrinsic);
-  }
-  RetTy visitDbgLabelInst(DbgLabelInst &I, const ctx *context) {
-    DELEGATE(DbgInfoIntrinsic);
-  }
-  RetTy visitDbgInfoIntrinsic(DbgInfoIntrinsic &I, const ctx *context) {
-    DELEGATE(IntrinsicInst);
-  }
-  RetTy visitMemSetInst(MemSetInst &I, const ctx *context) {
-    DELEGATE(MemIntrinsic);
-  }
-  RetTy visitMemCpyInst(MemCpyInst &I, const ctx *context) {
-    DELEGATE(MemTransferInst);
-  }
-  RetTy visitMemMoveInst(MemMoveInst &I, const ctx *context) {
-    DELEGATE(MemTransferInst);
-  }
-  RetTy visitMemTransferInst(MemTransferInst &I, const ctx *context) {
-    DELEGATE(MemIntrinsic);
-  }
-  RetTy visitMemIntrinsic(MemIntrinsic &I, const ctx *context) {
-    DELEGATE(IntrinsicInst);
-  }
-  RetTy visitVAStartInst(VAStartInst &I, const ctx *context) {
-    DELEGATE(IntrinsicInst);
-  }
-  RetTy visitVAEndInst(VAEndInst &I, const ctx *context) {
-    DELEGATE(IntrinsicInst);
-  }
-  RetTy visitVACopyInst(VACopyInst &I, const ctx *context) {
-    DELEGATE(IntrinsicInst);
-  }
-  RetTy visitIntrinsicInst(IntrinsicInst &I, const ctx *context) {
-    DELEGATE(CallInst);
-  }
-  RetTy visitCallBrInst(CallBrInst &I, const ctx *context) {
-    DELEGATE(CallBase);
-  }
+  RetTy visitDbgDeclareInst(DbgDeclareInst &I, const ctx *context) { DELEGATE(DbgInfoIntrinsic); }
+  RetTy visitDbgValueInst(DbgValueInst &I, const ctx *context) { DELEGATE(DbgInfoIntrinsic); }
+  RetTy visitDbgLabelInst(DbgLabelInst &I, const ctx *context) { DELEGATE(DbgInfoIntrinsic); }
+  RetTy visitDbgInfoIntrinsic(DbgInfoIntrinsic &I, const ctx *context) { DELEGATE(IntrinsicInst); }
+  RetTy visitMemSetInst(MemSetInst &I, const ctx *context) { DELEGATE(MemIntrinsic); }
+  RetTy visitMemCpyInst(MemCpyInst &I, const ctx *context) { DELEGATE(MemTransferInst); }
+  RetTy visitMemMoveInst(MemMoveInst &I, const ctx *context) { DELEGATE(MemTransferInst); }
+  RetTy visitMemTransferInst(MemTransferInst &I, const ctx *context) { DELEGATE(MemIntrinsic); }
+  RetTy visitMemIntrinsic(MemIntrinsic &I, const ctx *context) { DELEGATE(IntrinsicInst); }
+  RetTy visitVAStartInst(VAStartInst &I, const ctx *context) { DELEGATE(IntrinsicInst); }
+  RetTy visitVAEndInst(VAEndInst &I, const ctx *context) { DELEGATE(IntrinsicInst); }
+  RetTy visitVACopyInst(VACopyInst &I, const ctx *context) { DELEGATE(IntrinsicInst); }
+  RetTy visitIntrinsicInst(IntrinsicInst &I, const ctx *context) { DELEGATE(CallInst); }
+  RetTy visitCallBrInst(CallBrInst &I, const ctx *context) { DELEGATE(CallBase); }
   RetTy visitCallInst(CallInst &I, const ctx *context) { DELEGATE(CallBase); }
-  RetTy visitInvokeInst(InvokeInst &I, const ctx *context) {
-    DELEGATE(CallBase);
-  }
+  RetTy visitInvokeInst(InvokeInst &I, const ctx *context) { DELEGATE(CallBase); }
 
-  RetTy visitTerminator(Instruction &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
+  RetTy visitTerminator(Instruction &I, const ctx *context) { DELEGATE(Instruction); }
 
   // Next level propagators: If the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
-  RetTy visitCastInst(CastInst &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitUnaryOperator(UnaryOperator &I, const ctx *context) {
-    DELEGATE(UnaryInstruction);
-  }
-  RetTy visitBinaryOperator(BinaryOperator &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
+  RetTy visitCastInst(CastInst &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitUnaryOperator(UnaryOperator &I, const ctx *context) { DELEGATE(UnaryInstruction); }
+  RetTy visitBinaryOperator(BinaryOperator &I, const ctx *context) { DELEGATE(Instruction); }
   RetTy visitCmpInst(CmpInst &I, const ctx *context) { DELEGATE(Instruction); }
   // RetTy visitTerminatorInst(TerminatorInst &I, const ctx *context)    {
   // DELEGATE(Instruction);}
-  RetTy visitUnaryInstruction(UnaryInstruction &I, const ctx *context) {
-    DELEGATE(Instruction);
-  }
+  RetTy visitUnaryInstruction(UnaryInstruction &I, const ctx *context) { DELEGATE(Instruction); }
 
   RetTy visitCallBase(CallBase &I, const ctx *context) {
-    if (isa<InvokeInst>(I) || isa<CallBrInst>(I))
-      return static_cast<SubClass *>(this)->visitTerminator(I);
+    if (isa<InvokeInst>(I) || isa<CallBrInst>(I)) return static_cast<SubClass *>(this)->visitTerminator(I);
 
     DELEGATE(Instruction);
   }

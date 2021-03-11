@@ -35,8 +35,7 @@ static const Value *stripNullOrUnDef(const Value *V) {
   }
 
   if (Operator::getOpcode(V) == Instruction::IntToPtr) {
-    if (auto ptrToInt = llvm::dyn_cast<PtrToIntOperator>(
-            cast<Operator>(V)->getOperand(0))) {
+    if (auto ptrToInt = llvm::dyn_cast<PtrToIntOperator>(cast<Operator>(V)->getOperand(0))) {
       // handle (inttoptr (ptrtoint %ptr)) pattern
       V = ptrToInt->getOperand(0);
     } else {
@@ -57,8 +56,7 @@ const Value *FICanonicalizer::stripPointerCastsAndOffsets(const Value *V) {
     if (auto *GEP = dyn_cast<GEPOperator>(V)) {
       // skip even if GEP is not in_bound
       V = GEP->getPointerOperand();
-    } else if (Operator::getOpcode(V) == Instruction::BitCast ||
-               Operator::getOpcode(V) == Instruction::AddrSpaceCast) {
+    } else if (Operator::getOpcode(V) == Instruction::BitCast || Operator::getOpcode(V) == Instruction::AddrSpaceCast) {
       V = cast<Operator>(V)->getOperand(0);
     } else if (auto *GA = dyn_cast<GlobalAlias>(V)) {
       V = GA->getAliasee();
@@ -100,8 +98,7 @@ static const Value *stripPointerCasts(const Value *V) {
   do {
     if (auto *GEP = dyn_cast<GEPOperator>(V)) {
       return V;  // do not collapse any GEP even if it has all-zero offset
-    } else if (Operator::getOpcode(V) == Instruction::BitCast ||
-               Operator::getOpcode(V) == Instruction::AddrSpaceCast) {
+    } else if (Operator::getOpcode(V) == Instruction::BitCast || Operator::getOpcode(V) == Instruction::AddrSpaceCast) {
       V = cast<Operator>(V)->getOperand(0);
     } else if (auto *GA = dyn_cast<GlobalAlias>(V)) {
       V = GA->getAliasee();
@@ -177,8 +174,7 @@ size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
   // forms
   assert(GEP->getNumOperands() == 2 || GEP->getNumOperands() == 3);
 
-  for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP);
-       GTI != GTE; GTI++) {
+  for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP); GTI != GTE; GTI++) {
     // 1st, the first idx is zero, and the second idx is a variable
     // getelementptr [type], [type *] %obj, 0, %var
     if (isa<UndefValue>(GTI.getOperand())) {
@@ -200,8 +196,7 @@ size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
   llvm_unreachable("bad gep format");
 }
 
-bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap,
-                          size_t pOffset, size_t elementSize) {
+bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize) {
   if (arrayMap.empty()) {
     return false;
   }
@@ -228,11 +223,9 @@ bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap,
       size_t arrOffset = it.first;
       ArrayLayout *arrLayout = it.second;
 
-      if (arrOffset < pOffset &&
-          arrOffset + arrLayout->getArraySize() >= elementSize) {
+      if (arrOffset < pOffset && arrOffset + arrLayout->getArraySize() >= elementSize) {
         // might be nested here
-        return isArrayExistAtOffset(arrLayout->getSubArrayMap(),
-                                    pOffset - arrOffset, elementSize);
+        return isArrayExistAtOffset(arrLayout->getSubArrayMap(), pOffset - arrOffset, elementSize);
       }
     }
   }

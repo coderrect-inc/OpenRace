@@ -33,8 +33,7 @@ bool InsertGlobalCtorCallPass::runOnModule(llvm::Module &M) {
   // @llvm.global_ctors = [N x { i32, void ()*, i8* }]
   if (ctors->hasInitializer()) {
     const llvm::Constant *initializer = ctors->getInitializer();
-    if (initializer->isNullValue() ||
-        llvm::isa<llvm::UndefValue>(initializer)) {
+    if (initializer->isNullValue() || llvm::isa<llvm::UndefValue>(initializer)) {
       return false;
     }
 
@@ -43,8 +42,7 @@ bool InsertGlobalCtorCallPass::runOnModule(llvm::Module &M) {
     for (int i = 0; i < initArray->getNumOperands(); i++) {
       llvm::Constant *curCtor = initArray->getOperand(i);
       // the ctor is a structure of type { i32, void ()*, i8* }
-      llvm::Constant *init =
-          llvm::cast<llvm::ConstantAggregate>(curCtor)->getOperand(1);
+      llvm::Constant *init = llvm::cast<llvm::ConstantAggregate>(curCtor)->getOperand(1);
       auto initFun = llvm::cast<Function>(init);
       builder.CreateCall(FunctionCallee(initFun->getFunctionType(), initFun));
     }
@@ -54,7 +52,6 @@ bool InsertGlobalCtorCallPass::runOnModule(llvm::Module &M) {
 }
 
 char InsertGlobalCtorCallPass::ID = 0;
-static RegisterPass<InsertGlobalCtorCallPass> IGCCP(
-    "", "Insert call to global variable constructor before main",
-    true, /*CFG only*/
-    false /*is analysis*/);
+static RegisterPass<InsertGlobalCtorCallPass> IGCCP("", "Insert call to global variable constructor before main",
+                                                    true, /*CFG only*/
+                                                    false /*is analysis*/);

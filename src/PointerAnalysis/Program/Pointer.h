@@ -22,13 +22,11 @@ class Pointer {
   CGPtrNode<ctx> *ptrNode = nullptr;
 
  public:
-  Pointer(const ctx *context, const llvm::Value *value)
-      : context(context), value(value) {}
+  Pointer(const ctx *context, const llvm::Value *value) : context(context), value(value) {}
 
   Pointer(const Pointer<ctx> &) = delete;
-  Pointer(Pointer<ctx> &&) =
-      delete;  // can not be moved! as the address is held by the
-               // corresponding callgraph node
+  Pointer(Pointer<ctx> &&) = delete;  // can not be moved! as the address is held by the
+                                      // corresponding callgraph node
   Pointer<ctx> &operator=(const Pointer<ctx> &) = delete;
   Pointer<ctx> &operator=(Pointer<ctx> &&) = delete;
 
@@ -47,8 +45,7 @@ class Pointer {
 // for container operation
 template <typename ctx>
 bool operator==(const Pointer<ctx> &lhs, const Pointer<ctx> &rhs) {
-  return lhs.getContext() == rhs.getContext() &&
-         lhs.getValue() == rhs.getValue();
+  return lhs.getContext() == rhs.getContext() && lhs.getValue() == rhs.getValue();
 }
 
 template <typename ctx>

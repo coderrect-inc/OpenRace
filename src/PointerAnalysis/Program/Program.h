@@ -18,12 +18,9 @@ class ProgramPoint {
  public:
   ProgramPoint() = delete;
 
-  ProgramPoint(const llvm::Instruction *inst, const ctx *context)
-      : inst(inst), context(context) {}
+  ProgramPoint(const llvm::Instruction *inst, const ctx *context) : inst(inst), context(context) {}
 
-  [[nodiscard]] inline const llvm::Instruction *getInstruction() const {
-    return this->inst;
-  }
+  [[nodiscard]] inline const llvm::Instruction *getInstruction() const { return this->inst; }
 
   [[nodiscard]] inline const ctx *getContext() const { return this->context; }
 

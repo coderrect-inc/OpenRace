@@ -24,13 +24,10 @@ class CGObjNode : public CGNodeBase<ctx> {
 
   const ObjT *obj;
 
-  CGObjNode(const ObjT *obj, NodeID id)
-      : super(id, CGNodeKind::ObjNode), obj(obj){};
+  CGObjNode(const ObjT *obj, NodeID id) : super(id, CGNodeKind::ObjNode), obj(obj){};
 
  public:
-  static inline bool classof(const super *node) {
-    return node->getType() == CGNodeKind::ObjNode;
-  }
+  static inline bool classof(const super *node) { return node->getType() == CGNodeKind::ObjNode; }
 
   inline CGNodeBase<ctx> *getAddrTakenNode() {
     CGNodeBase<ctx> *addrTakeNode = this->graph->getNode(this->getNodeID() + 1);

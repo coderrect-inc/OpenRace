@@ -28,8 +28,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
  public:
   using CGNodeTy = CGNodeBase<ctx>;
   struct OnNewConstraintCallBack {
-    virtual void onNewConstraint(CGNodeTy *src, CGNodeTy *dst,
-                                 Constraints constraint) = 0;
+    virtual void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) = 0;
   };
 
   LOCAL_STATISTIC(NumObjNode, "Number of Object Nodes");
@@ -57,8 +56,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
 
   inline CGNodeTy *getCGNode(NodeID id) const { return this->getNode(id); }
 
-  inline bool addConstraints(CGNodeTy *src, CGNodeTy *dst,
-                             Constraints constraint) {
+  inline bool addConstraints(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) {
     // should not add edges to nodes that has super node
 
     if (DEBUG_PTA) {
@@ -76,8 +74,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       }
 
       llvm::outs() << "addConstraints (type-" << type << "): "
-                   << "src: " << src->getNodeID()
-                   << " dst: " << dst->getNodeID() << "\n";
+                   << "src: " << src->getNodeID() << " dst: " << dst->getNodeID() << "\n";
     }
 
     assert(src && dst /*&& !src->hasSuperNode() && !dst->hasSuperNode()*/);
@@ -88,8 +85,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
 
     if (constraint == Constraints::addr_of) {
       // addr_of can only be applied between obj --addr_of-> ptr
-      assert(src->getType() == CGNodeKind::ObjNode &&
-             "taken addr of non-object node is not allowed");
+      assert(src->getType() == CGNodeKind::ObjNode && "taken addr of non-object node is not allowed");
 
       // This is a trick, so that the copy edge will be visited
       // during solving phase, so that we do not need to handle addr_of
@@ -108,8 +104,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       if (anonNode->insertConstraint(dst, Constraints::copy)) {
         if (callBack) {
           // the edge is actually adding to the super node
-          callBack->onNewConstraint(anonNode, dst->getSuperNode(),
-                                    Constraints::copy);
+          callBack->onNewConstraint(anonNode, dst->getSuperNode(), Constraints::copy);
         }
         NumConstraints++;
         return true;
@@ -119,8 +114,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       bool newEdge = src->insertConstraint(dst, constraint);
       if (callBack && newEdge) {
         // the edge is actually adding to the super node
-        callBack->onNewConstraint(src->getSuperNode(), dst->getSuperNode(),
-                                  constraint);
+        callBack->onNewConstraint(src->getSuperNode(), dst->getSuperNode(), constraint);
         NumConstraints++;
       }
 
@@ -162,8 +156,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       }
 
       superNode->childNodes |= node->childNodes;
-      superNode->indirectNodes.insert(node->indirectNodes.begin(),
-                                      node->indirectNodes.end());
+      superNode->indirectNodes.insert(node->indirectNodes.begin(), node->indirectNodes.end());
 
       node->indirectNodes.clear();
       node->childNodes.clear();  // release the memory
@@ -201,10 +194,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
     return node;
   }
 
-  ConstraintGraph()
-      : GraphBase<CGNodeBase<ctx>, Constraints>(),
-        objVec(),
-        callBack(nullptr){};
+  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), objVec(), callBack(nullptr){};
 };
 
 }  // namespace pta
@@ -213,27 +203,21 @@ namespace llvm {
 
 template <typename ctx>
 struct GraphTraits<const pta::ConstraintGraph<ctx>>
-    : public GraphTraits<
-          const pta::GraphBase<pta::CGNodeBase<ctx>, pta::Constraints>> {};
+    : public GraphTraits<const pta::GraphBase<pta::CGNodeBase<ctx>, pta::Constraints>> {};
 
 template <typename ctx>
 struct GraphTraits<pta::ConstraintGraph<ctx>>
-    : public GraphTraits<
-          pta::GraphBase<pta::CGNodeBase<ctx>, pta::Constraints>> {};
+    : public GraphTraits<pta::GraphBase<pta::CGNodeBase<ctx>, pta::Constraints>> {};
 
 // for callgraph visualization
 template <typename ctx>
-struct DOTGraphTraits<const pta::ConstraintGraph<ctx>>
-    : public DefaultDOTGraphTraits {
+struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphTraits {
   using GraphTy = pta::ConstraintGraph<ctx>;
   using NodeTy = pta::CGNodeBase<ctx>;
 
-  explicit DOTGraphTraits(bool simple = false)
-      : DefaultDOTGraphTraits(simple) {}
+  explicit DOTGraphTraits(bool simple = false) : DefaultDOTGraphTraits(simple) {}
 
-  static std::string getGraphName(const GraphTy &) {
-    return "constraint_graph";
-  }
+  static std::string getGraphName(const GraphTy &) { return "constraint_graph"; }
 
   /// Return function name;
   static std::string getNodeLabel(const NodeTy *node, const GraphTy &graph) {
@@ -244,8 +228,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>>
     return os.str();
   }
 
-  static std::string getNodeAttributes(const NodeTy *node,
-                                       const GraphTy &graph) {
+  static std::string getNodeAttributes(const NodeTy *node, const GraphTy &graph) {
     //        if (isa<CGPtrNode<ctx>>(node)) {
     //            return "";
     //        } else if (isa<CGSuperNode<ctx, PtsTy>>(node)) {
@@ -257,8 +240,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>>
   }
 
   template <typename EdgeIter>
-  static std::string getEdgeAttributes(const NodeTy *node, EdgeIter EI,
-                                       const GraphTy &graph) {
+  static std::string getEdgeAttributes(const NodeTy *node, EdgeIter EI, const GraphTy &graph) {
     pta::Constraints edgeTy = (*EI).first;
     switch (edgeTy) {
       case pta::Constraints::load:

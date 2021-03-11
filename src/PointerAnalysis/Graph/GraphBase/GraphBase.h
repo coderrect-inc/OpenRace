@@ -107,9 +107,7 @@ class NodeBase {
     assert(node != nullptr);
 
     bool b1 = succ.insert(std::make_pair(edgeKind, node)).second;
-    bool b2 =
-        node->pred.insert(std::make_pair(edgeKind, static_cast<NodeTy *>(this)))
-            .second;
+    bool b2 = node->pred.insert(std::make_pair(edgeKind, static_cast<NodeTy *>(this))).second;
     assert(b1 == b2);
     return b1;
   }
@@ -123,16 +121,12 @@ class NodeBase {
 
   inline iterator succ_begin() { return iterator(succ.begin()); }
   inline iterator succ_end() { return iterator(succ.end()); }
-  inline const_iterator succ_begin() const {
-    return const_iterator(succ.begin());
-  }
+  inline const_iterator succ_begin() const { return const_iterator(succ.begin()); }
   inline const_iterator succ_end() const { return const_iterator(succ.end()); }
 
   inline iterator pred_begin() { return iterator(pred.begin()); }
   inline iterator pred_end() { return iterator(pred.end()); }
-  inline const_iterator pred_begin() const {
-    return const_iterator(pred.begin());
-  }
+  inline const_iterator pred_begin() const { return const_iterator(pred.begin()); }
   inline const_iterator pred_end() const { return const_iterator(pred.end()); }
 
   inline edge_iterator edge_begin() { return succ.begin(); }
@@ -162,18 +156,12 @@ struct GraphTraits<const pta::GraphBase<NodeType, EdgeType>> {
   //                             dereference to a NodeRef.
   using ChildIteratorType = typename NodeType::const_iterator;
 
-  static NodeRef getEntryNode(const GraphType *graph) {
-    return *(graph->begin());
-  }
+  static NodeRef getEntryNode(const GraphType *graph) { return *(graph->begin()); }
 
   // Return iterators that point to the beginning and ending of the child
   // node list for the specified node.
-  static ChildIteratorType child_begin(NodeRef node) {
-    return node->const_succ_begin();
-  }
-  static ChildIteratorType child_end(NodeRef node) {
-    return node->const_succ_end();
-  }
+  static ChildIteratorType child_begin(NodeRef node) { return node->const_succ_begin(); }
+  static ChildIteratorType child_end(NodeRef node) { return node->const_succ_end(); }
 
   //- dereference to a NodeRef
   // nodes_iterator/begin/end - Allow iteration over all nodes in the
@@ -191,13 +179,9 @@ struct GraphTraits<const pta::GraphBase<NodeType, EdgeType>> {
 
   // Return iterators that point to the beginning and ending of the
   // edge list for the given callgraph node.
-  static ChildEdgeIteratorType child_edge_begin(NodeRef node) {
-    return node->edge_begin();
-  }
+  static ChildEdgeIteratorType child_edge_begin(NodeRef node) { return node->edge_begin(); }
 
-  static ChildEdgeIteratorType child_edge_end(NodeRef node) {
-    return node->edge_end();
-  }
+  static ChildEdgeIteratorType child_edge_end(NodeRef node) { return node->edge_end(); }
 
   // Return the destination node of an edge.
   static NodeRef edge_dest(EdgeRef edge) { return edge.second; }
@@ -222,9 +206,7 @@ struct GraphTraits<pta::GraphBase<NodeType, EdgeType>> {
 
   // Return iterators that point to the beginning and ending of the child
   // node list for the specified node.
-  static ChildIteratorType child_begin(NodeRef node) {
-    return node->succ_begin();
-  }
+  static ChildIteratorType child_begin(NodeRef node) { return node->succ_begin(); }
   static ChildIteratorType child_end(NodeRef node) { return node->succ_end(); }
 
   //- dereference to a NodeRef
@@ -245,13 +227,9 @@ struct GraphTraits<pta::GraphBase<NodeType, EdgeType>> {
 
   // Return iterators that point to the beginning and ending of the
   // edge list for the given callgraph node.
-  static ChildEdgeIteratorType child_edge_begin(NodeRef node) {
-    return node->edge_begin();
-  }
+  static ChildEdgeIteratorType child_edge_begin(NodeRef node) { return node->edge_begin(); }
 
-  static ChildEdgeIteratorType child_edge_end(NodeRef node) {
-    return node->edge_end();
-  }
+  static ChildEdgeIteratorType child_edge_end(NodeRef node) { return node->edge_end(); }
 
   // Return the destination node of an edge.
   static NodeRef edge_dest(EdgeRef edge) { return edge.second; }
@@ -277,9 +255,7 @@ struct GraphTraits<Inverse<const pta::GraphBase<NodeType, EdgeType>>> {
 
   // Return iterators that point to the beginning and ending of the child
   // node list for the specified node.
-  static ChildIteratorType child_begin(NodeRef node) {
-    return node->pred_begin();
-  }
+  static ChildIteratorType child_begin(NodeRef node) { return node->pred_begin(); }
   static ChildIteratorType child_end(NodeRef node) { return node->pred_end(); }
 
   //- dereference to a NodeRef
@@ -300,13 +276,9 @@ struct GraphTraits<Inverse<const pta::GraphBase<NodeType, EdgeType>>> {
 
   // Return iterators that point to the beginning and ending of the
   // edge list for the given callgraph node.
-  static ChildEdgeIteratorType child_edge_begin(NodeRef node) {
-    return node->pred_edge_begin();
-  }
+  static ChildEdgeIteratorType child_edge_begin(NodeRef node) { return node->pred_edge_begin(); }
 
-  static ChildEdgeIteratorType child_edge_end(NodeRef node) {
-    return node->pred_edge_end();
-  }
+  static ChildEdgeIteratorType child_edge_end(NodeRef node) { return node->pred_edge_end(); }
 
   // Return the destination node of an edge.
   static NodeRef edge_dest(EdgeRef edge) { return edge.second; }
@@ -332,9 +304,7 @@ struct GraphTraits<Inverse<pta::GraphBase<NodeType, EdgeType>>> {
 
   // Return iterators that point to the beginning and ending of the child
   // node list for the specified node.
-  static ChildIteratorType child_begin(NodeRef node) {
-    return node->pred_begin();
-  }
+  static ChildIteratorType child_begin(NodeRef node) { return node->pred_begin(); }
   static ChildIteratorType child_end(NodeRef node) { return node->pred_end(); }
 
   //- dereference to a NodeRef
@@ -355,13 +325,9 @@ struct GraphTraits<Inverse<pta::GraphBase<NodeType, EdgeType>>> {
 
   // Return iterators that point to the beginning and ending of the
   // edge list for the given callgraph node.
-  static ChildEdgeIteratorType child_edge_begin(NodeRef node) {
-    return node->pred_edge_begin();
-  }
+  static ChildEdgeIteratorType child_edge_begin(NodeRef node) { return node->pred_edge_begin(); }
 
-  static ChildEdgeIteratorType child_edge_end(NodeRef node) {
-    return node->pred_edge_end();
-  }
+  static ChildEdgeIteratorType child_edge_end(NodeRef node) { return node->pred_edge_end(); }
 
   // Return the destination node of an edge.
   static NodeRef edge_dest(EdgeRef edge) { return edge.second; }

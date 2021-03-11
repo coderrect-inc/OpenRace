@@ -26,23 +26,15 @@ class CallEdge {
   const llvm::Instruction *callerSite;
 
  public:
-  explicit CallEdge(const llvm::Instruction *callerSite)
-      : callerSite(callerSite) {
-    assert(llvm::isa<llvm::CallInst>(callerSite) ||
-           llvm::isa<llvm::InvokeInst>(callerSite));
+  explicit CallEdge(const llvm::Instruction *callerSite) : callerSite(callerSite) {
+    assert(llvm::isa<llvm::CallInst>(callerSite) || llvm::isa<llvm::InvokeInst>(callerSite));
   }
 
-  [[nodiscard]] inline const llvm::Instruction *getCallInstruction() const {
-    return callerSite;
-  }
+  [[nodiscard]] inline const llvm::Instruction *getCallInstruction() const { return callerSite; }
 
-  inline bool operator<(const CallEdge &rhs) const {
-    return this->getCallInstruction() < rhs.getCallInstruction();
-  }
+  inline bool operator<(const CallEdge &rhs) const { return this->getCallInstruction() < rhs.getCallInstruction(); }
 
-  bool operator==(const CallEdge &rhs) const {
-    return this->getCallInstruction() == rhs.getCallInstruction();
-  }
+  bool operator==(const CallEdge &rhs) const { return this->getCallInstruction() == rhs.getCallInstruction(); }
 };
 
 // forward declaration
@@ -60,22 +52,16 @@ class CallGraphNode : public NodeBase<CallEdge, CallGraphNode<ctx>> {
     CtxFunction<ctx> fun;
     InDirectCallSite<ctx> funPtr;
 
-    U(const ctx *C, const llvm::Function *F, const llvm::Instruction *I,
-      CallGraphNode<ctx> *N)
-        : fun(C, F, I, N) {}
-    U(const ctx *C, const llvm::Instruction *I, const llvm::Value *V,
-      CallGraphNode<ctx> *N)
-        : funPtr(C, I, V, N) {}
+    U(const ctx *C, const llvm::Function *F, const llvm::Instruction *I, CallGraphNode<ctx> *N) : fun(C, F, I, N) {}
+    U(const ctx *C, const llvm::Instruction *I, const llvm::Value *V, CallGraphNode<ctx> *N) : funPtr(C, I, V, N) {}
     ~U(){};
   } target;
 
   // use with care!!!!
-  CallGraphNode(const ctx *C, const llvm::Function *F,
-                const llvm::Instruction *I, NodeID id)
+  CallGraphNode(const ctx *C, const llvm::Function *F, const llvm::Instruction *I, NodeID id)
       : super(id), target(C, F, I, this), kind(CallKind::Direct) {}
 
-  CallGraphNode(const ctx *C, const llvm::Instruction *I, const llvm::Value *V,
-                NodeID id)
+  CallGraphNode(const ctx *C, const llvm::Instruction *I, const llvm::Value *V, NodeID id)
       : super(id), target(C, I, V, this), kind(CallKind::Indirect) {
     // V is not neccessarily be the called value of I, as it can be intercepted!
   }
@@ -90,9 +76,7 @@ class CallGraphNode : public NodeBase<CallEdge, CallGraphNode<ctx>> {
     }
   }
 
-  [[nodiscard]] inline bool isIndirectCall() const {
-    return this->kind == CallKind::Indirect;
-  }
+  [[nodiscard]] inline bool isIndirectCall() const { return this->kind == CallKind::Indirect; }
 
   [[nodiscard]] inline const CtxFunction<ctx> *getTargetFun() const {
     assert(kind == CallKind::Direct);
@@ -129,14 +113,12 @@ class CallGraph : public GraphBase<CallGraphNode<ctx>, CallEdge> {
 
  private:
   // assumption, the CtxFunction passed is a newly created function
-  inline NodeType *createCallNode(const ctx *C, const llvm::Function *F,
-                                  const llvm::Instruction *I) {
+  inline NodeType *createCallNode(const ctx *C, const llvm::Function *F, const llvm::Instruction *I) {
     return this->template addNewNode<NodeType>(C, F, I);
   }
 
   // assumption, the CtxFunction passed is a newly created function
-  inline NodeType *createIndCallNode(const ctx *C, const llvm::Value *V,
-                                     const llvm::Instruction *I) {
+  inline NodeType *createIndCallNode(const ctx *C, const llvm::Value *V, const llvm::Instruction *I) {
     return this->template addNewNode<NodeType>(C, I, V);
   }
 
@@ -155,28 +137,20 @@ class CallGraph : public GraphBase<CallGraphNode<ctx>, CallEdge> {
 namespace llvm {
 
 template <typename ctx>
-struct GraphTraits<pta::CallGraph<ctx>>
-    : public GraphTraits<
-          pta::GraphBase<pta::CallGraphNode<ctx>, pta::CallEdge>> {};
+struct GraphTraits<pta::CallGraph<ctx>> : public GraphTraits<pta::GraphBase<pta::CallGraphNode<ctx>, pta::CallEdge>> {};
 
 template <typename ctx>
 struct GraphTraits<const pta::CallGraph<ctx>>
-    : public GraphTraits<
-          const pta::GraphBase<pta::CallGraphNode<ctx>, pta::CallEdge>> {};
+    : public GraphTraits<const pta::GraphBase<pta::CallGraphNode<ctx>, pta::CallEdge>> {};
 
 template <typename ctx>
-struct DOTGraphTraits<const pta::CallGraph<ctx>>
-    : public DefaultDOTGraphTraits {
-  explicit DOTGraphTraits(bool simple = false)
-      : DefaultDOTGraphTraits(simple) {}
+struct DOTGraphTraits<const pta::CallGraph<ctx>> : public DefaultDOTGraphTraits {
+  explicit DOTGraphTraits(bool simple = false) : DefaultDOTGraphTraits(simple) {}
 
-  static std::string getGraphName(const pta::CallGraph<ctx> &) {
-    return "CallGraph";
-  }
+  static std::string getGraphName(const pta::CallGraph<ctx> &) { return "CallGraph"; }
 
   /// Return function name;
-  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node,
-                                  const pta::CallGraph<ctx> &graph) {
+  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node, const pta::CallGraph<ctx> &graph) {
     std::string str;
     raw_string_ostream os(str);
     os << pta::CtxTrait<ctx>::toString(node->getContext()) << "\n";

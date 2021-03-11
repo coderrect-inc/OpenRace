@@ -19,16 +19,14 @@ using namespace llvm;
 
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
 
-void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst,
-                                            SmallVector<Value *, 5> &idx,
+void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst, SmallVector<Value *, 5> &idx,
                                             IRBuilder<NoFolder> &builder) {
   switch (type->getTypeID()) {
     case llvm::Type::StructTyID: {
       auto structType = static_cast<const StructType *>(type);
       for (int i = 0; i < structType->getNumElements(); i++) {
         idx.push_back(ConstantInt::get(idxType, i));
-        lowerMemCpyForType(structType->getElementType(i), src, dst, idx,
-                           builder);
+        lowerMemCpyForType(structType->getElementType(i), src, dst, idx, builder);
         idx.pop_back();
       }
       break;
@@ -77,8 +75,7 @@ bool LoweringMemCpyPass::runOnModule(llvm::Module &M) {
   auto &DL = M.getDataLayout();
   IRBuilder<NoFolder> builder(M.getContext());
 
-  array<StringRef, 2> MemCpys{"llvm.memcpy.p0i8.p0i8.i32",
-                              "llvm.memcpy.p0i8.p0i8.i64"};
+  array<StringRef, 2> MemCpys{"llvm.memcpy.p0i8.p0i8.i32", "llvm.memcpy.p0i8.p0i8.i64"};
   for (StringRef MemCpyName : MemCpys) {
     Function *memcpy = M.getFunction(MemCpyName);
     if (memcpy != nullptr) {
@@ -110,8 +107,7 @@ bool LoweringMemCpyPass::runOnModule(llvm::Module &M) {
                 SmallVector<Value *, 5> idx;
                 idx.push_back(ConstantInt::get(idxType, 0));
 
-                lowerMemCpyForType(elemType, srcBitCast->getOperand(0),
-                                   dstBitCast->getOperand(0), idx, builder);
+                lowerMemCpyForType(elemType, srcBitCast->getOperand(0), dstBitCast->getOperand(0), idx, builder);
 
                 // do some simple cleanups
                 // callInst->eraseFromParent();
@@ -122,8 +118,7 @@ bool LoweringMemCpyPass::runOnModule(llvm::Module &M) {
                     instToRemove.push_back(srcInst);
                   }
                 }
-                if (dstBitCast->getNumUses() ==
-                    0) {  // src might be equal to dst
+                if (dstBitCast->getNumUses() == 0) {  // src might be equal to dst
                   // dstBitCast->eraseFromParent();
                   if (auto dstInst = llvm::dyn_cast<BitCastInst>(dst)) {
                     if (dstInst->getParent() != nullptr) {
@@ -148,6 +143,5 @@ bool LoweringMemCpyPass::runOnModule(llvm::Module &M) {
 }
 
 char LoweringMemCpyPass::ID = 0;
-static RegisterPass<LoweringMemCpyPass> LMCPY("", "Lowering MemCpy call",
-                                              false, /*CFG only*/
+static RegisterPass<LoweringMemCpyPass> LMCPY("", "Lowering MemCpy call", false, /*CFG only*/
                                               false /*is analysis*/);

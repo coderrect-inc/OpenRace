@@ -11,12 +11,10 @@
 TEST_CASE("Callstack", "[unit]") {
   llvm::LLVMContext ctx;
   auto module = std::make_unique<llvm::Module>("testmodule", ctx);
-  auto func1 = llvm::Function::Create(
-      llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
-      llvm::Function::ExternalLinkage, "testfunction1", module.get());
-  auto func2 = llvm::Function::Create(
-      llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
-      llvm::Function::ExternalLinkage, "testfunction2", module.get());
+  auto func1 = llvm::Function::Create(llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
+                                      llvm::Function::ExternalLinkage, "testfunction1", module.get());
+  auto func2 = llvm::Function::Create(llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
+                                      llvm::Function::ExternalLinkage, "testfunction2", module.get());
 
   race::CallStack callstack;
 

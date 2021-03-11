@@ -16,8 +16,7 @@ class CallSite {
   static const llvm::Function* resolveTargetFunction(const llvm::Value*);
 
  public:
-  explicit CallSite(const llvm::Instruction* I)
-      : CB(llvm::dyn_cast<llvm::CallBase>(I)) {}
+  explicit CallSite(const llvm::Instruction* I) : CB(llvm::dyn_cast<llvm::CallBase>(I)) {}
 
   [[nodiscard]] inline bool isCallOrInvoke() const { return CB != nullptr; }
 
@@ -40,13 +39,9 @@ class CallSite {
     return false;
   }
 
-  [[nodiscard]] inline const llvm::Value* getCalledValue() const {
-    return CB->getCalledOperand();
-  }
+  [[nodiscard]] inline const llvm::Value* getCalledValue() const { return CB->getCalledOperand(); }
 
-  [[nodiscard]] inline const llvm::Function* getCalledFunction() const {
-    return this->getTargetFunction();
-  }
+  [[nodiscard]] inline const llvm::Function* getCalledFunction() const { return this->getTargetFunction(); }
 
   [[nodiscard]] inline const llvm::Function* getTargetFunction() const {
     if (this->isIndirectCall()) {
@@ -61,31 +56,19 @@ class CallSite {
     return resolveTargetFunction(CB->getCalledOperand());
   }
 
-  [[nodiscard]] inline const llvm::Value* getReturnedArgOperand() const {
-    return CB->getReturnedArgOperand();
-  }
+  [[nodiscard]] inline const llvm::Value* getReturnedArgOperand() const { return CB->getReturnedArgOperand(); }
 
-  [[nodiscard]] inline const llvm::Instruction* getInstruction() const {
-    return CB;
-  }
+  [[nodiscard]] inline const llvm::Instruction* getInstruction() const { return CB; }
 
-  [[nodiscard]] unsigned int getNumArgOperands() const {
-    return CB->getNumArgOperands();
-  }
+  [[nodiscard]] unsigned int getNumArgOperands() const { return CB->getNumArgOperands(); }
 
-  const llvm::Value* getArgOperand(unsigned int i) const {
-    return CB->getArgOperand(i);
-  }
+  const llvm::Value* getArgOperand(unsigned int i) const { return CB->getArgOperand(i); }
 
   inline auto args() const -> decltype(CB->args()) { return CB->args(); }
 
-  [[nodiscard]] inline auto arg_begin() const -> decltype(CB->arg_begin()) {
-    return CB->arg_begin();
-  }
+  [[nodiscard]] inline auto arg_begin() const -> decltype(CB->arg_begin()) { return CB->arg_begin(); }
 
-  [[nodiscard]] inline auto arg_end() const -> decltype(CB->arg_end()) {
-    return CB->arg_end();
-  }
+  [[nodiscard]] inline auto arg_end() const -> decltype(CB->arg_end()) { return CB->arg_end(); }
 
   inline llvm::Type* getType() const { return CB->getType(); };
 };

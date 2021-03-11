@@ -52,8 +52,7 @@ class MemLayout {
 
   bool cached = false;
   const bool mIsArray;
-  explicit MemLayout(llvm::Type *T, bool isArray = false)
-      : type(T), mIsArray(isArray) {}
+  explicit MemLayout(llvm::Type *T, bool isArray = false) : type(T), mIsArray(isArray) {}
 
   // should only be called once
   void setMaxOffsets(size_t LOffset, size_t POffset) {
@@ -99,13 +98,9 @@ class MemLayout {
     return logicalIndex[lOffset];
   }
 
-  inline const llvm::SparseBitVector<> &getSpecialLayout() const {
-    return this->specialLayout;
-  }
+  inline const llvm::SparseBitVector<> &getSpecialLayout() const { return this->specialLayout; }
 
-  inline unsigned int getNumIndexableElem() const {
-    return this->elementLayout.count();
-  }
+  inline unsigned int getNumIndexableElem() const { return this->elementLayout.count(); }
 
   inline bool offsetIndexable(size_t lOffset) const {
     if (LLVM_UNLIKELY(!cached)) {
@@ -117,12 +112,9 @@ class MemLayout {
     return indexableLayout.test(lOffset);
   }
 
-  inline bool offsetIsPtr(size_t lOffset) const {
-    return pointerLayout.test(lOffset);
-  }
+  inline bool offsetIsPtr(size_t lOffset) const { return pointerLayout.test(lOffset); }
 
-  __attribute__((noinline))
-  __attribute__((used))  // for debugging purpose, do not opt out the function
+  __attribute__((noinline)) __attribute__((used))  // for debugging purpose, do not opt out the function
   void
   dump() {
     llvm::dump(elementLayout, llvm::errs());
@@ -130,9 +122,7 @@ class MemLayout {
     llvm::dump(specialLayout, llvm::errs());
   }
 
-  inline const std::map<size_t, ArrayLayout *> &getSubArrayMap() const {
-    return this->subArrays;
-  }
+  inline const std::map<size_t, ArrayLayout *> &getSubArrayMap() const { return this->subArrays; }
 
   // insert a subarray layout into the memory layout at certain *physical*
   // offset
@@ -164,12 +154,9 @@ class MemLayout {
   // TODO: maybe cache the result if this becomes the bottleneck
   size_t indexPhysicalOffset(size_t &pOffset) const;
   // merge a sub-layout into current memory layout
-  void mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset,
-                         size_t lOffset);
+  void mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, size_t lOffset);
 
-  [[nodiscard]] std::string getFieldAccessPath(const llvm::Module *M,
-                                               size_t pOffset,
-                                               llvm::StringRef separator) const;
+  [[nodiscard]] std::string getFieldAccessPath(const llvm::Module *M, size_t pOffset, llvm::StringRef separator) const;
 
   friend MemLayoutManager;
 };

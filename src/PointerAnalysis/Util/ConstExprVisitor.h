@@ -21,8 +21,7 @@ struct ConstExprVisitor {
         case llvm::Instruction::GetElementPtr:
           return ((SC *)this)->visitGEP(llvm::dyn_cast<llvm::GEPOperator>(CE));
         case llvm::Instruction::BitCast:
-          return ((SC *)this)
-              ->visitBitCast(llvm::dyn_cast<llvm::BitCastOperator>(CE));
+          return ((SC *)this)->visitBitCast(llvm::dyn_cast<llvm::BitCastOperator>(CE));
         default:
           // TODO handle more!
           LOG_ERROR("unhandled constant expression. type={}", *C);

@@ -44,22 +44,11 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
  public:
   using ObjNode = CGObjNode<ctx, FSObject<ctx>>;
 
-  explicit FSObject(MemBlock<ctx> *memBlock,
-                    ObjectKind kind = ObjectKind::Normal,
-                    bool allowIndex = true)
-      : Super(),
-        memBlock(memBlock),
-        pOffset(0),
-        kind(kind),
-        allowIndex(allowIndex){};
+  explicit FSObject(MemBlock<ctx> *memBlock, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
+      : Super(), memBlock(memBlock), pOffset(0), kind(kind), allowIndex(allowIndex){};
 
-  FSObject(MemBlock<ctx> *memBlock, size_t pOffset,
-           ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
-      : Super(),
-        memBlock(memBlock),
-        pOffset(pOffset),
-        kind(kind),
-        allowIndex(allowIndex){};
+  FSObject(MemBlock<ctx> *memBlock, size_t pOffset, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
+      : Super(), memBlock(memBlock), pOffset(pOffset), kind(kind), allowIndex(allowIndex){};
 
   template <typename PT>
   void initWithNode(ConstraintGraph<ctx> *CG) {
@@ -78,84 +67,53 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
   FSObject<ctx> &operator=(const FSObject<ctx> &) = delete;
   FSObject<ctx> &operator=(FSObject<ctx> &&) = delete;
 
-  inline const FSObject<ctx> *indexObject(const llvm::Instruction *idx,
-                                          const llvm::DataLayout &DL) const {
+  inline const FSObject<ctx> *indexObject(const llvm::Instruction *idx, const llvm::DataLayout &DL) const {
     if (allowIndex) {
       return this->memBlock->indexObject(this, idx, DL, false);
     }
     return nullptr;
   }
 
-  inline const FSObject<ctx> *indexPtrObject(const llvm::Instruction *idx,
-                                             const llvm::DataLayout &DL) const {
+  inline const FSObject<ctx> *indexPtrObject(const llvm::Instruction *idx, const llvm::DataLayout &DL) const {
     if (allowIndex) {
       return this->memBlock->indexObject(this, idx, DL, true);
     }
     return nullptr;
   }
 
-  virtual bool processSpecial(CGNodeBase<ctx> *src,
-                              CGNodeBase<ctx> *dst) const {
-    return false;
-  }
+  virtual bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const { return false; }
 
-  [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const {
-    return this->memBlock->getAllocSite();
-  }
+  [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const { return this->memBlock->getAllocSite(); }
 
-  [[nodiscard]] inline const ctx *getContext() const {
-    return this->getAllocSite().getContext();
-  }
+  [[nodiscard]] inline const ctx *getContext() const { return this->getAllocSite().getContext(); }
 
-  [[nodiscard]] inline const llvm::Value *getValue() const {
-    return this->getAllocSite().getValue();
-  }
+  [[nodiscard]] inline const llvm::Value *getValue() const { return this->getAllocSite().getValue(); }
 
-  [[nodiscard]] inline AllocKind getAllocType() const {
-    return this->getAllocSite().getAllocType();
-  }
+  [[nodiscard]] inline AllocKind getAllocType() const { return this->getAllocSite().getAllocType(); }
 
-  [[nodiscard]] inline const llvm::Type *getOffsetType(
-      const llvm::DataLayout &DL) const {
+  [[nodiscard]] inline const llvm::Type *getOffsetType(const llvm::DataLayout &DL) const {
     return this->memBlock->getOffsetType(pOffset, DL);
   }
 
-  [[nodiscard]] inline bool isFunction() const {
-    return this->getAllocType() == AllocKind::Functions;
-  }
+  [[nodiscard]] inline bool isFunction() const { return this->getAllocType() == AllocKind::Functions; }
 
-  [[nodiscard]] inline const llvm::Type *getType() const {
-    return this->getAllocSite().getValue()->getType();
-  }
+  [[nodiscard]] inline const llvm::Type *getType() const { return this->getAllocSite().getValue()->getType(); }
 
-  [[nodiscard]] inline bool isGlobalObj() const {
-    return this->getAllocType() == AllocKind::Globals;
-  }
+  [[nodiscard]] inline bool isGlobalObj() const { return this->getAllocType() == AllocKind::Globals; }
 
-  [[nodiscard]] inline bool isStackObj() const {
-    return this->getAllocType() == AllocKind::Stack;
-  }
+  [[nodiscard]] inline bool isStackObj() const { return this->getAllocType() == AllocKind::Stack; }
 
-  [[nodiscard]] inline bool isHeapObj() const {
-    return this->getAllocType() == AllocKind::Heap;
-  }
+  [[nodiscard]] inline bool isHeapObj() const { return this->getAllocType() == AllocKind::Heap; }
 
-  [[nodiscard]] inline bool isAnonObj() const {
-    return this->getAllocType() == AllocKind::Anonymous;
-  }
+  [[nodiscard]] inline bool isAnonObj() const { return this->getAllocType() == AllocKind::Anonymous; }
 
-  [[nodiscard]] inline bool isFIObject() const {
-    return this->memBlock->isFIBlock();
-  }
+  [[nodiscard]] inline bool isFIObject() const { return this->memBlock->isFIBlock(); }
 
-  [[nodiscard]] inline bool isSpecialObject() const {
-    return this->kind == ObjectKind::Special;
-  }
+  [[nodiscard]] inline bool isSpecialObject() const { return this->kind == ObjectKind::Special; }
 
   inline size_t getPOffset() const { return pOffset; }
 
-  [[nodiscard]] inline std::string getFieldAccessPath(
-      const llvm::StringRef separator = "->") const {
+  [[nodiscard]] inline std::string getFieldAccessPath(const llvm::StringRef separator = "->") const {
     return this->memBlock->getFieldAccessPath(pOffset, separator);
   }
 

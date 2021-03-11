@@ -22,8 +22,7 @@ class MemLayoutManager {
  private:
   using MemLayoutAllocator = llvm::SpecificBumpPtrAllocator<MemLayout>;
   using ArrayLayoutAllocator = llvm::SpecificBumpPtrAllocator<ArrayLayout>;
-  using CallBackT =
-      const std::function<bool(llvm::Type *, MemLayout *, size_t &, size_t &)>;
+  using CallBackT = const std::function<bool(llvm::Type *, MemLayout *, size_t &, size_t &)>;
 
   // owner of memlayout
   MemLayoutAllocator memLayoutAllocator;
@@ -34,10 +33,8 @@ class MemLayoutManager {
   llvm::DenseMap<llvm::Type *, MemLayout *> collapsedLayoutMap;
   llvm::DenseMap<llvm::Type *, MemLayout *> unCollapsedLayoutMap;
 
-  void setElementLayout(llvm::Type *elementType, MemLayout *parentLayout,
-                        const llvm::DataLayout &DL, size_t &lOffset,
-                        size_t &pOffset, bool collapseArray,
-                        CallBackT &callback) {
+  void setElementLayout(llvm::Type *elementType, MemLayout *parentLayout, const llvm::DataLayout &DL, size_t &lOffset,
+                        size_t &pOffset, bool collapseArray, CallBackT &callback) {
     assert(!collapseArray ? pOffset == lOffset : pOffset >= lOffset);
 
     if (callback && callback(elementType, parentLayout, lOffset, pOffset)) {
@@ -51,8 +48,7 @@ class MemLayoutManager {
         // recursive call, should be fine, the type tree shouldn't be too deep
         // change it if it becomes a problem.
         size_t subPOffset = 0, subLOffset = 0;
-        const MemLayout *subLayout = DFSTypeTree(
-            elementType, DL, subLOffset, subPOffset, collapseArray, callback);
+        const MemLayout *subLayout = DFSTypeTree(elementType, DL, subLOffset, subPOffset, collapseArray, callback);
         parentLayout->mergeMemoryLayout(subLayout, pOffset, lOffset);
         // forward the logical offset
         lOffset += subLOffset;
@@ -87,10 +83,8 @@ class MemLayoutManager {
     }
   }
 
-  const MemLayout *getCollapsedArrayLayout(llvm::ArrayType *T,
-                                           const llvm::DataLayout &DL,
-                                           size_t &lOffset, size_t &pOffset,
-                                           CallBackT &callback) {
+  const MemLayout *getCollapsedArrayLayout(llvm::ArrayType *T, const llvm::DataLayout &DL, size_t &lOffset,
+                                           size_t &pOffset, CallBackT &callback) {
     assert(lOffset == 0 && pOffset == 0);
 
     auto layout = new (memLayoutAllocator.Allocate()) MemLayout(T, true);
@@ -99,8 +93,7 @@ class MemLayoutManager {
     size_t numElement = T->getArrayNumElements();
     size_t elementSize = DL.getTypeAllocSize(elementType);
 
-    auto arrayLayout = new (arrayLayoutAllocator.Allocate())
-        ArrayLayout(numElement, elementSize);
+    auto arrayLayout = new (arrayLayoutAllocator.Allocate()) ArrayLayout(numElement, elementSize);
     layout->insertSubArray(0, arrayLayout);
 
     // set the element layout
@@ -121,10 +114,8 @@ class MemLayoutManager {
     return layout;
   }
 
-  const MemLayout *getNonCollapsedArrayLayout(llvm::ArrayType *T,
-                                              const llvm::DataLayout &DL,
-                                              size_t &lOffset, size_t &pOffset,
-                                              CallBackT &callback) {
+  const MemLayout *getNonCollapsedArrayLayout(llvm::ArrayType *T, const llvm::DataLayout &DL, size_t &lOffset,
+                                              size_t &pOffset, CallBackT &callback) {
     assert(lOffset == 0 && pOffset == 0);
     auto layout = new (memLayoutAllocator.Allocate()) MemLayout(T, false);
     // creating a new array layout
@@ -133,20 +124,17 @@ class MemLayoutManager {
     size_t elementSize = DL.getTypeAllocSize(elementType);
 
     assert(numElement * elementSize == DL.getTypeAllocSize(T));
-    assert(numElement != std::numeric_limits<uint64_t>::max() &&
-           "Unbounded Array Should be Collapsed!");
+    assert(numElement != std::numeric_limits<uint64_t>::max() && "Unbounded Array Should be Collapsed!");
     // auto arrayLayout = new (arrayLayoutAllocator.Allocate())
     // ArrayLayout(numElement, elementSize); layout->insertSubArray(0,
     // arrayLayout);
 
     for (int i = 0; i < numElement; i++) {
-      setElementLayout(elementType, layout, DL, lOffset, pOffset, false,
-                       callback);
+      setElementLayout(elementType, layout, DL, lOffset, pOffset, false, callback);
       assert(lOffset == pOffset && pOffset == (i + 1) * elementSize);
     }
     // layout->insertArrayTuple(numElement, elementSize, 0, layoutOffset);
-    assert(pOffset == DL.getTypeAllocSize(T) &&
-           lOffset == DL.getTypeAllocSize(T));
+    assert(pOffset == DL.getTypeAllocSize(T) && lOffset == DL.getTypeAllocSize(T));
 
     layout->setMaxOffsets(lOffset, pOffset);
     // arrayLayout->setLayoutSize(lOffset);
@@ -156,10 +144,8 @@ class MemLayoutManager {
     assert(result && "creating a exsiting type layout");
     return layout;
   }
-  const MemLayout *getArrayLayout(llvm::ArrayType *T,
-                                  const llvm::DataLayout &DL, size_t &lOffset,
-                                  size_t &pOffset, bool collapseArray,
-                                  CallBackT &callback) {
+  const MemLayout *getArrayLayout(llvm::ArrayType *T, const llvm::DataLayout &DL, size_t &lOffset, size_t &pOffset,
+                                  bool collapseArray, CallBackT &callback) {
     if (collapseArray) {
       return getCollapsedArrayLayout(T, DL, lOffset, pOffset, callback);
     } else {
@@ -167,10 +153,8 @@ class MemLayoutManager {
     }
   }
 
-  const MemLayout *getStructLayout(llvm::StructType *T,
-                                   const llvm::DataLayout &DL, size_t &lOffset,
-                                   size_t &pOffset, bool collapseArray,
-                                   CallBackT &callback) {
+  const MemLayout *getStructLayout(llvm::StructType *T, const llvm::DataLayout &DL, size_t &lOffset, size_t &pOffset,
+                                   bool collapseArray, CallBackT &callback) {
     assert(lOffset == 0 && pOffset == 0);
     // create a new MemLayout
     auto layout = new (memLayoutAllocator.Allocate()) MemLayout(T);
@@ -189,8 +173,7 @@ class MemLayoutManager {
       pOffset += padding;
 
       // recursively build the sub-layout of the field
-      this->setElementLayout(elementType, layout, DL, lOffset, pOffset,
-                             collapseArray, callback);
+      this->setElementLayout(elementType, layout, DL, lOffset, pOffset, collapseArray, callback);
     }
 
     // here pOffset might not equal to the allocation size because of the
@@ -207,10 +190,8 @@ class MemLayoutManager {
     // DL.getTypeAllocSize(T));
     layout->setMaxOffsets(lOffset, pOffset);
     // cached the result
-    bool result =
-        collapseArray
-            ? collapsedLayoutMap.insert(std::make_pair(T, layout)).second
-            : unCollapsedLayoutMap.insert(std::make_pair(T, layout)).second;
+    bool result = collapseArray ? collapsedLayoutMap.insert(std::make_pair(T, layout)).second
+                                : unCollapsedLayoutMap.insert(std::make_pair(T, layout)).second;
 
     assert(result && "creating a existing type layout");
     return layout;
@@ -219,17 +200,14 @@ class MemLayoutManager {
   // TODO: change it to non-recursive version if the type tree can be too deep
   // layout offset may not be equal to physical offset at the presence of
   // arrays.
-  const MemLayout *DFSTypeTree(llvm::Type *T, const llvm::DataLayout &DL,
-                               size_t &lOffset, size_t &pOffset,
+  const MemLayout *DFSTypeTree(llvm::Type *T, const llvm::DataLayout &DL, size_t &lOffset, size_t &pOffset,
                                bool collapseArray, CallBackT &callback) {
     assert(T->isAggregateType());
 
     // already cached
-    auto it = collapseArray ? collapsedLayoutMap.find(T)
-                            : unCollapsedLayoutMap.find(T);
+    auto it = collapseArray ? collapsedLayoutMap.find(T) : unCollapsedLayoutMap.find(T);
 
-    if (collapseArray ? it != collapsedLayoutMap.end()
-                      : it != unCollapsedLayoutMap.end()) {
+    if (collapseArray ? it != collapsedLayoutMap.end() : it != unCollapsedLayoutMap.end()) {
       // also update the layout offset and physical offset
       const MemLayout *layout = it->second;
       lOffset += layout->maxLOffset;
@@ -242,10 +220,8 @@ class MemLayoutManager {
       layout->setMaxOffsets(0, 0);
       layout->setElementOffset(0);
 
-      bool result =
-          collapseArray
-              ? collapsedLayoutMap.insert(std::make_pair(T, layout)).second
-              : unCollapsedLayoutMap.insert(std::make_pair(T, layout)).second;
+      bool result = collapseArray ? collapsedLayoutMap.insert(std::make_pair(T, layout)).second
+                                  : unCollapsedLayoutMap.insert(std::make_pair(T, layout)).second;
 
       assert(result && "creating a existing type layout");
       return layout;
@@ -253,19 +229,16 @@ class MemLayoutManager {
 
     // dispatch
     if (auto arrayTy = llvm::dyn_cast<llvm::ArrayType>(T)) {
-      return getArrayLayout(arrayTy, DL, lOffset, pOffset, collapseArray,
-                            callback);
+      return getArrayLayout(arrayTy, DL, lOffset, pOffset, collapseArray, callback);
     } else if (auto structTy = llvm::dyn_cast<llvm::StructType>(T)) {
-      return getStructLayout(structTy, DL, lOffset, pOffset, collapseArray,
-                             callback);
+      return getStructLayout(structTy, DL, lOffset, pOffset, collapseArray, callback);
     }
 
     llvm_unreachable("aggregate type is not array or structure!?");
   }
 
  public:
-  const MemLayout *getLayoutForType(llvm::Type *T, const llvm::DataLayout &DL,
-                                    bool collapseArray = true,
+  const MemLayout *getLayoutForType(llvm::Type *T, const llvm::DataLayout &DL, bool collapseArray = true,
                                     CallBackT &callback = nullptr) {
     // offset index the layout table might be different than the phsical layout
     // of the type as arrays are collapsed.

@@ -24,8 +24,7 @@ struct InterceptResult {
   const llvm::Value *redirectTo;
   Option option;
 
-  InterceptResult(const llvm::Value *target, Option opt)
-      : redirectTo(target), option(opt) {}
+  InterceptResult(const llvm::Value *target, Option opt) : redirectTo(target), option(opt) {}
 };
 
 }  // namespace pta

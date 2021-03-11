@@ -20,8 +20,7 @@ class LoweringMemCpyPass : public llvm::ModulePass {
   llvm::Type *idxType = nullptr;
 
   void lowerMemCpyForType(llvm::Type *type, llvm::Value *src, llvm::Value *dst,
-                          llvm::SmallVector<llvm::Value *, 5> &idx,
-                          llvm::IRBuilder<llvm::NoFolder> &builder);
+                          llvm::SmallVector<llvm::Value *, 5> &idx, llvm::IRBuilder<llvm::NoFolder> &builder);
 
  public:
   static char ID;

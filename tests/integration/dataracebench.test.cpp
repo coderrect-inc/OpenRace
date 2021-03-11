@@ -11,8 +11,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
 
-  auto module = llvm::parseIRFile(
-      "integration/dataracebench/DRB001-antidep1-orig-yes.ll", err, context);
+  auto module = llvm::parseIRFile("integration/dataracebench/DRB001-antidep1-orig-yes.ll", err, context);
   if (!module) {
     err.print("DRB001", llvm::errs());
   }

@@ -39,8 +39,7 @@ class AllocSite {
   const AllocKind type;
   // can only be created by allocating a new memory block
   // there is only one instance of AllocSite per ctx+value
-  AllocSite(const ctx *c, const llvm::Value *v, const AllocKind t)
-      : context(c), value(v), type(t) {
+  AllocSite(const ctx *c, const llvm::Value *v, const AllocKind t) : context(c), value(v), type(t) {
     assert(value != nullptr || type == AllocKind::Anonymous);
   }
 
@@ -54,9 +53,7 @@ class AllocSite {
   // getters
   [[nodiscard]] inline const ctx *getContext() const { return this->context; }
 
-  [[nodiscard]] inline const llvm::Value *getValue() const {
-    return this->value;
-  }
+  [[nodiscard]] inline const llvm::Value *getValue() const { return this->value; }
 
   [[nodiscard]] inline AllocKind getAllocType() const { return this->type; }
 

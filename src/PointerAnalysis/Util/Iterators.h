@@ -15,22 +15,15 @@ struct const_pointer {
 
 template <typename WrapperIteratorT,
           typename ValueT = typename std::conditional<
-              std::is_const<typename std::remove_pointer<
-                  typename WrapperIteratorT::iterator_type>::type>::value,
-              typename const_pointer<typename std::iterator_traits<
-                  WrapperIteratorT>::value_type::pointer>::type,
-              typename std::iterator_traits<
-                  WrapperIteratorT>::value_type::pointer>::type>
+              std::is_const<typename std::remove_pointer<typename WrapperIteratorT::iterator_type>::type>::value,
+              typename const_pointer<typename std::iterator_traits<WrapperIteratorT>::value_type::pointer>::type,
+              typename std::iterator_traits<WrapperIteratorT>::value_type::pointer>::type>
 class UniquePtrIterator
-    : public llvm::iterator_adaptor_base<
-          UniquePtrIterator<WrapperIteratorT>, WrapperIteratorT,
-          typename std::iterator_traits<WrapperIteratorT>::iterator_category,
-          ValueT> {
+    : public llvm::iterator_adaptor_base<UniquePtrIterator<WrapperIteratorT>, WrapperIteratorT,
+                                         typename std::iterator_traits<WrapperIteratorT>::iterator_category, ValueT> {
  private:
-  using BaseT = llvm::iterator_adaptor_base<
-      UniquePtrIterator<WrapperIteratorT>, WrapperIteratorT,
-      typename std::iterator_traits<WrapperIteratorT>::iterator_category,
-      ValueT>;
+  using BaseT = llvm::iterator_adaptor_base<UniquePtrIterator<WrapperIteratorT>, WrapperIteratorT,
+                                            typename std::iterator_traits<WrapperIteratorT>::iterator_category, ValueT>;
 
  public:
   UniquePtrIterator() = default;
@@ -42,18 +35,13 @@ class UniquePtrIterator
 };
 
 template <typename WrapperIteratorT,
-          typename ValueT = typename std::iterator_traits<
-              WrapperIteratorT>::value_type::second_type>
+          typename ValueT = typename std::iterator_traits<WrapperIteratorT>::value_type::second_type>
 class PairSecondIterator
-    : public llvm::iterator_adaptor_base<
-          PairSecondIterator<WrapperIteratorT>, WrapperIteratorT,
-          typename std::iterator_traits<WrapperIteratorT>::iterator_category,
-          ValueT> {
+    : public llvm::iterator_adaptor_base<PairSecondIterator<WrapperIteratorT>, WrapperIteratorT,
+                                         typename std::iterator_traits<WrapperIteratorT>::iterator_category, ValueT> {
  private:
-  using BaseT = llvm::iterator_adaptor_base<
-      PairSecondIterator<WrapperIteratorT>, WrapperIteratorT,
-      typename std::iterator_traits<WrapperIteratorT>::iterator_category,
-      ValueT>;
+  using BaseT = llvm::iterator_adaptor_base<PairSecondIterator<WrapperIteratorT>, WrapperIteratorT,
+                                            typename std::iterator_traits<WrapperIteratorT>::iterator_category, ValueT>;
 
  public:
   PairSecondIterator() = default;
@@ -66,8 +54,7 @@ class PairSecondIterator
 
 // TODO: this is a bad implementation, just use llvm::concat_iterator
 // iterator that concat N iterator together
-template <typename Wrapped, int N,
-          typename ValueT = typename std::iterator_traits<Wrapped>::value_type>
+template <typename Wrapped, int N, typename ValueT = typename std::iterator_traits<Wrapped>::value_type>
 struct ConcatIterator : public ConcatIterator<Wrapped, N - 1, ValueT> {
   using super = ConcatIterator<Wrapped, N - 1, ValueT>;
   using self = ConcatIterator<Wrapped, N, ValueT>;
@@ -79,8 +66,7 @@ struct ConcatIterator : public ConcatIterator<Wrapped, N - 1, ValueT> {
   Wrapped end;
 
   template <typename... Args>
-  ConcatIterator(Wrapped cur, Wrapped end, Args &&...args)
-      : super(std::forward<Args>(args)...), cur(cur), end(end) {}
+  ConcatIterator(Wrapped cur, Wrapped end, Args &&...args) : super(std::forward<Args>(args)...), cur(cur), end(end) {}
 
   inline self &operator++() {
     if (cur == end) {
@@ -109,13 +95,10 @@ struct ConcatIterator : public ConcatIterator<Wrapped, N - 1, ValueT> {
     }
   }
 
-  inline bool operator!=(const self &rhs) const {
-    return !this->operator==(rhs);
-  }
+  inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
 
   inline bool operator==(const self &rhs) const {
-    return cur == rhs.cur &&
-           ((const super *)this)->operator==((const super &)rhs);
+    return cur == rhs.cur && ((const super *)this)->operator==((const super &)rhs);
   }
 
   //    auto operator-> () -> decltype(cur.operator->()) {
@@ -128,8 +111,7 @@ struct ConcatIterator : public ConcatIterator<Wrapped, N - 1, ValueT> {
 };
 
 template <typename Wrapped, typename ValueT>
-struct ConcatIterator<Wrapped, 1, ValueT>
-    : public std::iterator<std::forward_iterator_tag, ValueT> {
+struct ConcatIterator<Wrapped, 1, ValueT> : public std::iterator<std::forward_iterator_tag, ValueT> {
   using self = ConcatIterator<Wrapped, 1, ValueT>;
   using ReferenceT = ValueT &;
 
@@ -151,9 +133,7 @@ struct ConcatIterator<Wrapped, 1, ValueT>
 
   inline ReferenceT operator*() const { return *cur; }
 
-  inline bool operator!=(const self &rhs) const {
-    return !this->operator==(rhs);
-  }
+  inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
   inline bool operator==(const self &rhs) const { return cur == rhs.cur; }
 
   // auto operator-> () -> decltype(cur.operator->()) { return cur.operator->();
@@ -161,10 +141,8 @@ struct ConcatIterator<Wrapped, 1, ValueT>
 };
 
 // ASSUMPTION: E (a enum) and N are convertible
-template <typename Wrapped, int N, typename E,
-          typename ValueT = typename std::iterator_traits<Wrapped>::value_type>
-struct ConcatIteratorWithTag
-    : public ConcatIteratorWithTag<Wrapped, N - 1, E, ValueT> {
+template <typename Wrapped, int N, typename E, typename ValueT = typename std::iterator_traits<Wrapped>::value_type>
+struct ConcatIteratorWithTag : public ConcatIteratorWithTag<Wrapped, N - 1, E, ValueT> {
   using super = ConcatIteratorWithTag<Wrapped, N - 1, E, ValueT>;
   using self = ConcatIteratorWithTag<Wrapped, N, E, ValueT>;
 
@@ -204,20 +182,16 @@ struct ConcatIteratorWithTag
     }
   }
 
-  inline bool operator!=(const self &rhs) const {
-    return !this->operator==(rhs);
-  }
+  inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
 
   inline bool operator==(const self &rhs) const {
-    return cur == rhs.cur &&
-           static_cast<const super *>(this)->operator==((const super &)rhs);
+    return cur == rhs.cur && static_cast<const super *>(this)->operator==((const super &)rhs);
   }
 };
 
 template <typename Wrapped, typename E, typename ValueT>
 struct ConcatIteratorWithTag<Wrapped, 1, E, ValueT>
-    : public std::iterator<std::forward_iterator_tag,
-                           const std::pair<E, ValueT>> {
+    : public std::iterator<std::forward_iterator_tag, const std::pair<E, ValueT>> {
   using self = ConcatIteratorWithTag<Wrapped, 1, E, ValueT>;
   // using ValueT = const std::pair<E, typename
   // std::iterator_traits<Wrapped>::value_type>;
@@ -241,43 +215,31 @@ struct ConcatIteratorWithTag<Wrapped, 1, E, ValueT>
     return tmp;
   }
 
-  inline ReferenceT operator*() const {
-    return std::make_pair(static_cast<E>(0), *cur);
-  }
+  inline ReferenceT operator*() const { return std::make_pair(static_cast<E>(0), *cur); }
 
-  inline bool operator!=(const self &rhs) const {
-    return !this->operator==(rhs);
-  }
+  inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
 
   inline bool operator==(const self &rhs) const { return cur == rhs.cur; }
 };
 
 template <typename NodeIDIteratorT, typename GraphT,
-          typename ValueT = typename std::conditional<
-              std::is_const<GraphT>::value,
-              /*if true*/ typename GraphT::ConstNodePtrT,
-              /*if false*/ typename GraphT::NodePtrT>::type>
+          typename ValueT = typename std::conditional<std::is_const<GraphT>::value,
+                                                      /*if true*/ typename GraphT::ConstNodePtrT,
+                                                      /*if false*/ typename GraphT::NodePtrT>::type>
 class NodeIDWrapperIterator
-    : public llvm::iterator_adaptor_base<
-          NodeIDWrapperIterator<NodeIDIteratorT, GraphT, ValueT>,
-          NodeIDIteratorT,
-          typename std::iterator_traits<NodeIDIteratorT>::iterator_category,
-          ValueT> {
+    : public llvm::iterator_adaptor_base<NodeIDWrapperIterator<NodeIDIteratorT, GraphT, ValueT>, NodeIDIteratorT,
+                                         typename std::iterator_traits<NodeIDIteratorT>::iterator_category, ValueT> {
  private:
-  using BaseT = llvm::iterator_adaptor_base<
-      NodeIDWrapperIterator<NodeIDIteratorT, GraphT>, NodeIDIteratorT,
-      typename std::iterator_traits<NodeIDIteratorT>::iterator_category,
-      ValueT>;
+  using BaseT = llvm::iterator_adaptor_base<NodeIDWrapperIterator<NodeIDIteratorT, GraphT>, NodeIDIteratorT,
+                                            typename std::iterator_traits<NodeIDIteratorT>::iterator_category, ValueT>;
 
   GraphT *G;
 
  public:
   explicit NodeIDWrapperIterator(GraphT *G) : G(G) {}
 
-  explicit NodeIDWrapperIterator(GraphT *G, const NodeIDIteratorT &i)
-      : G(G), BaseT(i) {}
-  explicit NodeIDWrapperIterator(GraphT *G, NodeIDIteratorT &&i)
-      : G(G), BaseT(std::move(i)) {}
+  explicit NodeIDWrapperIterator(GraphT *G, const NodeIDIteratorT &i) : G(G), BaseT(i) {}
+  explicit NodeIDWrapperIterator(GraphT *G, NodeIDIteratorT &&i) : G(G), BaseT(std::move(i)) {}
 
   ValueT operator*() const {
     NodeID id = *(this->I);
@@ -285,36 +247,29 @@ class NodeIDWrapperIterator
   }
 };
 
-template <
-    typename NodeIDEdgeIteratorT, typename GraphT,
-    typename ValueT = typename std::conditional<
-        std::is_const<GraphT>::value,
-        /*if true*/
-        std::pair<typename GraphT::EdgeT, typename GraphT::ConstNodePtrT>,
-        /*if false*/
-        std::pair<typename GraphT::EdgeT, typename GraphT::NodePtrT>>::type>
+template <typename NodeIDEdgeIteratorT, typename GraphT,
+          typename ValueT =
+              typename std::conditional<std::is_const<GraphT>::value,
+                                        /*if true*/
+                                        std::pair<typename GraphT::EdgeT, typename GraphT::ConstNodePtrT>,
+                                        /*if false*/
+                                        std::pair<typename GraphT::EdgeT, typename GraphT::NodePtrT>>::type>
 class NodeIDWrapperEdgeIterator
     : public llvm::iterator_adaptor_base<
-          NodeIDWrapperEdgeIterator<NodeIDEdgeIteratorT, GraphT, ValueT>,
-          NodeIDEdgeIteratorT,
-          typename std::iterator_traits<NodeIDEdgeIteratorT>::iterator_category,
-          ValueT> {
+          NodeIDWrapperEdgeIterator<NodeIDEdgeIteratorT, GraphT, ValueT>, NodeIDEdgeIteratorT,
+          typename std::iterator_traits<NodeIDEdgeIteratorT>::iterator_category, ValueT> {
  private:
-  using BaseT = llvm::iterator_adaptor_base<
-      NodeIDWrapperEdgeIterator<NodeIDEdgeIteratorT, GraphT>,
-      NodeIDEdgeIteratorT,
-      typename std::iterator_traits<NodeIDEdgeIteratorT>::iterator_category,
-      ValueT>;
+  using BaseT =
+      llvm::iterator_adaptor_base<NodeIDWrapperEdgeIterator<NodeIDEdgeIteratorT, GraphT>, NodeIDEdgeIteratorT,
+                                  typename std::iterator_traits<NodeIDEdgeIteratorT>::iterator_category, ValueT>;
 
   GraphT *G;
 
  public:
   explicit NodeIDWrapperEdgeIterator() = default;
 
-  explicit NodeIDWrapperEdgeIterator(GraphT *G, const NodeIDEdgeIteratorT &i)
-      : G(G), BaseT(i) {}
-  explicit NodeIDWrapperEdgeIterator(GraphT *G, NodeIDEdgeIteratorT &&i)
-      : G(G), BaseT(std::move(i)) {}
+  explicit NodeIDWrapperEdgeIterator(GraphT *G, const NodeIDEdgeIteratorT &i) : G(G), BaseT(i) {}
+  explicit NodeIDWrapperEdgeIterator(GraphT *G, NodeIDEdgeIteratorT &&i) : G(G), BaseT(std::move(i)) {}
 
   ValueT operator*() const {
     NodeID id = (*(this->I)).second;

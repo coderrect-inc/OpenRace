@@ -16,8 +16,7 @@ using namespace llvm;
 //                                  cl::desc("max number of indirect call target
 //                                  that can be resolved by indirect call"));
 
-const Function* pta::CallSite::resolveTargetFunction(
-    const Value* calledValue) {
+const Function* pta::CallSite::resolveTargetFunction(const Value* calledValue) {
   // TODO: In this case, a constant expression/global aliases, which can be
   // resolved directly
   if (auto bitcast = dyn_cast<BitCastOperator>(calledValue)) {
@@ -40,8 +39,7 @@ const Function* pta::CallSite::resolveTargetFunction(
   if (isa<UndefValue>(calledValue)) {
     return nullptr;
   }
-  LOG_ERROR("Unable to resolveTargetFunction from calledValue. called={}",
-            *calledValue);
+  LOG_ERROR("Unable to resolveTargetFunction from calledValue. called={}", *calledValue);
   // return nullptr;
   llvm_unreachable("Unable to resolveTargetFunction from calledValue");
 }

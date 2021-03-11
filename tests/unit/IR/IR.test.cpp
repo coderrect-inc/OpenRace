@@ -15,9 +15,8 @@
 TEST_CASE("Manually Constructed IR", "[unit][IR]") {
   llvm::LLVMContext ctx;
   auto module = std::make_unique<llvm::Module>("testmodule", ctx);
-  auto func = llvm::Function::Create(
-      llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
-      llvm::Function::ExternalLinkage, "testfunction", module.get());
+  auto func = llvm::Function::Create(llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), false),
+                                     llvm::Function::ExternalLinkage, "testfunction", module.get());
 
   auto BB = llvm::BasicBlock::Create(ctx, "testblock", func);
   llvm::IRBuilder<llvm::NoFolder> IRB(BB);

@@ -75,18 +75,15 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
   std::array<size_t, 7> sharedIdxs = {4, 5, 6, 7, 8, 10, 11};
   std::array<size_t, 5> emptyIdxs = {0, 1, 13, 14, 15};
 
-  for (auto sharedIt = sharedIdxs.begin(), sharedEnd = sharedIdxs.end();
-       sharedIt != sharedEnd; ++sharedIt) {
+  for (auto sharedIt = sharedIdxs.begin(), sharedEnd = sharedIdxs.end(); sharedIt != sharedEnd; ++sharedIt) {
     // Check it shares lock with self
-    auto holdsLock =
-        llvm::cast<race::MemAccessEvent>(events.at(*sharedIt).get());
+    auto holdsLock = llvm::cast<race::MemAccessEvent>(events.at(*sharedIt).get());
     UNSCOPED_INFO("Check " << *sharedIt << "-" << *sharedIt);
     CHECK(lockset.sharesLock(holdsLock, holdsLock));
 
     // Check it shares lock with all others that hold this lock
     for (auto otherIt = sharedIt; otherIt != sharedEnd; ++otherIt) {
-      auto const other =
-          llvm::cast<race::MemAccessEvent>(events.at(*otherIt).get());
+      auto const other = llvm::cast<race::MemAccessEvent>(events.at(*otherIt).get());
       UNSCOPED_INFO("Check " << *sharedIt << "-" << *otherIt);
       CHECK(lockset.sharesLock(holdsLock, other));
     }

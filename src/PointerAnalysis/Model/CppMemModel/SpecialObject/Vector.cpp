@@ -18,9 +18,8 @@ namespace pta {
 namespace cpp {
 
 std::map<StringRef, VectorAPI::APIKind> VectorAPI::VecAPIMap = {
-    {"push_back", APIKind::PUSH_BACK}, {"begin", APIKind::IT_BEGIN},
-    {"end", APIKind::IT_END},          {"operator[]", APIKind::OPERATOR_INDEX},
-    {"vector", APIKind::CTOR},         {"~vector", APIKind::DTOR},
+    {"push_back", APIKind::PUSH_BACK},       {"begin", APIKind::IT_BEGIN}, {"end", APIKind::IT_END},
+    {"operator[]", APIKind::OPERATOR_INDEX}, {"vector", APIKind::CTOR},    {"~vector", APIKind::DTOR},
 };
 
 void VectorAPI::init(const Function *fun) {
@@ -37,12 +36,10 @@ void VectorAPI::init(const Function *fun) {
     const llvm::Value *theVec = fun->arg_begin();  // the *this*
     if (theVec != nullptr) {
       if (theVec->getType()->isPointerTy()) {
-        this->vecElemType =
-            resolveVecElemType(theVec->getType()->getPointerElementType());
+        this->vecElemType = resolveVecElemType(theVec->getType()->getPointerElementType());
         if (this->vecElemType && isSupportedElementType(this->vecElemType)) {
           // a resolvable vector API
-          StringRef funBaseName =
-              demangler.getFunctionBaseName(nullptr, nullptr);
+          StringRef funBaseName = demangler.getFunctionBaseName(nullptr, nullptr);
           auto it = VecAPIMap.find(funBaseName);
           if (it != VecAPIMap.end()) {
             this->kind = it->second;

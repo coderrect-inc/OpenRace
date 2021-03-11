@@ -13,8 +13,7 @@
 using namespace llvm;
 using namespace pta;
 
-static bool isCompatibleFunctionType(const FunctionType *FT1,
-                                     const FunctionType *FT2);
+static bool isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2);
 
 static const Type *stripArrayType(const Type *type) {
   while (auto AT = llvm::dyn_cast<llvm::ArrayType>(type)) {
@@ -26,9 +25,7 @@ static const Type *stripArrayType(const Type *type) {
 
 inline static bool isPtrToEmptyStruct(const llvm::Type *T) {
   // {}* ptr
-  if (StructType *ST = T->isPointerTy()
-                           ? dyn_cast<StructType>(T->getPointerElementType())
-                           : nullptr) {
+  if (StructType *ST = T->isPointerTy() ? dyn_cast<StructType>(T->getPointerElementType()) : nullptr) {
     if (ST->getNumElements() == 0) {
       return true;
     }
@@ -38,12 +35,10 @@ inline static bool isPtrToEmptyStruct(const llvm::Type *T) {
 }
 
 inline static bool isVoidPtr(const llvm::Type *T) {
-  return T == PointerType::get(IntegerType::getInt8Ty(T->getContext()), 0) ||
-         isPtrToEmptyStruct(T);
+  return T == PointerType::get(IntegerType::getInt8Ty(T->getContext()), 0) || isPtrToEmptyStruct(T);
 }
 
-static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2,
-                        const DataLayout &DL) {
+static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2, const DataLayout &DL) {
   assert(T1 && T2);
 
   if (T1 == T2) {
@@ -53,25 +48,20 @@ static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2,
   // IMPORTANT: treat i8* as equal type to every type as it is the void * in
   // C/C++ i8* is used in some essential data structures like vtables to hold
   // the alias of virtual function
-  if (T1->isPointerTy() && T2->isPointerTy() &&
-      (isVoidPtr(T1) || isVoidPtr(T2))) {
+  if (T1->isPointerTy() && T2->isPointerTy() && (isVoidPtr(T1) || isVoidPtr(T2))) {
     return true;
   }
 
-  if ((T1->isArrayTy() &&
-       T1->getArrayElementType() == IntegerType::getInt8Ty(T1->getContext())) ||
-      (T2->isArrayTy() &&
-       T2->getArrayElementType() == IntegerType::getInt8Ty(T2->getContext()))) {
-    if (DL.getTypeAllocSize(const_cast<Type *>(T1)) ==
-        DL.getTypeAllocSize(const_cast<Type *>(T2))) {
+  if ((T1->isArrayTy() && T1->getArrayElementType() == IntegerType::getInt8Ty(T1->getContext())) ||
+      (T2->isArrayTy() && T2->getArrayElementType() == IntegerType::getInt8Ty(T2->getContext()))) {
+    if (DL.getTypeAllocSize(const_cast<Type *>(T1)) == DL.getTypeAllocSize(const_cast<Type *>(T2))) {
       return true;
     }
   }
 
   // looser function type filtering
   if (T1->isFunctionTy() && T2->isFunctionTy()) {
-    return isCompatibleFunctionType(cast<FunctionType>(T1),
-                                    cast<FunctionType>(T2));
+    return isCompatibleFunctionType(cast<FunctionType>(T1), cast<FunctionType>(T2));
   }
 
   if (T1->isStructTy() && T2->isStructTy()) {
@@ -82,16 +72,14 @@ static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2,
       auto N2 = stripNumberPostFix(ST2->getName());
       if (N1 == N2 && !N1.equals("struct.anon")) {  // has meaningful same name
         return ST1->getNumElements() == ST2->getNumElements() &&
-               DL.getTypeAllocSize(const_cast<Type *>(T1)) ==
-                   DL.getTypeAllocSize(const_cast<Type *>(T2));
+               DL.getTypeAllocSize(const_cast<Type *>(T1)) == DL.getTypeAllocSize(const_cast<Type *>(T2));
       }
     } else {
       // has a anonmyous structure
       // make sure every element is the same
       if (ST1->getNumElements() == ST2->getNumElements()) {
         for (int i = 0; i < ST1->getNumElements(); i++) {
-          if (!isTypeEqual(ST1->getElementType(i), ST2->getElementType(i),
-                           DL)) {
+          if (!isTypeEqual(ST1->getElementType(i), ST2->getElementType(i), DL)) {
             return false;
           }
         }
@@ -104,9 +92,7 @@ static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2,
   return false;
 }
 
-bool pta::isZeroOffsetTypeInRootType(const Type *rootType,
-                                      const Type *elemType,
-                                      const DataLayout &DL) {
+bool pta::isZeroOffsetTypeInRootType(const Type *rootType, const Type *elemType, const DataLayout &DL) {
   if (rootType == nullptr || elemType == nullptr) {
     // JEFF: should return false for null??
     return true;
@@ -127,8 +113,7 @@ bool pta::isZeroOffsetTypeInRootType(const Type *rootType,
   }
 
   auto stripedRootType = stripArrayType(rootType);
-  if (stripedRootType != rootType &&
-      isZeroOffsetTypeInRootType(stripedRootType, elemType, DL)) {
+  if (stripedRootType != rootType && isZeroOffsetTypeInRootType(stripedRootType, elemType, DL)) {
     return true;
   }
 
@@ -157,8 +142,7 @@ bool pta::isZeroOffsetTypeInRootType(const Type *rootType,
   return isTypeEqual(rootType, elemType, DL);
 }
 
-const Type *pta::getTypeAtOffset(const Type *ctype, size_t offset,
-                                  const DataLayout &DL, bool stripArray) {
+const Type *pta::getTypeAtOffset(const Type *ctype, size_t offset, const DataLayout &DL, bool stripArray) {
   if (offset == 0) {
     if (stripArray) {
       return stripArrayType(ctype);
@@ -177,15 +161,13 @@ const Type *pta::getTypeAtOffset(const Type *ctype, size_t offset,
         // 0 sized object
         return elemType;
       }
-      if (offset >= elemOff &&
-          offset < elemOff + DL.getTypeAllocSize(elemType)) {
+      if (offset >= elemOff && offset < elemOff + DL.getTypeAllocSize(elemType)) {
         return getTypeAtOffset(elemType, offset - elemOff, DL, stripArray);
       }
     }
   } else if (auto AT = dyn_cast<ArrayType>(type)) {
     auto elemSize = DL.getTypeAllocSize(AT->getArrayElementType());
-    return getTypeAtOffset(AT->getArrayElementType(), offset % elemSize, DL,
-                           stripArray);
+    return getTypeAtOffset(AT->getArrayElementType(), offset % elemSize, DL, stripArray);
   }
 
   // wrong offset
@@ -253,11 +235,9 @@ static bool isCompatibleType(const Type *T1, const Type *T2) {
       return true;
     }
 
-    if (isa<FunctionType>(T1->getPointerElementType()) &&
-        isa<FunctionType>(T2->getPointerElementType())) {
-      return isCompatibleFunctionType(
-          cast<FunctionType>(T1->getPointerElementType()),
-          cast<FunctionType>(T2->getPointerElementType()));
+    if (isa<FunctionType>(T1->getPointerElementType()) && isa<FunctionType>(T2->getPointerElementType())) {
+      return isCompatibleFunctionType(cast<FunctionType>(T1->getPointerElementType()),
+                                      cast<FunctionType>(T2->getPointerElementType()));
     }
 
     // llvm IR does not have struct parameter, they are expanded into fields
@@ -318,8 +298,7 @@ static bool isCompatibleType(const Type *T1, const Type *T2) {
   return false;
 }
 
-static bool isCompatibleFunctionType(const FunctionType *FT1,
-                                     const FunctionType *FT2) {
+static bool isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2) {
   // fast path, the same type
   if (FT1 == FT2) {
     return true;
@@ -365,8 +344,7 @@ void pta::recordCGNode(const llvm::Value *val) {
 
 void pta::dumpCGNodeDistribution() {
   llvm::outs() << "*************************************\n";
-  for (auto it = NodeDistribution.begin(), ie = NodeDistribution.end();
-       it != ie; it++) {
+  for (auto it = NodeDistribution.begin(), ie = NodeDistribution.end(); it != ie; it++) {
     llvm::outs() << it->first << ": " << it->second << "\n";
   }
   llvm::outs() << "*************************************\n";
@@ -382,8 +360,7 @@ std::string pta::getSourceDir(const Value *val) {
     } else if (isa<AllocaInst>(inst)) {
       // TODO: there must be other insts than AllocaInst
       // that can be a shared variable
-      for (DbgInfoIntrinsic *DII :
-           FindDbgAddrUses(const_cast<Instruction *>(inst))) {
+      for (DbgInfoIntrinsic *DII : FindDbgAddrUses(const_cast<Instruction *>(inst))) {
         if (auto DDI = llvm::dyn_cast<llvm::DbgDeclareInst>(DII)) {
           auto DIVar = llvm::cast<llvm::DIVariable>(DDI->getVariable());
           return DIVar->getDirectory().str();
@@ -392,16 +369,13 @@ std::string pta::getSourceDir(const Value *val) {
     }
   } else if (auto gvar = llvm::dyn_cast<llvm::GlobalVariable>(val)) {
     // find the debuggin information for global variables
-    llvm::NamedMDNode *CU_Nodes =
-        gvar->getParent()->getNamedMetadata("llvm.dbg.cu");
+    llvm::NamedMDNode *CU_Nodes = gvar->getParent()->getNamedMetadata("llvm.dbg.cu");
     if (CU_Nodes) {
       for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
         auto CUNode = llvm::cast<llvm::DICompileUnit>(CU_Nodes->getOperand(i));
-        for (llvm::DIGlobalVariableExpression *GV :
-             CUNode->getGlobalVariables()) {
+        for (llvm::DIGlobalVariableExpression *GV : CUNode->getGlobalVariables()) {
           llvm::DIGlobalVariable *DGV = GV->getVariable();
-          if (DGV->getName() == gvar->getName() ||
-              DGV->getLinkageName() == gvar->getName()) {
+          if (DGV->getName() == gvar->getName() || DGV->getLinkageName() == gvar->getName()) {
             return DGV->getDirectory().str();
           }
         }
@@ -412,8 +386,7 @@ std::string pta::getSourceDir(const Value *val) {
   return "";
 }
 
-static bool isLooslyCompatibleCall(const llvm::CallBase *CS,
-                                   const llvm::Function *target) {
+static bool isLooslyCompatibleCall(const llvm::CallBase *CS, const llvm::Function *target) {
   assert(CS->isIndirectCall());
 
   // fast path, the same type
@@ -421,8 +394,7 @@ static bool isLooslyCompatibleCall(const llvm::CallBase *CS,
     return true;
   }
 
-  if (!CS->getType()->isPointerTy() &&
-      !target->getReturnType()->isPointerTy() &&
+  if (!CS->getType()->isPointerTy() && !target->getReturnType()->isPointerTy() &&
       CS->getType() != target->getReturnType()) {
     return false;
   }
@@ -447,12 +419,10 @@ static bool isLooslyCompatibleCall(const llvm::CallBase *CS,
   auto fit = CS->arg_begin();
   for (const Argument &arg : target->args()) {
     const Value *param = *fit;
-    if (!param->getType()->isPointerTy() && !arg.getType()->isPointerTy() &&
-        param->getType() != arg.getType()) {
+    if (!param->getType()->isPointerTy() && !arg.getType()->isPointerTy() && param->getType() != arg.getType()) {
       // for non pointer type, they should be matched
       return false;
-    } else if (param->getType()->isPointerTy() !=
-               arg.getType()->isPointerTy()) {
+    } else if (param->getType()->isPointerTy() != arg.getType()->isPointerTy()) {
       return false;
     }
     fit++;
@@ -466,16 +436,14 @@ llvm::Type *pta::isStructWithFlexibleArray(const llvm::StructType *ST) {
   size_t numElem = ST->getNumElements();
   if (numElem) {
     auto lastElem = ST->elements()[numElem - 1];
-    if (auto AT = llvm::dyn_cast<llvm::ArrayType>(lastElem);
-        AT && AT->getNumElements() == 0) {
+    if (auto AT = llvm::dyn_cast<llvm::ArrayType>(lastElem); AT && AT->getNumElements() == 0) {
       return AT->getElementType();
     }
   }
   return nullptr;
 }
 
-llvm::StructType *pta::getConvertedFlexibleArrayType(
-    const llvm::StructType *ST, llvm::Type *flexibleArrayElem) {
+llvm::StructType *pta::getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexibleArrayElem) {
   assert(isStructWithFlexibleArray(ST));
 
   // if this is a structure type with flexible array element at the end
@@ -500,8 +468,7 @@ extern cl::opt<bool> CONFIG_EXHAUST_MODE;
 
 // simple type check fails when cases like
 // call void (...) %ptr()
-bool pta::isCompatibleCall(const llvm::Instruction *indirectCall,
-                            const llvm::Function *target) {
+bool pta::isCompatibleCall(const llvm::Instruction *indirectCall, const llvm::Function *target) {
   auto call = cast<CallBase>(indirectCall);
 
   return isLooslyCompatibleCall(call, target);

@@ -50,8 +50,7 @@ class CppMemModel : public FSMemModel<ctx> {
   using ObjectTy = typename Super::ObjectTy;
   using Canonicalizer = FSCanonicalizer;
 
-  explicit CppMemModel(ConsGraphTy &consGraph, PtrManager &owner,
-                       llvm::Module &M)
+  explicit CppMemModel(ConsGraphTy &consGraph, PtrManager &owner, llvm::Module &M)
       : Super(consGraph, owner, M, Super::MemModelKind::CPP) {
     TypeMDinit(&M);
   }
@@ -67,16 +66,14 @@ class CppMemModel : public FSMemModel<ctx> {
   }
 
   template <typename PT>
-  PtrNode *createAnonNode(const llvm::CallBase *apiCall,
-                          std::vector<PtrNode *> &&params) {
+  PtrNode *createAnonNode(const llvm::CallBase *apiCall, std::vector<PtrNode *> &&params) {
     auto tag = new (Allocator) VecAPITag<ctx>(apiCall, std::move(params));
     return this->ptrManager.template createAnonPtrNode<PT>(tag);
   }
 
   static bool isSpecialTypeImpl(const llvm::Type *T) {
     auto vectorElemT = VectorAPI::resolveVecElemType(T);
-    bool isVector =
-        vectorElemT && VectorAPI::isSupportedElementType(vectorElemT);
+    bool isVector = vectorElemT && VectorAPI::isSupportedElementType(vectorElemT);
     // is type equivalience accurate enough? i.e., How often is it when user use
     // the same type but not for vtable should be rare, the vtable ptr type is
     // "i32 (...) **"
@@ -92,18 +89,14 @@ class CppMemModel : public FSMemModel<ctx> {
       case VectorAPI::APIKind::PUSH_BACK:
         if (calledAPI.getVecElemType()->isPointerTy()) {
           // only care when a pointer is pushed in
-          auto vec = getPtrNode(
-              C, calledAPI.getArgOperand(0));  // first argument is *this*
-          auto elem = getPtrNode(
-              C, calledAPI.getArgOperand(
-                     1));  // second argument is a pointer to the element.
+          auto vec = getPtrNode(C, calledAPI.getArgOperand(0));   // first argument is *this*
+          auto elem = getPtrNode(C, calledAPI.getArgOperand(1));  // second argument is a pointer to the element.
           auto loadedElem = createAnonNode<PT>();
 
           this->consGraph.addConstraints(elem, loadedElem, Constraints::load);
 
           std::vector<PtrNode *> params{loadedElem};
-          auto fake =
-              createAnonNode<PT>(calledAPI.getCallSite(), std::move(params));
+          auto fake = createAnonNode<PT>(calledAPI.getCallSite(), std::move(params));
 
           // add a special constraints
           this->consGraph.addConstraints(vec, fake, Constraints::special);
@@ -130,18 +123,16 @@ class CppMemModel : public FSMemModel<ctx> {
   }
 
   template <typename PT>
-  inline ObjNode *allocStructArrayObjImpl(const ctx *C, const llvm::Value *V,
-                                          AllocKind T, llvm::Type *type,
+  inline ObjNode *allocStructArrayObjImpl(const ctx *C, const llvm::Value *V, AllocKind T, llvm::Type *type,
                                           const llvm::DataLayout &DL) {
     if (T != AllocKind::Anonymous) {
       if (auto GV = llvm::dyn_cast<llvm::GlobalVariable>(V)) {
         if (isVTableVariable(GV) && !GV->isDeclaration()) {
           // if this is a vtable, handle it specially (do not collapse the array
           // when building the memory layout)
-          const MemLayout *layout = this->layoutManager.getLayoutForType(
-              GV->getType()->getPointerElementType(), DL, false);
-          auto block =
-              super allocMemBlock<AggregateMemBlock<ctx>>(C, GV, T, layout);
+          const MemLayout *layout =
+              this->layoutManager.getLayoutForType(GV->getType()->getPointerElementType(), DL, false);
+          auto block = super allocMemBlock<AggregateMemBlock<ctx>>(C, GV, T, layout);
           return super createNode<PT>(block->getObjectAt(0));
         }
       }
@@ -165,8 +156,7 @@ class CppMemModel : public FSMemModel<ctx> {
       elemType = AT->getArrayElementType();  // strip array
     }
 
-    auto collectSpecialObj = [&](llvm::Type *T, MemLayout *L, size_t &lOffset,
-                                 size_t &pOffset) -> bool {
+    auto collectSpecialObj = [&](llvm::Type *T, MemLayout *L, size_t &lOffset, size_t &pOffset) -> bool {
       if (isSpecialTypeImpl(T)) {
         L->setElementOffset(lOffset);
         L->setSpecialOffset(pOffset);
@@ -181,10 +171,8 @@ class CppMemModel : public FSMemModel<ctx> {
 
     std::vector<std::pair<size_t, const llvm::Type *>> vectorOffset;
 
-    auto layout =
-        this->layoutManager.getLayoutForType(type, DL, true, collectSpecialObj);
-    auto block = static_cast<AggregateMemBlock<ctx> *>(
-        super allocMemBlock<AggregateMemBlock<ctx>>(C, V, T, layout));
+    auto layout = this->layoutManager.getLayoutForType(type, DL, true, collectSpecialObj);
+    auto block = static_cast<AggregateMemBlock<ctx> *>(super allocMemBlock<AggregateMemBlock<ctx>>(C, V, T, layout));
 
     for (auto offset : layout->getSpecialLayout()) {
       auto elem = getTypeAtOffset(type, offset, DL);
@@ -234,11 +222,9 @@ class CppMemModel : public FSMemModel<ctx> {
   }
 
   template <typename PT>
-  void initializeGlobal(const llvm::GlobalVariable *gVar,
-                        const llvm::DataLayout &DL) {
+  void initializeGlobal(const llvm::GlobalVariable *gVar, const llvm::DataLayout &DL) {
     if (gVar->getType()->isPointerTy()) {  // should always be true?
-      auto vectorElemT = VectorAPI::resolveVecElemType(
-          gVar->getType()->getPointerElementType());
+      auto vectorElemT = VectorAPI::resolveVecElemType(gVar->getType()->getPointerElementType());
       if (vectorElemT && VectorAPI::isSupportedElementType(vectorElemT)) {
         return;
       }
@@ -247,8 +233,7 @@ class CppMemModel : public FSMemModel<ctx> {
     super initializeGlobal<PT>(gVar, DL);
   }
 
-  inline InterceptResult interceptFunction(const llvm::Function *F,
-                                           const llvm::Instruction *callSite) {
+  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction *callSite) {
     // does not matter as they function body should be deleted by
     // RewriteModeledAPIPass
     return {F, InterceptResult::Option::EXPAND_BODY};
@@ -256,14 +241,12 @@ class CppMemModel : public FSMemModel<ctx> {
 
   // return *true* when the callsite handled by the
   template <typename PT>
-  inline bool interceptCallSite(const CtxFunction<CtxTy> *caller,
-                                const CtxFunction<CtxTy> *callee,
+  inline bool interceptCallSite(const CtxFunction<CtxTy> *caller, const CtxFunction<CtxTy> *callee,
                                 const llvm::Instruction *callSite) {
     if (CONFIG_VTABLE_MODE) {
       if (auto call = dyn_cast<CallBase>(callSite)) {
         if (call->getCalledFunction() != nullptr &&
-            call->getCalledFunction()->getName().equals(
-                ".coderrect.vtable.init")) {
+            call->getCalledFunction()->getName().equals(".coderrect.vtable.init")) {
           // the vtable init function
           const ctx *context = caller->getContext();
           // call void @.coderrect.vtable.init(i32 (...)*** %2, i32 (...)** %4),
@@ -284,8 +267,7 @@ class CppMemModel : public FSMemModel<ctx> {
     return false;
   }
 
-  static inline void addPreProcessingPass(
-      llvm::legacy::PassManagerBase &passes) {
+  static inline void addPreProcessingPass(llvm::legacy::PassManagerBase &passes) {
     passes.add(new RewriteModeledAPIPass());
   }
 
@@ -296,8 +278,7 @@ class CppMemModel : public FSMemModel<ctx> {
 }  // namespace cpp
 
 template <typename ctx>
-struct MemModelTrait<cpp::CppMemModel<ctx>>
-    : MemModelHelper<cpp::CppMemModel<ctx>> {
+struct MemModelTrait<cpp::CppMemModel<ctx>> : MemModelHelper<cpp::CppMemModel<ctx>> {
   // Maybe better to put into Canonicalizer classes?
   // whether *all* GEPs will be collapse by the canonicalizer
   static const bool COLLAPSE_GEP = false;

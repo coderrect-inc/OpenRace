@@ -27,8 +27,7 @@ extern cl::opt<size_t> PTAAnonLimit;
 
 namespace pta {
 
-size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP,
-                      const llvm::DataLayout &DL);
+size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout &DL);
 
 // namespace cpp {
 // template <typename ctx>
@@ -75,8 +74,7 @@ class FSMemModel {
     const_cast<FSObject<ctx> *>(obj)->setObjNode(ret);
 
     if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createObjNode: " << ret->getNodeID()
-                   << " obj: " << *obj->getValue() << "\n";  // JEFF
+      llvm::outs() << "createObjNode: " << ret->getNodeID() << " obj: " << *obj->getValue() << "\n";  // JEFF
     } else if (DEBUG_PTA)
       llvm::outs() << "createObjNode: " << ret->getNodeID() << "\n";
 
@@ -94,15 +92,12 @@ class FSMemModel {
   }
 
   template <typename BlockT, typename... Args>
-  MemBlock<ctx> *allocMemBlock(const ctx *c, const llvm::Value *v,
-                               Args &&...args) {
+  MemBlock<ctx> *allocMemBlock(const ctx *c, const llvm::Value *v, Args &&...args) {
     bool result;
-    MemBlock<ctx> *block =
-        new (Allocator) BlockT(c, v, std::forward<Args>(args)...);
+    MemBlock<ctx> *block = new (Allocator) BlockT(c, v, std::forward<Args>(args)...);
     // we do not to put anonymous object into the map
     if (block->getAllocSite().getAllocType() != AllocKind::Anonymous) {
-      std::tie(std::ignore, result) =
-          this->memBlockMap.insert(std::make_pair(std::make_pair(c, v), block));
+      std::tie(std::ignore, result) = this->memBlockMap.insert(std::make_pair(std::make_pair(c, v), block));
       // must be adding a new memory block
       assert(result && "allocating a existing memory block");
     }
@@ -112,8 +107,7 @@ class FSMemModel {
   // The llvm::type does not have to be consistent with the type of the
   // llvm::value as the heap allocation type might be inferred using heuristics.
   template <typename PT>
-  inline ObjNode *allocStructArrayObjImpl(const ctx *C, const llvm::Value *V,
-                                          AllocKind T, llvm::Type *type,
+  inline ObjNode *allocStructArrayObjImpl(const ctx *C, const llvm::Value *V, AllocKind T, llvm::Type *type,
                                           const llvm::DataLayout &DL) {
     auto layout = layoutManager.getLayoutForType(type, DL);
     auto block = this->allocMemBlock<AggregateMemBlock<ctx>>(C, V, T, layout);
@@ -121,16 +115,14 @@ class FSMemModel {
   }
 
   template <typename PT>
-  inline ObjNode *allocStructArrayObj(const ctx *C, const llvm::Value *V,
-                                      AllocKind T, llvm::Type *type,
+  inline ObjNode *allocStructArrayObj(const ctx *C, const llvm::Value *V, AllocKind T, llvm::Type *type,
                                       const llvm::DataLayout &DL) {
     switch (kind) {
       case MemModelKind::FS: {
         return this->allocStructArrayObjImpl<PT>(C, V, T, type, DL);
       }
       case MemModelKind::CPP: {
-        return static_cast<cpp::CppMemModel<ctx> *>(this)
-            ->template allocStructArrayObjImpl<PT>(C, V, T, type, DL);
+        return static_cast<cpp::CppMemModel<ctx> *>(this)->template allocStructArrayObjImpl<PT>(C, V, T, type, DL);
       }
       default:
         return nullptr;
@@ -138,8 +130,7 @@ class FSMemModel {
   }
 
   template <typename PT>
-  inline ObjNode *allocFIObject(const ctx *C, const llvm::Value *V,
-                                AllocKind T) {
+  inline ObjNode *allocFIObject(const ctx *C, const llvm::Value *V, AllocKind T) {
     // we can not infer the type of the allocating heap object,
     // conservatively treat it field insensitively.
     MemBlock<ctx> *block = this->allocMemBlock<FIMemBlock<ctx>>(C, V, T);
@@ -147,8 +138,8 @@ class FSMemModel {
   }
 
   template <typename PT>
-  ObjNode *allocValueWithType(const ctx *C, const llvm::Value *V, AllocKind T,
-                              llvm::Type *type, const llvm::DataLayout &DL) {
+  ObjNode *allocValueWithType(const ctx *C, const llvm::Value *V, AllocKind T, llvm::Type *type,
+                              const llvm::DataLayout &DL) {
     if (CONFIG_USE_FI_MODE) {
       return allocFIObject<PT>(C, V, T);
     }
@@ -197,8 +188,7 @@ class FSMemModel {
   using ObjectTy = FSObject<ctx>;
   using Canonicalizer = FSCanonicalizer;
 
-  FSMemModel(ConsGraphTy &consGraph, PtrManager &owner, llvm::Module &M,
-             MemModelKind kind = MemModelKind::FS)
+  FSMemModel(ConsGraphTy &consGraph, PtrManager &owner, llvm::Module &M, MemModelKind kind = MemModelKind::FS)
       : consGraph(consGraph), ptrManager(owner), module(M), kind(kind) {}
 
  protected:
@@ -206,10 +196,8 @@ class FSMemModel {
   inline ObjNode *allocNullObj(const llvm::Module *module) {
     assert(!nullObjNode && "recreating a null object!");
 
-    auto v = llvm::ConstantPointerNull::get(
-        llvm::Type::getInt8PtrTy(module->getContext()));
-    auto *block = this->allocMemBlock<FIMemBlock<ctx>>(CT::getGlobalCtx(), v,
-                                                       AllocKind::Null);
+    auto v = llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(module->getContext()));
+    auto *block = this->allocMemBlock<FIMemBlock<ctx>>(CT::getGlobalCtx(), v, AllocKind::Null);
     return this->template createNode<PT>(block->getObjectAt(0));
   }
 
@@ -217,16 +205,13 @@ class FSMemModel {
   inline ObjNode *allocUniObj(const llvm::Module *module) {
     assert(!uniObjNode && "recreating a universal object!");
 
-    auto v =
-        llvm::UndefValue::get(llvm::Type::getInt8PtrTy(module->getContext()));
-    auto *block = this->allocMemBlock<FIMemBlock<ctx>>(CT::getGlobalCtx(), v,
-                                                       AllocKind::Universal);
+    auto v = llvm::UndefValue::get(llvm::Type::getInt8PtrTy(module->getContext()));
+    auto *block = this->allocMemBlock<FIMemBlock<ctx>>(CT::getGlobalCtx(), v, AllocKind::Universal);
     return this->template createNode<PT>(block->getObjectAt(0));
   }
 
   template <typename PT>
-  inline void handleMemCpy(const ctx *C, const llvm::MemCpyInst *memCpy,
-                           PtrNode *src, PtrNode *dst) {
+  inline void handleMemCpy(const ctx *C, const llvm::MemCpyInst *memCpy, PtrNode *src, PtrNode *dst) {
     // TODO: memcpy whose cpy size is constant should already be lowered before
     // PTA, for the remaining memcpy, we do not handle it for now. if we handle
     // it, it more introduce too many false positive, as we have to do it
@@ -234,8 +219,8 @@ class FSMemModel {
     LOG_TRACE("unhandled memcpy instruction. inst={}", *memCpy);
     if (CONFIG_USE_FI_MODE) {
       // a temporal node
-      ObjNode *memCpyNode = this->template allocAnonObj<PT>(
-          C, memCpy->getModule()->getDataLayout(), nullptr, nullptr, false);
+      ObjNode *memCpyNode =
+          this->template allocAnonObj<PT>(C, memCpy->getModule()->getDataLayout(), nullptr, nullptr, false);
       // a MemCpy => <src>--load--><tmp>--store--><dst>;
       consGraph.addConstraints(src, memCpyNode, Constraints::load);
       consGraph.addConstraints(memCpyNode, dst, Constraints::store);
@@ -257,23 +242,19 @@ class FSMemModel {
   template <typename PT>
   inline ObjNode *allocFunction(const llvm::Function *f) {
     // create a function object (function pointer can not be indexed as well)
-    MemBlock<ctx> *block = this->allocMemBlock<ScalarMemBlock<ctx>>(
-        CT::getGlobalCtx(), f, AllocKind::Functions);
+    MemBlock<ctx> *block = this->allocMemBlock<ScalarMemBlock<ctx>>(CT::getGlobalCtx(), f, AllocKind::Functions);
     return createNode<PT>(block->getObjectAt(0));
   }
 
   template <typename PT>
-  inline ObjNode *allocGlobalVariable(const llvm::GlobalVariable *g,
-                                      const llvm::DataLayout &DL) {
+  inline ObjNode *allocGlobalVariable(const llvm::GlobalVariable *g, const llvm::DataLayout &DL) {
     LOG_TRACE("allocating global. global={}", *g);
     auto pointedType = g->getType()->getPointerElementType();
-    return this->allocValueWithType<PT>(CT::getGlobalCtx(), g,
-                                        AllocKind::Globals, pointedType, DL);
+    return this->allocValueWithType<PT>(CT::getGlobalCtx(), g, AllocKind::Globals, pointedType, DL);
   }
 
   template <typename PT>
-  inline ObjNode *allocStackObj(const ctx *C, const llvm::AllocaInst *I,
-                                const llvm::DataLayout &DL) {
+  inline ObjNode *allocStackObj(const ctx *C, const llvm::AllocaInst *I, const llvm::DataLayout &DL) {
     LOG_TRACE("allocating Stack Object. inst={}", *I);
 
     const llvm::Value *arraySize = I->getArraySize();
@@ -288,33 +269,28 @@ class FSMemModel {
         type = llvm::ArrayType::get(elementType, elementNum);
       }
     } else {
-      type =
-          llvm::ArrayType::get(elementType, std::numeric_limits<size_t>::max());
+      type = llvm::ArrayType::get(elementType, std::numeric_limits<size_t>::max());
     }
 
     return this->allocValueWithType<PT>(C, I, AllocKind::Stack, type, DL);
   }
 
   template <typename PT>
-  inline ObjNode *allocHeapObj(const ctx *C, const llvm::Instruction *I,
-                               const llvm::DataLayout &DL, llvm::Type *T) {
+  inline ObjNode *allocHeapObj(const ctx *C, const llvm::Instruction *I, const llvm::DataLayout &DL, llvm::Type *T) {
     if (T != nullptr) {
       return this->allocValueWithType<PT>(C, I, AllocKind::Heap, T, DL);
     }
 
     // we can not infer the type of the allocating heap object,
     // conservatively treat it field insensitively.
-    MemBlock<ctx> *block =
-        this->allocMemBlock<FIMemBlock<ctx>>(C, I, AllocKind::Heap);
+    MemBlock<ctx> *block = this->allocMemBlock<FIMemBlock<ctx>>(C, I, AllocKind::Heap);
     return createNode<PT>(block->getObjectAt(0));
   }
 
   template <typename PT>
-  void initAnonAggregateObj(
-      const ctx *C, const llvm::DataLayout &DL, llvm::Type *T,
-      MemBlock<ctx> *block, std::vector<const llvm::Type *> &typeTree,
-      const llvm::Value *tag,
-      size_t &globOffset) {  // the offset of the field currently being accessed
+  void initAnonAggregateObj(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, MemBlock<ctx> *block,
+                            std::vector<const llvm::Type *> &typeTree, const llvm::Value *tag,
+                            size_t &globOffset) {  // the offset of the field currently being accessed
     // must be sized type
     //        llvm::outs() <<
     //        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << "\n"; for
@@ -340,9 +316,8 @@ class FSMemModel {
       } else if (auto ptrElem = llvm::dyn_cast<llvm::PointerType>(elemTy)) {
         // skipping the element type if the type is not valid for array
         // e.g., function, void type
-        ObjNode *child = allocAnonObjRec<PT>(
-            C, DL, getUnboundedArrayTy(elemTy->getPointerElementType()), tag,
-            typeTree);
+        ObjNode *child =
+            allocAnonObjRec<PT>(C, DL, getUnboundedArrayTy(elemTy->getPointerElementType()), tag, typeTree);
         if (child != nullptr) {
           const FSObject<ctx> *object = block->getPtrObjectAt(offset);
           // assert(object && "No Pointer Element at the offset");
@@ -354,8 +329,7 @@ class FSMemModel {
             } else {
               assert(offset == 0);
             }
-            consGraph.addConstraints(child, object->getObjNode(),
-                                     Constraints::addr_of);
+            consGraph.addConstraints(child, object->getObjNode(), Constraints::addr_of);
           }
         }
       }
@@ -371,24 +345,22 @@ class FSMemModel {
   const int ANON_REC_LIMIT = PTAAnonLimit;
   const int ANON_REC_DEPTH_LIMIT = 10;
   template <typename PT>
-  ObjNode *allocAnonObjRec(const ctx *C, const llvm::DataLayout &DL,
-                           llvm::Type *T, const llvm::Value *tag,
+  ObjNode *allocAnonObjRec(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, const llvm::Value *tag,
                            std::vector<const llvm::Type *> &typeTree) {
     // limit the depth of anonmyous object
     if (typeTree.size() > ANON_REC_DEPTH_LIMIT) {
       return nullptr;
     }
 
-    if (std::find(typeTree.begin(), typeTree.end(), T) != typeTree.end() ||
-        T == nullptr || (ANON_REC_LIMIT && allocatedCount > ANON_REC_LIMIT)) {
+    if (std::find(typeTree.begin(), typeTree.end(), T) != typeTree.end() || T == nullptr ||
+        (ANON_REC_LIMIT && allocatedCount > ANON_REC_LIMIT)) {
       // recursive type
       // i.e., link_list {link_list *next};
       return nullptr;
     }
 
     if (!T->isSized()) {  // opaque type, can not infer the memory layout
-      auto block =
-          this->allocMemBlock<FIMemBlock<ctx>>(C, tag, AllocKind::Anonymous);
+      auto block = this->allocMemBlock<FIMemBlock<ctx>>(C, tag, AllocKind::Anonymous);
       auto objNode = createNode<PT>(block->getObjectAt(0));
       return objNode;
     }
@@ -397,8 +369,7 @@ class FSMemModel {
     typeTree.push_back(T);
 
     allocatedCount++;
-    ObjNode *objNode =
-        this->allocValueWithType<PT>(C, tag, AllocKind::Anonymous, T, DL);
+    ObjNode *objNode = this->allocValueWithType<PT>(C, tag, AllocKind::Anonymous, T, DL);
     MemBlock<ctx> *block = objNode->getObject()->memBlock;
 
     if (!objNode->getObject()->isSpecialObject()) {
@@ -422,13 +393,11 @@ class FSMemModel {
           if (auto structElem = llvm::dyn_cast<llvm::StructType>(elemTy)) {
             size_t offset = 0;
             // the element is a structure, try to initialize it recursively
-            initAnonAggregateObj<PT>(C, DL, structElem, block, typeTree, tag,
-                                     offset);
+            initAnonAggregateObj<PT>(C, DL, structElem, block, typeTree, tag, offset);
           } else if (auto ptrElem = llvm::dyn_cast<llvm::PointerType>(elemTy)) {
             // treat ptr as array to allow indexing, that is int * -> int []
-            ObjNode *child = allocAnonObjRec<PT>(
-                C, DL, getUnboundedArrayTy(elemTy->getPointerElementType()),
-                tag, typeTree);
+            ObjNode *child =
+                allocAnonObjRec<PT>(C, DL, getUnboundedArrayTy(elemTy->getPointerElementType()), tag, typeTree);
             if (child != nullptr) {
               consGraph.addConstraints(child, objNode, Constraints::addr_of);
             }
@@ -436,9 +405,7 @@ class FSMemModel {
           break;
         }
         case llvm::Type::PointerTyID: {
-          ObjNode *child = allocAnonObjRec<PT>(
-              C, DL, getUnboundedArrayTy(T->getPointerElementType()), tag,
-              typeTree);
+          ObjNode *child = allocAnonObjRec<PT>(C, DL, getUnboundedArrayTy(T->getPointerElementType()), tag, typeTree);
           if (child != nullptr) {
             consGraph.addConstraints(child, objNode, Constraints::addr_of);
           }
@@ -455,8 +422,7 @@ class FSMemModel {
   }
 
   template <typename PT>
-  inline ObjNode *allocAnonObj(const ctx *C, const llvm::DataLayout &DL,
-                               llvm::Type *T, const llvm::Value *tag,
+  inline ObjNode *allocAnonObj(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, const llvm::Value *tag,
                                bool recursive) {
     // the anonymous object can not be access and looked up
     // or the T is not sized (e.g., opaque type due to incomplete bc file)
@@ -471,14 +437,12 @@ class FSMemModel {
       return this->allocValueWithType<PT>(C, tag, AllocKind::Anonymous, T, DL);
     }
 
-    MemBlock<ctx> *block =
-        this->allocMemBlock<FIMemBlock<ctx>>(C, tag, AllocKind::Anonymous);
+    MemBlock<ctx> *block = this->allocMemBlock<FIMemBlock<ctx>>(C, tag, AllocKind::Anonymous);
     return createNode<PT>(block->getObjectAt(0));
   }
 
   template <typename PT>
-  inline void processScalarGlobals(MemBlock<ctx> *memBlock,
-                                   const llvm::Constant *C, size_t &offset,
+  inline void processScalarGlobals(MemBlock<ctx> *memBlock, const llvm::Constant *C, size_t &offset,
                                    const llvm::DataLayout &DL) {
     if (C->getType()->isPointerTy() && !llvm::isa<llvm::BlockAddress>(C)) {
       /* FIXME: what if the constexpr is a complicated expression or global
@@ -504,8 +468,7 @@ class FSMemModel {
         auto baseValue = GEP->stripAndAccumulateConstantOffsets(DL, off, true);
         // objNode can be none, when it is a external symbol, which does not
         // have initializers.
-        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)
-                         ->getObjectAt(off.getSExtValue());
+        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)->getObjectAt(off.getSExtValue());
         // FIXME: Field-sensitive object can be nullptr, because we handle i8*
         // as scalar object however, it should be the most conservative type in
         // LLVM (void *) probably should handle it as a field-insensitive
@@ -518,20 +481,16 @@ class FSMemModel {
           }
         }
       } else {
-        objNode =
-            getMemBlock(CT::getGlobalCtx(), C)->getObjectAt(0)->getObjNode();
+        objNode = getMemBlock(CT::getGlobalCtx(), C)->getObjectAt(0)->getObjNode();
       }
 
       if (objNode != nullptr) {
         if (DEBUG_PTA_VERBOSE) {
-          llvm::outs() << "processScalarGlobals: " << *C
-                       << "\noffset: " << offset << "\n"
-                       << "objNode: " << objNode->getNodeID()
-                       << " ptrNode: " << ptrNode->getNodeID() << "\n";
+          llvm::outs() << "processScalarGlobals: " << *C << "\noffset: " << offset << "\n"
+                       << "objNode: " << objNode->getNodeID() << " ptrNode: " << ptrNode->getNodeID() << "\n";
         } else if (DEBUG_PTA)
           llvm::outs() << "processScalarGlobals: offset: " << offset << "\n"
-                       << "objNode: " << objNode->getNodeID()
-                       << " ptrNode: " << ptrNode->getNodeID() << "\n";
+                       << "objNode: " << objNode->getNodeID() << " ptrNode: " << ptrNode->getNodeID() << "\n";
 
         consGraph.addConstraints(objNode, ptrNode, Constraints::addr_of);
       }
@@ -542,31 +501,26 @@ class FSMemModel {
   }
 
   template <typename PT>
-  inline void processAggregateGlobals(MemBlock<ctx> *memBlock,
-                                      const llvm::Constant *C, size_t &offset,
+  inline void processAggregateGlobals(MemBlock<ctx> *memBlock, const llvm::Constant *C, size_t &offset,
                                       const llvm::DataLayout &DL) {
-    assert(llvm::isa<llvm::ConstantArray>(C) ||
-           llvm::isa<llvm::ConstantStruct>(C) ||
+    assert(llvm::isa<llvm::ConstantArray>(C) || llvm::isa<llvm::ConstantStruct>(C) ||
            llvm::isa<llvm::ConstantDataArray>(C));
 
     size_t initOffset = offset;
-    if (llvm::isa<llvm::ConstantArray>(C) ||
-        llvm::isa<llvm::ConstantStruct>(C)) {
+    if (llvm::isa<llvm::ConstantArray>(C) || llvm::isa<llvm::ConstantStruct>(C)) {
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
         // make up the padding if it is a structure type.
         if (auto structType = llvm::dyn_cast<llvm::StructType>(C->getType())) {
           auto structLayout = DL.getStructLayout(structType);
           if (structLayout->hasPadding()) {
             assert(offset >= initOffset);
-            size_t padding =
-                structLayout->getElementOffset(i) - (offset - initOffset);
+            size_t padding = structLayout->getElementOffset(i) - (offset - initOffset);
             offset += padding;
           }
         }
 
         // recursively traverse the initializer
-        processInitializer<PT>(
-            memBlock, llvm::cast<llvm::Constant>(C->getOperand(i)), offset, DL);
+        processInitializer<PT>(memBlock, llvm::cast<llvm::Constant>(C->getOperand(i)), offset, DL);
       }
       // make up the padding if it is a struct type
       if (auto structType = llvm::dyn_cast<llvm::StructType>(C->getType())) {
@@ -586,11 +540,9 @@ class FSMemModel {
 
   // TODO: change it to non-recursive version if the initializer is deep
   template <typename PT>
-  void processInitializer(MemBlock<ctx> *memBlock,
-                          const llvm::Constant *initializer, size_t &offset,
+  void processInitializer(MemBlock<ctx> *memBlock, const llvm::Constant *initializer, size_t &offset,
                           const llvm::DataLayout &DL) {
-    if (initializer->isNullValue() ||
-        llvm::isa<llvm::UndefValue>(initializer)) {
+    if (initializer->isNullValue() || llvm::isa<llvm::UndefValue>(initializer)) {
       // skip zero initializer and undef initializer
       offset += DL.getTypeAllocSize(initializer->getType());
     } else if (initializer->getType()->isSingleValueType()) {
@@ -601,8 +553,7 @@ class FSMemModel {
   }
 
   template <typename PT>
-  void initializeGlobal(const llvm::GlobalVariable *gVar,
-                        const llvm::DataLayout &DL) {
+  void initializeGlobal(const llvm::GlobalVariable *gVar, const llvm::DataLayout &DL) {
     if (gVar->hasInitializer()) {
       size_t offset = 0;
 
@@ -638,16 +589,14 @@ class FSMemModel {
     return result->getObjNode();
   }
 
-  inline InterceptResult interceptFunction(const llvm::Function *F,
-                                           const llvm::Instruction *callSite) {
+  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction *callSite) {
     return {F, InterceptResult::Option::EXPAND_BODY};
   }
 
   // return *true* when the callsite handled by the
   template <typename PT>
-  inline constexpr bool interceptCallSite(
-      const CtxFunction<CtxTy> *caller, const CtxFunction<CtxTy> *callee,
-      const llvm::Instruction *callSite) const {
+  inline constexpr bool interceptCallSite(const CtxFunction<CtxTy> *caller, const CtxFunction<CtxTy> *callee,
+                                          const llvm::Instruction *callSite) const {
     return false;
   }
 

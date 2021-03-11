@@ -20,8 +20,7 @@ class CGSuperNode : public CGNodeBase<ctx> {
   NodeList scc;
   NodeList callNodes;
 
-  CGSuperNode(const vector<super *> &scc, NodeID id)
-      : super(id, CGNodeKind::SuperNode) {
+  CGSuperNode(const vector<super *> &scc, NodeID id) : super(id, CGNodeKind::SuperNode) {
     for (super *node : scc) {
       if (node->isFunctionPtr()) {
         callNodes.set(node->getNodeID());
@@ -37,8 +36,7 @@ class CGSuperNode : public CGNodeBase<ctx> {
 
  public:
   inline void copyOutgoingEdges(super *node) {
-    for (auto it = node->pred_edge_begin(), ie = node->pred_edge_end();
-         it != ie; it++) {
+    for (auto it = node->pred_edge_begin(), ie = node->pred_edge_end(); it != ie; it++) {
       auto pred = (*it).second;
       auto edgeKind = (*it).first;
       // FIXME: is this correct?
@@ -52,8 +50,7 @@ class CGSuperNode : public CGNodeBase<ctx> {
     for (NodeID nodeId : scc) {
       auto node = this->graph->getNode(nodeId);
       // merge the incoming edges
-      for (auto it = node->edge_begin(), ie = node->edge_end(); it != ie;
-           it++) {
+      for (auto it = node->edge_begin(), ie = node->edge_end(); it != ie; it++) {
         this->insertConstraint((*it).second, (*it).first);
       }
     }
@@ -66,9 +63,7 @@ class CGSuperNode : public CGNodeBase<ctx> {
     this->removeConstraint(this, Constraints::copy);
   }
 
-  static inline bool classof(const super *node) {
-    return node->getType() == CGNodeKind::SuperNode;
-  }
+  static inline bool classof(const super *node) { return node->getType() == CGNodeKind::SuperNode; }
 
   virtual std::string toString() const { return "SuperNode"; }
 

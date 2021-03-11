@@ -54,23 +54,18 @@ bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
             // the object
             if (auto SI = dyn_cast<StoreInst>(&I)) {
               // store instruction is used to set vtable
-              if (SI->getPointerOperand()->stripInBoundsConstantOffsets() ==
-                      F.arg_begin() &&
-                  isVTableVariable(
-                      SI->getValueOperand()->stripInBoundsConstantOffsets())) {
+              if (SI->getPointerOperand()->stripInBoundsConstantOffsets() == F.arg_begin() &&
+                  isVTableVariable(SI->getValueOperand()->stripInBoundsConstantOffsets())) {
                 // covert the store of the vtable into a special function call
                 // so that it can get intercepted by the memory model and we can
                 // then perform special handling on it
-                auto vtInit = F.getParent()->getOrInsertFunction(
-                    ".coderrect.vtable.init",
-                    llvm::Type::getVoidTy(F.getContext()),
-                    SI->getPointerOperandType(),
-                    SI->getValueOperand()->getType());
+                auto vtInit =
+                    F.getParent()->getOrInsertFunction(".coderrect.vtable.init", llvm::Type::getVoidTy(F.getContext()),
+                                                       SI->getPointerOperandType(), SI->getValueOperand()->getType());
                 removedInst.push_back(SI);
 
                 builder.SetInsertPoint(SI);
-                builder.CreateCall(
-                    vtInit, {SI->getPointerOperand(), SI->getValueOperand()});
+                builder.CreateCall(vtInit, {SI->getPointerOperand(), SI->getValueOperand()});
                 changed = true;
               }
             }
@@ -88,8 +83,7 @@ bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
 }
 
 char RewriteModeledAPIPass::ID = 0;
-static RegisterPass<RewriteModeledAPIPass> RMP(
-    "", "", false, /*CFG only*/ false /*is analysis*/);
+static RegisterPass<RewriteModeledAPIPass> RMP("", "", false, /*CFG only*/ false /*is analysis*/);
 }  // namespace cpp
 
 }  // namespace pta

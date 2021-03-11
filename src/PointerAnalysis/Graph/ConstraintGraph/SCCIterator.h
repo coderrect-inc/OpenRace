@@ -21,10 +21,8 @@ namespace pta {
 // iterator is in topo order)
 //            otherwise it will be in reverse topo-order
 template <typename ctx, Constraints cons, bool reverse>
-class SCCIterator
-    : public llvm::iterator_facade_base<SCCIterator<ctx, cons, reverse>,
-                                        std::forward_iterator_tag,
-                                        const std::vector<CGNodeBase<ctx> *>> {
+class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, reverse>, std::forward_iterator_tag,
+                                                      const std::vector<CGNodeBase<ctx> *>> {
  private:
   using GraphT = ConstraintGraph<ctx>;
   using NodeT = CGNodeBase<ctx>;
@@ -39,12 +37,10 @@ class SCCIterator
     ChildItTy NextChild;  ///< The next child, modified inplace during DFS.
     unsigned MinVisited;  ///< Minimum uplink value of all children of Node.
 
-    StackElement(NodeRef Node, const ChildItTy &Child, unsigned Min)
-        : Node(Node), NextChild(Child), MinVisited(Min) {}
+    StackElement(NodeRef Node, const ChildItTy &Child, unsigned Min) : Node(Node), NextChild(Child), MinVisited(Min) {}
 
     bool operator==(const StackElement &Other) const {
-      return Node == Other.Node && NextChild == Other.NextChild &&
-             MinVisited == Other.MinVisited;
+      return Node == Other.Node && NextChild == Other.NextChild && MinVisited == Other.MinVisited;
     }
   };
 
@@ -86,22 +82,14 @@ class SCCIterator
   const GraphT *consG;
 
   explicit SCCIterator(const GraphT &G)
-      : visitNum(0),
-        visitedNode(G.getNodeNum()),
-        trueVisitedNode(G.getNodeNum()),
-        lastRoot(0),
-        consG(&G) {
+      : visitNum(0), visitedNode(G.getNodeNum()), trueVisitedNode(G.getNodeNum()), lastRoot(0), consG(&G) {
     NodeRef entryN = G[0];
     DFSVisitOne(entryN);
     GetNextSCC();
   }
 
   explicit SCCIterator(const GraphT &G, llvm::BitVector workList)
-      : visitNum(0),
-        visitedNode(std::move(workList)),
-        trueVisitedNode(G.getNodeNum()),
-        lastRoot(0),
-        consG(&G) {
+      : visitNum(0), visitedNode(std::move(workList)), trueVisitedNode(G.getNodeNum()), lastRoot(0), consG(&G) {
     int first = visitedNode.find_first_unset();
     if (first < 0) {
       return;
@@ -151,26 +139,17 @@ class SCCIterator
   }
 
  public:
-  static SCCIterator<ctx, cons, reverse> begin(const GraphT &G) {
-    return SCCIterator<ctx, cons, reverse>(G);
-  }
+  static SCCIterator<ctx, cons, reverse> begin(const GraphT &G) { return SCCIterator<ctx, cons, reverse>(G); }
 
-  static SCCIterator<ctx, cons, reverse> begin(
-      const GraphT &G, const llvm::BitVector &workList) {
+  static SCCIterator<ctx, cons, reverse> begin(const GraphT &G, const llvm::BitVector &workList) {
     return SCCIterator<ctx, cons, reverse>(G, workList);
   }
 
-  static SCCIterator<ctx, cons, reverse> end(const GraphT &) {
-    return SCCIterator<ctx, cons, reverse>();
-  }
+  static SCCIterator<ctx, cons, reverse> end(const GraphT &) { return SCCIterator<ctx, cons, reverse>(); }
 
-  [[nodiscard]] size_t visitedNodeNum() const {
-    return this->visitedNode.size();
-  }
+  [[nodiscard]] size_t visitedNodeNum() const { return this->visitedNode.size(); }
 
-  bool operator==(const SCCIterator &x) const {
-    return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
-  }
+  bool operator==(const SCCIterator &x) const { return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC; }
 
   // step to next connect sub graph
   bool nextSubGraph() {
@@ -228,26 +207,21 @@ void SCCIterator<ctx, cons, reverse>::DFSVisitOne(NodeRef N) {
   SCCNodeStack.push_back(N);
 
   // only detect scc that connected by copy edges
-  VisitStack.push_back(
-      StackElement(N, child_begin(N) /*N->pred_copy_begin()*/, visitNum));
+  VisitStack.push_back(StackElement(N, child_begin(N) /*N->pred_copy_begin()*/, visitNum));
   // this should be the first time to visit the node.
   // assert(!visitedNode.test(N->getNodeID()));
   visitedNode.set(N->getNodeID());
   trueVisitedNode.set(N->getNodeID());
 
 #ifdef DEBUG_OUTPUT  // Enable if needed when debugging.
-  llvm::dbgs() << "TarjanSCC: Node " << N->getNodeID()
-               << " : visitNum = " << visitNum << "\n";
+  llvm::dbgs() << "TarjanSCC: Node " << N->getNodeID() << " : visitNum = " << visitNum << "\n";
 #endif
 }
 
 template <typename ctx, Constraints cons, bool reverse>
 void SCCIterator<ctx, cons, reverse>::DFSVisitChildren() {
   assert(!VisitStack.empty());
-  while (
-      VisitStack.back().NextChild !=
-      child_end(
-          VisitStack.back().Node) /*VisitStack.back().Node->pred_copy_end()*/) {
+  while (VisitStack.back().NextChild != child_end(VisitStack.back().Node) /*VisitStack.back().Node->pred_copy_end()*/) {
     // TOS has at least one more child so continue DFS
     NodeRef childN = *VisitStack.back().NextChild++;
     auto Visited = nodeVisitNumbers.find(childN);
@@ -259,8 +233,7 @@ void SCCIterator<ctx, cons, reverse>::DFSVisitChildren() {
     }
     // node has been visited, update the min value
     unsigned childNum = Visited->second;
-    if (VisitStack.back().MinVisited > childNum)
-      VisitStack.back().MinVisited = childNum;
+    if (VisitStack.back().MinVisited > childNum) VisitStack.back().MinVisited = childNum;
   }
 }
 
@@ -274,20 +247,16 @@ void SCCIterator<ctx, cons, reverse>::GetNextSCC() {
     // Pop the leaf on top of the VisitStack.
     NodeRef visitingN = VisitStack.back().Node;
     unsigned minVisitNum = VisitStack.back().MinVisited;
-    assert(VisitStack.back().NextChild ==
-           child_end(visitingN) /*visitingN->pred_copy_end()*/);
+    assert(VisitStack.back().NextChild == child_end(visitingN) /*visitingN->pred_copy_end()*/);
     VisitStack.pop_back();
 
     // Propagate MinVisitNum to parent so we can detect the SCC starting
     // node.
-    if (!VisitStack.empty() && VisitStack.back().MinVisited > minVisitNum)
-      VisitStack.back().MinVisited = minVisitNum;
+    if (!VisitStack.empty() && VisitStack.back().MinVisited > minVisitNum) VisitStack.back().MinVisited = minVisitNum;
 
 #ifdef DEBUG_OUTPUT  // Enable if needed when debugging.
-    llvm::dbgs() << "TarjanSCC: Popped node " << visitingN->getNodeID()
-                 << " : minVisitNum = " << minVisitNum
-                 << "; Node visit num = " << nodeVisitNumbers[visitingN]
-                 << "\n";
+    llvm::dbgs() << "TarjanSCC: Popped node " << visitingN->getNodeID() << " : minVisitNum = " << minVisitNum
+                 << "; Node visit num = " << nodeVisitNumbers[visitingN] << "\n";
 #endif
 
     if (minVisitNum != nodeVisitNumbers[visitingN]) continue;
@@ -323,8 +292,7 @@ SCCIterator<ctx, cons, reverse> scc_begin(const ConstraintGraph<ctx> &G) {
 
 /// Construct the begin iterator for a deduced graph type T.
 template <typename ctx, Constraints cons, bool reverse = true>
-SCCIterator<ctx, cons, reverse> scc_begin(const ConstraintGraph<ctx> &G,
-                                          const llvm::BitVector &workList) {
+SCCIterator<ctx, cons, reverse> scc_begin(const ConstraintGraph<ctx> &G, const llvm::BitVector &workList) {
   return SCCIterator<ctx, cons, reverse>::begin(G, workList);
 }
 
@@ -336,8 +304,7 @@ SCCIterator<ctx, cons, reverse> scc_end(const ConstraintGraph<ctx> &G) {
 
 /// Construct the end iterator for a deduced graph type T.
 template <typename ctx, Constraints cons, bool reverse = true>
-SCCIterator<ctx, cons, reverse> scc_end(const ConstraintGraph<ctx> &G,
-                                        const llvm::BitVector & /*workList*/) {
+SCCIterator<ctx, cons, reverse> scc_end(const ConstraintGraph<ctx> &G, const llvm::BitVector & /*workList*/) {
   return SCCIterator<ctx, cons, reverse>::end(G);
 }
 

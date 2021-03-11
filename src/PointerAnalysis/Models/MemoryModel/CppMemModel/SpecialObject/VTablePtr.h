@@ -42,8 +42,7 @@ class VTablePtr : public FSObject<ctx> {
     objType = stripArray(objType);
     // resolve the type metadata
     auto structType = llvm::cast<StructType>(objType);
-    const DICompositeType *typeMD =
-        getTypeMetaData(block->getValue(), block->getAllocKind(), structType);
+    const DICompositeType *typeMD = getTypeMetaData(block->getValue(), block->getAllocKind(), structType);
 
     if (typeMD != nullptr) {
       SmallVector<const DIType *, 8> vptrPath;
@@ -62,8 +61,7 @@ class VTablePtr : public FSObject<ctx> {
             auto holder = cast<DIDerivedType>(vptrPath.pop_back_val());
             if (holder->getTag() == dwarf::DW_TAG_inheritance) {
               // still need to look up for the child class
-              vptrHolderMD =
-                  llvm::cast<DICompositeType>(vptrPath.pop_back_val());
+              vptrHolderMD = llvm::cast<DICompositeType>(vptrPath.pop_back_val());
             } else {
               break;
             }
@@ -92,21 +90,18 @@ class VTablePtr : public FSObject<ctx> {
         }
       }
     } else {
-      LOG_DEBUG("fail to resolve MD information. allocSite: {}",
-                *block->getValue());
+      LOG_DEBUG("fail to resolve MD information. allocSite: {}", *block->getValue());
     }
   }
 
   // const FSObject<ctx> *getVptrObj() const { return &this->vtablePtrObj; }
 
   // obj is in the pts of (src)
-  bool processSpecial(CGNodeBase<ctx> *src,
-                      CGNodeBase<ctx> *vptr) const override {
+  bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *vptr) const override {
     ConsGraph *consGraph = src->getGraph();
 
     PtrNode *ptrNode = llvm::cast<PtrNode>(vptr);
-    const llvm::Value *vtable =
-        ptrNode->getPointer()->getValue()->stripInBoundsConstantOffsets();
+    const llvm::Value *vtable = ptrNode->getPointer()->getValue()->stripInBoundsConstantOffsets();
 
     // vptr is the ptrnode that holds the address of the vtable
     // src is the ptrnode that the vtable is store into && obj \in pts(src)
@@ -116,18 +111,15 @@ class VTablePtr : public FSObject<ctx> {
 
     if (vtableName.empty()) {
       // no type metadata?
-      LOG_DEBUG("can not resolve class hierarchy information for {}",
-                *this->getAllocSite().getValue());
+      LOG_DEBUG("can not resolve class hierarchy information for {}", *this->getAllocSite().getValue());
       // do not do filtering
-      return consGraph->addConstraints(vptr, this->getObjNode(),
-                                       Constraints::copy);
+      return consGraph->addConstraints(vptr, this->getObjNode(), Constraints::copy);
     }
 
     // using type metadata to do filtering on the vtable
     if (vtable->getName().equals(vtableName)) {
       // this is the right vtable
-      return consGraph->addConstraints(vptr, this->getObjNode(),
-                                       Constraints::copy);
+      return consGraph->addConstraints(vptr, this->getObjNode(), Constraints::copy);
     }
     // using
     return false;

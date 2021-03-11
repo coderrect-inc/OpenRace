@@ -53,18 +53,14 @@ class AndersenWave : public SolverBase<LangModel, AndersenWave<LangModel>> {
             CGNodeTy *node = *nit;
             super::processCopy(scc.front(), node);
 
-            for (auto cit = node->succ_copy_begin(),
-                      cie = node->succ_copy_end();
-                 cit != cie; cit++) {
+            for (auto cit = node->succ_copy_begin(), cie = node->succ_copy_end(); cit != cie; cit++) {
               super::processCopy(node, *cit);
             }
           }
         }
         // now handle the node at the front
         CGNodeTy *curNode = scc.front();
-        for (auto cit = curNode->succ_copy_begin(),
-                  cie = curNode->succ_copy_end();
-             cit != cie; cit++) {
+        for (auto cit = curNode->succ_copy_begin(), cie = curNode->succ_copy_end(); cit != cie; cit++) {
           super::processCopy(curNode, *cit);
         }
       }
@@ -74,20 +70,14 @@ class AndersenWave : public SolverBase<LangModel, AndersenWave<LangModel>> {
       for (NodeID id = 0; id < nodeNum; id++) {
         CGNodeTy *curNode = consGraph.getNode(id);
 
-        for (auto it = curNode->succ_load_begin(),
-                  ie = curNode->succ_load_end();
-             it != ie; it++) {
+        for (auto it = curNode->succ_load_begin(), ie = curNode->succ_load_end(); it != ie; it++) {
           changed |= super::processLoad(curNode, *it);
         }
 
-        for (auto it = curNode->succ_store_begin(),
-                  ie = curNode->succ_store_end();
-             it != ie; it++) {
+        for (auto it = curNode->succ_store_begin(), ie = curNode->succ_store_end(); it != ie; it++) {
           changed |= super::processStore(curNode, *it);
         }
-        for (auto it = curNode->succ_offset_begin(),
-                  ie = curNode->succ_offset_end();
-             it != ie; it++) {
+        for (auto it = curNode->succ_offset_begin(), ie = curNode->succ_offset_end(); it != ie; it++) {
           changed |= super::processOffset(curNode, *it);
         }
       }

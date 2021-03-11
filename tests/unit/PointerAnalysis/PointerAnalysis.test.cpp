@@ -26,8 +26,7 @@ class PTAVerificationPass : public llvm::ModulePass {
 
   static char ID;
   PTAVerificationPass() : llvm::ModulePass(ID) {
-    static_assert(std::is_same<typename Solver::ctx, NoCtx>::value &&
-                  "Only support context insensitive");
+    static_assert(std::is_same<typename Solver::ctx, NoCtx>::value && "Only support context insensitive");
   }
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
@@ -75,19 +74,16 @@ class PTAVerificationPass : public llvm::ModulePass {
 };
 
 char PTAVerificationPass::ID = 0;
-static llvm::RegisterPass<PointerAnalysisPass<Solver>> PAP(
-    "Pointer Analysis Wrapper Pass", "Pointer Analysis Wrapper Pass", true,
-    true);
+static llvm::RegisterPass<PointerAnalysisPass<Solver>> PAP("Pointer Analysis Wrapper Pass",
+                                                           "Pointer Analysis Wrapper Pass", true, true);
 
 }  // namespace
 
 // Globals needed by PTA
-cl::opt<bool> CONFIG_EXHAUST_MODE("full",
-                                  cl::desc("Use exhaustive detection mode"));
-cl::opt<size_t> MaxIndirectTarget(
-    "max-indirect-target", cl::init(999),
-    cl::desc("max number of indirect call target that can be resolved by "
-             "indirect call"));
+cl::opt<bool> CONFIG_EXHAUST_MODE("full", cl::desc("Use exhaustive detection mode"));
+cl::opt<size_t> MaxIndirectTarget("max-indirect-target", cl::init(999),
+                                  cl::desc("max number of indirect call target that can be resolved by "
+                                           "indirect call"));
 cl::opt<size_t> PTAAnonLimit("ptaanon", cl::init(999), cl::desc("anon"));
 
 bool DEBUG_PTA = false;
@@ -99,23 +95,16 @@ std::vector<std::string> CONFIG_INDIRECT_APIS;
 TEST_CASE("PointerAnalysis", "[unit][PointerAnalysis]") {
   const std::string prefix = "unit/PointerAnalysis/";
   auto file = GENERATE(
-      "array-constIdx.ll", "global-call-struct.ll", "spec-vortex.ll",
-      "array-varIdx2.ll", "global-call-twoparms.ll", "struct-array.ll",
-      "array-varIdx.ll", "global-const-struct.ll",
-      "struct-assignment-direct.ll", "branch-call.ll", "global-funptr.ll",
-      "struct-assignment-indirect.ll", "branch-intra.ll",
-      "global-initializer.ll", "struct-assignment-nested.ll", "CI-funptr.ll",
-      "global-nested-calls.ll", "struct-field-multi-dereference.ll",
-      "CI-global.ll", "global-simple.ll", "struct-instance-return.ll",
-      "CI-local.ll", "heap-indirect.ll", "struct-nested-1-layer.ll",
-      "constraint-cycle-copy.ll", "heap-linkedlist.ll",
-      "struct-nested-2-layers.ll", "constraint-cycle-field.ll",
-      "heap-wrapper.ll", "struct-nested-array1.ll", "constraint-cycle-pwc.ll",
-      "struct-nested-array2.ll", "field-ptr-arith-constIdx.ll",
-      "ptr-dereference2.ll", "struct-nested-array3.ll", "funptr-nested-call.ll",
-      "ptr-dereference3.ll", "struct-onefld.ll", "funptr-simple.ll",
-      "spec-equake.ll", "struct-simple.ll", "funptr-struct.ll", "spec-gap.ll",
-      "struct-twoflds.ll", "global-array.ll", "spec-mesa.ll",
+      "array-constIdx.ll", "global-call-struct.ll", "spec-vortex.ll", "array-varIdx2.ll", "global-call-twoparms.ll",
+      "struct-array.ll", "array-varIdx.ll", "global-const-struct.ll", "struct-assignment-direct.ll", "branch-call.ll",
+      "global-funptr.ll", "struct-assignment-indirect.ll", "branch-intra.ll", "global-initializer.ll",
+      "struct-assignment-nested.ll", "CI-funptr.ll", "global-nested-calls.ll", "struct-field-multi-dereference.ll",
+      "CI-global.ll", "global-simple.ll", "struct-instance-return.ll", "CI-local.ll", "heap-indirect.ll",
+      "struct-nested-1-layer.ll", "constraint-cycle-copy.ll", "heap-linkedlist.ll", "struct-nested-2-layers.ll",
+      "constraint-cycle-field.ll", "heap-wrapper.ll", "struct-nested-array1.ll", "constraint-cycle-pwc.ll",
+      "struct-nested-array2.ll", "field-ptr-arith-constIdx.ll", "ptr-dereference2.ll", "struct-nested-array3.ll",
+      "funptr-nested-call.ll", "ptr-dereference3.ll", "struct-onefld.ll", "funptr-simple.ll", "spec-equake.ll",
+      "struct-simple.ll", "funptr-struct.ll", "spec-gap.ll", "struct-twoflds.ll", "global-array.ll", "spec-mesa.ll",
       "global-call-noparam.ll", "spec-parser.ll");
   // TODO: this case fails so I removed it "mesa.ll",
 

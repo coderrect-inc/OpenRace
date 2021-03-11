@@ -36,27 +36,16 @@ class CGPtrNode : public CGNodeBase<ctx> {
   } u;
 
   // for anonymous ptrnode
-  explicit CGPtrNode(NodeID id)
-      : super(id, CGNodeKind::PtrNode), isAnonmyous(true) {
-    u.tag = nullptr;
-  }
+  explicit CGPtrNode(NodeID id) : super(id, CGNodeKind::PtrNode), isAnonmyous(true) { u.tag = nullptr; }
 
   // C++ does allow implicit conversion from void * to const T*, so we are good
   // here
-  CGPtrNode(PtrNodeTag *tag, NodeID id)
-      : super(id, CGNodeKind::PtrNode), isAnonmyous(true) {
-    u.tag = tag;
-  }
+  CGPtrNode(PtrNodeTag *tag, NodeID id) : super(id, CGNodeKind::PtrNode), isAnonmyous(true) { u.tag = tag; }
 
-  CGPtrNode(const T *ptr, NodeID id)
-      : super(id, CGNodeKind::PtrNode), isAnonmyous(false) {
-    u.ptr = ptr;
-  }
+  CGPtrNode(const T *ptr, NodeID id) : super(id, CGNodeKind::PtrNode), isAnonmyous(false) { u.ptr = ptr; }
 
  public:
-  static inline bool classof(const super *node) {
-    return node->getType() == CGNodeKind::PtrNode;
-  }
+  static inline bool classof(const super *node) { return node->getType() == CGNodeKind::PtrNode; }
 
   inline bool isAnonNode() const { return isAnonmyous; }
 

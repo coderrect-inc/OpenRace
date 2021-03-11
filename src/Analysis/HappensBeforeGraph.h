@@ -5,58 +5,58 @@
 namespace race {
 
 class HappensBeforeGraph {
-public:
-    // constructs an graph from the events currently stored in program
-    explicit HappensBeforeGraph(const ProgramTrace &program);
+ public:
+  // constructs an graph from the events currently stored in program
+  explicit HappensBeforeGraph(const ProgramTrace &program);
 
-    // return true if there is a happens before edge from src to dst
-    [[nodiscard]] bool canReach(const Event *src, const Event *dst) const;
+  // return true if there is a happens before edge from src to dst
+  [[nodiscard]] bool canReach(const Event *src, const Event *dst) const;
 
-    // return true if there is no happens-before edge from src->dst or dst->src
-    [[nodiscard]] inline bool areParallel(const Event *lhs, const Event *rhs) const {
-        return !canReach(lhs, rhs) && !canReach(rhs, lhs);
+  // return true if there is no happens-before edge from src->dst or dst->src
+  [[nodiscard]] inline bool areParallel(const Event *lhs, const Event *rhs) const {
+    return !canReach(lhs, rhs) && !canReach(rhs, lhs);
+  }
+
+ private:
+  // EventId unique across entire program
+  struct EventPID {
+    ThreadID tid;
+    EventID eid;
+
+    EventPID(ThreadID tid, EventID eid) : tid(tid), eid(eid) {}
+    explicit EventPID(const Event *event) : tid(event->getThread().id), eid(event->getID()) {}
+
+    bool operator<(const EventPID &other) const {
+      if (tid != other.tid) {
+        return tid < other.tid;
+      }
+      return eid < other.eid;
     }
+    bool operator==(const EventPID &other) const { return tid == other.tid && eid == other.eid; }
+    bool operator<=(const EventPID &other) const { return *this < other || *this == other; }
+  };
 
-private:
-    // EventId unique across entire program
-    struct EventPID {
-        ThreadID tid;
-        EventID eid;
+  std::map<EventPID, std::set<EventPID>> syncEdges;
+  // DSF on syncEdges to see if src can reach dst
+  [[nodiscard]] bool syncEdgesDFS(EventPID src, EventPID dst) const;
+  [[nodiscard]] bool hasEdge(EventPID src, EventPID dst) const;
 
-        EventPID(ThreadID tid, EventID eid) : tid(tid), eid(eid) {}
-        explicit EventPID(const Event *event) : tid(event->getThread().id), eid(event->getID()) {}
+  // Per-thread **SORTED** list of sync events
+  std::map<ThreadID, std::vector<EventPID>> threadSyncs;
+  // Add sync to threadSyncs keeping the list of sync events sorted
+  void addSync(const Event *syncEvent);
 
-        bool operator<(const EventPID &other) const {
-            if (tid != other.tid) {
-                return tid < other.tid;
-            }
-            return eid < other.eid;
-        }
-        bool operator==(const EventPID &other) const { return tid == other.tid && eid == other.eid; }
-        bool operator<=(const EventPID &other) const { return *this < other || *this == other; }
-    };
+  void addSyncEdge(const Event *src, const Event *dst);
 
-    std::map<EventPID, std::set<EventPID>> syncEdges;
-    // DSF on syncEdges to see if src can reach dst
-    [[nodiscard]] bool syncEdgesDFS(EventPID src, EventPID dst) const;
-    [[nodiscard]] bool hasEdge(EventPID src, EventPID dst) const;
+  // Return next sync on the same thread, or this event if it is a sync
+  [[nodiscard]] std::optional<EventPID> findNextSync(const Event *e) const;
+  [[nodiscard]] std::optional<EventPID> findNextSync(EventPID node) const;
 
-    // Per-thread **SORTED** list of sync events
-    std::map<ThreadID, std::vector<EventPID>> threadSyncs;
-    // Add sync to threadSyncs keeping the list of sync events sorted
-    void addSync(const Event *syncEvent);
+  // Return next sync on the same thread AFTER this event (will not return this event if it is sync)
+  [[nodiscard]] std::optional<EventPID> findNextSyncAfter(EventPID node) const;
 
-    void addSyncEdge(const Event *src, const Event *dst);
-
-    // Return next sync on the same thread, or this event if it is a sync
-    [[nodiscard]] std::optional<EventPID> findNextSync(const Event *e) const;
-    [[nodiscard]] std::optional<EventPID> findNextSync(EventPID node) const;
-
-    // Return next sync on the same thread AFTER this event (will not return this event if it is sync)
-    [[nodiscard]] std::optional<EventPID> findNextSyncAfter(EventPID node) const;
-
-    // Return previous sync on the same thread, or this event if it is a sync
-    [[nodiscard]] std::optional<EventPID> findPrevSync(const Event *e) const;
+  // Return previous sync on the same thread, or this event if it is a sync
+  [[nodiscard]] std::optional<EventPID> findPrevSync(const Event *e) const;
 };
 
 }  // namespace race

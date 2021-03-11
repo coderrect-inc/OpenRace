@@ -20,9 +20,8 @@ class HybridCtx {
 
  private:
   template <size_t... N>
-  static std::tuple<const Args *...> evolveInnerContext(
-      const HybridCtx<Args...> *prevCtx, const llvm::Instruction *I,
-      std::index_sequence<N...>) {
+  static std::tuple<const Args *...> evolveInnerContext(const HybridCtx<Args...> *prevCtx, const llvm::Instruction *I,
+                                                        std::index_sequence<N...>) {
     return {CtxTrait<Args>::contextEvolve(std::get<N>(prevCtx->ctx), I)...};
   }
 
@@ -30,8 +29,7 @@ class HybridCtx {
   explicit HybridCtx(const Args *...args) : ctx{args...} {}
 
   HybridCtx(const HybridCtx<Args...> *prevCtx, const llvm::Instruction *I)
-      : ctx(evolveInnerContext(prevCtx, I,
-                               std::index_sequence_for<Args...>{})) {}
+      : ctx(evolveInnerContext(prevCtx, I, std::index_sequence_for<Args...>{})) {}
 
   const std::tuple<const Args *...> &getContext() const { return ctx; }
 
@@ -55,8 +53,7 @@ struct CtxTrait<HybridCtx<Args...>> {
   static std::unordered_set<HybridCtx<Args...>> ctxSet;
 
  public:
-  static const HybridCtx<Args...> *contextEvolve(
-      const HybridCtx<Args...> *prevCtx, const llvm::Instruction *I) {
+  static const HybridCtx<Args...> *contextEvolve(const HybridCtx<Args...> *prevCtx, const llvm::Instruction *I) {
     auto result = ctxSet.emplace(prevCtx, I);
     return &*result.first;
   }
@@ -64,8 +61,7 @@ struct CtxTrait<HybridCtx<Args...>> {
   static const HybridCtx<Args...> *getInitialCtx() { return &initCtx; }
   static const HybridCtx<Args...> *getGlobalCtx() { return &globCtx; }
 
-  static std::string toString(const HybridCtx<Args...> *context,
-                              bool detailed = false) {
+  static std::string toString(const HybridCtx<Args...> *context, bool detailed = false) {
     if (context == &globCtx) return "<global>";
     if (context == &initCtx) return "<empty>";
 
@@ -76,12 +72,10 @@ struct CtxTrait<HybridCtx<Args...>> {
 };
 
 template <typename... Args>
-const HybridCtx<Args...> CtxTrait<HybridCtx<Args...>>::initCtx{
-    CtxTrait<Args>::getInitialCtx()...};
+const HybridCtx<Args...> CtxTrait<HybridCtx<Args...>>::initCtx{CtxTrait<Args>::getInitialCtx()...};
 
 template <typename... Args>
-const HybridCtx<Args...> CtxTrait<HybridCtx<Args...>>::globCtx{
-    CtxTrait<Args>::getGlobalCtx()...};
+const HybridCtx<Args...> CtxTrait<HybridCtx<Args...>>::globCtx{CtxTrait<Args>::getGlobalCtx()...};
 
 template <typename... Args>
 std::unordered_set<HybridCtx<Args...>> CtxTrait<HybridCtx<Args...>>::ctxSet{};
@@ -94,10 +88,8 @@ namespace std {
 template <typename... Args>
 struct hash<pta::HybridCtx<Args...>> {
   template <size_t... N>
-  size_t hash_tuple(const pta::HybridCtx<Args...> &wrapper,
-                    std::index_sequence<N...> sequence) const {
-    llvm::hash_code code =
-        llvm::hash_combine(((const void *)std::get<N>(wrapper.ctx))...);
+  size_t hash_tuple(const pta::HybridCtx<Args...> &wrapper, std::index_sequence<N...> sequence) const {
+    llvm::hash_code code = llvm::hash_combine(((const void *)std::get<N>(wrapper.ctx))...);
     return hash_value(code);
   }
 

@@ -17,21 +17,19 @@ namespace pta {
 // after resolving the indirect call, do not traverse the whole
 // constraint graph again, instead, we only solve the newly resolved
 template <typename LangModel>
-class PartialUpdateSolver
-    : public SolverBase<LangModel, PartialUpdateSolver<LangModel>> {
+class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<LangModel>> {
  public:
   using super = SolverBase<LangModel, PartialUpdateSolver<LangModel>>;
   using Self = PartialUpdateSolver<LangModel>;
-  using PT = typename super::PT;        // points to set trait
-  using LMT = typename super::LMT;      // language model trait
-  using MMT = typename super::MMT;      // memory model trait
-  using ctx = typename super::ctx;      // context
-  using ObjTy = typename super::ObjTy;  // object type used by memory model
-  using PtsTy = typename super::PtsTy;  // points-to set type
-  using MemModel = typename super::MemModel;  // memory model used by the PTA
-  using CGNodeTy = typename super::CGNodeTy;  // constraint graph node type
-  using ObjNodeTy =
-      typename super::ObjNodeTy;  // object constraint graph node type
+  using PT = typename super::PT;                // points to set trait
+  using LMT = typename super::LMT;              // language model trait
+  using MMT = typename super::MMT;              // memory model trait
+  using ctx = typename super::ctx;              // context
+  using ObjTy = typename super::ObjTy;          // object type used by memory model
+  using PtsTy = typename super::PtsTy;          // points-to set type
+  using MemModel = typename super::MemModel;    // memory model used by the PTA
+  using CGNodeTy = typename super::CGNodeTy;    // constraint graph node type
+  using ObjNodeTy = typename super::ObjNodeTy;  // object constraint graph node type
   using PtrNodeTy = typename super::PtrNodeTy;
   using CallNodeTy = typename super::CallNodeTy;
   using CallGraphTy = typename super::CallGraphTy;  // call graph type
@@ -45,8 +43,7 @@ class PartialUpdateSolver
    public:
     CallBack(Self &solver, size_t nodeNum) : solver(solver), nodeNum(nodeNum) {}
 
-    void onNewConstraint(CGNodeTy *src, CGNodeTy *dst,
-                         Constraints constraint) override {
+    void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
       switch (constraint) {
         // copy between globals / parameter passing
         case Constraints::copy: {
@@ -59,34 +56,27 @@ class PartialUpdateSolver
         case Constraints::offset: {
           // offset from globals
           if (src->getNodeID() < nodeNum) {
-            solver.processOffset(
-                src, dst, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
+            solver.processOffset(src, dst, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
 #ifdef NO_ADDR_OF_FOR_OFFSET
-                  solver.consGraph->addConstraints(fieldObj, ptr,
-                                                   Constraints::addr_of);
+              solver.consGraph->addConstraints(fieldObj, ptr, Constraints::addr_of);
 #endif
-                  auto addrNode =
-                      llvm::cast<ObjNodeTy>(fieldObj)->getAddrTakenNode();
-                  solver.recordCopyEdge(addrNode, ptr);
-                });
+              auto addrNode = llvm::cast<ObjNodeTy>(fieldObj)->getAddrTakenNode();
+              solver.recordCopyEdge(addrNode, ptr);
+            });
           }
           break;
         }
         case Constraints::load: {
           // load from global
           if (src->getNodeID() < nodeNum) {
-            solver.processLoad(src, dst, [&](CGNodeTy *src, CGNodeTy *dst) {
-              solver.recordCopyEdge(src, dst);
-            });
+            solver.processLoad(src, dst, [&](CGNodeTy *src, CGNodeTy *dst) { solver.recordCopyEdge(src, dst); });
           }
           break;
         }
         case Constraints::store: {
           // store into global
           if (dst->getNodeID() < nodeNum) {
-            solver.processStore(src, dst, [&](CGNodeTy *src, CGNodeTy *dst) {
-              solver.recordCopyEdge(src, dst);
-            });
+            solver.processStore(src, dst, [&](CGNodeTy *src, CGNodeTy *dst) { solver.recordCopyEdge(src, dst); });
           }
           break;
         }
@@ -139,9 +129,7 @@ class PartialUpdateSolver
       this->updateFunPtr(superNode->getNodeID());
     }
 
-    for (auto cit = superNode->succ_copy_begin(),
-              cie = superNode->succ_copy_end();
-         cit != cie; cit++) {
+    for (auto cit = superNode->succ_copy_begin(), cie = superNode->succ_copy_end(); cit != cie; cit++) {
       if (super::processCopy(superNode, *cit)) {
         // the copy edge changed the pts of src
         // changedCopy.set(hashEdge(superNode, *cit));
@@ -164,11 +152,7 @@ class PartialUpdateSolver
   // llvm::BitVector changedCopy;
 
  public:
-  PartialUpdateSolver()
-      : requiredEdge(HASH_EDGE_LIMIT),
-        copyWorkList(),
-        lsWorkList(),
-        targetList() {}
+  PartialUpdateSolver() : requiredEdge(HASH_EDGE_LIMIT), copyWorkList(), lsWorkList(), targetList() {}
 
  protected:
   inline size_t hashEdge(CGNodeTy *src, CGNodeTy *dst) {
@@ -201,10 +185,8 @@ class PartialUpdateSolver
 
       // first do SCC detection and topo-sort
       // load/store/offset can create new copy constraint to be handled
-      auto copy_it =
-          scc_begin<ctx, Constraints::copy, false>(consGraph, copyWorkList);
-      auto copy_ie =
-          scc_end<ctx, Constraints::copy, false>(consGraph, copyWorkList);
+      auto copy_it = scc_begin<ctx, Constraints::copy, false>(consGraph, copyWorkList);
+      auto copy_ie = scc_end<ctx, Constraints::copy, false>(consGraph, copyWorkList);
 
       for (; copy_it != copy_ie; ++copy_it) {
         copySCCStack.push(*copy_it);
@@ -226,9 +208,7 @@ class PartialUpdateSolver
           processCopySCC(scc);
         } else {
           CGNodeTy *curNode = scc.front();
-          for (auto cit = curNode->succ_copy_begin(),
-                    cie = curNode->succ_copy_end();
-               cit != cie; cit++) {
+          for (auto cit = curNode->succ_copy_begin(), cie = curNode->succ_copy_end(); cit != cie; cit++) {
             if (shouldProcessCopy(curNode, *cit)) {
               if (super::processCopy(curNode, *cit)) {
                 // changedCopy.set(hashEdge(curNode, *cit));
@@ -253,41 +233,25 @@ class PartialUpdateSolver
       while (lastID >= 0) {
         CGNodeTy *curNode = consGraph.getNode(lastID);
 
-        for (auto it = curNode->pred_store_begin(),
-                  ie = curNode->pred_store_end();
-             it != ie; it++) {
-          super::processStore(*it, curNode, [&](CGNodeTy *src, CGNodeTy *dst) {
-            recordCopyEdge(src, dst);
-          });
+        for (auto it = curNode->pred_store_begin(), ie = curNode->pred_store_end(); it != ie; it++) {
+          super::processStore(*it, curNode, [&](CGNodeTy *src, CGNodeTy *dst) { recordCopyEdge(src, dst); });
         }
 
-        for (auto it = curNode->succ_load_begin(),
-                  ie = curNode->succ_load_end();
-             it != ie; it++) {
-          super::processLoad(curNode, *it, [&](CGNodeTy *src, CGNodeTy *dst) {
-            recordCopyEdge(src, dst);
-          });
+        for (auto it = curNode->succ_load_begin(), ie = curNode->succ_load_end(); it != ie; it++) {
+          super::processLoad(curNode, *it, [&](CGNodeTy *src, CGNodeTy *dst) { recordCopyEdge(src, dst); });
         }
 
         // to handled special constraints
-        for (auto it = curNode->succ_special_begin(),
-                  ie = curNode->succ_special_end();
-             it != ie; it++) {
-          super::processSpecial(
-              curNode, *it,
-              [&](CGNodeTy *src, CGNodeTy *dst) { recordCopyEdge(src, dst); });
+        for (auto it = curNode->succ_special_begin(), ie = curNode->succ_special_end(); it != ie; it++) {
+          super::processSpecial(curNode, *it, [&](CGNodeTy *src, CGNodeTy *dst) { recordCopyEdge(src, dst); });
         }
 
 #ifndef NO_ADDR_OF_FOR_OFFSET
-        for (auto it = curNode->succ_offset_begin(),
-                  ie = curNode->succ_offset_end();
-             it != ie; it++) {
-          super::processOffset(
-              curNode, *it, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
-                auto addrNode =
-                    llvm::cast<ObjNodeTy>(fieldObj)->getAddrTakenNode();
-                recordCopyEdge(addrNode, ptr);
-              });
+        for (auto it = curNode->succ_offset_begin(), ie = curNode->succ_offset_end(); it != ie; it++) {
+          super::processOffset(curNode, *it, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
+            auto addrNode = llvm::cast<ObjNodeTy>(fieldObj)->getAddrTakenNode();
+            recordCopyEdge(addrNode, ptr);
+          });
         }
 #endif
         lastID = lsWorkList.find_next_unset(lastID);
@@ -308,22 +272,18 @@ class PartialUpdateSolver
       while (lastID >= 0) {
         CGNodeTy *curNode = consGraph.getNode(lastID);
 
-        for (auto it = curNode->succ_offset_begin(),
-                  ie = curNode->succ_offset_end();
-             it != ie; it++) {
-          super::processOffset(
-              curNode, *it, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
-                assert(ptr->getNodeID() < targetList.size());
-                // targetList.reset(ptr->getNodeID());
-                PT::insert(ptr->getNodeID(),
-                           llvm::cast<ObjNodeTy>(fieldObj)->getObjectID());
+        for (auto it = curNode->succ_offset_begin(), ie = curNode->succ_offset_end(); it != ie; it++) {
+          super::processOffset(curNode, *it, [&](CGNodeTy *fieldObj, CGNodeTy *ptr) {
+            assert(ptr->getNodeID() < targetList.size());
+            // targetList.reset(ptr->getNodeID());
+            PT::insert(ptr->getNodeID(), llvm::cast<ObjNodeTy>(fieldObj)->getObjectID());
 
-                // ensure that ptr is visited by SCCIterator
-                copyWorkList.reset(ptr->getNodeID());
-                // the pts of ptr has been updated, so need to be revisted by
-                // load/store
-                lsWorkList.reset(ptr->getNodeID());
-              });
+            // ensure that ptr is visited by SCCIterator
+            copyWorkList.reset(ptr->getNodeID());
+            // the pts of ptr has been updated, so need to be revisted by
+            // load/store
+            lsWorkList.reset(ptr->getNodeID());
+          });
         }
         lastID = tmpWorklist.find_next_unset(lastID);
       }
@@ -353,8 +313,7 @@ class PartialUpdateSolver
       // size = {}, rate={}", requiredEdge.count(), requiredEdge.size(),
       //           ((float)requiredEdge.count()) / requiredEdge.size());
 
-      LOG_DEBUG("PTA Iteration No: {} - nodes: {}", numOfPTAIterations++,
-                this->getConsGraph()->getNodeNum());
+      LOG_DEBUG("PTA Iteration No: {} - nodes: {}", numOfPTAIterations++, this->getConsGraph()->getNodeNum());
     } while (!copyWorkList.all());
   }
 
@@ -372,10 +331,8 @@ class PartialUpdateSolver
     bool reanalyze;
     do {
       if (DEBUG_PTA)
-        llvm::outs()
-            << "pta_round: " << (++pta_round)
-            << " nodes: " << super::getConsGraph()->getNodeNum()
-            << "\n";  //<<" edges: "<<super::getConsGraph()->getEdgeNum()<<"\n";
+        llvm::outs() << "pta_round: " << (++pta_round) << " nodes: " << super::getConsGraph()->getNodeNum()
+                     << "\n";  //<<" edges: "<<super::getConsGraph()->getEdgeNum()<<"\n";
       // after this, the current contraints graph will reach fixed point.
       this->runSolver(*super::getLangModel());
 

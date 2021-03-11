@@ -49,8 +49,7 @@ static bool splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) {
   // the queue that stores all the constant indices
   std::vector<Value *> consIndices;
   std::vector<GetElementPtrInst *> erasedGEP;
-  ConstantInt *zero =
-      ConstantInt::get(IntegerType::getInt32Ty(F.getContext()), 0);
+  ConstantInt *zero = ConstantInt::get(IntegerType::getInt32Ty(F.getContext()), 0);
 
   // 2nd, split instructions with that uses variable to index
   for (auto &BB : F) {
@@ -71,8 +70,7 @@ static bool splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) {
           // since we skip the first index, we now start from gep 0,
           consIndices.push_back(zero);
           GTI++;
-        } else if (auto *idx = cast<Constant>(GTI.getOperand());
-                   !idx->isZeroValue()) {
+        } else if (auto *idx = cast<Constant>(GTI.getOperand()); !idx->isZeroValue()) {
           // the first index is constant, but is not a zero
           // getelementptr %ptr, 4, %idx1, ...
           lastBasePtr = builder.CreateGEP(lastBasePtr, idx);
@@ -148,6 +146,5 @@ bool CanonicalizeGEPPass::runOnFunction(Function &F) {
 }
 
 char CanonicalizeGEPPass::ID = 0;
-static RegisterPass<CanonicalizeGEPPass> CIP(
-    "", "Canonicalize GetElementPtr instruction", true, /*CFG only*/
-    false /*is analysis*/);
+static RegisterPass<CanonicalizeGEPPass> CIP("", "Canonicalize GetElementPtr instruction", true, /*CFG only*/
+                                             false /*is analysis*/);

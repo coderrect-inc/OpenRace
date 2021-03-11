@@ -17,8 +17,7 @@ class RingBufferIterator {
   uint32_t index;
 
  public:
-  RingBufferIterator(const PtrRingBuffer<PtrT, N> *buffer, uint32_t index)
-      : buffer(buffer), index(index){};
+  RingBufferIterator(const PtrRingBuffer<PtrT, N> *buffer, uint32_t index) : buffer(buffer), index(index){};
 
   RingBufferIterator<PtrT, N> &operator++() {
     if ((index + 1) % N == buffer->last) {
@@ -42,13 +41,9 @@ class RingBufferIterator {
 
   PtrT *operator*() const { return (*buffer)[index]; }
 
-  bool operator==(RingBufferIterator<PtrT, N> &rhs) {
-    return this->index == rhs.index && this->buffer == rhs.buffer;
-  }
+  bool operator==(RingBufferIterator<PtrT, N> &rhs) { return this->index == rhs.index && this->buffer == rhs.buffer; }
 
-  bool operator!=(RingBufferIterator<PtrT, N> &rhs) {
-    return !this->operator==(rhs);
-  }
+  bool operator!=(RingBufferIterator<PtrT, N> &rhs) { return !this->operator==(rhs); }
 };
 
 // ring buffer that stores pointers with fixed N size

@@ -21,8 +21,7 @@ class PointerAnalysisPass : public llvm::ImmutablePass {
 
   void analyze(llvm::Module *M, llvm::StringRef entry = "cr_main") {
     if (solver.get() != nullptr) {
-      if (solver->getLLVMModule() == M &&
-          entry.equals(solver->getEntryName())) {
+      if (solver->getLLVMModule() == M && entry.equals(solver->getEntryName())) {
         return;
       }
     }
@@ -38,8 +37,7 @@ class PointerAnalysisPass : public llvm::ImmutablePass {
   }
 
   Solver *getPTA() const {
-    assert(solver.get() != nullptr &&
-           "call analyze() before getting the pta instance");
+    assert(solver.get() != nullptr && "call analyze() before getting the pta instance");
     return solver.get();
   }
 

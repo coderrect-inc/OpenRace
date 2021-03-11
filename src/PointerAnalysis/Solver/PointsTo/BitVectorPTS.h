@@ -54,9 +54,7 @@ class BitVectorPTS {
     }
 
     bool r = ptsVec[src] |= ptsVec[dst];
-    assert(ptsVec[src].find_last() < 0
-               ? true
-               : ptsVec[src].find_last() < ptsVec.size());
+    assert(ptsVec[src].find_last() < 0 ? true : ptsVec[src].find_last() < ptsVec.size());
     return r;
   }
 
@@ -66,8 +64,7 @@ class BitVectorPTS {
     return ptsVec[src].intersects(ptsVec[dst]);
   }
 
-  [[nodiscard]] static inline bool intersectWithNoSpecialNode(NodeID src,
-                                                              NodeID dst) {
+  [[nodiscard]] static inline bool intersectWithNoSpecialNode(NodeID src, NodeID dst) {
     assert(src < ptsVec.size() && dst < ptsVec.size());
     auto result = ptsVec[src] & ptsVec[dst];
 
@@ -137,8 +134,7 @@ class BitVectorPTS {
   }
 
   static inline const PtsTy& getPointedBy(NodeID id) {
-    llvm_unreachable(
-        "not supported by BitVectorPTS, use PointedByPts instead ");
+    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead ");
   }
 
   // TODO: simply traverse the whole points-to information to gather the

@@ -21,16 +21,11 @@ using NoCtx = std::nullptr_t;
 template <>
 struct CtxTrait<NoCtx> {
   // No runtime overhead when
-  constexpr static const NoCtx* contextEvolve(const NoCtx*,
-                                              const llvm::Instruction*) {
-    return nullptr;
-  }
+  constexpr static const NoCtx* contextEvolve(const NoCtx*, const llvm::Instruction*) { return nullptr; }
   constexpr static const NoCtx* getInitialCtx() { return nullptr; }
   constexpr static const NoCtx* getGlobalCtx() { return nullptr; }
 
-  inline static std::string toString(const NoCtx*, bool detailed = false) {
-    return "<Empty>";
-  }
+  inline static std::string toString(const NoCtx*, bool detailed = false) { return "<Empty>"; }
   inline static void release(){};
 };
 

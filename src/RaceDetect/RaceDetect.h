@@ -28,12 +28,10 @@ Report detectRaces(llvm::Module *module) {
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
 
-  auto checkRace = [&](const race::WriteEvent *write,
-                       const race::MemAccessEvent *other) {
-    if (happensbefore.areParallel(write, other) &&
-        !lockset.sharesLock(write, other)) {
-      llvm::outs() << "Race between:\n\t" << *write->getIRInst()->getInst()
-                   << "\n\t" << *other->getIRInst()->getInst() << "\n";
+  auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
+    if (happensbefore.areParallel(write, other) && !lockset.sharesLock(write, other)) {
+      llvm::outs() << "Race between:\n\t" << *write->getIRInst()->getInst() << "\n\t" << *other->getIRInst()->getInst()
+                   << "\n";
       reporter.collect(write, other);
     }
   };
@@ -42,8 +40,7 @@ Report detectRaces(llvm::Module *module) {
     auto threadedWrites = sharedmem.getThreadedWrites(sharedObj);
     auto threadedReads = sharedmem.getThreadedReads(sharedObj);
 
-    for (auto it = threadedWrites.begin(), end = threadedWrites.end();
-         it != end; ++it) {
+    for (auto it = threadedWrites.begin(), end = threadedWrites.end(); it != end; ++it) {
       auto const wtid = it->first;
       auto const writes = it->second;
       // check Read/Write race

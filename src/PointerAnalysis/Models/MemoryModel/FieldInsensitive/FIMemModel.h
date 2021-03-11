@@ -42,8 +42,7 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
   ObjNode *uniObjNode = nullptr;
 
   template <typename PT>
-  inline ObjNode *createNode(const ctx *C, const llvm::Value *V,
-                             const AllocKind type) {
+  inline ObjNode *createNode(const ctx *C, const llvm::Value *V, const AllocKind type) {
     const FIObject<ctx> *obj = this->create(C, V, type);
     auto ret = consGraph.template addCGNode<ObjNode, PT>(obj);
     const_cast<FIObject<ctx> *>(obj)->setObjNode(ret);
@@ -60,27 +59,21 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
   template <typename PT>
   inline ObjNode *allocNullObj(const llvm::Module *module) {
     assert(!nullObjNode);
-    auto v = llvm::ConstantPointerNull::get(
-        llvm::Type::getInt8PtrTy(module->getContext()));
-    return this->template createNode<PT>(CT::getGlobalCtx(), v,
-                                         AllocKind::Null);
+    auto v = llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(module->getContext()));
+    return this->template createNode<PT>(CT::getGlobalCtx(), v, AllocKind::Null);
   }
 
   template <typename PT>
   inline ObjNode *allocUniObj(const llvm::Module *module) {
     assert(!uniObjNode);
-    auto v =
-        llvm::UndefValue::get(llvm::Type::getInt8PtrTy(module->getContext()));
-    return this->template createNode<PT>(CT::getGlobalCtx(), v,
-                                         AllocKind::Universal);
+    auto v = llvm::UndefValue::get(llvm::Type::getInt8PtrTy(module->getContext()));
+    return this->template createNode<PT>(CT::getGlobalCtx(), v, AllocKind::Universal);
   }
 
   template <typename PT>
-  inline void handleMemCpy(const ctx *C, const llvm::MemCpyInst *memCpy,
-                           PtrNode *src, PtrNode *dst) {
+  inline void handleMemCpy(const ctx *C, const llvm::MemCpyInst *memCpy, PtrNode *src, PtrNode *dst) {
     // a temporal node
-    ObjNode *memCpyNode =
-        this->template createNode<PT>(C, memCpy, AllocKind::Anonymous);
+    ObjNode *memCpyNode = this->template createNode<PT>(C, memCpy, AllocKind::Anonymous);
     // a MemCpy => <src>--load--><tmp>--store--><dst>;
     consGraph.addConstraints(src, memCpyNode, Constraints::load);
     consGraph.addConstraints(memCpyNode, dst, Constraints::store);
@@ -93,14 +86,12 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
 
   template <typename PT>
   inline ObjNode *allocFunction(const llvm::Function *f) {
-    return this->template createNode<PT>(CT::getGlobalCtx(), f,
-                                         AllocKind::Functions);
+    return this->template createNode<PT>(CT::getGlobalCtx(), f, AllocKind::Functions);
   }
 
   template <typename PT>
   inline ObjNode *allocGlobalVariable(const llvm::GlobalVariable *g) {
-    return this->template createNode<PT>(CT::getGlobalCtx(), g,
-                                         AllocKind::Globals);
+    return this->template createNode<PT>(CT::getGlobalCtx(), g, AllocKind::Globals);
   }
 
   template <typename PT>
@@ -109,8 +100,7 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
   }
 
   template <typename PT>
-  inline void processScalarGlobals(const llvm::GlobalVariable *gVar,
-                                   const llvm::Constant *C) {
+  inline void processScalarGlobals(const llvm::GlobalVariable *gVar, const llvm::Constant *C) {
     if (llvm::isa<llvm::PointerType>(C->getType())) {
       // strip the offset+alias
       auto value = Canonicalizer::canonicalize(C);
@@ -125,23 +115,19 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
   }
 
   template <typename PT>
-  inline void processAggregateGlobals(const llvm::GlobalVariable *gVar,
-                                      const llvm::Constant *c) {
-    assert(llvm::isa<llvm::ConstantArray>(c) ||
-           llvm::isa<llvm::ConstantDataSequential>(c) ||
+  inline void processAggregateGlobals(const llvm::GlobalVariable *gVar, const llvm::Constant *c) {
+    assert(llvm::isa<llvm::ConstantArray>(c) || llvm::isa<llvm::ConstantDataSequential>(c) ||
            llvm::isa<llvm::ConstantStruct>(c));
     // field-insensitive
     for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i) {
       // every field in the object are copied to the starting address of
       // their parents.
-      processInitializer<PT>(gVar,
-                             llvm::cast<llvm::Constant>(c->getOperand(i)));
+      processInitializer<PT>(gVar, llvm::cast<llvm::Constant>(c->getOperand(i)));
     }
   }
 
   template <typename PT>
-  void processInitializer(const llvm::GlobalVariable *gVar,
-                          const llvm::Constant *initializer) {
+  void processInitializer(const llvm::GlobalVariable *gVar, const llvm::Constant *initializer) {
     if (initializer->isNullValue()) {
       // skip zero initializer ? does it matter?
       // if so, simply link it to null obj
@@ -153,8 +139,7 @@ class FIMemModel : public SingleInstanceOwner<FIObject<ctx>> {
   }
 
   template <typename PT>
-  void initializeGlobal(const llvm::GlobalVariable *gVar,
-                        const llvm::DataLayout &DL) {
+  void initializeGlobal(const llvm::GlobalVariable *gVar, const llvm::DataLayout &DL) {
     if (gVar->hasInitializer()) {
       processInitializer<PT>(gVar, gVar->getInitializer());
     } else {

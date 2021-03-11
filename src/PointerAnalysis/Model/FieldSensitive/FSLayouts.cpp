@@ -19,8 +19,7 @@ using namespace std;
 
 namespace pta {
 
-static size_t indexBetweenArrays(const std::map<size_t, ArrayLayout *> &arrays,
-                                 size_t &pOffset) {
+static size_t indexBetweenArrays(const std::map<size_t, ArrayLayout *> &arrays, size_t &pOffset) {
   size_t lOffset = 0;
   size_t curOffset = 0;
   for (auto arrayPair : arrays) {
@@ -77,8 +76,7 @@ size_t MemLayout::indexPhysicalOffset(size_t &pOffset) const {
 }
 
 // merge a sub-layout into current memory layout
-void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset,
-                                  size_t lOffset) {
+void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, size_t lOffset) {
   for (auto elem : subLayout->elementLayout) {
     elementLayout.set(elem + lOffset);
   }
@@ -98,8 +96,7 @@ void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset,
     subArrays.begin()->second->mergeSubArrays(subLayout->subArrays, 0);
   } else {
     for (auto subArray : subLayout->subArrays) {
-      subArrays.insert(
-          std::make_pair(subArray.first + pOffset, subArray.second));
+      subArrays.insert(std::make_pair(subArray.first + pOffset, subArray.second));
     }
   }
 }
@@ -116,11 +113,9 @@ size_t ArrayLayout::indexPhysicalOffset(size_t &pOffset) const {
   }
 }
 
-static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members,
-                           size_t pOffset, vector<StringRef> &pathVec) {
+static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members, size_t pOffset, vector<StringRef> &pathVec) {
   for (auto member : members) {
-    if (pOffset >= member->getOffsetInBits() &&
-        pOffset < member->getOffsetInBits() + getDISize(member)) {
+    if (pOffset >= member->getOffsetInBits() && pOffset < member->getOffsetInBits() + getDISize(member)) {
       // this is the member!
       if (!member->getName().empty()) {
         pathVec.push_back(member->getName());
@@ -129,17 +124,14 @@ static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members,
       auto baseType = getBaseType(member);  // member->getBaseType();
       while (baseType->getTag() == dwarf::DW_TAG_array_type) {
         // strip off arrays
-        baseType =
-            getBaseType(cast<DICompositeType>(baseType));  //->getBaseType();
+        baseType = getBaseType(cast<DICompositeType>(baseType));  //->getBaseType();
       }
 
       if (auto CompositebaseType = dyn_cast<DICompositeType>(baseType)) {
-        if (baseType->getTag() == dwarf::DW_TAG_structure_type ||
-            baseType->getTag() == dwarf::DW_TAG_class_type) {
-          getPathNameVec(
-              getNonStaticDataMember(CompositebaseType),
-              pOffset - member->getOffsetInBits(),  // update the offset
-              pathVec);
+        if (baseType->getTag() == dwarf::DW_TAG_structure_type || baseType->getTag() == dwarf::DW_TAG_class_type) {
+          getPathNameVec(getNonStaticDataMember(CompositebaseType),
+                         pOffset - member->getOffsetInBits(),  // update the offset
+                         pathVec);
         }
         // unhandled: DW_TAG_enumeration_type, DW_TAG_union_type
         return;
@@ -162,8 +154,7 @@ static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members,
 }
 
 // NOTE: this might be expensive! call it with caution
-std::string MemLayout::getFieldAccessPath(
-    const Module *M, size_t pOffset, const llvm::StringRef separator) const {
+std::string MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const llvm::StringRef separator) const {
   if (M == nullptr) {
     return "";
   }

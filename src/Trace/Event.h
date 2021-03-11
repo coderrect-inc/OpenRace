@@ -26,9 +26,7 @@ class Event {
   [[nodiscard]] virtual const pta::ctx *getContext() const = 0;
   [[nodiscard]] virtual const ThreadTrace &getThread() const = 0;
   [[nodiscard]] virtual const race::StmtInfo *getIRInst() const = 0;
-  [[nodiscard]] virtual const llvm::Instruction *getInst() const {
-    return getIRInst()->getInst();
-  }
+  [[nodiscard]] virtual const llvm::Instruction *getInst() const { return getIRInst()->getInst(); }
   virtual void print(llvm::raw_ostream &os) const = 0;
 
  protected:
@@ -41,13 +39,10 @@ class MemAccessEvent : public Event {
 
  public:
   [[nodiscard]] const race::MemAccessInfo *getIRInst() const override = 0;
-  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getAccessedMemory()
-      const = 0;
+  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getAccessedMemory() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Read || e->type == Type::Write;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Read || e->type == Type::Write; }
 };
 
 class ReadEvent : public MemAccessEvent {
@@ -58,9 +53,7 @@ class ReadEvent : public MemAccessEvent {
   [[nodiscard]] inline const race::ReadInfo *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Read;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Read; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -73,9 +66,7 @@ class WriteEvent : public MemAccessEvent {
   [[nodiscard]] inline const race::WriteInfo *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Write;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Write; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -85,17 +76,13 @@ class ForkEvent : public Event {
   ForkEvent() : Event(Type::Fork) {}
 
  public:
-  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle()
-      const = 0;
-  [[nodiscard]] virtual std::vector<const pta::CallGraphNodeTy *>
-  getThreadEntry() const = 0;
+  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
+  [[nodiscard]] virtual std::vector<const pta::CallGraphNodeTy *> getThreadEntry() const = 0;
 
   [[nodiscard]] inline const race::ForkInfo *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Fork;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Fork; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -105,17 +92,14 @@ class JoinEvent : public Event {
   JoinEvent() : Event(Type::Join) {}
 
  public:
-  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle()
-      const = 0;
+  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
 
   [[nodiscard]] inline const race::JoinInfo *getIRInst() const override = 0;
 
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Join;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Join; }
 };
 
 class LockEvent : public Event {
@@ -127,9 +111,7 @@ class LockEvent : public Event {
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getLockObj() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Lock;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Lock; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -143,9 +125,7 @@ class UnlockEvent : public Event {
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getLockObj() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Unlock;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Unlock; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -159,9 +139,7 @@ class EnterCallEvent : public Event {
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::Call;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Call; }
 
   void print(llvm::raw_ostream &os) const override;
 };
@@ -175,9 +153,7 @@ class LeaveCallEvent : public Event {
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  [[nodiscard]] static inline bool classof(const Event *e) {
-    return e->type == Type::CallEnd;
-  }
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::CallEnd; }
 
   void print(llvm::raw_ostream &os) const override;
 };

@@ -36,15 +36,13 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     this->consGraph = CG;
 
     // create null ptr node
-    const llvm::Value *nullValue =
-        llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(context));
+    const llvm::Value *nullValue = llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(context));
     auto nullPtr = this->create(CT::getGlobalCtx(), nullValue);
     nullPtrNode = consGraph->template addCGNode<PtrNode, PT>(nullPtr);
     const_cast<Pointer<ctx> *>(nullPtr)->setPtrNode(nullPtrNode);
 
     // create universal ptr node
-    const llvm::Value *uniValue =
-        llvm::UndefValue::get(llvm::Type::getInt8PtrTy(context));
+    const llvm::Value *uniValue = llvm::UndefValue::get(llvm::Type::getInt8PtrTy(context));
     auto uniPtr = this->create(CT::getGlobalCtx(), uniValue);
     uniPtrNode = consGraph->template addCGNode<PtrNode, PT>(uniPtr);
     const_cast<Pointer<ctx> *>(uniPtr)->setPtrNode(uniPtrNode);
@@ -53,9 +51,7 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
  public:
   // return map does not managed by singleinstanceowner as it may conflict
   // with function pointers (when initialCtx and globalCtx are the same)
-  std::unordered_map<std::pair<const ctx *, const llvm::Function *>,
-                     Pointer<ctx>>
-      retPtrMap;
+  std::unordered_map<std::pair<const ctx *, const llvm::Function *>, Pointer<ctx>> retPtrMap;
   //    an anonoymous pointer but can be indexed
   //    std::unordered_map<std::pair<const ctx *, const void *>, PtrNode *>
   //    taggedAnonPtrMap;
@@ -65,10 +61,9 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
 
   template <typename PT>
   inline PtrNode *createRetNode(const CtxFunction<ctx> *fun) {
-    auto result = retPtrMap.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(fun->getContext(), fun->getFunction()),
-        std::forward_as_tuple(fun->getContext(), fun->getFunction()));
+    auto result =
+        retPtrMap.emplace(std::piecewise_construct, std::forward_as_tuple(fun->getContext(), fun->getFunction()),
+                          std::forward_as_tuple(fun->getContext(), fun->getFunction()));
 
     assert(result.second);
     auto retPtr = &result.first->second;
@@ -77,8 +72,7 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     retPtr->setPtrNode(ret);
 
     if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createRetNode: " << ret->getNodeID()
-                   << " fun: " << fun->getFunction()->getName()
+      llvm::outs() << "createRetNode: " << ret->getNodeID() << " fun: " << fun->getFunction()->getName()
                    << "\n";  // JEFF
     } else if (DEBUG_PTA)
       llvm::outs() << "createRetNode: " << ret->getNodeID() << "\n";
@@ -177,8 +171,7 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
       auto ret = consGraph->template addCGNode<PtrNode, PT>(ptr);
       const_cast<Pointer<ctx> *>(ptr)->setPtrNode(ret);
       if (DEBUG_PTA_VERBOSE) {
-        llvm::outs() << "getOrCreatePtrNode: " << ret->getNodeID()
-                     << " value: " << *V << "\n";  // JEFF
+        llvm::outs() << "getOrCreatePtrNode: " << ret->getNodeID() << " value: " << *V << "\n";  // JEFF
       } else if (DEBUG_PTA)
         llvm::outs() << "getOrCreatePtrNode: " << ret->getNodeID() << "\n";
     }
@@ -203,8 +196,7 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     const_cast<Pointer<ctx> *>(ptr)->setPtrNode(ret);
 
     if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createPtrNode: " << ret->getNodeID() << " value: " << *V
-                   << "\n";  // JEFF
+      llvm::outs() << "createPtrNode: " << ret->getNodeID() << " value: " << *V << "\n";  // JEFF
     } else if (DEBUG_PTA)
       llvm::outs() << "createPtrNode: " << ret->getNodeID() << "\n";
 

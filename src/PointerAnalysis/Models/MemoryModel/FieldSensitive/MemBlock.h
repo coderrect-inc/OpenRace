@@ -34,11 +34,9 @@ class ScalarMemBlock;
 template <typename ctx>
 class AggregateMemBlock;
 
-size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP,
-                      const llvm::DataLayout &DL);
+size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout &DL);
 
-bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap,
-                          size_t pOffset, size_t elementSize);
+bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize);
 
 enum class MemBlockKind {
   // Array, Structure
@@ -59,8 +57,7 @@ class MemBlock {
   const AllocSite<ctx> allocSite;
 
  protected:
-  MemBlock(const ctx *c, const llvm::Value *v, const AllocKind t,
-           const MemBlockKind kind)
+  MemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemBlockKind kind)
       : allocSite(c, v, t), kind(kind){};
 
  public:
@@ -69,8 +66,7 @@ class MemBlock {
   [[nodiscard]] inline const FSObject<ctx> *getObjectAt(size_t offset) {
     switch (kind) {
       case MemBlockKind::Aggregate:
-        return static_cast<AggregateMemBlock<ctx> *>(this)->indexMemoryBlock(
-            offset, false);
+        return static_cast<AggregateMemBlock<ctx> *>(this)->indexMemoryBlock(offset, false);
       case MemBlockKind::FIBlock:
         return &static_cast<FIMemBlock<ctx> *>(this)->object;
       case MemBlockKind::Scalar: {
@@ -86,8 +82,7 @@ class MemBlock {
   [[nodiscard]] inline const FSObject<ctx> *getPtrObjectAt(size_t offset) {
     switch (kind) {
       case MemBlockKind::Aggregate:
-        return static_cast<AggregateMemBlock<ctx> *>(this)->indexMemoryBlock(
-            offset, true);
+        return static_cast<AggregateMemBlock<ctx> *>(this)->indexMemoryBlock(offset, true);
       case MemBlockKind::FIBlock:
         return &static_cast<FIMemBlock<ctx> *>(this)->object;
       case MemBlockKind::Scalar: {
@@ -100,12 +95,10 @@ class MemBlock {
     }
   }
 
-  [[nodiscard]] inline const llvm::Type *getOffsetType(
-      size_t pOffset, const llvm::DataLayout &DL) {
+  [[nodiscard]] inline const llvm::Type *getOffsetType(size_t pOffset, const llvm::DataLayout &DL) {
     switch (kind) {
       case MemBlockKind::Aggregate:
-        return static_cast<AggregateMemBlock<ctx> *>(this)->getOffsetType(
-            pOffset, DL);
+        return static_cast<AggregateMemBlock<ctx> *>(this)->getOffsetType(pOffset, DL);
       case MemBlockKind::FIBlock:
       case MemBlockKind::Scalar: {
         // scalar object and field-insensitive object can not be queried
@@ -126,15 +119,12 @@ class MemBlock {
     }
   }
 
-  [[nodiscard]] FSObject<ctx> *indexObject(const FSObject<ctx> *obj,
-                                           const llvm::Instruction *idx,
-                                           const llvm::DataLayout &DL,
-                                           bool ensurePtr) {
+  [[nodiscard]] FSObject<ctx> *indexObject(const FSObject<ctx> *obj, const llvm::Instruction *idx,
+                                           const llvm::DataLayout &DL, bool ensurePtr) {
     assert(obj->memBlock == this);
     switch (kind) {
       case MemBlockKind::Aggregate:
-        return static_cast<AggregateMemBlock<ctx> *>(this)->indexObject(
-            obj, idx, DL, ensurePtr);
+        return static_cast<AggregateMemBlock<ctx> *>(this)->indexObject(obj, idx, DL, ensurePtr);
       case MemBlockKind::FIBlock:
         return &static_cast<FIMemBlock<ctx> *>(this)->object;
       case MemBlockKind::Scalar: {
@@ -146,31 +136,20 @@ class MemBlock {
     }
   }
 
-  [[nodiscard]] inline const ctx *getContext() const {
-    return allocSite.getContext();
-  }
+  [[nodiscard]] inline const ctx *getContext() const { return allocSite.getContext(); }
 
-  [[nodiscard]] inline const llvm::Module *getLLVMModule() const {
-    return this->allocSite.getLLVMModule();
-  }
+  [[nodiscard]] inline const llvm::Module *getLLVMModule() const { return this->allocSite.getLLVMModule(); }
 
-  [[nodiscard]] inline const llvm::Value *getValue() const {
-    return allocSite.getValue();
-  }
+  [[nodiscard]] inline const llvm::Value *getValue() const { return allocSite.getValue(); }
 
-  [[nodiscard]] inline AllocKind getAllocKind() const {
-    return allocSite.getAllocType();
-  }
+  [[nodiscard]] inline AllocKind getAllocKind() const { return allocSite.getAllocType(); }
 
-  [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const {
-    return allocSite;
-  }
+  [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const { return allocSite; }
 
   [[nodiscard]] inline bool validateStepSize(size_t pOffset, size_t stepSize) {
     switch (kind) {
       case MemBlockKind::Aggregate:
-        return static_cast<AggregateMemBlock<ctx> *>(this)->validateStepSize(
-            pOffset, stepSize);
+        return static_cast<AggregateMemBlock<ctx> *>(this)->validateStepSize(pOffset, stepSize);
       case MemBlockKind::FIBlock:
         return true;
       case MemBlockKind::Scalar: {
@@ -180,15 +159,11 @@ class MemBlock {
     }
   }
 
-  [[nodiscard]] inline bool isFIBlock() {
-    return kind == MemBlockKind::FIBlock && !CONFIG_USE_FI_MODE;
-  }
+  [[nodiscard]] inline bool isFIBlock() { return kind == MemBlockKind::FIBlock && !CONFIG_USE_FI_MODE; }
 
-  [[nodiscard]] inline std::string getFieldAccessPath(
-      size_t pOffset, const llvm::StringRef separator) const {
+  [[nodiscard]] inline std::string getFieldAccessPath(size_t pOffset, const llvm::StringRef separator) const {
     if (kind == MemBlockKind::Aggregate) {
-      return static_cast<const AggregateMemBlock<ctx> *>(this)
-          ->getFieldAccessPath(pOffset, separator);
+      return static_cast<const AggregateMemBlock<ctx> *>(this)->getFieldAccessPath(pOffset, separator);
     }
     return "";
   }
@@ -219,13 +194,11 @@ class ScalarMemBlock : public MemBlock<ctx> {
   std::unique_ptr<FSObject<ctx>> object;
 
  public:
-  ScalarMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t)
-      : MemBlock<ctx>(c, v, t, MemBlockKind::Scalar) {
+  ScalarMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t) : MemBlock<ctx>(c, v, t, MemBlockKind::Scalar) {
     object = std::make_unique<FSObject<ctx>>(this);
   }
 
-  ScalarMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t,
-                 FSObject<ctx> *obj)
+  ScalarMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, FSObject<ctx> *obj)
       : MemBlock<ctx>(c, v, t, MemBlockKind::Scalar) {
     object.reset(obj);
   }
@@ -268,9 +241,8 @@ class AggregateMemBlock : public MemBlock<ctx> {
     }
   }
 
-  FSObject<ctx> *indexObject(const FSObject<ctx> *obj,
-                             const llvm::Instruction *idx,
-                             const llvm::DataLayout &DL, bool ensurePtr) {
+  FSObject<ctx> *indexObject(const FSObject<ctx> *obj, const llvm::Instruction *idx, const llvm::DataLayout &DL,
+                             bool ensurePtr) {
     auto gep = llvm::dyn_cast<llvm::GetElementPtrInst>(idx);
     if (gep == nullptr) {
       // only gep can be used to index AggregateMemBlock
@@ -288,14 +260,9 @@ class AggregateMemBlock : public MemBlock<ctx> {
         // type filtering on the indexed object
         if (offset.getSExtValue() >= 0) {
           // do not filter out backward index
-          if (!gep->getPointerOperandType()
-                   ->getPointerElementType()
-                   ->isIntegerTy(8)) {
+          if (!gep->getPointerOperandType()->getPointerElementType()->isIntegerTy(8)) {
             // do not filter out gep i8 *? which is void * in C
-            if (!isZeroOffsetTypeInRootType(
-                    fieldTy,
-                    gep->getPointerOperandType()->getPointerElementType(),
-                    DL)) {
+            if (!isZeroOffsetTypeInRootType(fieldTy, gep->getPointerOperandType()->getPointerElementType(), DL)) {
               return nullptr;
             }
           }
@@ -356,8 +323,7 @@ class AggregateMemBlock : public MemBlock<ctx> {
       // fast path
       if (ensurePtr ? layout->offsetIsPtr(0) : true) {
         if (fieldObjs[0].get() == nullptr) {
-          fieldObjs[0] =
-              std::unique_ptr<FSObject<ctx>>(new FSObject<ctx>(this));
+          fieldObjs[0] = std::unique_ptr<FSObject<ctx>>(new FSObject<ctx>(this));
         }
         return fieldObjs[0].get();
       }
@@ -373,8 +339,7 @@ class AggregateMemBlock : public MemBlock<ctx> {
         // 2nd, index the memory block, return cached object or create a new
         // object.
         if (fieldObjs[fieldNum].get() == nullptr) {
-          fieldObjs[fieldNum] =
-              std::unique_ptr<FSObject<ctx>>(new FSObject<ctx>(this, pOffset));
+          fieldObjs[fieldNum] = std::unique_ptr<FSObject<ctx>>(new FSObject<ctx>(this, pOffset));
           if (isImmutable) {
             fieldObjs[fieldNum]->setImmutable();
           }
@@ -386,28 +351,21 @@ class AggregateMemBlock : public MemBlock<ctx> {
     return nullptr;
   }
 
-  [[nodiscard]] inline std::string getFieldAccessPath(
-      size_t pOffset, llvm::StringRef separator) const {
-    return this->layout->getFieldAccessPath(this->getLLVMModule(), pOffset,
-                                            separator);
+  [[nodiscard]] inline std::string getFieldAccessPath(size_t pOffset, llvm::StringRef separator) const {
+    return this->layout->getFieldAccessPath(this->getLLVMModule(), pOffset, separator);
   }
 
-  [[nodiscard]] inline bool validateStepSize(size_t pOffset,
-                                             size_t stepSize) const {
+  [[nodiscard]] inline bool validateStepSize(size_t pOffset, size_t stepSize) const {
     return isArrayExistAtOffset(layout->getSubArrayMap(), pOffset, stepSize);
   }
 
  public:
-  AggregateMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t,
-                    const MemLayout *layout)
-      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate),
-        layout(layout),
-        isImmutable(false) {
+  AggregateMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemLayout *layout)
+      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate), layout(layout), isImmutable(false) {
     // insert the first objects, other object are lazily initialized
     // objectMap.try_emplace(0 /*key*/, this, 0, 0);
     if (layout->getNumIndexableElem() == 0) {
-      fieldObjs.resize(
-          1);  // model zero-sized object as if it has at least one element
+      fieldObjs.resize(1);  // model zero-sized object as if it has at least one element
       fieldType.resize(1);
     } else {
       fieldObjs.resize(layout->getNumIndexableElem());

@@ -98,12 +98,7 @@ class CGNodeBase {
   IndirectNodeSet indirectNodes;
 
   inline CGNodeBase(NodeID id, CGNodeKind type)
-      : id(id),
-        type(type),
-        superNode(nullptr),
-        childNodes{},
-        indirectNodes{},
-        isImmutable(false) {}
+      : id(id), type(type), superNode(nullptr), childNodes{}, indirectNodes{}, isImmutable(false) {}
 
  private:
   inline bool insertConstraint(Self *node, Constraints edgeKind) {
@@ -152,25 +147,15 @@ class CGNodeBase {
   CGNodeBase<ctx> &operator=(const CGNodeBase<ctx> &) = delete;
   CGNodeBase<ctx> &operator=(CGNodeBase<ctx> &&) = delete;
 
-  [[nodiscard]] inline bool isSpecialNode() const {
-    return this->getNodeID() < NORMAL_NODE_START_ID;
-  }
+  [[nodiscard]] inline bool isSpecialNode() const { return this->getNodeID() < NORMAL_NODE_START_ID; }
 
-  [[nodiscard]] inline bool isNullObj() const {
-    return this->getNodeID() == NULL_OBJ;
-  }
+  [[nodiscard]] inline bool isNullObj() const { return this->getNodeID() == NULL_OBJ; }
 
-  [[nodiscard]] inline bool isUniObj() const {
-    return this->getNodeID() == UNI_OBJ;
-  }
+  [[nodiscard]] inline bool isUniObj() const { return this->getNodeID() == UNI_OBJ; }
 
-  [[nodiscard]] inline bool isNullPtr() const {
-    return this->getNodeID() == NULL_PTR;
-  }
+  [[nodiscard]] inline bool isNullPtr() const { return this->getNodeID() == NULL_PTR; }
 
-  [[nodiscard]] inline bool isUniPtr() const {
-    return this->getNodeID() == UNI_PTR;
-  }
+  [[nodiscard]] inline bool isUniPtr() const { return this->getNodeID() == UNI_PTR; }
 
   // after setting the flag, no edges shall be added into the node
   inline void setImmutable() { this->isImmutable = true; }
@@ -190,54 +175,42 @@ class CGNodeBase {
   // remove all the edges
   inline void clearConstraints() {
 #ifdef USE_NODE_ID_FOR_CONSTRAINTS
-#define CLEAR_CONSTRAINT(TYPE)                                           \
-  {                                                                      \
-    constexpr auto index =                                               \
-        static_cast<std::underlying_type<Constraints>::type>(            \
-            Constraints::TYPE);                                          \
-    for (auto it = this->succ_##TYPE##_begin(),                          \
-              ie = this->succ_##TYPE##_end();                            \
-         it != ie; it++) {                                               \
-      Self *target = *it;                                                \
-      /*auto iter =*/target->predCons[index].reset(this->getNodeID());   \
-      /*assert(iter != target->predCons[index].end());*/                 \
-      /*target->predCons[index].erase(iter);*/                           \
-    }                                                                    \
-    for (auto it = this->pred_##TYPE##_begin(),                          \
-              ie = this->pred_##TYPE##_end();                            \
-         it != ie; it++) {                                               \
-      Self *target = *it;                                                \
-      /*auto iter = */ target->succCons[index].reset(this->getNodeID()); \
-      /*assert(iter != target->succCons[index].end());*/                 \
-      /*target->succCons[index].erase(iter);*/                           \
-    }                                                                    \
-    this->succCons[index].clear();                                       \
-    this->predCons[index].clear();                                       \
+#define CLEAR_CONSTRAINT(TYPE)                                                                      \
+  {                                                                                                 \
+    constexpr auto index = static_cast<std::underlying_type<Constraints>::type>(Constraints::TYPE); \
+    for (auto it = this->succ_##TYPE##_begin(), ie = this->succ_##TYPE##_end(); it != ie; it++) {   \
+      Self *target = *it;                                                                           \
+      /*auto iter =*/target->predCons[index].reset(this->getNodeID());                              \
+      /*assert(iter != target->predCons[index].end());*/                                            \
+      /*target->predCons[index].erase(iter);*/                                                      \
+    }                                                                                               \
+    for (auto it = this->pred_##TYPE##_begin(), ie = this->pred_##TYPE##_end(); it != ie; it++) {   \
+      Self *target = *it;                                                                           \
+      /*auto iter = */ target->succCons[index].reset(this->getNodeID());                            \
+      /*assert(iter != target->succCons[index].end());*/                                            \
+      /*target->succCons[index].erase(iter);*/                                                      \
+    }                                                                                               \
+    this->succCons[index].clear();                                                                  \
+    this->predCons[index].clear();                                                                  \
   }
 #else
-#define CLEAR_CONSTRAINT(TYPE)                                \
-  {                                                           \
-    constexpr auto index =                                    \
-        static_cast<std::underlying_type<Constraints>::type>( \
-            Constraints::TYPE);                               \
-    for (auto it = this->succ_##TYPE##_begin(),               \
-              ie = this->succ_##TYPE##_end();                 \
-         it != ie; it++) {                                    \
-      Self *target = *it;                                     \
-      auto iter = target->predCons[index].find(this);         \
-      assert(iter != target->predCons[index].end());          \
-      target->predCons[index].erase(iter);                    \
-    }                                                         \
-    for (auto it = this->pred_##TYPE##_begin(),               \
-              ie = this->pred_##TYPE##_end();                 \
-         it != ie; it++) {                                    \
-      Self *target = *it;                                     \
-      auto iter = target->succCons[index].find(this);         \
-      assert(iter != target->succCons[index].end());          \
-      target->succCons[index].erase(iter);                    \
-    }                                                         \
-    this->succCons[index].clear();                            \
-    this->predCons[index].clear();                            \
+#define CLEAR_CONSTRAINT(TYPE)                                                                      \
+  {                                                                                                 \
+    constexpr auto index = static_cast<std::underlying_type<Constraints>::type>(Constraints::TYPE); \
+    for (auto it = this->succ_##TYPE##_begin(), ie = this->succ_##TYPE##_end(); it != ie; it++) {   \
+      Self *target = *it;                                                                           \
+      auto iter = target->predCons[index].find(this);                                               \
+      assert(iter != target->predCons[index].end());                                                \
+      target->predCons[index].erase(iter);                                                          \
+    }                                                                                               \
+    for (auto it = this->pred_##TYPE##_begin(), ie = this->pred_##TYPE##_end(); it != ie; it++) {   \
+      Self *target = *it;                                                                           \
+      auto iter = target->succCons[index].find(this);                                               \
+      assert(iter != target->succCons[index].end());                                                \
+      target->succCons[index].erase(iter);                                                          \
+    }                                                                                               \
+    this->succCons[index].clear();                                                                  \
+    this->predCons[index].clear();                                                                  \
   }
 #endif
     CLEAR_CONSTRAINT(load)
@@ -252,9 +225,7 @@ class CGNodeBase {
 
   [[nodiscard]] inline CGNodeKind getType() const { return type; }
 
-  [[nodiscard]] inline bool hasSuperNode() const {
-    return superNode != nullptr;
-  }
+  [[nodiscard]] inline bool hasSuperNode() const { return superNode != nullptr; }
 
   inline void setIndirectCallNode(CallGraphNode<ctx> *callNode) {
     // assert(callNode->isIndirectCall() && this->indirectNode == nullptr);
@@ -262,25 +233,15 @@ class CGNodeBase {
     // this->indirectNode = callNode;
   }
 
-  inline const IndirectNodeSet &getIndirectNodes() const {
-    return indirectNodes;
-  }
+  inline const IndirectNodeSet &getIndirectNodes() const { return indirectNodes; }
 
-  inline auto indirect_begin() const -> decltype(this->indirectNodes.begin()) {
-    return this->indirectNodes.begin();
-  }
+  inline auto indirect_begin() const -> decltype(this->indirectNodes.begin()) { return this->indirectNodes.begin(); }
 
-  inline auto indirect_end() const -> decltype(this->indirectNodes.end()) {
-    return this->indirectNodes.end();
-  }
+  inline auto indirect_end() const -> decltype(this->indirectNodes.end()) { return this->indirectNodes.end(); }
 
-  [[nodiscard]] inline bool isFunctionPtr() {
-    return !this->indirectNodes.empty();
-  }
+  [[nodiscard]] inline bool isFunctionPtr() { return !this->indirectNodes.empty(); }
 
-  [[nodiscard]] inline ConstraintGraph<ctx> *getGraph() {
-    return static_cast<ConstraintGraph<ctx> *>(this->graph);
-  }
+  [[nodiscard]] inline ConstraintGraph<ctx> *getGraph() { return static_cast<ConstraintGraph<ctx> *>(this->graph); }
 
   [[nodiscard]] inline NodeID getNodeID() const { return id; }
 
@@ -290,24 +251,20 @@ class CGNodeBase {
 #ifdef USE_NODE_ID_FOR_CONSTRAINTS
   using cg_iterator = NodeIDWrapperIterator<typename SetTy::iterator, GraphTy>;
 
-#define __CONS_ITER__(DIRECTION, KIND, TYPE)                        \
-  [[nodiscard]] inline cg_iterator DIRECTION##_##KIND##_##TYPE() {  \
-    constexpr auto index =                                          \
-        static_cast<std::underlying_type<Constraints>::type>(       \
-            Constraints::KIND);                                     \
-    static_assert(index < 6, "");                                   \
-    return cg_iterator(this->graph, DIRECTION##Cons[index].TYPE()); \
+#define __CONS_ITER__(DIRECTION, KIND, TYPE)                                                        \
+  [[nodiscard]] inline cg_iterator DIRECTION##_##KIND##_##TYPE() {                                  \
+    constexpr auto index = static_cast<std::underlying_type<Constraints>::type>(Constraints::KIND); \
+    static_assert(index < 6, "");                                                                   \
+    return cg_iterator(this->graph, DIRECTION##Cons[index].TYPE());                                 \
   }
 #else
   using cg_iterator = typename SetTy::iterator;
 
-#define __CONS_ITER__(DIRECTION, KIND, TYPE)                       \
-  [[nodiscard]] inline cg_iterator DIRECTION##_##KIND##_##TYPE() { \
-    constexpr auto index =                                         \
-        static_cast<std::underlying_type<Constraints>::type>(      \
-            Constraints::KIND);                                    \
-    static_assert(index < 6, "");                                  \
-    return DIRECTION##Cons[index].TYPE();                          \
+#define __CONS_ITER__(DIRECTION, KIND, TYPE)                                                        \
+  [[nodiscard]] inline cg_iterator DIRECTION##_##KIND##_##TYPE() {                                  \
+    constexpr auto index = static_cast<std::underlying_type<Constraints>::type>(Constraints::KIND); \
+    static_assert(index < 6, "");                                                                   \
+    return DIRECTION##Cons[index].TYPE();                                                           \
   }
 #endif
 
@@ -336,27 +293,21 @@ class CGNodeBase {
   using id_iterator = ConcatIterator<typename SetTy::iterator, 6, NodeID>;
   using const_id_iterator = ConcatIterator<typename SetTy::iterator, 6, NodeID>;
 
-  using id_edge_iterator =
-      ConcatIteratorWithTag<typename SetTy::iterator, 6, Constraints, NodeID>;
-  using const_id_edge_iterator =
-      ConcatIteratorWithTag<typename SetTy::iterator, 6, Constraints, NodeID>;
+  using id_edge_iterator = ConcatIteratorWithTag<typename SetTy::iterator, 6, Constraints, NodeID>;
+  using const_id_edge_iterator = ConcatIteratorWithTag<typename SetTy::iterator, 6, Constraints, NodeID>;
 #else
   using id_iterator = ConcatIterator<typename SetTy::iterator, 5>;
   using const_id_iterator = ConcatIterator<typename SetTy::const_iterator, 5>;
 
-  using id_edge_iterator =
-      ConcatIteratorWithTag<typename SetTy::iterator, 5, Constraints>;
-  using const_id_edge_iterator =
-      ConcatIteratorWithTag<typename SetTy::const_iterator, 5, Constraints>;
+  using id_edge_iterator = ConcatIteratorWithTag<typename SetTy::iterator, 5, Constraints>;
+  using const_id_edge_iterator = ConcatIteratorWithTag<typename SetTy::const_iterator, 5, Constraints>;
 #endif
 
 #ifdef USE_NODE_ID_FOR_CONSTRAINTS
   using iterator = NodeIDWrapperIterator<id_iterator, GraphTy>;
-  using const_iterator =
-      NodeIDWrapperIterator<const_id_iterator, const GraphTy>;
+  using const_iterator = NodeIDWrapperIterator<const_id_iterator, const GraphTy>;
   using edge_iterator = NodeIDWrapperEdgeIterator<id_edge_iterator, GraphTy>;
-  using const_edge_iterator =
-      NodeIDWrapperEdgeIterator<const_id_edge_iterator, const GraphTy>;
+  using const_edge_iterator = NodeIDWrapperEdgeIterator<const_id_edge_iterator, const GraphTy>;
 #else
   using iterator = id_iterator;
   using const_iterator = const_id_iterator;
@@ -364,86 +315,53 @@ class CGNodeBase {
   using const_edge_iterator = const_id_edge_iterator;
 #endif
 
-#define INIT_ITERATOR(CONTAINER, BEGIN, END)                       \
-  (CONTAINER[5].BEGIN(), CONTAINER[5].END(), CONTAINER[4].BEGIN(), \
-   CONTAINER[4].END(), CONTAINER[3].BEGIN(), CONTAINER[3].END(),   \
-   CONTAINER[2].BEGIN(), CONTAINER[2].END(), CONTAINER[1].BEGIN(), \
-   CONTAINER[1].END(), CONTAINER[0].BEGIN(), CONTAINER[0].END())
+#define INIT_ITERATOR(CONTAINER, BEGIN, END)                                                                 \
+  (CONTAINER[5].BEGIN(), CONTAINER[5].END(), CONTAINER[4].BEGIN(), CONTAINER[4].END(), CONTAINER[3].BEGIN(), \
+   CONTAINER[3].END(), CONTAINER[2].BEGIN(), CONTAINER[2].END(), CONTAINER[1].BEGIN(), CONTAINER[1].END(),   \
+   CONTAINER[0].BEGIN(), CONTAINER[0].END())
 
 #ifdef USE_NODE_ID_FOR_CONSTRAINTS
-#define NODE_ITERATOR(CONTAINER, BEGIN, END) \
-  iterator(this->graph, id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
+#define NODE_ITERATOR(CONTAINER, BEGIN, END) iterator(this->graph, id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
 
 #define CONST_NODE_ITERATOR(CONTAINER, BEGIN, END) \
-  const_iterator(this->graph,                      \
-                 const_id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
+  const_iterator(this->graph, const_id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
 
 #define EDGE_ITERATOR(CONTAINER, BEGIN, END) \
-  edge_iterator(this->graph,                 \
-                id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
-
-#define CONST_EDGE_ITERATOR(CONTAINER, BEGIN, END)                       \
-  const_edge_iterator(this->graph, const_id_edge_iterator INIT_ITERATOR( \
-                                       CONTAINER, BEGIN, END))
-
-#else
-#define NODE_ITERATOR(CONTAINER, BEGIN, END) \
-  id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
-
-#define CONST_NODE_ITERATOR(CONTAINER, BEGIN, END) \
-  const_id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
-
-#define EDGE_ITERATOR(CONTAINER, BEGIN, END) \
-  id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
+  edge_iterator(this->graph, id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
 
 #define CONST_EDGE_ITERATOR(CONTAINER, BEGIN, END) \
-  const_id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
+  const_edge_iterator(this->graph, const_id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END))
+
+#else
+#define NODE_ITERATOR(CONTAINER, BEGIN, END) id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
+
+#define CONST_NODE_ITERATOR(CONTAINER, BEGIN, END) const_id_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
+
+#define EDGE_ITERATOR(CONTAINER, BEGIN, END) id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
+
+#define CONST_EDGE_ITERATOR(CONTAINER, BEGIN, END) const_id_edge_iterator INIT_ITERATOR(CONTAINER, BEGIN, END)
 
 #endif
 
   inline iterator succ_begin() { return NODE_ITERATOR(succCons, begin, end); }
   inline iterator succ_end() { return NODE_ITERATOR(succCons, end, end); }
-  inline const_iterator succ_begin() const {
-    return CONST_NODE_ITERATOR(succCons, begin, end);
-  }
-  inline const_iterator succ_end() const {
-    return CONST_NODE_ITERATOR(succCons, end, end);
-  }
+  inline const_iterator succ_begin() const { return CONST_NODE_ITERATOR(succCons, begin, end); }
+  inline const_iterator succ_end() const { return CONST_NODE_ITERATOR(succCons, end, end); }
 
   inline iterator pred_begin() { return NODE_ITERATOR(predCons, begin, end); }
   inline iterator pred_end() { return NODE_ITERATOR(predCons, end, end); }
-  inline const_iterator pred_begin() const {
-    return CONST_NODE_ITERATOR(predCons, begin, end);
-  }
-  inline const_iterator pred_end() const {
-    return CONST_NODE_ITERATOR(predCons, end, end);
-  }
+  inline const_iterator pred_begin() const { return CONST_NODE_ITERATOR(predCons, begin, end); }
+  inline const_iterator pred_end() const { return CONST_NODE_ITERATOR(predCons, end, end); }
 
-  inline edge_iterator succ_edge_begin() {
-    return EDGE_ITERATOR(succCons, begin, end);
-  }
-  inline edge_iterator succ_edge_end() {
-    return EDGE_ITERATOR(succCons, end, end);
-  }
-  inline const_edge_iterator succ_edge_begin() const {
-    return CONST_EDGE_ITERATOR(succCons, begin, end);
-  }
-  inline const_edge_iterator succ_edge_end() const {
-    return CONST_EDGE_ITERATOR(succCons, end, end);
-  }
+  inline edge_iterator succ_edge_begin() { return EDGE_ITERATOR(succCons, begin, end); }
+  inline edge_iterator succ_edge_end() { return EDGE_ITERATOR(succCons, end, end); }
+  inline const_edge_iterator succ_edge_begin() const { return CONST_EDGE_ITERATOR(succCons, begin, end); }
+  inline const_edge_iterator succ_edge_end() const { return CONST_EDGE_ITERATOR(succCons, end, end); }
 
-  inline edge_iterator pred_edge_begin() {
-    return EDGE_ITERATOR(predCons, begin, end);
-  }
-  inline edge_iterator pred_edge_end() {
-    return EDGE_ITERATOR(predCons, end, end);
-  }
-  inline const_edge_iterator pred_edge_begin() const {
-    return CONST_EDGE_ITERATOR(predCons, begin, end);
-  }
-  inline const_edge_iterator pred_edge_end() const {
-    return CONST_EDGE_ITERATOR(predCons, end, end);
-  }
+  inline edge_iterator pred_edge_begin() { return EDGE_ITERATOR(predCons, begin, end); }
+  inline edge_iterator pred_edge_end() { return EDGE_ITERATOR(predCons, end, end); }
+  inline const_edge_iterator pred_edge_begin() const { return CONST_EDGE_ITERATOR(predCons, begin, end); }
+  inline const_edge_iterator pred_edge_end() const { return CONST_EDGE_ITERATOR(predCons, end, end); }
 
   // needed by GraphTrait
   inline edge_iterator edge_begin() { return succ_edge_begin(); }
@@ -459,10 +377,8 @@ class CGNodeBase {
 
 // `above` --- number of lines above the target line
 // `below` --- number of lines below the target line
-static std::string getPTACodeSnippet(std::string directory,
-                                     std::string filename, unsigned line,
-                                     unsigned col, unsigned above,
-                                     unsigned below) {
+static std::string getPTACodeSnippet(std::string directory, std::string filename, unsigned line, unsigned col,
+                                     unsigned above, unsigned below) {
   assert(above >= 0 && below >= 0);
   // source code file path
   std::string absPath = directory + "/" + filename;
@@ -490,8 +406,7 @@ static std::string getPTACodeSnippet(std::string directory,
         // then we append 4 lines (that's all we have)
         unsigned n = line > above ? above : (line - 1);
         for (unsigned i = 0; i < n; i++) {
-          raw << " " << line - above + i << "|"
-              << buf[(idx + above - i) % above] << "\n";
+          raw << " " << line - above + i << "|" << buf[(idx + above - i) % above] << "\n";
         }
         raw << ">";
       }
@@ -541,12 +456,9 @@ static std::string getPTASourceLocSnippet(const Value *val) {
     } else if (isa<AllocaInst>(inst)) {
       // TODO: there must be other insts than AllocaInst
       // that can be a shared variable
-      for (DbgInfoIntrinsic *DII :
-           FindDbgAddrUses(const_cast<Instruction *>(inst))) {
-        if (llvm::DbgDeclareInst *DDI =
-                llvm::dyn_cast<llvm::DbgDeclareInst>(DII)) {
-          llvm::DIVariable *DIVar =
-              llvm::cast<llvm::DIVariable>(DDI->getVariable());
+      for (DbgInfoIntrinsic *DII : FindDbgAddrUses(const_cast<Instruction *>(inst))) {
+        if (llvm::DbgDeclareInst *DDI = llvm::dyn_cast<llvm::DbgDeclareInst>(DII)) {
+          llvm::DIVariable *DIVar = llvm::cast<llvm::DIVariable>(DDI->getVariable());
           line = DIVar->getLine();
           col = 0;
           filename = DIVar->getFilename().str();
@@ -556,31 +468,24 @@ static std::string getPTASourceLocSnippet(const Value *val) {
         }
       }
     }
-  } else if (const GlobalVariable *gvar =
-                 llvm::dyn_cast<llvm::GlobalVariable>(val)) {
+  } else if (const GlobalVariable *gvar = llvm::dyn_cast<llvm::GlobalVariable>(val)) {
     // find the debuggin information for global variables
-    llvm::NamedMDNode *CU_Nodes =
-        gvar->getParent()->getNamedMetadata("llvm.dbg.cu");
+    llvm::NamedMDNode *CU_Nodes = gvar->getParent()->getNamedMetadata("llvm.dbg.cu");
     if (CU_Nodes) {
       // iterate over all the !DICompileUnit
       // each of whom has a field called globals to indicate all the debugging
       // info for global variables
       for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-        llvm::DICompileUnit *CUNode =
-            llvm::cast<llvm::DICompileUnit>(CU_Nodes->getOperand(i));
-        for (llvm::DIGlobalVariableExpression *GV :
-             CUNode->getGlobalVariables()) {
+        llvm::DICompileUnit *CUNode = llvm::cast<llvm::DICompileUnit>(CU_Nodes->getOperand(i));
+        for (llvm::DIGlobalVariableExpression *GV : CUNode->getGlobalVariables()) {
           llvm::DIGlobalVariable *DGV = GV->getVariable();
           // DGV->getLinkageName() is the mangled name
-          if (DGV->getName() == gvar->getName() ||
-              DGV->getLinkageName() == gvar->getName()) {
+          if (DGV->getName() == gvar->getName() || DGV->getLinkageName() == gvar->getName()) {
             line = DGV->getLine();
             col = 0;
             filename = DGV->getFilename().str();
             directory = DGV->getDirectory().str();
-            name = DGV->getName() == gvar->getName()
-                       ? DGV->getName().str()
-                       : DGV->getLinkageName().str();
+            name = DGV->getName() == gvar->getName() ? DGV->getName().str() : DGV->getLinkageName().str();
             break;
           }
         }
@@ -588,8 +493,7 @@ static std::string getPTASourceLocSnippet(const Value *val) {
     }
   }
 
-  llvm::outs() << "name: " << name << " dir: " << directory
-               << " file: " << filename << " line: " << line << "\n";
+  llvm::outs() << "name: " << name << " dir: " << directory << " file: " << filename << " line: " << line << "\n";
   auto snippet = getPTACodeSnippet(directory, filename, line, 0, 2, 2);
 
   return snippet;

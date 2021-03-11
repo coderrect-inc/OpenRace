@@ -25,8 +25,7 @@ class KCallSite {
 
   KCallSite() noexcept : ctxBuffer() {}
 
-  KCallSite(const self *prevCtx, const llvm::Instruction *I)
-      : ctxBuffer(prevCtx->ctxBuffer) {
+  KCallSite(const self *prevCtx, const llvm::Instruction *I) : ctxBuffer(prevCtx->ctxBuffer) {
     assert(pta::CallSite(I).isCallOrInvoke());
     ctxBuffer.push(I);
   }
@@ -97,8 +96,7 @@ struct CtxTrait<KCallSite<K>> {
   static std::unordered_set<KCallSite<K>> ctxSet;
 
  public:
-  static const KCallSite<K> *contextEvolve(const KCallSite<K> *prevCtx,
-                                           const llvm::Instruction *I) {
+  static const KCallSite<K> *contextEvolve(const KCallSite<K> *prevCtx, const llvm::Instruction *I) {
     auto result = ctxSet.emplace(prevCtx, I);
     return &*result.first;
   }
@@ -107,8 +105,7 @@ struct CtxTrait<KCallSite<K>> {
 
   static const KCallSite<K> *getGlobalCtx() { return &globCtx; }
 
-  static std::string toString(const KCallSite<K> *context,
-                              bool detailed = false) {
+  static std::string toString(const KCallSite<K> *context, bool detailed = false) {
     if (context == &globCtx) return "<global>";
     if (context == &initCtx) return "<empty>";
     return context->toString(detailed);

@@ -56,9 +56,7 @@ class GraphWriter {
   }
 
  public:
-  GraphWriter(llvm::raw_ostream &o, const GraphType &g, bool SN) : O(o), G(g) {
-    DTraits = DOTTraits(SN);
-  }
+  GraphWriter(llvm::raw_ostream &o, const GraphType &g, bool SN) : O(o), G(g) { DTraits = DOTTraits(SN); }
 
   void writeGraph(const std::string &Title = "") {
     // Output the header for the callgraph...
@@ -156,8 +154,7 @@ class GraphWriter {
       unsigned i = 0, e = DTraits.numEdgeDestLabels(Node);
       for (; i != e && i != 64; ++i) {
         if (i) O << "|";
-        O << "<d" << i << ">"
-          << llvm::DOT::EscapeString(DTraits.getEdgeDestLabel(Node, i));
+        O << "<d" << i << ">" << llvm::DOT::EscapeString(DTraits.getEdgeDestLabel(Node, i));
       }
 
       if (i != e) O << "|<d64>truncated...";
@@ -170,11 +167,9 @@ class GraphWriter {
     edge_iterator EI = GTraits::child_edge_begin(Node);
     edge_iterator EE = GTraits::child_edge_end(Node);
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i)
-      if (!DTraits.isNodeHidden(GTraits::edge_dest(*EI)))
-        writeEdge(Node, i, EI);
+      if (!DTraits.isNodeHidden(GTraits::edge_dest(*EI))) writeEdge(Node, i, EI);
     for (; EI != EE; ++EI)
-      if (!DTraits.isNodeHidden(GTraits::edge_dest(*EI)))
-        writeEdge(Node, 64, EI);
+      if (!DTraits.isNodeHidden(GTraits::edge_dest(*EI))) writeEdge(Node, 64, EI);
   }
 
   void writeEdge(NodeRef Node, unsigned edgeidx, edge_iterator EI) {
@@ -182,17 +177,14 @@ class GraphWriter {
       int DestPort = -1;
       if (DTraits.getEdgeSourceLabel(Node, EI).empty()) edgeidx = -1;
 
-      emitEdge(static_cast<const void *>(Node), edgeidx,
-               static_cast<const void *>(TargetNode), DestPort,
+      emitEdge(static_cast<const void *>(Node), edgeidx, static_cast<const void *>(TargetNode), DestPort,
                DTraits.getEdgeAttributes(Node, EI, G));
     }
   }
 
   /// emitSimpleNode - Outputs a simple (non-record) node
-  void emitSimpleNode(
-      const void *ID, const std::string &Attr, const std::string &Label,
-      unsigned NumEdgeSources = 0,
-      const std::vector<std::string> *EdgeSourceLabels = nullptr) {
+  void emitSimpleNode(const void *ID, const std::string &Attr, const std::string &Label, unsigned NumEdgeSources = 0,
+                      const std::vector<std::string> *EdgeSourceLabels = nullptr) {
     O << "\tNode" << ID << "[ ";
     if (!Attr.empty()) O << Attr << ",";
     O << " label =\"";
@@ -204,8 +196,7 @@ class GraphWriter {
       for (unsigned i = 0; i != NumEdgeSources; ++i) {
         if (i) O << "|";
         O << "<s" << i << ">";
-        if (EdgeSourceLabels)
-          O << llvm::DOT::EscapeString((*EdgeSourceLabels)[i]);
+        if (EdgeSourceLabels) O << llvm::DOT::EscapeString((*EdgeSourceLabels)[i]);
       }
       O << "}}";
     }
@@ -213,16 +204,15 @@ class GraphWriter {
   }
 
   /// emitEdge - Output an edge from a simple node into the graph...
-  void emitEdge(const void *SrcNodeID, int SrcNodePort, const void *DestNodeID,
-                int DestNodePort, const std::string &Attrs) {
+  void emitEdge(const void *SrcNodeID, int SrcNodePort, const void *DestNodeID, int DestNodePort,
+                const std::string &Attrs) {
     if (SrcNodePort > 64) return;              // Eminating from truncated part?
     if (DestNodePort > 64) DestNodePort = 64;  // Targeting the truncated part?
 
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0) O << ":s" << SrcNodePort;
     O << " -> Node" << DestNodeID;
-    if (DestNodePort >= 0 && DTraits.hasEdgeDestLabels())
-      O << ":d" << DestNodePort;
+    if (DestNodePort >= 0 && DTraits.hasEdgeDestLabels()) O << ":d" << DestNodePort;
 
     if (!Attrs.empty()) O << "[" << Attrs << "]";
     O << ";\n";
@@ -234,8 +224,7 @@ class GraphWriter {
 };
 
 template <typename GraphType>
-llvm::raw_ostream &WriteGraph(llvm::raw_ostream &O, const GraphType &G,
-                              bool ShortNames = false,
+llvm::raw_ostream &WriteGraph(llvm::raw_ostream &O, const GraphType &G, bool ShortNames = false,
                               const llvm::Twine &Title = "") {
   // Start the callgraph emission process...
   pta::GraphWriter<const GraphType> W(O, G, ShortNames);
@@ -247,8 +236,7 @@ llvm::raw_ostream &WriteGraph(llvm::raw_ostream &O, const GraphType &G,
 }
 
 template <class GraphType>
-void WriteGraphToFile(const std::string &graphName, const GraphType &graph,
-                      bool simple = false) {
+void WriteGraphToFile(const std::string &graphName, const GraphType &graph, bool simple = false) {
   std::string fileName = graphName + ".dot";
   llvm::outs() << "Writing '" << fileName << "'...";
 

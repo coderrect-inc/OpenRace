@@ -50,6 +50,5 @@ bool RemoveExceptionHandlerPass::runOnFunction(Function &F) {
 }
 
 char RemoveExceptionHandlerPass::ID = 0;
-static RegisterPass<RemoveExceptionHandlerPass> REH(
-    "", "Remove Exception Handling Code in IR", false, /*CFG only*/
-    false /*is analysis*/);
+static RegisterPass<RemoveExceptionHandlerPass> REH("", "Remove Exception Handling Code in IR", false, /*CFG only*/
+                                                    false /*is analysis*/);

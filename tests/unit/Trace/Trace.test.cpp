@@ -4,10 +4,8 @@
 
 #include "Trace/ProgramTrace.h"
 
-CATCH_REGISTER_ENUM(race::Event::Type, race::Event::Type::Read,
-                    race::Event::Type::Write, race::Event::Type::Fork,
-                    race::Event::Type::Join, race::Event::Type::Call,
-                    race::Event::Type::CallEnd)
+CATCH_REGISTER_ENUM(race::Event::Type, race::Event::Type::Read, race::Event::Type::Write, race::Event::Type::Fork,
+                    race::Event::Type::Join, race::Event::Type::Call, race::Event::Type::CallEnd)
 TEST_CASE("ThreadTrace construction", "[unit][event]") {
   const char *modString = R"(
 declare void @print(i64)

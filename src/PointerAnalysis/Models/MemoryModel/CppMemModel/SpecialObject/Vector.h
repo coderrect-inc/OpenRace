@@ -54,22 +54,17 @@ class VectorAPI {
 
  public:
   explicit VectorAPI(const llvm::Instruction *call)
-      : APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)),
-        vecElemType(nullptr),
-        kind(APIKind::UNKNOWN) {
+      : APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
     if (APICall != nullptr) {
       init(APICall->getCalledFunction());
     }
   }
 
-  explicit VectorAPI(const llvm::Function *F)
-      : APICall(nullptr), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
+  explicit VectorAPI(const llvm::Function *F) : APICall(nullptr), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
     init(F);
   }
 
-  inline const llvm::Value *getArgOperand(unsigned int i) const {
-    return APICall->getArgOperand(i);
-  }
+  inline const llvm::Value *getArgOperand(unsigned int i) const { return APICall->getArgOperand(i); }
 
   inline const llvm::CallBase *getCallSite() const { return APICall; }
 
@@ -90,8 +85,7 @@ struct VecAPITag : public PtrNodeTag {
   const std::vector<PtrNode *> params;
   const llvm::CallBase *callsite;
 
-  VecAPITag(const llvm::CallBase *I, std::vector<PtrNode *> &&v)
-      : params(std::move(v)), callsite(I) {}
+  VecAPITag(const llvm::CallBase *I, std::vector<PtrNode *> &&v) : params(std::move(v)), callsite(I) {}
 
   std::string toString() override {
     std::string str;
@@ -114,9 +108,7 @@ class Vector : public FSObject<ctx> {
   const llvm::Type *elemType;
 
   Vector(const llvm::Type *elemType)
-      : FSObject<ctx>(nullptr, ObjectKind::Special),
-        theElem(nullptr, ObjectKind::Special, false),
-        elemType(elemType) {}
+      : FSObject<ctx>(nullptr, ObjectKind::Special), theElem(nullptr, ObjectKind::Special, false), elemType(elemType) {}
 
   Vector(size_t pOffset, const llvm::Type *elemType)
       : FSObject<ctx>(nullptr, pOffset, ObjectKind::Special),
@@ -143,8 +135,7 @@ class Vector : public FSObject<ctx> {
 
  public:
   // *src* can points to theVec
-  bool processSpecial(CGNodeBase<ctx> *src,
-                      CGNodeBase<ctx> *dst) const override {
+  bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const override {
     bool changed = false;
 
     auto consGraph = static_cast<ConsGraph *>(dst->getGraph());
@@ -167,14 +158,12 @@ class Vector : public FSObject<ctx> {
         assert(calledAPI.getVecElemType()->isPointerTy());
         assert(params.size() == 1);
 
-        changed = consGraph->addConstraints(
-            params.front(), theElem.getObjNode(), Constraints::copy);
+        changed = consGraph->addConstraints(params.front(), theElem.getObjNode(), Constraints::copy);
         break;
       }
       case VectorAPI::APIKind::IT_BEGIN:
       case VectorAPI::APIKind::OPERATOR_INDEX: {
-        changed = consGraph->addConstraints(theElem.getObjNode(), dst,
-                                            Constraints::addr_of);
+        changed = consGraph->addConstraints(theElem.getObjNode(), dst, Constraints::addr_of);
         break;
       }
       case VectorAPI::APIKind::IT_END:
