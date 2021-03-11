@@ -24,11 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build and Test
+      - name: Build
         run: |
           mkdir build
           cd build
           conan install ..
           cmake -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ .. 
           cmake --build . -j
+      
+      - name: Test
+        run: |
+          cd build
           ctest
