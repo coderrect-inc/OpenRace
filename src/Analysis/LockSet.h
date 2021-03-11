@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include "PointerAnalysis/RaceModel.h"
+#include "LanguageModel/RaceModel.h"
 #include "Trace/ProgramTrace.h"
 
 namespace race {

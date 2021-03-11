@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "Event.h"
-#include "PointerAnalysis/RaceModel.h"
+#include "LanguageModel/RaceModel.h"
 
 namespace race {
 

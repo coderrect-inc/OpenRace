@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IR/Info.h"
-#include "PointerAnalysis/RaceModel.h"
+#include "LanguageModel/RaceModel.h"
 
 namespace race {
 

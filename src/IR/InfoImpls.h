@@ -91,6 +91,31 @@ class PthreadCreateInfo : public ForkInfo {
   }
 };
 
+class OpenMPForkInfo : public ForkInfo {
+  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L262
+  // @param loc  source location information
+  // @param argc  total number of arguments in the ellipsis
+  // @param microtask  pointer to callback routine consisting of outlined parallel
+  // construct
+  // @param ...  pointers to shared variables that aren't global
+  constexpr static unsigned int threadHandleOffset = 0;
+  constexpr static unsigned int threadEntryOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPForkInfo(const llvm::CallBase *inst) : inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
+    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
+  }
+
+  [[nodiscard]] const llvm::Value *getThreadEntry() const override {
+    return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
+  }
+};
+
 // ==================================================================
 // =============== JoinInfo Implementations ========================
 // ==================================================================

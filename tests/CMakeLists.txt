@@ -5,6 +5,7 @@ add_executable(tester
     unit/Analysis/LockSet.test.cpp
     unit/Analysis/SharedMemory.test.cpp
     unit/IR/IR.test.cpp
+    unit/IR/OpenMPIR.test.cpp
     unit/PointerAnalysis/PointerAnalysis.test.cpp
     unit/Trace/CallStack.test.cpp
     unit/Trace/Trace.test.cpp

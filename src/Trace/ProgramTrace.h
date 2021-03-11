@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "PointerAnalysis/RaceModel.h"
+#include "LanguageModel/RaceModel.h"
 #include "Trace/Event.h"
 #include "Trace/ThreadTrace.h"
 

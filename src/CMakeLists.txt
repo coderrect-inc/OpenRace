@@ -16,7 +16,9 @@ set(pta-lib-sources
     PreProcessing/Passes/CanonicalizeGEPPass.cpp
     PreProcessing/Passes/InsertGlobalCtorCallPass.cpp
     PreProcessing/Passes/LoweringMemCpyPass.cpp
-    PreProcessing/Passes/RemoveExceptionHandlerPass.cpp)
+    PreProcessing/Passes/RemoveExceptionHandlerPass.cpp
+    
+    LanguageModel/RaceModel.cpp)
 
 add_library(pta STATIC ${pta-lib-sources})
 target_link_libraries(pta ${llvm_libs} pthread)
