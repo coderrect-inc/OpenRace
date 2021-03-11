@@ -1,6 +1,17 @@
 name: build-and-test
 
-on: [push]
+on:
+  pull_request:
+    branches: 
+      - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'conanfile.txt'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - develop
 
 env:
   BUILD_TYPE: Release
@@ -19,5 +30,5 @@ jobs:
           cd build
           conan install ..
           cmake -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ .. 
-          cmake --build .
+          cmake --build . -j
           ctest
