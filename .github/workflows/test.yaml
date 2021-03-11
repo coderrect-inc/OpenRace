@@ -1,0 +1,28 @@
+name: build-and-test
+
+on: [push]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: coderrect/openrace-env
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Build Env
+        run: cmake -E make_directory ${{github.workspace}}/build
+      
+      - name: Build
+        shell: bash
+        working-directory: ${{github.workspace}}/build
+        run: conan install ..
+        run: cmake -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ .. 
+        run: cmake --build .
+
+      - name: Test
+        working_directory: ${{github.workspace}}/build
+        shell: bash
+        run: ctest
