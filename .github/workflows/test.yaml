@@ -16,7 +16,7 @@ jobs:
       - name: Setup Build Env
         run: cmake -E make_directory ${{github.workspace}}/build
       
-      -name: What is going on
+      - name: What is going on
         run: ls
 
       - name: Install Deps
