@@ -24,6 +24,6 @@ jobs:
           cmake --build .
 
       - name: Test
-        working_directory: ${{github.workspace}}/build
+        working-directory: ${{github.workspace}}/build
         shell: bash
         run: ctest
