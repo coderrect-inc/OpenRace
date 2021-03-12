@@ -57,6 +57,11 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       case StmtInfo::Type::Call: {
         std::shared_ptr<const CallInfo> call(ir, llvm::cast<CallInfo>(ir.get()));
 
+        if (call->isIndirect()) {
+          // TODO:
+          continue;
+        }
+
         auto directContext = pta::CT::contextEvolve(context, ir->getInst());
         auto const directNode = pta.getDirectNodeOrNull(directContext, call->getInst()->getCalledFunction());
 

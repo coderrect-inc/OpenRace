@@ -139,6 +139,8 @@ class CallInfo : public StmtInfo {
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
+  [[nodiscard]] inline bool isIndirect() const { return inst->isIndirectCall(); }
+
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static bool classof(const StmtInfo *e) { return e->type == Type::Call; }
 };
