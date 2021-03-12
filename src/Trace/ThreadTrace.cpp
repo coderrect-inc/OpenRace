@@ -58,7 +58,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         std::shared_ptr<const CallInfo> call(ir, llvm::cast<CallInfo>(ir.get()));
 
         if (call->isIndirect()) {
-          // TODO:
+          // TODO: handle indirect
           continue;
         }
 
