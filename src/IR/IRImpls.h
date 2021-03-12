@@ -10,18 +10,18 @@ namespace race {
 // =============== ReadIR Implementations ========================
 // ==================================================================
 
-class LoadInfo : public ReadIR {
+class LoadIR : public ReadIR {
   const llvm::LoadInst *inst;
 
  public:
-  explicit LoadInfo(const llvm::LoadInst *load) : inst(load) {}
+  explicit LoadIR(const llvm::LoadInst *load) : inst(load) {}
 
   [[nodiscard]] inline const llvm::LoadInst *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
 };
 
-class APIReadInfo : public ReadIR {
+class APIReadIR : public ReadIR {
   // Operand that this API call reads
   unsigned int operandOffset;
 
@@ -29,7 +29,7 @@ class APIReadInfo : public ReadIR {
 
  public:
   // API call that reads one of it's operands, specified by 'operandOffset'
-  APIReadInfo(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
+  APIReadIR(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -40,18 +40,18 @@ class APIReadInfo : public ReadIR {
 // =============== WriteIR Implementations ========================
 // ==================================================================
 
-class StoreInfo : public WriteIR {
+class StoreIR : public WriteIR {
   const llvm::StoreInst *inst;
 
  public:
-  explicit StoreInfo(const llvm::StoreInst *store) : inst(store) {}
+  explicit StoreIR(const llvm::StoreInst *store) : inst(store) {}
 
   [[nodiscard]] inline const llvm::StoreInst *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
 };
 
-class APIWriteInfo : public WriteIR {
+class APIWriteIR : public WriteIR {
   // Operand that this API call reads
   unsigned int operandOffset;
 
@@ -59,7 +59,7 @@ class APIWriteInfo : public WriteIR {
 
  public:
   // API call that write to one of it's operands, specified by 'operandOffset'
-  APIWriteInfo(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
+  APIWriteIR(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -72,13 +72,13 @@ class APIWriteInfo : public WriteIR {
 // =============== ForkIR Implementations ========================
 // ==================================================================
 
-class PthreadCreateInfo : public ForkIR {
+class PthreadCreateIR : public ForkIR {
   constexpr static unsigned int threadHandleOffset = 0;
   constexpr static unsigned int threadEntryOffset = 2;
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadCreateInfo(const llvm::CallBase *inst) : inst(inst) {}
+  explicit PthreadCreateIR(const llvm::CallBase *inst) : inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -91,7 +91,7 @@ class PthreadCreateInfo : public ForkIR {
   }
 };
 
-class OpenMPForkInfo : public ForkIR {
+class OpenMPForkIR : public ForkIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L262
   // @param loc  source location information
   // @param argc  total number of arguments in the ellipsis
@@ -103,7 +103,7 @@ class OpenMPForkInfo : public ForkIR {
   const llvm::CallBase *inst;
 
  public:
-  explicit OpenMPForkInfo(const llvm::CallBase *inst) : inst(inst) {}
+  explicit OpenMPForkIR(const llvm::CallBase *inst) : inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -120,12 +120,12 @@ class OpenMPForkInfo : public ForkIR {
 // =============== JoinIR Implementations ========================
 // ==================================================================
 
-class PthreadJoinInfo : public JoinIR {
+class PthreadJoinIR : public JoinIR {
   const unsigned int threadHandleOffset = 0;
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadJoinInfo(const llvm::CallBase *inst) : inst(inst) {}
+  explicit PthreadJoinIR(const llvm::CallBase *inst) : inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -138,12 +138,12 @@ class PthreadJoinInfo : public JoinIR {
 // =============== LockIR Implementations ========================
 // ==================================================================
 
-class PthreadMutexLockInfo : public LockIR {
+class PthreadMutexLockIR : public LockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadMutexLockInfo(const llvm::CallBase *call) : inst(call) {}
+  explicit PthreadMutexLockIR(const llvm::CallBase *call) : inst(call) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -156,12 +156,12 @@ class PthreadMutexLockInfo : public LockIR {
 // =============== UnlockIR Implementations =======================
 // ==================================================================
 
-class PthreadMutexUnlockInfo : public UnlockIR {
+class PthreadMutexUnlockIR : public UnlockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadMutexUnlockInfo(const llvm::CallBase *call) : inst(call) {}
+  explicit PthreadMutexUnlockIR(const llvm::CallBase *call) : inst(call) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 

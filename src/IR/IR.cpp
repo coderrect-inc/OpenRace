@@ -45,13 +45,13 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR::Type &type)
 void ReadIR::print(llvm::raw_ostream &os) const {
   auto val = getAccessedValue();
   auto valName = getValNameHelper(val);
-  os << "Info " << type << " - " << valName << " - " << getInst() << "\n";
+  os << "IR " << type << " - " << valName << " - " << getInst() << "\n";
 }
 
 void WriteIR::print(llvm::raw_ostream &os) const {
   auto val = getAccessedValue();
   auto valName = getValNameHelper(val);
-  os << "Info " << type << " - " << valName << " - " << getInst() << "\n";
+  os << "IR " << type << " - " << valName << " - " << getInst() << "\n";
 }
 
 void ForkIR::print(llvm::raw_ostream &os) const {
@@ -60,28 +60,28 @@ void ForkIR::print(llvm::raw_ostream &os) const {
 
   auto handle = getThreadHandle();
   auto handleName = getValNameHelper(handle, "UnknownHandle");
-  os << "Info " << type << " - " << funcName << " - " << handleName << "\n";
+  os << "IR " << type << " - " << funcName << " - " << handleName << "\n";
 }
 
 void JoinIR::print(llvm::raw_ostream &os) const {
   auto handle = getThreadHandle();
   auto handleName = getValNameHelper(handle, "UnknownHandle");
-  os << "Info " << type << " - " << handleName << "\n";
+  os << "IR " << type << " - " << handleName << "\n";
 }
 
 void CallIR::print(llvm::raw_ostream &os) const {
   auto func = llvm::cast<llvm::CallBase>(getInst())->getFunction();
   auto funcName = getValNameHelper(func, "UnknownFunc");
-  os << "Info " << type << " - " << funcName << "\n";
+  os << "IR " << type << " - " << funcName << "\n";
 }
 void LockIR::print(llvm::raw_ostream &os) const {
   auto lockName = getValNameHelper(getLockValue());
-  os << "Info " << type << " - " << lockName << "\n";
+  os << "IR " << type << " - " << lockName << "\n";
 }
 
 void UnlockIR::print(llvm::raw_ostream &os) const {
   auto lockName = getValNameHelper(getLockValue());
-  os << "Info " << type << " - " << lockName << "\n";
+  os << "IR " << type << " - " << lockName << "\n";
 }
 
 llvm::StringRef IR::toString() const {

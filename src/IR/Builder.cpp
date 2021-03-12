@@ -37,12 +37,12 @@ RaceFunction race::generateRaceFunction(const llvm::Function &func) {
         if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst)) {
           continue;
         }
-        instructions.push_back(std::make_shared<race::LoadInfo>(loadInst));
+        instructions.push_back(std::make_shared<race::LoadIR>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
         if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst)) {
           continue;
         }
-        instructions.push_back(std::make_shared<race::StoreInfo>(storeInst));
+        instructions.push_back(std::make_shared<race::StoreIR>(storeInst));
       } else if (auto retInst = llvm::dyn_cast<llvm::ReturnInst>(inst)) {
         // TODO: what should this do?
       } else if (auto branchInst = llvm::dyn_cast<llvm::BranchInst>(inst)) {
@@ -66,15 +66,15 @@ RaceFunction race::generateRaceFunction(const llvm::Function &func) {
         // TODO: System for users to register new function recognizers here
         auto funcName = calledFunc->getName();
         if (PthreadModel::isPthreadCreate(funcName)) {
-          instructions.push_back(std::make_shared<PthreadCreateInfo>(callInst));
+          instructions.push_back(std::make_shared<PthreadCreateIR>(callInst));
         } else if (PthreadModel::isPthreadJoin(funcName)) {
-          instructions.push_back(std::make_shared<PthreadJoinInfo>(callInst));
+          instructions.push_back(std::make_shared<PthreadJoinIR>(callInst));
         } else if (PthreadModel::isPthreadMutexLock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadMutexLockInfo>(callInst));
+          instructions.push_back(std::make_shared<PthreadMutexLockIR>(callInst));
         } else if (PthreadModel::isPthreadMutexUnlock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadMutexUnlockInfo>(callInst));
+          instructions.push_back(std::make_shared<PthreadMutexUnlockIR>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPForkInfo>(callInst));
+          instructions.push_back(std::make_shared<OpenMPForkIR>(callInst));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
         } else if (isLLVMDebug(funcName)) {

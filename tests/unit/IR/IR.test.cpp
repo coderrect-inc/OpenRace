@@ -21,11 +21,11 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
   auto BB = llvm::BasicBlock::Create(ctx, "testblock", func);
   llvm::IRBuilder<llvm::NoFolder> IRB(BB);
 
-  SECTION("Construct LoadInfo") {
+  SECTION("Construct LoadIR") {
     auto alloca = IRB.CreateAlloca(IRB.getInt32Ty());
     auto loadInst = IRB.CreateLoad(IRB.getInt32Ty(), alloca);
 
-    auto load = std::make_unique<race::LoadInfo>(loadInst);
+    auto load = std::make_unique<race::LoadIR>(loadInst);
     REQUIRE(load->getInst() == loadInst);
     REQUIRE(llvm::isa<llvm::LoadInst>(load->getInst()));
     REQUIRE(load->getAccessedValue() == loadInst->getPointerOperand());
@@ -33,12 +33,12 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
     REQUIRE(llvm::isa<race::MemAccessIR>(load));
   }
 
-  SECTION("Construct StoreInfo") {
+  SECTION("Construct StoreIR") {
     auto alloca = IRB.CreateAlloca(IRB.getInt32Ty());
     auto val = IRB.getInt32(42);
     auto storeInst = IRB.CreateStore(val, alloca);
 
-    auto store = std::make_unique<race::StoreInfo>(storeInst);
+    auto store = std::make_unique<race::StoreIR>(storeInst);
     REQUIRE(store->getInst() == storeInst);
     REQUIRE(llvm::isa<llvm::StoreInst>(store->getInst()));
     REQUIRE(store->getAccessedValue() == storeInst->getPointerOperand());

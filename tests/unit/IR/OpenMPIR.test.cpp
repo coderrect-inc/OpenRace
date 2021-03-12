@@ -48,7 +48,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   auto racefunc = race::generateRaceFunction(func);
   REQUIRE(racefunc.size() == 1);
 
-  auto ompfork = llvm::dyn_cast<race::OpenMPForkInfo>(racefunc.at(0).get());
+  auto ompfork = llvm::dyn_cast<race::OpenMPForkIR>(racefunc.at(0).get());
   REQUIRE(ompfork);
   CHECK(ompfork->getInst()->getCalledFunction()->getName() == "__kmpc_fork_call");
   CHECK(ompfork->getThreadEntry()->getName() == ".omp_outlined.");
