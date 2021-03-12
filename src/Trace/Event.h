@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IR/Info.h"
+#include "IR/IR.h"
 #include "LanguageModel/RaceModel.h"
 
 namespace race {
@@ -25,7 +25,7 @@ class Event {
   [[nodiscard]] virtual EventID getID() const = 0;
   [[nodiscard]] virtual const pta::ctx *getContext() const = 0;
   [[nodiscard]] virtual const ThreadTrace &getThread() const = 0;
-  [[nodiscard]] virtual const race::StmtInfo *getIRInst() const = 0;
+  [[nodiscard]] virtual const race::IR *getIRInst() const = 0;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const { return getIRInst()->getInst(); }
   virtual void print(llvm::raw_ostream &os) const = 0;
 
@@ -38,7 +38,7 @@ class MemAccessEvent : public Event {
   using Event::Event;
 
  public:
-  [[nodiscard]] const race::MemAccessInfo *getIRInst() const override = 0;
+  [[nodiscard]] const race::MemAccessIR *getIRInst() const override = 0;
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getAccessedMemory() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
@@ -50,7 +50,7 @@ class ReadEvent : public MemAccessEvent {
   ReadEvent() : MemAccessEvent(Type::Read) {}
 
  public:
-  [[nodiscard]] inline const race::ReadInfo *getIRInst() const override = 0;
+  [[nodiscard]] inline const race::ReadIR *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Read; }
@@ -63,7 +63,7 @@ class WriteEvent : public MemAccessEvent {
   WriteEvent() : MemAccessEvent(Type::Write) {}
 
  public:
-  [[nodiscard]] inline const race::WriteInfo *getIRInst() const override = 0;
+  [[nodiscard]] inline const race::WriteIR *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Write; }
@@ -79,7 +79,7 @@ class ForkEvent : public Event {
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
   [[nodiscard]] virtual std::vector<const pta::CallGraphNodeTy *> getThreadEntry() const = 0;
 
-  [[nodiscard]] inline const race::ForkInfo *getIRInst() const override = 0;
+  [[nodiscard]] inline const race::ForkIR *getIRInst() const override = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Fork; }
@@ -94,7 +94,7 @@ class JoinEvent : public Event {
  public:
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
 
-  [[nodiscard]] inline const race::JoinInfo *getIRInst() const override = 0;
+  [[nodiscard]] inline const race::JoinIR *getIRInst() const override = 0;
 
   void print(llvm::raw_ostream &os) const override;
 
@@ -107,7 +107,7 @@ class LockEvent : public Event {
   LockEvent() : Event(Type::Lock) {}
 
  public:
-  [[nodiscard]] const race::LockInfo *getIRInst() const override = 0;
+  [[nodiscard]] const race::LockIR *getIRInst() const override = 0;
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getLockObj() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
@@ -121,7 +121,7 @@ class UnlockEvent : public Event {
   UnlockEvent() : Event(Type::Unlock) {}
 
  public:
-  [[nodiscard]] const race::UnlockInfo *getIRInst() const override = 0;
+  [[nodiscard]] const race::UnlockIR *getIRInst() const override = 0;
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getLockObj() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
@@ -135,7 +135,7 @@ class EnterCallEvent : public Event {
   EnterCallEvent() : Event(Type::Call) {}
 
  public:
-  [[nodiscard]] const race::CallInfo *getIRInst() const override = 0;
+  [[nodiscard]] const race::CallIR *getIRInst() const override = 0;
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
@@ -149,7 +149,7 @@ class LeaveCallEvent : public Event {
   LeaveCallEvent() : Event(Type::CallEnd) {}
 
  public:
-  [[nodiscard]] const race::CallInfo *getIRInst() const override = 0;
+  [[nodiscard]] const race::CallIR *getIRInst() const override = 0;
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)

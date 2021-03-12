@@ -24,38 +24,38 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 
   for (auto const &ir : irFunc) {
     switch (ir->type) {
-      case StmtInfo::Type::Read: {
-        std::shared_ptr<const ReadInfo> read(ir, llvm::cast<ReadInfo>(ir.get()));
+      case IR::Type::Read: {
+        std::shared_ptr<const ReadIR> read(ir, llvm::cast<ReadIR>(ir.get()));
         events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Write: {
-        std::shared_ptr<const WriteInfo> write(ir, llvm::cast<WriteInfo>(ir.get()));
+      case IR::Type::Write: {
+        std::shared_ptr<const WriteIR> write(ir, llvm::cast<WriteIR>(ir.get()));
         events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Fork: {
-        std::shared_ptr<const ForkInfo> fork(ir, llvm::cast<ForkInfo>(ir.get()));
+      case IR::Type::Fork: {
+        std::shared_ptr<const ForkIR> fork(ir, llvm::cast<ForkIR>(ir.get()));
         events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Join: {
-        std::shared_ptr<const JoinInfo> join(ir, llvm::cast<JoinInfo>(ir.get()));
+      case IR::Type::Join: {
+        std::shared_ptr<const JoinIR> join(ir, llvm::cast<JoinIR>(ir.get()));
         events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Lock: {
-        std::shared_ptr<const LockInfo> lock(ir, llvm::cast<LockInfo>(ir.get()));
+      case IR::Type::Lock: {
+        std::shared_ptr<const LockIR> lock(ir, llvm::cast<LockIR>(ir.get()));
         events.push_back(std::make_unique<const LockEventImpl>(lock, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Unlock: {
-        std::shared_ptr<const UnlockInfo> unlock(ir, llvm::cast<UnlockInfo>(ir.get()));
+      case IR::Type::Unlock: {
+        std::shared_ptr<const UnlockIR> unlock(ir, llvm::cast<UnlockIR>(ir.get()));
         events.push_back(std::make_unique<const UnlockEventImpl>(unlock, einfo, events.size()));
         break;
       }
-      case StmtInfo::Type::Call: {
-        std::shared_ptr<const CallInfo> call(ir, llvm::cast<CallInfo>(ir.get()));
+      case IR::Type::Call: {
+        std::shared_ptr<const CallIR> call(ir, llvm::cast<CallIR>(ir.get()));
 
         if (call->isIndirect()) {
           // TODO: handle indirect

@@ -10,7 +10,7 @@
 #include <catch2/catch.hpp>
 
 #include "IR/Builder.h"
-#include "IR/InfoImpls.h"
+#include "IR/IRImpls.h"
 
 TEST_CASE("Manually Constructed IR", "[unit][IR]") {
   llvm::LLVMContext ctx;
@@ -29,8 +29,8 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
     REQUIRE(load->getInst() == loadInst);
     REQUIRE(llvm::isa<llvm::LoadInst>(load->getInst()));
     REQUIRE(load->getAccessedValue() == loadInst->getPointerOperand());
-    REQUIRE(llvm::isa<race::ReadInfo>(load));
-    REQUIRE(llvm::isa<race::MemAccessInfo>(load));
+    REQUIRE(llvm::isa<race::ReadIR>(load));
+    REQUIRE(llvm::isa<race::MemAccessIR>(load));
   }
 
   SECTION("Construct StoreInfo") {
@@ -42,18 +42,18 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
     REQUIRE(store->getInst() == storeInst);
     REQUIRE(llvm::isa<llvm::StoreInst>(store->getInst()));
     REQUIRE(store->getAccessedValue() == storeInst->getPointerOperand());
-    REQUIRE(llvm::isa<race::WriteInfo>(store));
-    REQUIRE(llvm::isa<race::MemAccessInfo>(store));
+    REQUIRE(llvm::isa<race::WriteIR>(store));
+    REQUIRE(llvm::isa<race::MemAccessIR>(store));
   }
 
-  SECTION("Construct CallInfo") {
+  SECTION("Construct CallIR") {
     auto callInst = IRB.CreateCall(func);
     REQUIRE(callInst != nullptr);
 
-    auto call = std::make_unique<race::CallInfo>(callInst);
+    auto call = std::make_unique<race::CallIR>(callInst);
     REQUIRE(call->getInst() == callInst);
     REQUIRE(llvm::isa<llvm::CallBase>(call->getInst()));
-    REQUIRE(llvm::isa<race::CallInfo>(call));
+    REQUIRE(llvm::isa<race::CallIR>(call));
   }
 }
 
@@ -84,19 +84,19 @@ define void @foo(i32* %x) {
   auto racefunc = race::generateRaceFunction(func);
   REQUIRE(racefunc.size() == 4);
 
-  auto read = llvm::dyn_cast<race::ReadInfo>(racefunc.at(0).get());
+  auto read = llvm::dyn_cast<race::ReadIR>(racefunc.at(0).get());
   REQUIRE(read);
   REQUIRE(read->getAccessedValue()->getName() == "x");
 
-  auto externcall = llvm::dyn_cast<race::CallInfo>(racefunc.at(1).get());
+  auto externcall = llvm::dyn_cast<race::CallIR>(racefunc.at(1).get());
   REQUIRE(externcall);
   REQUIRE(externcall->getInst()->getCalledFunction()->getName() == "bar");
 
-  auto write = llvm::dyn_cast<race::WriteInfo>(racefunc.at(2).get());
+  auto write = llvm::dyn_cast<race::WriteIR>(racefunc.at(2).get());
   REQUIRE(write);
   REQUIRE(write->getAccessedValue()->getName() == "x");
 
-  auto call = llvm::dyn_cast<race::CallInfo>(racefunc.at(3).get());
+  auto call = llvm::dyn_cast<race::CallIR>(racefunc.at(3).get());
   REQUIRE(call);
   REQUIRE(call->getInst()->getCalledFunction()->getName() == "hello");
 }
@@ -129,12 +129,12 @@ declare i32 @pthread_join(i64, i8**)
   auto racefunc = race::generateRaceFunction(func);
   REQUIRE(racefunc.size() == 3);
 
-  auto pthreadcreate = llvm::dyn_cast<race::ForkInfo>(racefunc.at(0).get());
+  auto pthreadcreate = llvm::dyn_cast<race::ForkIR>(racefunc.at(0).get());
   REQUIRE(pthreadcreate);
   REQUIRE(pthreadcreate->getThreadHandle()->getName() == "p_thread");
   REQUIRE(pthreadcreate->getThreadEntry()->getName() == "entry");
 
-  auto pthreadjoin = llvm::dyn_cast<race::JoinInfo>(racefunc.at(2).get());
+  auto pthreadjoin = llvm::dyn_cast<race::JoinIR>(racefunc.at(2).get());
   REQUIRE(pthreadjoin);
   REQUIRE(pthreadjoin->getThreadHandle()->getName() == "thread");
 }
@@ -165,13 +165,13 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
   REQUIRE(racefunc.size() == 2);
 
   SECTION("pthread_mutex_lock") {
-    auto lock = llvm::dyn_cast<race::LockInfo>(racefunc.at(0).get());
+    auto lock = llvm::dyn_cast<race::LockIR>(racefunc.at(0).get());
     REQUIRE(lock != nullptr);
     CHECK(lock->getLockValue()->getName() == "mutex");
   }
 
   SECTION("pthread_mutex_unlock") {
-    auto unlock = llvm::dyn_cast<race::UnlockInfo>(racefunc.at(1).get());
+    auto unlock = llvm::dyn_cast<race::UnlockIR>(racefunc.at(1).get());
     REQUIRE(unlock != nullptr);
     CHECK(unlock->getLockValue()->getName() == "mutex");
   }

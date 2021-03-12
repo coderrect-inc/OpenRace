@@ -2,7 +2,7 @@
 
 #include <llvm/IR/Instructions.h>
 
-#include "IR/InfoImpls.h"
+#include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
 
@@ -52,7 +52,7 @@ RaceFunction race::generateRaceFunction(const llvm::Function &func) {
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls
-          instructions.push_back(std::make_shared<race::CallInfo>(callInst));
+          instructions.push_back(std::make_shared<race::CallIR>(callInst));
           continue;
         }
 
@@ -80,7 +80,7 @@ RaceFunction race::generateRaceFunction(const llvm::Function &func) {
         } else if (isLLVMDebug(funcName)) {
           // Skip
         } else {
-          instructions.push_back(std::make_shared<CallInfo>(callInst));
+          instructions.push_back(std::make_shared<CallIR>(callInst));
         }
       }
     }

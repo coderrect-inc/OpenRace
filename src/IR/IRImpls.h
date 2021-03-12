@@ -2,15 +2,15 @@
 
 #include <llvm/IR/Instructions.h>
 
-#include "IR/Info.h"
+#include "IR/IR.h"
 
 namespace race {
 
 // ==================================================================
-// =============== ReadInfo Implementations ========================
+// =============== ReadIR Implementations ========================
 // ==================================================================
 
-class LoadInfo : public ReadInfo {
+class LoadInfo : public ReadIR {
   const llvm::LoadInst *inst;
 
  public:
@@ -21,7 +21,7 @@ class LoadInfo : public ReadInfo {
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
 };
 
-class APIReadInfo : public ReadInfo {
+class APIReadInfo : public ReadIR {
   // Operand that this API call reads
   unsigned int operandOffset;
 
@@ -37,10 +37,10 @@ class APIReadInfo : public ReadInfo {
 };
 
 // ==================================================================
-// =============== WriteInfo Implementations ========================
+// =============== WriteIR Implementations ========================
 // ==================================================================
 
-class StoreInfo : public WriteInfo {
+class StoreInfo : public WriteIR {
   const llvm::StoreInst *inst;
 
  public:
@@ -51,7 +51,7 @@ class StoreInfo : public WriteInfo {
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
 };
 
-class APIWriteInfo : public WriteInfo {
+class APIWriteInfo : public WriteIR {
   // Operand that this API call reads
   unsigned int operandOffset;
 
@@ -69,10 +69,10 @@ class APIWriteInfo : public WriteInfo {
 };
 
 // ==================================================================
-// =============== ForkInfoImplementations ========================
+// =============== ForkIR Implementations ========================
 // ==================================================================
 
-class PthreadCreateInfo : public ForkInfo {
+class PthreadCreateInfo : public ForkIR {
   constexpr static unsigned int threadHandleOffset = 0;
   constexpr static unsigned int threadEntryOffset = 2;
   const llvm::CallBase *inst;
@@ -91,7 +91,7 @@ class PthreadCreateInfo : public ForkInfo {
   }
 };
 
-class OpenMPForkInfo : public ForkInfo {
+class OpenMPForkInfo : public ForkIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L262
   // @param loc  source location information
   // @param argc  total number of arguments in the ellipsis
@@ -117,10 +117,10 @@ class OpenMPForkInfo : public ForkInfo {
 };
 
 // ==================================================================
-// =============== JoinInfo Implementations ========================
+// =============== JoinIR Implementations ========================
 // ==================================================================
 
-class PthreadJoinInfo : public JoinInfo {
+class PthreadJoinInfo : public JoinIR {
   const unsigned int threadHandleOffset = 0;
   const llvm::CallBase *inst;
 
@@ -135,10 +135,10 @@ class PthreadJoinInfo : public JoinInfo {
 };
 
 // ==================================================================
-// =============== LockInfo Implementations ========================
+// =============== LockIR Implementations ========================
 // ==================================================================
 
-class PthreadMutexLockInfo : public LockInfo {
+class PthreadMutexLockInfo : public LockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 
@@ -153,10 +153,10 @@ class PthreadMutexLockInfo : public LockInfo {
 };
 
 // ==================================================================
-// =============== UnlockInfo Implementations =======================
+// =============== UnlockIR Implementations =======================
 // ==================================================================
 
-class PthreadMutexUnlockInfo : public UnlockInfo {
+class PthreadMutexUnlockInfo : public UnlockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 

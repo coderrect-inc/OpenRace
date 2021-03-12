@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "IR/Info.h"
+#include "IR/IR.h"
 
 namespace race {
-using RaceFunction = std::vector<std::shared_ptr<const StmtInfo>>;
+using RaceFunction = std::vector<std::shared_ptr<const IR>>;
 
 RaceFunction generateRaceFunction(const llvm::Function *func);
 RaceFunction generateRaceFunction(const llvm::Function &func);

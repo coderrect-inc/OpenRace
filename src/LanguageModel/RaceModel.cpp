@@ -1,6 +1,6 @@
 #include "LanguageModel/RaceModel.h"
 
-#include "IR/InfoImpls.h"
+#include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
 

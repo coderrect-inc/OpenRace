@@ -34,7 +34,7 @@ set(racedetect-lib-sources
     Analysis/LockSet.cpp
     Analysis/SharedMemory.cpp
     IR/Builder.cpp
-    IR/Info.cpp
+    IR/IR.cpp
     Trace/Event.cpp
     Trace/EventImpl.cpp
     Trace/ProgramTrace.cpp

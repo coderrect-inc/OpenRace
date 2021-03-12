@@ -6,7 +6,7 @@
 #include <catch2/catch.hpp>
 
 #include "IR/Builder.h"
-#include "IR/InfoImpls.h"
+#include "IR/IRImpls.h"
 
 TEST_CASE("OpenMP", "[unit][IR][omp]") {
   const char *ModuleString = R"(
