@@ -20,7 +20,7 @@ The cmake options do the following:
  - `CMAKE_BUILD_TYPE=Debug`  
  Builds the project in debug mode. This makes it is easier to debug if/when issues occur.
  - `LLVM_DIR=$LLVM_DIR`  
- Should point to a directory containing `LLVMConfig.cmake`. Make sure the correct version of LLVM is being used. Check the CMakeLists.txt file to see which version of LLVM our project expects. You can either use a prebuilt version of LLVM, or build the correct version of LLVM directly.
+ Should point to a directory containing `LLVMConfig.cmake`. Make sure to use LLVM 10.0.0. You can either use a prebuilt version of LLVM, or build the correct version of LLVM directly.
 
 ## Running Tests
 

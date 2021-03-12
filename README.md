@@ -17,7 +17,7 @@ make -j
 
 Feel free to adjust cmake options as you see fit.
 
-The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake`.
+The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake` for LLVM version 10.0.0 .
 
 # Developing
 Project layout based on: https://github.com/vector-of-bool/pitchfork
