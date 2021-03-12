@@ -20,10 +20,8 @@ Feel free to adjust cmake options as you see fit.
 The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake` for LLVM version 10.0.0 .
 
 # Developing
-Project layout based on: https://github.com/vector-of-bool/pitchfork
-- In general prefer Merged header/source
-- Pointer analysis is exception for legacy
+- Project layout based on [Pitchfork Layout](https://api.csswg.org/bikeshed/?force=1&url=https://raw.githubusercontent.com/vector-of-bool/pitchfork/develop/data/spec.bs)
 
-CMake guidelines based off of: https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+- CMake guidelines based off of [Effective Modern CMake](https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1)
 
-Conan usage based on: https://docs.conan.io/en/latest/integrations/build_system/cmake/cmake_generator.html
+- Conan usage based on Conan's [CMake Docs](https://docs.conan.io/en/latest/integrations/build_system/cmake/cmake_generator.html)
