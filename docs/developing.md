@@ -1,4 +1,6 @@
-# Building
+# Developers Guide
+
+## Building
 
 The recommended method of building the project for development is
 
@@ -20,7 +22,7 @@ The cmake options do the following:
  - `LLVM_DIR=$LLVM_DIR`  
  Should point to a directory containing `LLVMConfig.cmake`. Make sure the correct version of LLVM is being used. Check the CMakeLists.txt file to see which version of LLVM our project expects. You can either use a prebuilt version of LLVM, or build the correct version of LLVM directly.
 
-# Running Tests
+## Running Tests
 
 From the build directory, run `ctest`. This should automatically handle running tests from the correct directory. 
 
@@ -28,7 +30,7 @@ Tests can also be executed manually using the`bin/tester` executable. Many of th
 
 It is expected that all tests will always pass in the main branch of the project.
 
-# Adding Tests
+## Adding Tests
 
 Tests are split into two types, unit and integration.
 
@@ -41,7 +43,7 @@ Any time code is added, tests should also likely be added to cover the new code.
 For example, when adding support for `pthread_create`, a unit test should be added to check that the llvm IR call to `pthread_create` is correctly recognized, and an integration test for a simple program using `pthread_create` should be added.
 
 
-# Running clang-format
+## Running clang-format
 
 All code should be formatted according to the `.clang-format` file at the project root.
 
