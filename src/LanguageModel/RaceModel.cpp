@@ -63,19 +63,19 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
     // non global shared args are passed as pointers n, n+1, n+2, ...
     // and received by outlined func as m, m+1, m+2, ...
 
-    // Need to link 3rd arg of caller (n) to 2nd arg of callee (m)
-    // and 4th arg of caller (n+1) to 3rd arg of callee (m+1)
+    // Need to link 4th arg of caller (n) to 3rd arg of callee (m)
+    // and 4th arg of caller (n+1) to 4th arg of callee (m+1)
     // and so on
 
     auto calleeArg = callee->getFunction()->arg_begin();
-    auto callerArg = caller->getFunction()->arg_begin();
+    auto callerArg = call->arg_begin();
     std::advance(calleeArg, 2);
     std::advance(callerArg, 3);
     for (auto const end = callee->getFunction()->arg_end(); calleeArg != end; ++calleeArg, ++callerArg) {
       // Only link args with pointer type
       if (calleeArg->getType()->isPointerTy()) {
         PtrNode *formal = this->getPtrNode(callee->getContext(), calleeArg);
-        PtrNode *actual = this->getPtrNode(caller->getContext(), callerArg);
+        PtrNode *actual = this->getPtrNode(caller->getContext(), *callerArg);
         this->consGraph->addConstraints(actual, formal, Constraints::copy);
       }
     }

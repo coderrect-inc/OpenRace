@@ -9,6 +9,7 @@ add_executable(tester
     unit/PointerAnalysis/PointerAnalysis.test.cpp
     unit/Trace/CallStack.test.cpp
     unit/Trace/Trace.test.cpp
+    unit/Trace/OpenMPTrace.test.cpp
     
     integration/pthreadrace.test.cpp
     #integration/dataracebench.test.cpp

@@ -5,6 +5,8 @@
 
 #include <catch2/catch.hpp>
 
+#include "Trace/ProgramTrace.h"
+
 TEST_CASE("OpenmP ThreadTrace construction", "[unit][event][omp]") {
   const char *ModuleString = R"(
 
@@ -40,5 +42,21 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
     Err.print("error", llvm::errs());
     FAIL("no module");
   }
-  auto func = module->getFunction("main");
+
+  // Actual PTA
+  auto pta = std::make_unique<pta::PTA>();
+  pta->analyze(module.get(), "main");
+
+  race::ProgramTrace program(*pta);
+  auto const &threads = program.getThreads();
+  REQUIRE(threads.size() == 2);
+
+  auto const ompThread = threads.at(1).get();
+  auto const &events = ompThread->getEvents();
+  REQUIRE(events.size() == 4);
+
+  CHECK(events.at(0)->type == race::Event::Type::Write);
+  CHECK(events.at(1)->type == race::Event::Type::Read);
+  CHECK(events.at(2)->type == race::Event::Type::Read);
+  CHECK(events.at(3)->type == race::Event::Type::Write);
 }
