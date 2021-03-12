@@ -20,7 +20,7 @@ Feel free to adjust cmake options as you see fit.
 The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake`.
 
 # Developing
-Project layout based on: https://github.com/vector-of-bool/pitchfork
+Project layout based on the [Pitchfork Layout](https://api.csswg.org/bikeshed/?force=1&url=https://raw.githubusercontent.com/vector-of-bool/pitchfork/develop/data/spec.bs)
 - In general prefere Merged header/source
 - Pointer analysis is exception for legacy
 
