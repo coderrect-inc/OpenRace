@@ -1,19 +1,19 @@
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
+  title: 'Coderrect OpenRace',
+  tagline: 'Your multithreaded piece of mind, now open-sourced!',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
+  organizationName: 'coderrect-inc', // Usually your GitHub org/user name.
   projectName: 'docusaurus', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'Coderrect OpenRace',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Coderrect OpenRace',
         src: 'img/logo.svg',
       },
       items: [
@@ -23,7 +23,10 @@ module.exports = {
           label: 'Docs',
           position: 'left',
         },
-        {to: 'blog', label: 'Blog', position: 'left'},
+        // Now redirect to coderrect.com's blog.
+        // Later we can have OpenRace's own blog.
+        // { to: 'blog', label: 'Blog', position: 'left' },
+        { to: 'https://coderrect.com/blog/', label: 'Blog', position: 'left' },
         {
           href: 'https://github.com/facebook/docusaurus',
           label: 'GitHub',
@@ -47,33 +50,26 @@ module.exports = {
             },
           ],
         },
-        {
-          title: 'Community',
-          items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
-            },
-          ],
-        },
+        // TODO: where's our twitter?
+        // {
+        //   title: 'Community',
+        //   items: [
+        //     {
+        //       label: 'Twitter',
+        //       href: 'https://twitter.com/docusaurus',
+        //     },
+        //   ],
+        // },
         {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: 'blog',
+              label: 'GitHub',
+              href: 'https://github.com/coderrect-inc/OpenRace',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'Blog',
+              to: 'blog',
             },
           ],
         },
