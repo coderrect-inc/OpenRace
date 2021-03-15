@@ -6,7 +6,7 @@ module.exports = {
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/coderrect-logo.png',
   organizationName: 'coderrect-inc', // Usually your GitHub org/user name.
   projectName: 'docusaurus', // Usually your repo name.
   themeConfig: {
@@ -14,7 +14,7 @@ module.exports = {
       title: 'Coderrect OpenRace',
       logo: {
         alt: 'Coderrect OpenRace',
-        src: 'img/logo.svg',
+        src: 'img/coderrect-logo.png',
       },
       items: [
         {
