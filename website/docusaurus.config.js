@@ -17,18 +17,20 @@ module.exports = {
         src: 'img/coderrect-logo.png',
       },
       items: [
-        {
-          to: 'docs/',
-          activeBasePath: 'docs',
-          label: 'Docs',
-          position: 'left',
-        },
-        // Now redirect to coderrect.com's blog.
+        // NOTE: Since we are using doc-only mode
+        // we don't need an entry for docs on navbar
+        // {
+        //   to: 'docs/',
+        //   activeBasePath: 'docs',
+        //   label: 'Docs',
+        //   position: 'left',
+        // },
+        // NOTE: Now redirect to coderrect.com's blog.
         // Later we can have OpenRace's own blog.
         // { to: 'blog', label: 'Blog', position: 'left' },
         { to: 'https://coderrect.com/blog/', label: 'Blog', position: 'left' },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/coderrect-inc/OpenRace',
           label: 'GitHub',
           position: 'right',
         },
@@ -85,7 +87,9 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://github.com/coderrect-inc/OpenRace/edit/master/website/',
+          // NOTE: The config below enables "doc-only mode" by redirecting docs to '/'
+          routeBasePath: '/',
         },
         blog: {
           showReadingTime: true,
