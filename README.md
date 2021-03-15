@@ -25,3 +25,5 @@ The only required option is `LLVM_DIR` which should point to the directory conta
 - CMake guidelines based off of [Effective Modern CMake](https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1)
 
 - Conan usage based on Conan's [CMake Docs](https://docs.conan.io/en/latest/integrations/build_system/cmake/cmake_generator.html)
+
+- [Documentation](https://coderrect-inc.github.io/OpenRace/)
