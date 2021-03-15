@@ -49,16 +49,6 @@ module.exports = {
             },
           ],
         },
-        // TODO: where's our twitter?
-        // {
-        //   title: 'Community',
-        //   items: [
-        //     {
-        //       label: 'Twitter',
-        //       href: 'https://twitter.com/docusaurus',
-        //     },
-        //   ],
-        // },
         {
           title: 'More',
           items: [
