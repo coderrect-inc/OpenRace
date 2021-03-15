@@ -3,7 +3,7 @@ module.exports = {
   title: 'Coderrect OpenRace',
   tagline: 'Your multithreaded piece of mind, now open-sourced!',
   url: 'https://coderrect-inc.github.io',
-  baseUrl: '/OpenRace/',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/coderrect-logo.png',
