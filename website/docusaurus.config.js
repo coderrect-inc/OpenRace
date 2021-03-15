@@ -74,7 +74,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/coderrect-inc/OpenRace/edit/master/website/',
+            'https://github.com/coderrect-inc/OpenRace/tree/develop/website/docs',
           // NOTE: The config below enables "doc-only mode" by redirecting docs to '/'
           routeBasePath: '/',
         },
