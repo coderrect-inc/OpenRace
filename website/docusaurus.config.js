@@ -2,13 +2,13 @@
 module.exports = {
   title: 'Coderrect OpenRace',
   tagline: 'Your multithreaded piece of mind, now open-sourced!',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  url: 'https://coderrect-inc.github.io',
+  baseUrl: '/OpenRace/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/coderrect-logo.png',
   organizationName: 'coderrect-inc', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  projectName: 'OpenRace', // Usually your repo name.
   themeConfig: {
     navbar: {
       title: 'Coderrect OpenRace',
