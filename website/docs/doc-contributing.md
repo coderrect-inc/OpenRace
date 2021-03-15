@@ -3,7 +3,7 @@ id: doc-contributing
 title: How to Contribute?
 ---
 
-# Support for new feature
+## Support for new feature
 
 There are two cases to consider when adding support for a new feature.
 
@@ -15,7 +15,7 @@ If the new feature behaves the same as an existing `StmtInfo::Type`, you only ne
 
 If you need to add a new operation to `StmtInfo::Type`, you need to write a recognizer and update Trace generation and each of the Analyses.
 
-## Adding an IRRecognizer
+### Adding an IRRecognizer
 
 In `IR/Builder.cpp` the `generateRaceFunction` traverses LLVM IR and produces a `RaceFunction` containing only the loigcal operations we care about for race detection.
 
@@ -25,11 +25,11 @@ Two things need to be done to add a new recognizer:
 
 For example, say we want to add `pthread_create` as a new Fork operation.
 
-### Defining the Impl class
+#### Defining the Impl class
 
 First, we define a new Impl class in `IR/IRImpls.h` that implements the `ForkInfo` interface defined in `IR/IR.h`.
 
-```
+```cpp
 class PthreadCreateInfo : public ForkInfo {
     constexpr static unsigned int threadHandleOffset = 0;
     constexpr static unsigned int threadEntryOffset = 2;
@@ -50,20 +50,20 @@ public:
 };
 ```
 
-### Adding a branch to `generateRaceFunction`
+#### Adding a branch to `generateRaceFunction`
 
 Second, we add a branch to `generateRaceFunction` that recognizes a call to `pthread_create`, constructs the new impl class, and adds the constructed object to the list of instructions.
 
-```
+```cpp
 if (isPthreadCreate(funcName)) {
     instructions.push_back(std::make_shared<PthreadCreateInfo>(callInst));
 ```
 
-# Testing
+## Testing
 
 Anytime anything new is added, you should add a new test case where appropriate.
 
-## Writing Tests
+### Writing Tests
 
 Tests are written using Catch2.
 
@@ -80,7 +80,7 @@ Integration tests are testing the tool as a whole. Most of the integration tests
 If you need to read some data from a file ina  test, assume the working directory to be `tests/data`. This is the working directory used when CMake runs the test binary.
 
 
-## Running Tests
+### Running Tests
 
 The easiest way to run the tests is to run `ctest` in the build directory after building the project.
 
