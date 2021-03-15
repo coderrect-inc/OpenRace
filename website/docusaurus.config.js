@@ -47,8 +47,8 @@ module.exports = {
               to: 'docs/',
             },
             {
-              label: 'Second Doc',
-              to: 'docs/doc2/',
+              label: 'Contributing',
+              to: '/doc-contributing',
             },
           ],
         },
@@ -76,7 +76,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Coderrect, Inc. Built with Docusaurus.`,
     },
   },
   presets: [
