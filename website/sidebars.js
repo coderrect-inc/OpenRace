@@ -1,6 +1,6 @@
 module.exports = {
   someSidebar: {
-    Developers: ['doc-style-guide', 'doc-design-overview', 'doc-how-to-contribute'],
+    Developers: ['doc-style-guide', 'doc-overview', 'doc-contributing'],
     Features: ['mdx'],
   },
 };

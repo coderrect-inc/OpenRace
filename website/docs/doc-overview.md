@@ -1,3 +1,8 @@
+---
+id: doc-overview
+title: Design Overview
+---
+
 # High Level Design
 
 The high level design is split into three phases.

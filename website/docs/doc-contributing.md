@@ -1,3 +1,8 @@
+---
+id: doc-contributing
+title: How to Contribute?
+---
+
 # Support for new feature
 
 There are two cases to consider when adding support for a new feature.
