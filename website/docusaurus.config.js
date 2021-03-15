@@ -25,9 +25,6 @@ module.exports = {
         //   label: 'Docs',
         //   position: 'left',
         // },
-        // NOTE: Now redirect to coderrect.com's blog.
-        // Later we can have OpenRace's own blog.
-        // { to: 'blog', label: 'Blog', position: 'left' },
         { to: 'https://coderrect.com/blog/', label: 'Blog', position: 'left' },
         {
           href: 'https://github.com/coderrect-inc/OpenRace',
