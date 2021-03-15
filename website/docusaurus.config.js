@@ -44,7 +44,7 @@ module.exports = {
           items: [
             {
               label: 'Style Guide',
-              to: 'docs/',
+              to: '/',
             },
             {
               label: 'Contributing',
@@ -71,7 +71,7 @@ module.exports = {
             },
             {
               label: 'Blog',
-              to: 'blog',
+              to: 'https://coderrect.com/blog/',
             },
           ],
         },

@@ -12,6 +12,7 @@ on:
 
 jobs:
   checks:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -29,6 +30,7 @@ jobs:
           fi
           npm run build
   doc-publish:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
