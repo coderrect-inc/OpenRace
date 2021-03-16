@@ -96,7 +96,8 @@ module.exports = {
       {
         hashed: true,
         language: ["en"],
-        highlightSearchTermsOnTargetPage: true
+        highlightSearchTermsOnTargetPage: true,
+        indexPages: true,
       }
     ]
   ]
