@@ -71,4 +71,4 @@ By submitting code you guarantee that:
 - you are not aware of any pending or threatened claims, suits, actions, or charges related to the submitted work and that you will notify Coderrect Inc. immediately if you become aware of any pending or threatened claims, suits, actions, or charges related to the submitted work.
 
 
-**By making a contribution to this project you agree and accept on behalf of yourself and your organization**
+**By making a contribution to this project You agree and accept this license**
