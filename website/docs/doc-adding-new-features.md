@@ -1,9 +1,9 @@
 ---
-id: doc-contributing
-title: How to Contribute?
+id: doc-adding-new-features
+title: Adding New Features
 ---
 
-## Support for new feature
+## Supports for new features
 
 There are two cases to consider when adding support for a new feature.
 
