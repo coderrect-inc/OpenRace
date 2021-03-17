@@ -1,6 +1,7 @@
 ---
 id: doc-get-started
 title: Get Started with Coderrect OpenRace
+slug: /
 ---
 
 ## Building the Project

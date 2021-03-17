@@ -1,8 +1,6 @@
 ---
 id: doc-style-guide
 title: Style Guide
-sidebar_label: Style Guide
-slug: /
 ---
 
 ## Code Format
