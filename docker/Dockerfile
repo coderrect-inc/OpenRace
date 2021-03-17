@@ -1,4 +1,4 @@
-FROM gcc:10.2.0
+FROM gcc:10.2.0 AS build
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
@@ -13,9 +13,6 @@ RUN apt-get update \
 
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=
-
-# Install conan
-RUN pip install conan
 
 # Build and install llvm
 RUN git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.git
@@ -33,6 +30,26 @@ RUN cmake \
     -DCMAKE_BUILD_TYPE=Release \
     ../llvm
 RUN cmake --build . --parallel
-RUN cmake --install .
+RUN cmake --build . --target install
 
-WORKDIR /
+FROM gcc:10.2.0
+
+# Copy llvm which was built before
+COPY --from=build /usr/local /usr/local
+
+# Avoid warnings by switching to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y \
+    cmake make python-pip \
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to dialog for any ad-hoc use of apt-get
+ENV DEBIAN_FRONTEND=
+
+# Install conan
+RUN pip install conan
