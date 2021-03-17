@@ -97,6 +97,8 @@ module.exports = {
         hashed: true,
         language: ["en"],
         highlightSearchTermsOnTargetPage: true,
+        // NOTE: a hack to make local search works for doc-only mode
+        // (because docs are index pages now)
         indexPages: true,
       }
     ]
