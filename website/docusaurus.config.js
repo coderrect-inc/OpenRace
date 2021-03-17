@@ -74,7 +74,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/coderrect-inc/OpenRace/tree/develop/website/docs',
+            'https://github.com/coderrect-inc/OpenRace/tree/develop/website',
           // NOTE: The config below enables "doc-only mode" by redirecting docs to '/'
           routeBasePath: '/',
         },
@@ -90,4 +90,17 @@ module.exports = {
       },
     ],
   ],
+  plugins: [
+    [
+      "@easyops-cn/docusaurus-search-local",
+      {
+        hashed: true,
+        language: ["en"],
+        highlightSearchTermsOnTargetPage: true,
+        // NOTE: a hack to make local search works for doc-only mode
+        // (because docs are index pages now)
+        indexPages: true,
+      }
+    ]
+  ]
 };

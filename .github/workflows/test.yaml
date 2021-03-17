@@ -4,11 +4,6 @@ on:
   pull_request:
     branches: 
       - develop
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'conanfile.txt'
-      - '.github/workflows/**'
   push:
     branches:
       - develop
