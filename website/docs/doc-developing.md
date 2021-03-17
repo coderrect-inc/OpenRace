@@ -1,4 +1,7 @@
-# Developers Guide
+---
+id: doc-developing
+title: Development Guide
+---
 
 ## Building
 
