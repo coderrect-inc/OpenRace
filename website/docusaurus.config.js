@@ -45,7 +45,7 @@ module.exports = {
             },
             {
               label: 'Contributing',
-              to: '/doc-contributing',
+              to: '/doc-adding-new-features',
             },
           ],
         },
