@@ -47,5 +47,5 @@ add_library(racedetect-lib STATIC ${racedetect-lib-sources})
 target_link_libraries(racedetect-lib pta)
 target_include_directories(racedetect-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable(racedetect main.cpp)
-target_link_libraries(racedetect racedetect-lib ${llvm_libs})
+add_executable(openrace main.cpp)
+target_link_libraries(openrace racedetect-lib ${llvm_libs})

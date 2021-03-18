@@ -22,11 +22,23 @@ Please note, the tool is still in the early stages of development and does not s
 First either download the tool from the GitHub releases page or build the latest version from source and run:
 
 ```
-> racedetect tests/data/integration/pthreadrace/pthreadsimple.ll
+> openrace tests/data/integration/pthreadrace/pthreadsimple.ll
 ==== Races ====
 pthreadsimple.c:8:9 pthreadsimple.c:8:9
 Total Races Detected: 1
 ```
+
+The tool takes an LLVM IR file as input. The IR must be generated using clang 10.0.1.
+
+To generate LLVM IR for a single file, run
+
+```
+> clang -S -emit-llvm -g file.cpp
+```
+
+Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce a LLVM IR file for a project with multiple files. 
+
+Generating LLVM IR for large projects is outside the scope if this tool (for now). 
 
 # Building
 
