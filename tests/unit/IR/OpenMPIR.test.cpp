@@ -60,7 +60,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
 
   auto func = module->getFunction("main");
 
-  auto racefunc = race::generateRaceFunction(func);
+  auto racefunc = race::generateFunctionSummary(func);
   REQUIRE(racefunc.size() == 4);
 
   auto ompFork = llvm::dyn_cast<race::OpenMPForkIR>(racefunc.at(0).get());

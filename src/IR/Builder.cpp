@@ -26,7 +26,7 @@ bool hasNoAliasMD(const llvm::Instruction *inst) {
   return AAMD.NoAlias != nullptr;
 }
 
-// Assuming BI points to a OpenMP fork call, the next inst should be a duplicate omp fork call
+// Assuming ompForkCall points to a OpenMP fork call, the next inst should be a duplicate omp fork call
 // this returns that omp fork or null if the next inst is not a omp fork call
 std::shared_ptr<OpenMPForkIR> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
   auto next = ompForkCall->getNextNode();
@@ -50,17 +50,17 @@ bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"
 bool isLLVMDebug(const llvm::StringRef &funcName) { return funcName.equals("llvm.dbg.declare"); }
 }  // namespace
 
-FunctionSummary race::generateRaceFunction(const llvm::Function *func) {
+FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
   assert(func != nullptr);
-  return generateRaceFunction(*func);
+  return generateFunctionSummary(*func);
 }
 
-FunctionSummary race::generateRaceFunction(const llvm::Function &func) {
+FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary instructions;
 
   for (auto const &basicblock : func.getBasicBlockList()) {
-    for (auto BI = basicblock.begin(), BE = basicblock.end(); BI != BE; ++BI) {
-      auto inst = llvm::cast<llvm::Instruction>(BI);
+    for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
+      auto inst = llvm::cast<llvm::Instruction>(it);
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
@@ -115,7 +115,7 @@ FunctionSummary race::generateRaceFunction(const llvm::Function &func) {
             continue;
           }
           // We matched the next inst as twin omp fork
-          ++BI;
+          ++it;
 
           // push the two forks and joins such tha the two threads created for the parallel region are in parallel
           instructions.push_back(ompFork);
