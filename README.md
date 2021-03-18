@@ -1,4 +1,17 @@
+<div align="center">
+<img src="https://coderrect.com/wp-content/uploads/2018/12/Coderrect-Horizontal-Logo-Large-3.png" alt="Coderrect Logo" width="300"/>
+</div>
+
+
 # OpenRace
+
+OpenRace is an in development C/C++ data race detection tool.
+
+This project aims to have a clean and extensible design to facilitate community contributions.
+
+OpenRace is an open source implementation of the [Coderrect Scanner][CS] which is a C/C++/Fortran data race detection tool. The open source tool is currently behind the original scanner in terms of feature support, but we are actively developing and expect OpenRace to eventually replace the closed source implementation of [Coderrect Scanner][CS].
+
+[CS]: https://coderrect.com/overview/
 
 [![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
 
