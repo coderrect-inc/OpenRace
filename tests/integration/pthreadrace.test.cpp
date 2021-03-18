@@ -11,7 +11,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "RaceDetect/RaceDetect.h"
+#include "RaceDetect.h"
 #include "Reporter/Reporter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"

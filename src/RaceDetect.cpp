@@ -9,9 +9,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "RaceDetect/RaceDetect.h"
+#include "RaceDetect.h"
 
+#include "Analysis/HappensBeforeGraph.h"
+#include "Analysis/LockSet.h"
+#include "Analysis/SharedMemory.h"
+#include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
+#include "Trace/ProgramTrace.h"
 
 using namespace race;
 
