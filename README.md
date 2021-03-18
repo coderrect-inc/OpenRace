@@ -15,6 +15,19 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 [![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
 
+# Running
+
+Please note, the tool is still in the early stages of development and does not support many features yet.
+
+First either download the tool from the GitHub releases page or build the latest version from source and run:
+
+```
+> racedetect tests/data/integration/pthreadrace/pthreadsimple.ll
+==== Races ====
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+Total Races Detected: 1
+```
+
 # Building
 
 Using conan to manage dependencies. Instructions to install conan can be found [here](https://conan.io/downloads.html).
