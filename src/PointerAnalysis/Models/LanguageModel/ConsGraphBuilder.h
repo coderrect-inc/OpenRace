@@ -36,9 +36,6 @@ limitations under the License.
 #include "PointerAnalysis/Util/GraphWriter.h"
 #include "PointerAnalysis/Util/SingleInstanceOwner.h"
 
-extern bool DEBUG_PTA;
-extern bool DEBUG_PTA_VERBOSE;
-
 namespace pta {
 
 #define MODEL static_cast<SubClass *>(this)

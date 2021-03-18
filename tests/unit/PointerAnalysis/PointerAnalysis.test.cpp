@@ -97,8 +97,6 @@ cl::opt<size_t> MaxIndirectTarget("max-indirect-target", cl::init(999),
                                            "indirect call"));
 cl::opt<size_t> PTAAnonLimit("ptaanon", cl::init(999), cl::desc("anon"));
 
-bool DEBUG_PTA = false;
-bool DEBUG_PTA_VERBOSE = false;
 std::vector<std::string> CONFIG_INDIRECT_APIS;
 
 // TODO: write custom catch2 main and pass location
