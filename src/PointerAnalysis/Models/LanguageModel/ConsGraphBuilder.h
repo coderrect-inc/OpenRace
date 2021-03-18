@@ -45,7 +45,7 @@ enum class IndirectResolveOption {
   SKIP,        // do not add the resolved function to the callgraph
   WITH_LIMIT,  // only add the resolved function to the callgraph iff the
                // indirect call limit is not exceeded.
-  CRITICAL,    // make sure the functon are inserted to callgraph, even if the
+  CRITICAL,    // make sure the function are inserted to callgraph, even if the
                // limit has been exceeded.
 };
 
@@ -250,7 +250,6 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
             }
           }
         }
-        // if (applyLimit && count >= MaxIndirectTarget) break;
       }
     }
     if (changed) {

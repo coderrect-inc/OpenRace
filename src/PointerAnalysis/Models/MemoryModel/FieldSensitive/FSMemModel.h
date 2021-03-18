@@ -30,7 +30,6 @@ limitations under the License.
 #include "PointerAnalysis/Util/Util.h"
 
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
-extern cl::opt<size_t> PTAAnonLimit;
 
 namespace pta {
 
@@ -344,12 +343,12 @@ class FSMemModel {
   }
 
   int allocatedCount;
-  const int ANON_REC_LIMIT = PTAAnonLimit;
+  const int ANON_REC_LIMIT = 999;
   const int ANON_REC_DEPTH_LIMIT = 10;
   template <typename PT>
   ObjNode *allocAnonObjRec(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, const llvm::Value *tag,
                            std::vector<const llvm::Type *> &typeTree) {
-    // limit the depth of anonmyous object
+    // limit the depth of anonymous object
     if (typeTree.size() > ANON_REC_DEPTH_LIMIT) {
       return nullptr;
     }

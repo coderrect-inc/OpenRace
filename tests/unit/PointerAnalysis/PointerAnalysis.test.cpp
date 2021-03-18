@@ -90,17 +90,6 @@ static llvm::RegisterPass<PointerAnalysisPass<Solver>> PAP("Pointer Analysis Wra
 
 }  // namespace
 
-// Globals needed by PTA
-cl::opt<bool> CONFIG_EXHAUST_MODE("full", cl::desc("Use exhaustive detection mode"));
-cl::opt<size_t> MaxIndirectTarget("max-indirect-target", cl::init(999),
-                                  cl::desc("max number of indirect call target that can be resolved by "
-                                           "indirect call"));
-cl::opt<size_t> PTAAnonLimit("ptaanon", cl::init(999), cl::desc("anon"));
-
-std::vector<std::string> CONFIG_INDIRECT_APIS;
-
-// TODO: write custom catch2 main and pass location
-// of these files as cmd line arg in cmake
 TEST_CASE("PointerAnalysis", "[unit][PointerAnalysis]") {
   const std::string prefix = "unit/PointerAnalysis/";
   auto file = GENERATE(
