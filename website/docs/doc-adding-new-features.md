@@ -3,7 +3,7 @@ id: doc-adding-new-features
 title: Adding New Features
 ---
 
-## Supports for new features
+## Support for new features
 
 There are two cases to consider when adding support for a new feature.
 
