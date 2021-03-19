@@ -11,7 +11,10 @@ limitations under the License.
 
 #pragma once
 
-#include <Trace/ProgramTrace.h>
+#include <optional>
+
+#include "Trace/ProgramTrace.h"
+
 namespace race {
 
 struct SourceLoc {
@@ -19,38 +22,52 @@ struct SourceLoc {
   unsigned int line;
   unsigned int col;
 
-  SourceLoc() : filename("UNKOWN"), line(0), col(0) {}
+  SourceLoc() = delete;
   SourceLoc(llvm::StringRef filename, unsigned int line, unsigned int col) : filename(filename), line(line), col(col) {}
   explicit SourceLoc(const llvm::DILocation *loc)
       : filename(loc->getFilename()), line(loc->getLine()), col(loc->getColumn()) {}
 
-  // Location is unknown
-  bool isUnkown() const { return filename == "UNKOWN"; }
-
   inline bool operator==(const SourceLoc &other) const {
     return filename == other.filename && line == other.line && col == other.col;
   }
+  inline bool operator!=(const SourceLoc &other) const { return !(*this == other); }
 
-  inline bool operator<(const SourceLoc &other) const {
-    if (filename < other.filename) return true;
-    if (line < other.line) return true;
-    return col < other.col;
-  }
+  inline bool operator<(const SourceLoc &other) const;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const SourceLoc &loc);
 
+struct RaceAccess {
+  // source location cannot always be identified
+  std::optional<SourceLoc> location;
+  const llvm::Instruction *inst;
+
+  RaceAccess(const MemAccessEvent *event);
+
+  bool sameLocation(const RaceAccess &other) const { return location == other.location; }
+
+  bool operator==(const RaceAccess &other) const;
+  bool operator!=(const RaceAccess &other) const;
+  bool operator<(const RaceAccess &other) const;
+};
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const std::optional<SourceLoc> &location);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const RaceAccess &acc);
+
 struct Race {
  public:
-  SourceLoc first;
-  SourceLoc second;
-  Race(SourceLoc first, SourceLoc second) : first(first), second(second) {
+  RaceAccess first;
+  RaceAccess second;
+  Race(RaceAccess first, RaceAccess second) : first(first), second(second) {
     if (second < first) std::swap(first, second);
   }
 
+  // Check if either access is missing source location
+  bool missingLocation() const { return !first.location.has_value() || !second.location.has_value(); }
+
   inline bool operator==(const Race &other) const { return first == other.first && second == other.second; }
   inline bool operator<(const Race &other) const {
-    if (first < other.first) return true;
+    if (first != other.first) return first < other.first;
     return second < other.second;
   }
 };
