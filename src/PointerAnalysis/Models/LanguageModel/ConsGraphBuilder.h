@@ -288,7 +288,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
     // must be a call instruction
     assert(CS.isCallOrInvoke());
     // the target function should match
-    assert(CS.isIndirectCall() || CS.getTargetFunction() == callee->getFunction());
+    assert(CS.isIndirectCall() || CS.getCalledFunction() == callee->getFunction());
     // callsite should be in the caller function
     assert(callsite->getFunction() == caller->getFunction());
     // the rule of context evolution should be obeyed.
