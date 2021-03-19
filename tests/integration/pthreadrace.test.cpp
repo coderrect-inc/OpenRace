@@ -24,7 +24,7 @@ TEST_CASE("Pthreadrace", "[integration][pthread]") {
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
 
-  auto module = llvm::parseIRFile("integration/pthreadrace/ll/pthreadsimple.ll", err, context);
+  auto module = llvm::parseIRFile("integration/pthreadrace/ll/pthread_simple.ll", err, context);
   if (!module) {
     err.print("pthreadsimple", llvm::errs());
   }
