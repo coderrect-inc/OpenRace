@@ -32,7 +32,7 @@ struct SourceLoc {
   }
   inline bool operator!=(const SourceLoc &other) const { return !(*this == other); }
 
-  inline bool operator<(const SourceLoc &other) const;
+  bool operator<(const SourceLoc &other) const;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const SourceLoc &loc);
@@ -75,10 +75,6 @@ struct Race {
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Race &race);
 
 using Report = std::set<Race>;
-// Helpers for testing
-bool reportContains(const Report &report, Race race);
-bool reportContains(const Report &report, std::vector<Race> races);
-
 class Reporter {
   std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> races;
 

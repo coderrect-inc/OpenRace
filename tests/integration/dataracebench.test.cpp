@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "RaceDetect/RaceDetect.h"
 #include "Reporter/Reporter.h"
+#include "helpers/ReportChecking.h"
 
 // OpenMP support is a work in progress
 TEST_CASE("dataracebench", "[!mayfail][integration][dataracebench][omp]") {
@@ -37,7 +38,7 @@ TEST_CASE("dataracebench", "[!mayfail][integration][dataracebench][omp]") {
     llvm::errs() << race << "\n";
   }
 
-  // race::Race race = {{"DRB001-antidep1-orig-yes.c", 64, 9}, {"DRB001-antidep1-orig-yes.c", 66, 26}};
+  auto race = TestRace::fromString("DRB001-antidep1-orig-yes.c:64:9 DRB001-antidep1-orig-yes.c:66:26");
   // This check fails when omp fork is not joined correctly
-  // CHECK(!reportContains(report, race));
+  CHECK(!reportContains(report, race));
 }

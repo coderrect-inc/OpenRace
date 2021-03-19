@@ -83,21 +83,6 @@ Report Reporter::getReport() const {
   return report;
 }
 
-bool race::reportContains(const Report &report, Race race) {
-  return std::find(report.begin(), report.end(), race) != report.end();
-}
-
-bool race::reportContains(const Report &report, std::vector<Race> races) {
-  for (auto const &race : report) {
-    auto it = std::find(races.begin(), races.end(), race);
-    if (it != races.end()) {
-      races.erase(it);
-    }
-  }
-
-  return races.empty();
-}
-
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
   os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t" << *race.second.inst;
   return os;

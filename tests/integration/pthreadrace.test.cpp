@@ -9,14 +9,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/SourceMgr.h>
+
 #include <catch2/catch.hpp>
 
 #include "RaceDetect/RaceDetect.h"
 #include "Reporter/Reporter.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/SourceMgr.h"
+#include "helpers/ReportChecking.h"
 
 TEST_CASE("Pthreadrace", "[integration][pthread]") {
   llvm::LLVMContext context;
@@ -35,6 +37,6 @@ TEST_CASE("Pthreadrace", "[integration][pthread]") {
     llvm::errs() << race.first << " " << race.second << "\n";
   }
 
-  // race::Race race = {{"pthreadsimple.c", 8, 9}, {"pthreadsimple.c", 8, 9}};
-  // CHECK(reportContains(report, race));
+  auto race = TestRace::fromString("pthreadsimple.c:8:9 pthreadsimple.c:8:9");
+  CHECK(reportContains(report, race));
 }
