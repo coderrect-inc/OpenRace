@@ -7,14 +7,15 @@ add_executable(tester
     unit/IR/IR.test.cpp
     unit/IR/OpenMPIR.test.cpp
     unit/PointerAnalysis/PointerAnalysis.test.cpp
+    unit/PreProcessing/DuplicateOpenMPForks.test.cpp
     unit/Trace/CallStack.test.cpp
     unit/Trace/Trace.test.cpp
     unit/Trace/OpenMPTrace.test.cpp
     
     integration/pthreadrace.test.cpp
-    #integration/dataracebench.test.cpp
+    integration/dataracebench.test.cpp
 )
-target_link_libraries(tester pta racedetect ${llvm_libs} CONAN_PKG::catch2)
+target_link_libraries(tester pta racedetect-lib ${llvm_libs} CONAN_PKG::catch2)
 target_include_directories(tester PRIVATE ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(tester PRIVATE ${LLVM_DEFINITIONS})
 

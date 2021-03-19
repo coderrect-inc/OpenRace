@@ -29,7 +29,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   }
   callstack.push(func);
 
-  auto irFunc = generateRaceFunction(func);
+  auto irFunc = generateFunctionSummary(func);
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 

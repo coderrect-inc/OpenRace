@@ -16,11 +16,9 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "IR/Builder.h"
-#include "IR/IRImpls.h"
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
-TEST_CASE("OpenMP", "[unit][IR][omp]") {
+TEST_CASE("Duplicate OpenMP Forks", "[unit][preprocessing][omp]") {
   const char *ModuleString = R"(
 
 %struct.ident_t = type { i32, i32, i32, i32, i8* }
@@ -36,15 +34,7 @@ define i32 @main() {
     ret i32 0
 }
 
-define internal void @.omp_outlined.(i32* noalias %.global_tid., i32* noalias %.bound_tid., i32* nonnull align 4 dereferenceable(4) %count) {
-    %count.addr = alloca i32*
-    store i32* %count, i32** %count.addr
-    %1 = load i32*, i32** %count.addr
-    %2 = load i32, i32* %1
-    %inc = add nsw i32 %2, 1
-    store i32 %inc, i32* %1
-    ret void
-}
+declare void @.omp_outlined.(i32* noalias, i32* noalias, i32*);
 
 declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) 
 )";
@@ -56,28 +46,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
     FAIL("no module");
   }
 
+  REQUIRE(module->getFunction("main")->getEntryBlock().getInstList().size() == 4);
   duplicateOpenMPForks(*module);
-
-  auto func = module->getFunction("main");
-
-  auto racefunc = race::generateFunctionSummary(func);
-  REQUIRE(racefunc.size() == 4);
-
-  auto ompFork = llvm::dyn_cast<race::OpenMPForkIR>(racefunc.at(0).get());
-  REQUIRE(ompFork);
-  CHECK(ompFork->getInst()->getCalledFunction()->getName() == "__kmpc_fork_call");
-  CHECK(ompFork->getThreadEntry()->getName() == ".omp_outlined.");
-
-  ompFork = llvm::dyn_cast<race::OpenMPForkIR>(racefunc.at(1).get());
-  REQUIRE(ompFork);
-  CHECK(ompFork->getInst()->getCalledFunction()->getName() == "__kmpc_fork_call");
-  CHECK(ompFork->getThreadEntry()->getName() == ".omp_outlined.");
-
-  auto ompJoin = llvm::dyn_cast<race::OpenMPJoinIR>(racefunc.at(2).get());
-  REQUIRE(ompJoin);
-  CHECK(ompJoin->getInst()->getCalledFunction()->getName() == "__kmpc_fork_call");
-
-  ompJoin = llvm::dyn_cast<race::OpenMPJoinIR>(racefunc.at(3).get());
-  REQUIRE(ompJoin);
-  CHECK(ompJoin->getInst()->getCalledFunction()->getName() == "__kmpc_fork_call");
+  REQUIRE(module->getFunction("main")->getEntryBlock().getInstList().size() == 5);
 }

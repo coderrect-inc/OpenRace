@@ -47,10 +47,6 @@ declare i32 @pthread_join(i64, i8**)
     Err.print("error", llvm::errs());
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "foo");
-  race::ProgramTrace program(*pta);
-
+  race::ProgramTrace program(module.get(), "foo");
   race::SharedMemory sharedmem(program);
 }

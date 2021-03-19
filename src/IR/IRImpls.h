@@ -145,6 +145,18 @@ class PthreadJoinIR : public JoinIR {
   }
 };
 
+// This actually corresponds to a OpenMP fork instruction, as the fork call acts as both a fork and join in one call
+class OpenMPJoinIR : public JoinIR {
+  std::shared_ptr<OpenMPForkIR> fork;
+
+ public:
+  explicit OpenMPJoinIR(const std::shared_ptr<OpenMPForkIR> fork) : fork(fork) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
+};
+
 // ==================================================================
 // =============== LockIR Implementations ========================
 // ==================================================================

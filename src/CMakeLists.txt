@@ -17,13 +17,15 @@ set(pta-lib-sources
     PreProcessing/Passes/InsertGlobalCtorCallPass.cpp
     PreProcessing/Passes/LoweringMemCpyPass.cpp
     PreProcessing/Passes/RemoveExceptionHandlerPass.cpp
+    PreProcessing/Passes/DuplicateOpenMPForks.cpp
+    PreProcessing/PreProcessing.cpp
     
     LanguageModel/RaceModel.cpp)
 
 add_library(pta STATIC ${pta-lib-sources})
 target_link_libraries(pta ${llvm_libs} pthread)
 target_include_directories(pta PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(pta SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
+target_include_directories(pta SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(pta PUBLIC ${LLVM_DEFINITIONS})
 target_compile_options(pta PUBLIC -fno-rtti)
 target_compile_features(pta PUBLIC cxx_std_17)
@@ -39,10 +41,11 @@ set(racedetect-lib-sources
     Trace/EventImpl.cpp
     Trace/ProgramTrace.cpp
     Trace/ThreadTrace.cpp
-    Reporter/Reporter.cpp)
-add_library(racedetect STATIC ${racedetect-lib-sources})
-target_link_libraries(racedetect pta)
-target_include_directories(racedetect PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(racedetect SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
-# target_compile_options(racedetect PUBLIC -fno-rtti)
-# target_compile_features(racedetect PUBLIC cxx_std_17)
+    Reporter/Reporter.cpp
+    RaceDetect.cpp)
+add_library(racedetect-lib STATIC ${racedetect-lib-sources})
+target_link_libraries(racedetect-lib pta)
+target_include_directories(racedetect-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_executable(openrace main.cpp)
+target_link_libraries(openrace racedetect-lib ${llvm_libs})

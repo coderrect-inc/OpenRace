@@ -208,14 +208,6 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
         // llvm::outs() << scc.front()->getNodeID() << ",";
 
         if (scc.size() > 1) {
-          if (DEBUG_PTA) {
-            llvm::outs() << "SCC(" << scc.size() << "): ";  // JEFF
-            for (auto n : scc) {
-              llvm::outs() << n->getNodeID() << ", ";  // JEFF
-            }
-            llvm::outs() << "\n";  // JEFF
-          }
-
           processCopySCC(scc);
         } else {
           CGNodeTy *curNode = scc.front();
@@ -341,9 +333,6 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
     int pta_round = 0;
     bool reanalyze;
     do {
-      if (DEBUG_PTA)
-        llvm::outs() << "pta_round: " << (++pta_round) << " nodes: " << super::getConsGraph()->getNodeNum()
-                     << "\n";  //<<" edges: "<<super::getConsGraph()->getEdgeNum()<<"\n";
       // after this, the current contraints graph will reach fixed point.
       this->runSolver(*super::getLangModel());
 

@@ -11,10 +11,17 @@ limitations under the License.
 
 #pragma once
 
-#include "llvm/ADT/StringRef.h"
+#include <llvm/ADT/StringRef.h>
+#include <llvm/IR/Function.h>
 
 namespace OpenMPModel {
 
-inline bool isFork(const llvm::StringRef &funcName) { return funcName.equals("__kmpc_fork_call"); }
+inline bool isFork(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_fork_call"); }
+inline bool isFork(const llvm::CallBase* callInst) {
+  if (!callInst) return false;
+  auto const func = callInst->getCalledFunction();
+  if (!func->hasName()) return false;
+  return isFork(func->getName());
+}
 
 }  // namespace OpenMPModel

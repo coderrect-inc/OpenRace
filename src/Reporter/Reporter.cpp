@@ -38,7 +38,35 @@ void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) { races.e
 Report Reporter::getReport() const {
   Report report;
   for (auto const &racepair : races) {
-    report.emplace_back(getSourceLoc(racepair.first), getSourceLoc(racepair.second));
+    auto const loc1 = getSourceLoc(racepair.first);
+    auto const loc2 = getSourceLoc(racepair.second);
+    Race race(loc1, loc2);
+    if (loc1.isUnkown() || loc2.isUnkown()) {
+      llvm::errs() << "skipping race with unknown location: " << race << "\n";
+      continue;
+    }
+
+    report.insert(race);
   }
   return report;
+}
+
+bool race::reportContains(const Report &report, Race race) {
+  return std::find(report.begin(), report.end(), race) != report.end();
+}
+
+bool race::reportContains(const Report &report, std::vector<Race> races) {
+  for (auto const &race : report) {
+    auto it = std::find(races.begin(), races.end(), race);
+    if (it != races.end()) {
+      races.erase(it);
+    }
+  }
+
+  return races.empty();
+}
+
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
+  os << race.first << " " << race.second;
+  return os;
 }

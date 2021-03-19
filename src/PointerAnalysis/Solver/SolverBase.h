@@ -149,11 +149,6 @@ class SolverBase {
       if (fieldObj == nullptr) {
         continue;
       }
-      if (DEBUG_PTA)
-        llvm::outs() << "processOffset: "
-                     << "src: " << src->getNodeID() << " fieldObj: " << fieldObj->getNodeID()
-                     << " dst: " << dst->getNodeID() << "\n";
-
       if (!PT::has(ptrNode->getNodeID(), fieldObj->getObjectID())) {
 #ifndef NO_ADDR_OF_FOR_OFFSET
         // insert an addr_of constraint if ptrNode does not points to field

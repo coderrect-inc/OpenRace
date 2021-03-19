@@ -11,11 +11,18 @@ limitations under the License.
 
 #include "ProgramTrace.h"
 
+#include "PreProcessing/PreProcessing.h"
 #include "Trace/Event.h"
 
 using namespace race;
 
-ProgramTrace::ProgramTrace(const pta::PTA &pta) : pta(pta) {
+ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) {
+  // Run preprocessing on module
+  preprocess(*module);
+
+  // Run pointer analysis
+  pta.analyze(module, entryName);
+
   auto mainEntry = pta::GT::getEntryNode(pta.getCallGraph());
   // construct main thread
   threads.push_back(std::make_unique<ThreadTrace>(*this, mainEntry));

@@ -41,11 +41,7 @@ define void @foo() {
   llvm::SMDiagnostic Err;
   auto module = llvm::parseAssemblyString(modString, Err, Ctx);
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "foo");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get(), "foo");
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 1);
 
@@ -90,11 +86,7 @@ declare i32 @pthread_join(i64, i8**)
     Err.print("error", llvm::errs());
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "foo");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get(), "foo");
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 2);
 
@@ -170,11 +162,7 @@ declare i32 @pthread_join(i64, i8**)
     Err.print("error", llvm::errs());
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "foo");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get(), "foo");
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 3);
 
@@ -235,11 +223,7 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
     Err.print("error", llvm::errs());
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "main");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get());
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 1);
 

@@ -69,10 +69,7 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
     Err.print("error", llvm::errs());
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "main");
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get());
 
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 1);

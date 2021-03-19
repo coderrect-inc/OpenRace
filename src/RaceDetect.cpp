@@ -9,43 +9,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#pragma once
+#include "RaceDetect.h"
 
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
 #include "Analysis/SharedMemory.h"
 #include "LanguageModel/RaceModel.h"
-#include "Reporter/Reporter.h"
+#include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
 
-namespace race {
+using namespace race;
 
-Report detectRaces(llvm::Module *module) {
+bool isRace(const race::WriteEvent *write, const race::MemAccessEvent *other, const HappensBeforeGraph &happensbefore,
+            const LockSet &lockset) {
+  return happensbefore.areParallel(write, other) && !lockset.sharesLock(write, other);
+}
+
+Report race::detectRaces(llvm::Module *module) {
   race::Reporter reporter;
 
-  //   // Required setup by PTA
-  //   aser::logger::LoggingConfig config;
-  //   config.enableFile = false;
-  //   config.enableTerminal = false;
-  //   config.level = spdlog::level::info;
-  //   aser::logger::init(config);
-
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module, "main");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module);
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
-
-  auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
-    if (happensbefore.areParallel(write, other) && !lockset.sharesLock(write, other)) {
-      llvm::outs() << "Race between:\n\t" << *write->getIRInst()->getInst() << "\n\t" << *other->getIRInst()->getInst()
-                   << "\n";
-      reporter.collect(write, other);
-    }
-  };
 
   for (auto const sharedObj : sharedmem.getSharedObjects()) {
     auto threadedWrites = sharedmem.getThreadedWrites(sharedObj);
@@ -59,7 +45,9 @@ Report detectRaces(llvm::Module *module) {
         if (wtid == rtid) continue;
         for (auto write : writes) {
           for (auto read : reads) {
-            checkRace(write, read);
+            if (isRace(write, read, happensbefore, lockset)) {
+              reporter.collect(write, read);
+            }
           }
         }
       }
@@ -69,7 +57,9 @@ Report detectRaces(llvm::Module *module) {
         auto otherWrites = wit->second;
         for (auto write : writes) {
           for (auto otherWrite : otherWrites) {
-            checkRace(write, otherWrite);
+            if (isRace(write, otherWrite, happensbefore, lockset)) {
+              reporter.collect(write, otherWrite);
+            }
           }
         }
       }
@@ -78,5 +68,3 @@ Report detectRaces(llvm::Module *module) {
 
   return reporter.getReport();
 }
-
-}  // namespace race

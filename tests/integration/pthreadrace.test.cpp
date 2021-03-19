@@ -11,15 +11,12 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "RaceDetect/RaceDetect.h"
+#include "RaceDetect.h"
+#include "Reporter/Reporter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
-
-bool reportContains(const race::Report &report, const race::Race r) {
-  return std::find(report.begin(), report.end(), r) != report.end();
-}
 
 TEST_CASE("Pthreadrace", "[integration][pthread]") {
   llvm::LLVMContext context;

@@ -9,20 +9,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#pragma once
+#include "PreProcessing/PreProcessing.h"
 
-#include <memory>
-#include <vector>
+#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
-#include "IR/IR.h"
-
-namespace race {
-using FunctionSummary = std::vector<std::shared_ptr<const IR>>;
-
-FunctionSummary generateFunctionSummary(const llvm::Function *func);
-FunctionSummary generateFunctionSummary(const llvm::Function &func);
-
-// class Builder {
-//     mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
-// };
-}  // namespace race
+void preprocess(llvm::Module &module) { duplicateOpenMPForks(module); }

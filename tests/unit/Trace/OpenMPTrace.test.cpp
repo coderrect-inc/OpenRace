@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
+#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 #include "Trace/ProgramTrace.h"
 
 TEST_CASE("OpenmP ThreadTrace construction", "[unit][event][omp]") {
@@ -54,20 +55,29 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
     FAIL("no module");
   }
 
-  // Actual PTA
-  auto pta = std::make_unique<pta::PTA>();
-  pta->analyze(module.get(), "main");
-
-  race::ProgramTrace program(*pta);
+  race::ProgramTrace program(module.get());
   auto const &threads = program.getThreads();
-  REQUIRE(threads.size() == 2);
 
+  // 1 main thread, 2 omp threads
+  REQUIRE(threads.size() == 3);
+
+  // Check the omp thread has expected event types
   auto const ompThread = threads.at(1).get();
   auto const &events = ompThread->getEvents();
   REQUIRE(events.size() == 4);
-
   CHECK(events.at(0)->type == race::Event::Type::Write);
   CHECK(events.at(1)->type == race::Event::Type::Read);
   CHECK(events.at(2)->type == race::Event::Type::Read);
   CHECK(events.at(3)->type == race::Event::Type::Write);
+
+  // Both omp threads should be identical
+  SECTION("OpenMP threads match") {
+    auto const &omp2events = threads.at(2)->getEvents();
+    REQUIRE(omp2events.size() == events.size());
+    for (auto i = 0; i < events.size(); ++i) {
+      auto const &e1 = events.at(i);
+      auto const &e2 = omp2events.at(i);
+      CHECK(e1->type == e2->type);
+    }
+  }
 }

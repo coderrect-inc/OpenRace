@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <llvm/Support/Allocator.h>
 
+#include "Logging/Log.h"
 #include "PointerAnalysis/Models/LanguageModel/PtrNodeManager.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/CppMemModel.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSCanonicalizer.h"
@@ -25,16 +26,10 @@ limitations under the License.
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/MemBlock.h"
 #include "PointerAnalysis/Models/MemoryModel/SpecialObjects/MapObject.h"
 #include "PointerAnalysis/Program/InterceptResult.h"
-//#include "aser/PreProcessing/Passes/CanonicalizeGEPPass.h"
-//#include "aser/PreProcessing/Passes/LoweringMemCpyPass.h"
-#include "Logging/Log.h"
 #include "PointerAnalysis/Util/ConstExprVisitor.h"
 #include "PointerAnalysis/Util/Util.h"
 
-extern bool DEBUG_PTA;
-extern bool DEBUG_PTA_VERBOSE;
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
-extern cl::opt<size_t> PTAAnonLimit;
 
 namespace pta {
 
@@ -83,11 +78,6 @@ class FSMemModel {
     assert(obj != nullptr);
     auto ret = consGraph.template addCGNode<ObjNode, PT>(obj);
     const_cast<FSObject<ctx> *>(obj)->setObjNode(ret);
-
-    if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createObjNode: " << ret->getNodeID() << " obj: " << *obj->getValue() << "\n";  // JEFF
-    } else if (DEBUG_PTA)
-      llvm::outs() << "createObjNode: " << ret->getNodeID() << "\n";
 
     return ret;
   }
@@ -353,12 +343,12 @@ class FSMemModel {
   }
 
   int allocatedCount;
-  const int ANON_REC_LIMIT = PTAAnonLimit;
+  const int ANON_REC_LIMIT = 999;
   const int ANON_REC_DEPTH_LIMIT = 10;
   template <typename PT>
   ObjNode *allocAnonObjRec(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, const llvm::Value *tag,
                            std::vector<const llvm::Type *> &typeTree) {
-    // limit the depth of anonmyous object
+    // limit the depth of anonymous object
     if (typeTree.size() > ANON_REC_DEPTH_LIMIT) {
       return nullptr;
     }
@@ -496,13 +486,6 @@ class FSMemModel {
       }
 
       if (objNode != nullptr) {
-        if (DEBUG_PTA_VERBOSE) {
-          llvm::outs() << "processScalarGlobals: " << *C << "\noffset: " << offset << "\n"
-                       << "objNode: " << objNode->getNodeID() << " ptrNode: " << ptrNode->getNodeID() << "\n";
-        } else if (DEBUG_PTA)
-          llvm::outs() << "processScalarGlobals: offset: " << offset << "\n"
-                       << "objNode: " << objNode->getNodeID() << " ptrNode: " << ptrNode->getNodeID() << "\n";
-
         consGraph.addConstraints(objNode, ptrNode, Constraints::addr_of);
       }
     }

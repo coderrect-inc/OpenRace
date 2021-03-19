@@ -23,11 +23,11 @@ class ProgramTrace {
   std::vector<std::unique_ptr<ThreadTrace>> threads;
 
  public:
-  const pta::PTA &pta;
+  pta::PTA pta;
 
   [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
 
-  explicit ProgramTrace(const pta::PTA &pta);
+  explicit ProgramTrace(llvm::Module *, llvm::StringRef entryName = "main");
   ~ProgramTrace() = default;
   ProgramTrace(const ProgramTrace &) = delete;
   ProgramTrace(ProgramTrace &&) = delete;  // Need to update threads because

@@ -24,11 +24,14 @@ struct SourceLoc {
   explicit SourceLoc(const llvm::DILocation *loc)
       : filename(loc->getFilename()), line(loc->getLine()), col(loc->getColumn()) {}
 
-  bool operator==(const SourceLoc &other) const {
+  // Location is unknown
+  bool isUnkown() const { return filename == "UNKOWN"; }
+
+  inline bool operator==(const SourceLoc &other) const {
     return filename == other.filename && line == other.line && col == other.col;
   }
 
-  bool operator<(const SourceLoc &other) const {
+  inline bool operator<(const SourceLoc &other) const {
     if (filename < other.filename) return true;
     if (line < other.line) return true;
     return col < other.col;
@@ -45,10 +48,19 @@ struct Race {
     if (second < first) std::swap(first, second);
   }
 
-  bool operator==(const Race &other) const { return first == other.first && second == other.second; }
+  inline bool operator==(const Race &other) const { return first == other.first && second == other.second; }
+  inline bool operator<(const Race &other) const {
+    if (first < other.first) return true;
+    return second < other.second;
+  }
 };
 
-using Report = std::vector<Race>;
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Race &race);
+
+using Report = std::set<Race>;
+// Helpers for testing
+bool reportContains(const Report &report, Race race);
+bool reportContains(const Report &report, std::vector<Race> races);
 
 class Reporter {
   std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> races;

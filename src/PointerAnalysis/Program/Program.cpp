@@ -23,10 +23,6 @@ limitations under the License.
 using namespace pta;
 using namespace llvm;
 
-// extern cl::opt<size_t> MaxIndirectTarget("max-indirect-target", cl::init(2),
-//                                  cl::desc("max number of indirect call target
-//                                  that can be resolved by indirect call"));
-
 const Function* pta::CallSite::resolveTargetFunction(const Value* calledValue) {
   // TODO: In this case, a constant expression/global aliases, which can be
   // resolved directly

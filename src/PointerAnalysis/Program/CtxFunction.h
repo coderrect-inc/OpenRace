@@ -19,8 +19,6 @@ limitations under the License.
 
 #include "PointerAnalysis/Program/CallSite.h"
 
-extern llvm::cl::opt<size_t> MaxIndirectTarget;
-
 namespace pta {
 
 template <typename ctx>
@@ -85,7 +83,7 @@ class InDirectCallSite {
   const llvm::Value *const funPtr;
 
   std::set<const llvm::Function *> targets;           // possible targets
-  std::set<const CallGraphNode<ctx> *> resolvedNode;  // the correponding call node
+  std::set<const CallGraphNode<ctx> *> resolvedNode;  // the corresponding call node
 
   CallGraphNode<ctx> *const callNode;  // the corresponding indirect call node
 
@@ -125,8 +123,8 @@ class InDirectCallSite {
 
   [[nodiscard]] inline const llvm::Instruction *getCallSite() const { return this->callSite.getInstruction(); }
 
-  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit) {
-    if (applyLimit && this->targets.size() >= MaxIndirectTarget) {
+  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit, size_t maxIndirectTarget = 999) {
+    if (applyLimit && this->targets.size() >= maxIndirectTarget) {
       return false;
     }
     return this->targets.insert(fun).second;

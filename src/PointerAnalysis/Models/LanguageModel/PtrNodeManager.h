@@ -21,9 +21,6 @@ limitations under the License.
 #include "PointerAnalysis/Program/Pointer.h"
 #include "PointerAnalysis/Util/SingleInstanceOwner.h"
 
-extern bool DEBUG_PTA;
-extern bool DEBUG_PTA_VERBOSE;
-
 namespace pta {
 
 template <typename ctx>
@@ -81,12 +78,6 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
 
     auto ret = consGraph->template addCGNode<PtrNode, PT>(retPtr);
     retPtr->setPtrNode(ret);
-
-    if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createRetNode: " << ret->getNodeID() << " fun: " << fun->getFunction()->getName()
-                   << "\n";  // JEFF
-    } else if (DEBUG_PTA)
-      llvm::outs() << "createRetNode: " << ret->getNodeID() << "\n";
 
     return ret;
   }
@@ -181,10 +172,6 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     if (result.second) {
       auto ret = consGraph->template addCGNode<PtrNode, PT>(ptr);
       const_cast<Pointer<ctx> *>(ptr)->setPtrNode(ret);
-      if (DEBUG_PTA_VERBOSE) {
-        llvm::outs() << "getOrCreatePtrNode: " << ret->getNodeID() << " value: " << *V << "\n";  // JEFF
-      } else if (DEBUG_PTA)
-        llvm::outs() << "getOrCreatePtrNode: " << ret->getNodeID() << "\n";
     }
     return ptr->getPtrNode();
   }
@@ -205,11 +192,6 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     auto ptr = this->create(C, V);
     auto ret = consGraph->template addCGNode<PtrNode, PT>(ptr);
     const_cast<Pointer<ctx> *>(ptr)->setPtrNode(ret);
-
-    if (DEBUG_PTA_VERBOSE) {
-      llvm::outs() << "createPtrNode: " << ret->getNodeID() << " value: " << *V << "\n";  // JEFF
-    } else if (DEBUG_PTA)
-      llvm::outs() << "createPtrNode: " << ret->getNodeID() << "\n";
 
     return ret;
   }
