@@ -52,9 +52,7 @@ class CallSite {
 
   [[nodiscard]] inline const llvm::Value* getCalledValue() const { return CB->getCalledOperand(); }
 
-  [[nodiscard]] inline const llvm::Function* getCalledFunction() const { return this->getTargetFunction(); }
-
-  [[nodiscard]] inline const llvm::Function* getTargetFunction() const {
+  [[nodiscard]] inline const llvm::Function* getCalledFunction() const {
     if (this->isIndirectCall()) {
       return nullptr;
     }

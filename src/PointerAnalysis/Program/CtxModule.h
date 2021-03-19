@@ -216,7 +216,7 @@ class CtxModule {
           } else {
             // evolve the context upon new call site
             const ctx *calledCtx = CT::contextEvolve(context, &inst);
-            const llvm::Function *fun = cs.getTargetFunction();
+            const llvm::Function *fun = cs.getCalledFunction();
 
             auto targetNode = visitDirectCallSite(calledCtx, context, fun, &inst, BFSQueue, beforeNewNode, onNewDirect,
                                                   onNewInDirect);
