@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "RaceDetect/RaceDetect.h"
+#include "RaceDetect.h"
 #include "Reporter/Reporter.h"
 #include "helpers/ReportChecking.h"
 

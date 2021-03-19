@@ -475,8 +475,6 @@ llvm::StructType *pta::getConvertedFlexibleArrayType(const llvm::StructType *ST,
   return StructType::get(ST->getContext(), fieldTy, ST->isPacked());
 }
 
-extern cl::opt<bool> CONFIG_EXHAUST_MODE;
-
 // simple type check fails when cases like
 // call void (...) %ptr()
 bool pta::isCompatibleCall(const llvm::Instruction *indirectCall, const llvm::Function *target) {

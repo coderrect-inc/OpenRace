@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "RaceDetect/RaceDetect.h"
+#include "RaceDetect.h"
 #include "Reporter/Reporter.h"
 #include "helpers/ReportChecking.h"
 
@@ -24,7 +24,7 @@ TEST_CASE("Pthreadrace", "[integration][pthread]") {
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
 
-  auto module = llvm::parseIRFile("integration/pthreadrace/pthreadsimple.ll", err, context);
+  auto module = llvm::parseIRFile("integration/pthreadrace/ll/pthreadsimple.ll", err, context);
   if (!module) {
     err.print("pthreadsimple", llvm::errs());
   }

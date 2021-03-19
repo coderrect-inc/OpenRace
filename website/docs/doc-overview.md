@@ -85,6 +85,8 @@ The most important directories are:
  - [**`Trace`**](#trace) for generating a program Trace
  - [**`Analysis`**](#analysis) for our different analyses
 
+ The top level `src` directory also contains the main race detection logic in `RaceDetect.h/cpp`, and `main.cpp` which is the entry point to the `racedetect` executable.
+
 ### Analysis
 
 This directory contains all of our different analyses. Each of them takes a program trace as input and then allows for some specific property of the program trace to be queried.
@@ -287,12 +289,6 @@ This documentation is still in progress.
 ### PreProcessing
 
 This directory contains a number of passes and transformations that make the LLVM IR easier for our tool to analyze.
-
-### RaceDetect
-
-This directory contains the function that combines all the individual components.
-
-This function takes an LLVM IR module as input, constructs the ProgramTrace, does all of the individual analyses, and then combines their results to do the actual race detection.
 
 ### Reporter
 

@@ -23,8 +23,7 @@ limitations under the License.
 #include "llvm/Support/DOTGraphTraits.h"
 
 #define DEBUG_TYPE "pta-cons-graph"
-extern bool DEBUG_PTA;
-extern bool DEBUG_PTA_VERBOSE;
+
 namespace pta {
 
 // IMPORTANT!!
@@ -69,25 +68,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
 
   inline bool addConstraints(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) {
     // should not add edges to nodes that has super node
-
-    if (DEBUG_PTA) {
-      std::string type = "";  // copy
-      if (constraint == Constraints::copy) {
-        type = "copy";
-      } else if (constraint == Constraints::load) {
-        type = "load";
-      } else if (constraint == Constraints::store) {
-        type = "store";
-      } else if (constraint == Constraints::addr_of) {
-        type = "addr_of";
-      } else if (constraint == Constraints::offset) {
-        type = "offset";
-      }
-
-      llvm::outs() << "addConstraints (type-" << type << "): "
-                   << "src: " << src->getNodeID() << " dst: " << dst->getNodeID() << "\n";
-    }
-
     assert(src && dst /*&& !src->hasSuperNode() && !dst->hasSuperNode()*/);
     // self-circle copy edges has no effect
     if (src == dst && constraint == Constraints::copy) {
