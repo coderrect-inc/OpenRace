@@ -1,4 +1,4 @@
-#include "pthread.h"
+#include <pthread.h>
 
 int global;
 pthread_mutex_t mutex;

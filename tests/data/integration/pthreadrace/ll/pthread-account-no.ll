@@ -1,5 +1,5 @@
-; ModuleID = 'pthread_account_no_race.c'
-source_filename = "pthread_account_no_race.c"
+; ModuleID = 'pthread-account-no.c'
+source_filename = "pthread-account-no.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -17,7 +17,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @z = common dso_local global i32 0, align 4, !dbg !50
 @x = common dso_local global i32 0, align 4, !dbg !46
 @.str = private unnamed_addr constant [23 x i8] c"balance == (x + y) - z\00", align 1
-@.str.1 = private unnamed_addr constant [26 x i8] c"pthread_account_no_race.c\00", align 1
+@.str.1 = private unnamed_addr constant [21 x i8] c"pthread-account-no.c\00", align 1
 @__PRETTY_FUNCTION__.check_result = private unnamed_addr constant [27 x i8] c"void *check_result(void *)\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
@@ -91,7 +91,7 @@ if.then2:                                         ; preds = %if.then
   br label %if.end, !dbg !94
 
 if.else:                                          ; preds = %if.then
-  call void @__assert_fail(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([26 x i8], [26 x i8]* @.str.1, i64 0, i64 0), i32 27, i8* getelementptr inbounds ([27 x i8], [27 x i8]* @__PRETTY_FUNCTION__.check_result, i64 0, i64 0)) #5, !dbg !91
+  call void @__assert_fail(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([21 x i8], [21 x i8]* @.str.1, i64 0, i64 0), i32 27, i8* getelementptr inbounds ([27 x i8], [27 x i8]* @__PRETTY_FUNCTION__.check_result, i64 0, i64 0)) #5, !dbg !91
   unreachable, !dbg !91
 
 if.end:                                           ; preds = %if.then2
@@ -148,7 +148,7 @@ attributes #5 = { noreturn nounwind }
 !0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = distinct !DIGlobalVariable(name: "deposit_done", scope: !2, file: !3, line: 7, type: !10, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, file: !3, producer: "clang version 10.0.1 ", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, retainedTypes: !5, globals: !7, splitDebugInlining: false, nameTableKind: None)
-!3 = !DIFile(filename: "pthread_account_no_race.c", directory: "/home/yanze/code/OpenRace/tests/data/integration/pthreadrace")
+!3 = !DIFile(filename: "pthread-account-no.c", directory: "/home/yanze/code/OpenRace/tests/data/integration/pthreadrace")
 !4 = !{}
 !5 = !{!6}
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
