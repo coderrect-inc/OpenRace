@@ -117,8 +117,8 @@ const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
 
 bool RaceModel::isInvokingAnOrigin(const ctx *prevCtx, const llvm::Instruction *I) {
   auto call = llvm::dyn_cast<CallBase>(I);
-  if (!call || !call->getFunction() || !call->getFunction()->hasName()) return false;
+  if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 
-  auto const name = call->getFunction()->getName();
+  auto const name = call->getCalledFunction()->getName();
   return origins.find(name) != origins.end();
 }
