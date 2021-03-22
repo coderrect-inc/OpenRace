@@ -41,9 +41,9 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
 
       auto report = race::detectRaces(module.get());
 
-      llvm::errs() << "races\n";
+      llvm::errs() << "Detected Races:\n";
       for (auto const &race : report) {
-        llvm::errs() << race.first << " " << race.second << "\n";
+        llvm::errs() << race.first << " || " << race.second << "\n";
       }
 
       auto race = TestRace::fromString(oracle.second);
