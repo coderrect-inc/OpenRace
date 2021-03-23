@@ -16,6 +16,9 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
+#include "IR/Builder.h"
+#include "IR/IRImpls.h"
+#include "LanguageModel/OpenMP.h"
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
 TEST_CASE("Duplicate OpenMP Forks", "[unit][preprocessing][omp]") {
@@ -46,7 +49,27 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
     FAIL("no module");
   }
 
-  REQUIRE(module->getFunction("main")->getEntryBlock().getInstList().size() == 4);
+  auto ompForkCount = [](const llvm::BasicBlock &block) {
+    return std::count_if(block.begin(), block.end(), [](const llvm::Instruction &inst) {
+      auto call = llvm::dyn_cast<llvm::CallBase>(&inst);
+      if (!call) return false;
+      return OpenMPModel::isFork(call);
+    });
+  };
+
+  // Test that an additional omp fork is added
+  auto const &targetBlock = module->getFunction("main")->getEntryBlock();
+  auto const numOmpForksBefore = ompForkCount(targetBlock);
   duplicateOpenMPForks(*module);
-  REQUIRE(module->getFunction("main")->getEntryBlock().getInstList().size() == 5);
+  UNSCOPED_INFO("OpenMP fork call should have been duplicated");
+  REQUIRE(ompForkCount(targetBlock) == numOmpForksBefore * 2);
+
+  // Duplicated fork calls need different thread handles to be distinguished
+  auto const summary = race::generateFunctionSummary(module->getFunction("main"));
+  auto const fork1 = llvm::dyn_cast<race::OpenMPFork>(summary.at(0).get());
+  REQUIRE(fork1 != nullptr);
+  auto const fork2 = llvm::dyn_cast<race::OpenMPFork>(summary.at(1).get());
+  REQUIRE(fork2 != nullptr);
+  UNSCOPED_INFO("Duplicated fork should have different handle");
+  CHECK(fork1->getThreadHandle() != fork2->getThreadHandle());
 }
