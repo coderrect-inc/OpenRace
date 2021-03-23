@@ -26,12 +26,16 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
 
   std::string llPath = "integration/pthreadrace/ll/";
 
-  // NOTE: add new test input/output pair here
+  // NOTE: add new test input/output pair here.
+  // If the test case has no race, set the ouput as empty string.
   std::vector<std::pair<std::string, std::string>> oracles = {
-      std::make_pair("pthread-simple-yes.ll", "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9")};
+      std::make_pair("pthread-simple-yes.ll", "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9"),
+      std::make_pair("pthread-account-no.ll", ""), std::make_pair("pthread-spinlock-no.ll", ""),
+      std::make_pair("pthread-spinlock-yes.ll", ""), std::make_pair("pthread-array-no.ll", "")};
 
   for (const auto &oracle : oracles) {
-    SECTION("Testing " + oracle.first) {
+    SECTION("test " + oracle.first) {
+      llvm::errs() << "Analyzing " << oracle.first << "\n";
       auto llFile = llPath + oracle.first;
       auto module = llvm::parseIRFile(llFile, err, context);
       if (!module) {
@@ -41,13 +45,20 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
 
       auto report = race::detectRaces(module.get());
 
-      llvm::errs() << "Detected Races:\n";
-      for (auto const &race : report) {
-        llvm::errs() << race.first << " || " << race.second << "\n";
-      }
+      // compare race report with oracles
+      if (report.empty()) {
+        llvm::errs() << "No Race Detected\n";
+        REQUIRE(oracle.second.empty());
+      } else {
+        llvm::errs() << "===> Detected Races:\n";
+        for (auto const &race : report) {
+          llvm::errs() << "  " << race.first << " || " << race.second << "\n";
+        }
 
-      auto race = TestRace::fromString(oracle.second);
-      CHECK(reportContains(report, race));
+        auto race = TestRace::fromString(oracle.second);
+        CHECK(reportContains(report, race));
+      }
+      llvm::errs() << "\n";
     }
   }
 }
