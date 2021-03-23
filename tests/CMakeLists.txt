@@ -14,9 +14,13 @@ add_executable(tester
     
     integration/pthreadrace.test.cpp
     integration/dataracebench.test.cpp
+
+    # Helper logic
+    helpers/ReportChecking.cpp
 )
 target_link_libraries(tester pta racedetect-lib ${llvm_libs} CONAN_PKG::catch2)
 target_include_directories(tester PRIVATE ${LLVM_INCLUDE_DIRS})
+target_include_directories(tester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(tester PRIVATE ${LLVM_DEFINITIONS})
 
 

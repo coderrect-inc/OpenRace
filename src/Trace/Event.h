@@ -44,6 +44,8 @@ class Event {
   explicit Event(Type type) : type(type) {}
 };
 
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Event::Type &type);
+
 class MemAccessEvent : public Event {
  protected:
   using Event::Event;
