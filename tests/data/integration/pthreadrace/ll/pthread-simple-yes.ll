@@ -1,5 +1,5 @@
-; ModuleID = 'pthreadsimple.c'
-source_filename = "pthreadsimple.c"
+; ModuleID = 'pthread-simple-yes.c'
+source_filename = "pthread-simple-yes.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -74,7 +74,7 @@ attributes #4 = { nounwind }
 !0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = distinct !DIGlobalVariable(name: "global", scope: !2, file: !3, line: 3, type: !17, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, file: !3, producer: "clang version 10.0.1 ", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5, splitDebugInlining: false, nameTableKind: None)
-!3 = !DIFile(filename: "pthreadsimple.c", directory: "/home/yanze/code/OpenRace/tests/data/integration/pthreadrace")
+!3 = !DIFile(filename: "pthread-simple-yes.c", directory: "/home/yanze/code/OpenRace/tests/data/integration/pthreadrace")
 !4 = !{}
 !5 = !{!0, !6, !41}
 !6 = !DIGlobalVariableExpression(var: !7, expr: !DIExpression())

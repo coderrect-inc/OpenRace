@@ -20,23 +20,48 @@ limitations under the License.
 #include "Reporter/Reporter.h"
 #include "helpers/ReportChecking.h"
 
-TEST_CASE("Pthreadrace", "[integration][pthread]") {
+TEST_CASE("pthreadrace", "[integration][pthread]") {
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
 
-  auto module = llvm::parseIRFile("integration/pthreadrace/ll/pthreadsimple.ll", err, context);
-  if (!module) {
-    err.print("pthreadsimple", llvm::errs());
+  std::string llPath = "integration/pthreadrace/ll/";
+
+  // NOTE: add new test input/output pair here.
+  // If the test case has no race, set the ouput as empty string.
+  std::vector<std::pair<std::string, std::string>> oracles = {
+      std::make_pair("pthread-account-no.ll", ""),
+      std::make_pair("pthread-spinlock-no.ll", ""),
+      std::make_pair("pthread-spinlock-yes.ll", ""),
+      std::make_pair("pthread-array-no.ll", ""),
+      std::make_pair("pthread-barrier-no.ll", ""),
+      std::make_pair("pthread-simple-yes.ll", "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9")};
+
+  for (const auto &oracle : oracles) {
+    SECTION("test " + oracle.first) {
+      llvm::errs() << "Analyzing " << oracle.first << "\n";
+      auto llFile = llPath + oracle.first;
+      auto module = llvm::parseIRFile(llFile, err, context);
+      if (!module) {
+        err.print(oracle.first.c_str(), llvm::errs());
+      }
+      REQUIRE(module.get() != nullptr);
+
+      auto report = race::detectRaces(module.get());
+
+      // compare race report with oracles
+      if (report.empty()) {
+        llvm::errs() << "No Race Detected\n";
+        REQUIRE(oracle.second.empty());
+      } else {
+        llvm::errs() << "===> Detected Races:\n";
+        for (auto const &race : report) {
+          llvm::errs() << "  " << race.first << " || " << race.second << "\n";
+        }
+
+        auto race = TestRace::fromString(oracle.second);
+        CHECK(reportContains(report, race));
+      }
+      llvm::errs() << "\n";
+    }
   }
-  REQUIRE(module.get() != nullptr);
-
-  auto report = race::detectRaces(module.get());
-
-  llvm::errs() << "races\n";
-  for (auto const &race : report) {
-    llvm::errs() << race.first << " " << race.second << "\n";
-  }
-
-  auto race = TestRace::fromString("pthreadsimple.c:8:9 pthreadsimple.c:8:9");
-  CHECK(reportContains(report, race));
 }

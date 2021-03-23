@@ -36,7 +36,7 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
     auto alloca = IRB.CreateAlloca(IRB.getInt32Ty());
     auto loadInst = IRB.CreateLoad(IRB.getInt32Ty(), alloca);
 
-    auto load = std::make_unique<race::LoadIR>(loadInst);
+    auto load = std::make_unique<race::Load>(loadInst);
     REQUIRE(load->getInst() == loadInst);
     REQUIRE(llvm::isa<llvm::LoadInst>(load->getInst()));
     REQUIRE(load->getAccessedValue() == loadInst->getPointerOperand());
@@ -49,7 +49,7 @@ TEST_CASE("Manually Constructed IR", "[unit][IR]") {
     auto val = IRB.getInt32(42);
     auto storeInst = IRB.CreateStore(val, alloca);
 
-    auto store = std::make_unique<race::StoreIR>(storeInst);
+    auto store = std::make_unique<race::Store>(storeInst);
     REQUIRE(store->getInst() == storeInst);
     REQUIRE(llvm::isa<llvm::StoreInst>(store->getInst()));
     REQUIRE(store->getAccessedValue() == storeInst->getPointerOperand());
