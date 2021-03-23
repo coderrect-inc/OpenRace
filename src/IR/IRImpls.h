@@ -175,6 +175,20 @@ class PthreadMutexLockIR : public LockIR {
   }
 };
 
+class PthreadSpinLockIR : public LockIR {
+  const unsigned int lockObjectOffset = 0;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit PthreadSpinLockIR(const llvm::CallBase *call) : inst(call) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getLockValue() const override {
+    return inst->getArgOperand(lockObjectOffset)->stripPointerCasts();
+  }
+};
+
 // ==================================================================
 // =============== UnlockIR Implementations =======================
 // ==================================================================
@@ -185,6 +199,20 @@ class PthreadMutexUnlockIR : public UnlockIR {
 
  public:
   explicit PthreadMutexUnlockIR(const llvm::CallBase *call) : inst(call) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getLockValue() const override {
+    return inst->getArgOperand(lockObjectOffset)->stripPointerCasts();
+  }
+};
+
+class PthreadSpinUnlockIR : public LockIR {
+  const unsigned int lockObjectOffset = 0;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit PthreadSpinUnlockIR(const llvm::CallBase *call) : inst(call) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 

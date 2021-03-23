@@ -100,6 +100,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<PthreadMutexLockIR>(callInst));
         } else if (PthreadModel::isPthreadMutexUnlock(funcName)) {
           instructions.push_back(std::make_shared<PthreadMutexUnlockIR>(callInst));
+        } else if (PthreadModel::isPthreadSpinLock(funcName)) {
+          instructions.push_back(std::make_shared<PthreadSpinLockIR>(callInst));
+        } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
+          instructions.push_back(std::make_shared<PthreadSpinLockIR>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPForkIR>(callInst);
