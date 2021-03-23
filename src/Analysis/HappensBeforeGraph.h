@@ -28,6 +28,8 @@ class HappensBeforeGraph {
     return !canReach(lhs, rhs) && !canReach(rhs, lhs);
   }
 
+  void debugDump(llvm::raw_ostream &os) const;
+
  private:
   // EventId unique across entire program
   struct EventPID {
@@ -48,7 +50,7 @@ class HappensBeforeGraph {
   };
 
   std::map<EventPID, std::set<EventPID>> syncEdges;
-  // DSF on syncEdges to see if src can reach dst
+  // DFS on syncEdges to see if src can reach dst
   [[nodiscard]] bool syncEdgesDFS(EventPID src, EventPID dst) const;
   [[nodiscard]] bool hasEdge(EventPID src, EventPID dst) const;
 

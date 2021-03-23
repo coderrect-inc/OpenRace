@@ -12,14 +12,14 @@ limitations under the License.
 #include "Analysis/HappensBeforeGraph.h"
 
 /*
-Happens before works by assigning each event an ID like so:
+Happens before depends on each event having an increasing ID per thread:
 
 T1  T2
 ==  ==
-e1  e5
-e2  e6
-e3  e7
-e4  e8
+e1  e1
+e2  e2
+e3  e3
+e4  e4
 
 Then edges are added between sync events.
 If e2 is a fork spawning t2, and e3 is the corresponding join,
@@ -28,18 +28,18 @@ edges are added between events as shown below:
 T1  T2
 ==  ==
 e1
-e2->e5
-    e6
-    e7
-e3<-e8
+e2->e1
+    e2
+    e3
+e3<-e4
 e4
 
 Now call any event with a sync edge a syncEvent and store them separately.
 
 T1Sync  T2Sync
 ======  ======
-e2      e5
-e3      e8
+e2      e1
+e3      e4
 
 To check if an event A on T1 can reach an event B on T2
 - find the closest sync event after A on T1 (syncAfterA)
@@ -131,10 +131,13 @@ const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace 
   for (auto it = forks.rbegin(), rend = forks.rend(); it != rend; ++it) {
     auto const fork = *it;
     if (fork->getID() < join->getID()) {
+      llvm::errs() << "Using nearest fork heuristic to find corresponding fork!\n\tJoin: " << *join->getInst()
+                   << "\n\tFork: " << *fork->getInst() << "\n";
       return fork;
     }
   }
 
+  llvm::errs() << "Unable to find corresponding fork for join event: " << *join->getInst() << "\n";
   return nullptr;
 }
 
@@ -186,6 +189,7 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
     }
   }
 }
+
 void HappensBeforeGraph::addSync(const Event *syncEvent) {
   auto &syncs = threadSyncs[syncEvent->getThread().id];
   EventPID syncPID(syncEvent);
@@ -197,6 +201,7 @@ void HappensBeforeGraph::addSync(const Event *syncEvent) {
   }
   syncs.insert(it, syncPID);
 }
+
 void HappensBeforeGraph::addSyncEdge(const Event *src, const Event *dst) {
   EventPID srcID(src);
   EventPID dstID(dst);
@@ -207,6 +212,7 @@ void HappensBeforeGraph::addSyncEdge(const Event *src, const Event *dst) {
   addSync(src);
   addSync(dst);
 }
+
 bool HappensBeforeGraph::canReach(const Event *src, const Event *dst) const {
   auto srcSync = findNextSync(src);
   if (!srcSync.has_value()) {
@@ -224,6 +230,7 @@ bool HappensBeforeGraph::canReach(const Event *src, const Event *dst) const {
 
   return syncEdgesDFS(srcSync.value(), dstSync.value());
 }
+
 bool HappensBeforeGraph::syncEdgesDFS(HappensBeforeGraph::EventPID src, HappensBeforeGraph::EventPID dst) const {
   std::vector<EventPID> worklist;
   std::set<EventPID> visited;
@@ -324,4 +331,23 @@ std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findPrevSync(con
   }
 
   return std::nullopt;
+}
+
+void HappensBeforeGraph::debugDump(llvm::raw_ostream &os) const {
+  for (auto const &[tid, syncs] : threadSyncs) {
+    os << "T" << tid << " Syncs";
+    for (auto const &sync : syncs) {
+      os << "\n\t" << sync.tid << ":" << sync.eid;
+    }
+    os << "\n";
+  }
+
+  os << "==== Edges ====\n";
+  for (auto const &[src, dsts] : syncEdges) {
+    os << src.tid << ":" << src.eid << " ->";
+    for (auto const &dst : dsts) {
+      os << "\n\t" << dst.tid << ":" << src.tid << "\n";
+    }
+  }
+  os << "\n";
 }
