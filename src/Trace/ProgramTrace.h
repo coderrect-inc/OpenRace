@@ -36,4 +36,6 @@ class ProgramTrace {
   ProgramTrace &operator=(ProgramTrace &&) = delete;
 };
 
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const ProgramTrace &trace);
+
 }  // namespace race

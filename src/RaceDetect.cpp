@@ -66,5 +66,7 @@ Report race::detectRaces(llvm::Module *module) {
     }
   }
 
+  llvm::outs() << program << "\n";
+
   return reporter.getReport();
 }

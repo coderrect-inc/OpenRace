@@ -13,6 +13,37 @@ limitations under the License.
 
 using namespace race;
 
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event::Type &type) {
+  switch (type) {
+    case Event::Type::Read:
+      os << "Read";
+      break;
+    case Event::Type::Write:
+      os << "Write";
+      break;
+    case Event::Type::Fork:
+      os << "Fork";
+      break;
+    case Event::Type::Join:
+      os << "Join";
+      break;
+    case Event::Type::Lock:
+      os << "Lock";
+      break;
+    case Event::Type::Unlock:
+      os << "Unlock";
+      break;
+    case Event::Type::Call:
+      os << "Call";
+      break;
+    case Event::Type::CallEnd:
+      os << "EndCall";
+      break;
+  }
+
+  return os;
+}
+
 void ReadEvent::print(llvm::raw_ostream &os) const {
   // TODO
   os << "Event: READ\n";
