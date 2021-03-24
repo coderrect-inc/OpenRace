@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "Reporter/Reporter.h"
 
+using Oracle = std::pair<std::string, std::vector<std::string>>;
+
 // used for testing
 struct TestRace {
   // build race from string in format "file:line:col file:line:col"

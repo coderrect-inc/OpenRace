@@ -21,26 +21,34 @@ limitations under the License.
 #include "helpers/ReportChecking.h"
 
 TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
-  llvm::LLVMContext context;
-  llvm::SMDiagnostic err;
+  const std::string llPath = "integration/dataracebench/ll/";
 
-  auto module = llvm::parseIRFile("integration/dataracebench/ll/DRB001-antidep1-orig-yes.ll", err, context);
-  if (!module) {
-    err.print("DRB001", llvm::errs());
+  std::vector<Oracle> oracles = {
+      Oracle("DRB001-antidep1-orig-yes.ll", {"DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:10",
+                                             "DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:12"})};
+
+  for (auto const &oracle : oracles) {
+    SECTION("test " + oracle.first) {
+      llvm::LLVMContext context;
+      llvm::SMDiagnostic err;
+      auto testfile = llPath + oracle.first;
+      auto module = llvm::parseIRFile(testfile, err, context);
+      if (!module) {
+        err.print(oracle.first.c_str(), llvm::errs());
+      }
+      REQUIRE(module.get() != nullptr);
+
+      auto report = race::detectRaces(module.get());
+      llvm::errs() << "===> Detected Races:\n";
+      for (auto const &race : report) {
+        llvm::errs() << race << "\n";
+      }
+      llvm::errs() << "\n";
+
+      for (auto const &expectedRace : oracle.second) {
+        CHECK(reportContains(report, TestRace::fromString(expectedRace)));
+      }
+      CHECK(report.size() == oracle.second.size());
+    }
   }
-  REQUIRE(module.get() != nullptr);
-
-  auto report = race::detectRaces(module.get());
-
-  llvm::errs() << "races\n";
-  for (auto const &race : report) {
-    llvm::errs() << race << "\n";
-  }
-
-  auto races = TestRace::fromStrings({"DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:10",
-                                      "DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:12"});
-  for (auto const &race : races) {
-    CHECK(reportContains(report, race));
-  }
-  CHECK(report.size() == 2);
 }
