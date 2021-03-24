@@ -44,7 +44,7 @@ To generate LLVM IR for a single file, run
 
 Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce a LLVM IR file for a project with multiple files. 
 
-Generating LLVM IR for large projects is outside the scope if this tool (for now). 
+Generating LLVM IR for large projects is outside the scope of this tool (for now). 
 
 # Building
 
