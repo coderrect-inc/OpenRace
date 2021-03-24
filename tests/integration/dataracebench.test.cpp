@@ -21,6 +21,8 @@ limitations under the License.
 #include "helpers/ReportChecking.h"
 
 TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
+  llvm::LLVMContext context;
+  llvm::SMDiagnostic err;
   const std::string llPath = "integration/dataracebench/ll/";
 
   std::vector<Oracle> oracles = {
@@ -29,8 +31,6 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
 
   for (auto const &oracle : oracles) {
     SECTION("test " + oracle.first) {
-      llvm::LLVMContext context;
-      llvm::SMDiagnostic err;
       auto testfile = llPath + oracle.first;
       auto module = llvm::parseIRFile(testfile, err, context);
       if (!module) {
