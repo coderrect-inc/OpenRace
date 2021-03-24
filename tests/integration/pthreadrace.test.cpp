@@ -29,11 +29,8 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
   // NOTE: add new test input/output pair here.
   // If the test case has no race, set the ouput as empty string.
   std::vector<std::pair<std::string, std::string>> oracles = {
-      std::make_pair("pthread-account-no.ll", ""),
-      std::make_pair("pthread-spinlock-no.ll", ""),
-      std::make_pair("pthread-spinlock-yes.ll", ""),
-      std::make_pair("pthread-array-no.ll", ""),
-      std::make_pair("pthread-barrier-no.ll", ""),
+      std::make_pair("pthread-account-no.ll", ""), std::make_pair("pthread-spinlock-no.ll", ""),
+      std::make_pair("pthread-spinlock-yes.ll", ""), std::make_pair("pthread-array-no.ll", ""),
       std::make_pair("pthread-simple-yes.ll", "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9")};
 
   for (const auto &oracle : oracles) {

@@ -21,4 +21,5 @@ inline bool isPthreadMutexLock(const llvm::StringRef &funcName) { return funcNam
 inline bool isPthreadMutexUnlock(const llvm::StringRef &funcName) { return funcName.equals("pthread_mutex_unlock"); }
 inline bool isPthreadSpinLock(const llvm::StringRef &funcName) { return funcName.equals("pthread_spin_lock"); }
 inline bool isPthreadSpinUnlock(const llvm::StringRef &funcName) { return funcName.equals("pthread_spin_unlock"); }
+inline bool isPthreadOnce(const llvm::StringRef &funcName) { return funcName.equals("pthread_once"); }
 }  // namespace PthreadModel

@@ -18,7 +18,7 @@ limitations under the License.
 namespace race {
 
 // ==================================================================
-// =============== ReadIR Implementations ========================
+// ================== ReadIR Implementations ========================
 // ==================================================================
 
 class Load : public ReadIR {
@@ -48,7 +48,7 @@ class APIRead : public ReadIR {
 };
 
 // ==================================================================
-// =============== WriteIR Implementations ========================
+// ================= WriteIR Implementations ========================
 // ==================================================================
 
 class Store : public WriteIR {
@@ -80,7 +80,7 @@ class APIWrite : public WriteIR {
 };
 
 // ==================================================================
-// =============== ForkIR Implementations ========================
+// ================== ForkIR Implementations ========================
 // ==================================================================
 
 class PthreadCreate : public ForkIR {
@@ -128,7 +128,7 @@ class OpenMPFork : public ForkIR {
 };
 
 // ==================================================================
-// =============== JoinIR Implementations ========================
+// ================== JoinIR Implementations ========================
 // ==================================================================
 
 class PthreadJoin : public JoinIR {
@@ -158,7 +158,7 @@ class OpenMPJoin : public JoinIR {
 };
 
 // ==================================================================
-// =============== LockIR Implementations ========================
+// ================== LockIR Implementations ========================
 // ==================================================================
 
 class LockIRImpl : public LockIR {
@@ -175,11 +175,13 @@ class LockIRImpl : public LockIR {
   }
 };
 
+// NOTE: if a specific API semantic is the same as default impl,
+// create a type alias.
 using PthreadMutexLock = LockIRImpl;
 using PthreadSpinLock = LockIRImpl;
 
 // ==================================================================
-// =============== UnlockIR Implementations =======================
+// ================= UnlockIR Implementations =======================
 // ==================================================================
 
 class UnlockIRImpl : public UnlockIR {
@@ -196,7 +198,8 @@ class UnlockIRImpl : public UnlockIR {
   }
 };
 
+// NOTE: if a specific API semantic is the same as default impl,
+// create a type alias.
 using PthreadMutexUnlock = UnlockIRImpl;
 using PthreadSpinUnlock = UnlockIRImpl;
-
 }  // namespace race
