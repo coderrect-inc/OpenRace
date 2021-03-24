@@ -19,13 +19,19 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 Please note, the tool is still in the early stages of development and does not support many features yet.
 
-First either download the tool from the GitHub releases page or build the latest version from source and run:
+Until our first release, the easiest way to run the tool is through the `coderrect/openrace` docker image:
 
 ```
-> openrace tests/data/integration/pthreadrace/pthreadsimple.ll
+> docker pull coderrect/openrace
+> docker run -i --rm coderrect/openrace openrace < simplepthread.ll
 ==== Races ====
 pthreadsimple.c:8:9 pthreadsimple.c:8:9
-Total Races Detected: 1
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          %0 = load i32, i32* @global, align 4, !dbg !53
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          store i32 %inc, i32* @global, align 4, !dbg !53
+Total Races Detected: 2
 ```
 
 The tool takes an LLVM IR file as input. The IR must be generated using clang 10.0.1.

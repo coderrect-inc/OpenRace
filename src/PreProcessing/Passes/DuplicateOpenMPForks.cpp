@@ -33,10 +33,14 @@ void duplicateOpenMPForks(llvm::Module &module) {
             arg_list.push_back(val);
           }
 
+          // First arg is thread handle of type struct.ident_t *
+          // create a new handle so that the two spawned threads can be distinguished from eachother
+          auto ty = arg_list.front()->getType()->getPointerElementType();
+          arg_list[0] = build.CreateAlloca(ty, nullptr, "duplicateOmpForkHandle");
+
           auto callee = call->getCalledOperand();
 
           if (llvm::isa<llvm::CallInst>(&inst)) {
-            // build.CreateCall(callee, llvm::ArrayRef<llvm::Value *>(arg_list));
             auto inst = build.CreateCall(callee, {arg_list});
             assert(inst);
           } else {
