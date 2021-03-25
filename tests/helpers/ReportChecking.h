@@ -13,12 +13,9 @@ limitations under the License.
 
 #include <llvm/ADT/StringRef.h>
 
-#include <set>
-#include <string>
+#include <vector>
 
 #include "Reporter/Reporter.h"
-
-using Oracle = std::pair<std::string, std::vector<std::string>>;
 
 // used for testing
 struct TestRace {
@@ -26,7 +23,7 @@ struct TestRace {
   static TestRace fromString(llvm::StringRef s);
 
   // build set of races from strings
-  static std::set<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
+  static std::vector<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
 
   // Check if location of TestRace matches the actual race
   bool equals(const race::Race &race) const;
@@ -45,6 +42,18 @@ struct TestRace {
     if (second < first) std::swap(first, second);
   }
 };
+
+struct Oracle {
+  llvm::StringRef filename;
+  std::vector<TestRace> expectedRaces;
+
+  // races are converted to TestRace using TestRace::fromString
+  Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races);
+};
+
+// Generate race report and check that it meets expected for each oracle
+// llPath should point to directory containing test files
+void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath);
 
 // Helpers for testing
 bool reportContains(const race::Report &report, TestRace race);

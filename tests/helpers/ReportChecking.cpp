@@ -11,6 +11,15 @@ limitations under the License.
 
 #include "helpers/ReportChecking.h"
 
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/SourceMgr.h>
+
+#include <catch2/catch.hpp>
+
+#include "RaceDetect.h"
+
 namespace {
 unsigned int stringToUnsigned(llvm::StringRef s) {
   std::istringstream read(s);
@@ -41,11 +50,11 @@ TestRace TestRace::fromString(llvm::StringRef s) {
 }
 
 // build set of races from strings
-std::set<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings) {
-  std::set<TestRace> out;
+std::vector<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings) {
+  std::vector<TestRace> out;
 
   for (auto const &s : strings) {
-    out.insert(TestRace::fromString(s));
+    out.push_back(TestRace::fromString(s));
   }
 
   return out;
@@ -72,4 +81,36 @@ bool reportContains(const race::Report &report, std::vector<TestRace> races) {
   }
 
   return races.empty();
+}
+
+Oracle::Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races) : filename(filename) {
+  expectedRaces = TestRace::fromStrings(races);
+}
+
+void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {
+  llvm::LLVMContext context;
+  llvm::SMDiagnostic err;
+
+  for (auto const &oracle : oracles) {
+    SECTION("test " + oracle.filename.str()) {
+      auto testfile = llPath.str() + oracle.filename.str();
+      auto module = llvm::parseIRFile(testfile, err, context);
+      if (!module) {
+        err.print(oracle.filename.str().c_str(), llvm::errs());
+      }
+      REQUIRE(module.get() != nullptr);
+
+      auto report = race::detectRaces(module.get());
+      llvm::errs() << "===> Detected Races:\n";
+      for (auto const &race : report) {
+        llvm::errs() << race << "\n";
+      }
+      llvm::errs() << "\n";
+
+      for (auto const &expectedRace : oracle.expectedRaces) {
+        CHECK(reportContains(report, expectedRace));
+      }
+      CHECK(report.size() == oracle.expectedRaces.size());
+    }
+  }
 }
