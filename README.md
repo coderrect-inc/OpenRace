@@ -44,7 +44,61 @@ To generate LLVM IR for a single file, run
 
 Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce a LLVM IR file for a project with multiple files. 
 
-Generating LLVM IR for large projects is outside the scope of this tool (for now). 
+Generating LLVM IR for large projects is outside the scope of this tool (for now).
+
+# End-to-End Example
+
+```
+// pthread-simple.c
+#include <pthread.h>
+
+int global;
+pthread_mutex_t mutex;
+int global_locked;
+
+void *foo(void *a) {
+  global++;
+  pthread_mutex_lock(&mutex);
+  global_locked++;
+  pthread_mutex_unlock(&mutex);
+  return 0;
+}
+
+int main() {
+  pthread_t t1, t2;
+  pthread_mutex_t mutex;
+
+  pthread_create(&t1, 0, foo, 0);
+  pthread_create(&t2, 0, foo, 0);
+  pthread_join(t1, 0);
+  pthread_join(t2, 0);
+}
+```
+The OpenRace tool takes LLVM IR as input. Generate the LLVM IR for pthread-simple.c with the following command.
+
+**Note**: Make sure `clang --version` shows clang 10.0.1
+
+```
+> clang -S -emit-llvm -g pthread-simple.c
+> ls
+pthread-simple.c pthread-simple.ll
+```
+
+OpenRace can be run either by building the tool, or using our pre-built docker image.
+
+```
+> docker pull coderrect/openrace
+> docker run -i --rm coderrect/openrace openrace < pthread-simple.ll
+==== Races ====
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          %0 = load i32, i32* @global, align 4, !dbg !53
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          store i32 %inc, i32* @global, align 4, !dbg !53
+Total Races Detected: 2
+```
+
 
 # Building
 
