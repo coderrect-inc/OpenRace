@@ -83,30 +83,30 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc
 
 void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; };
 
-void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) { races.emplace_back(std::make_pair(e1, e2)); }
-
-Report Reporter::getReport() const {
-  Report report;
-  for (auto const &racepair : races) {
+Report::Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> racepairs) {
+  for (auto const &racepair : racepairs) {
     Race race(racepair.first, racepair.second);
     if (race.missingLocation()) {
       llvm::errs() << "skipping race with unknown location: " << race << "\n";
       continue;
     }
 
-    report.insert(race);
+    races.insert(race);
   }
-  return report;
 }
 
-void Reporter::dumpReport() const {
-  auto report = getReport();
-  auto path = "races.json";
+void Report::dumpReport(const std::string &path) const {
   std::ofstream output(path, std::ofstream::out);
-  json reportJSON(report);
+  json reportJSON(races);
   output << reportJSON;
   output.close();
 }
+
+void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) {
+  racepairs.emplace_back(std::make_pair(e1, e2));
+}
+
+Report Reporter::getReport() const { return Report(racepairs); }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
   os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t" << *race.second.inst;

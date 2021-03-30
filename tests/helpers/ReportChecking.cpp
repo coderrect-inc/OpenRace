@@ -67,12 +67,12 @@ bool TestRace::equals(const race::Race &race) const {
 }
 
 bool reportContains(const race::Report &report, TestRace race) {
-  return std::find_if(report.begin(), report.end(),
-                      [&](const race::Race &reportRace) { return race.equals(reportRace); }) != report.end();
+  return std::find_if(report.races.begin(), report.races.end(),
+                      [&](const race::Race &reportRace) { return race.equals(reportRace); }) != report.races.end();
 }
 bool reportContains(const race::Report &report, std::vector<TestRace> races) {
   // loop over report, removing any matched races from the list of test races
-  for (auto const &reportRace : report) {
+  for (auto const &reportRace : report.races) {
     auto it = std::find_if(races.begin(), races.end(), [&](const TestRace &race) { return race.equals(reportRace); });
     if (it != races.end()) {
       races.erase(it);
@@ -102,7 +102,7 @@ void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {
 
       auto report = race::detectRaces(module.get());
       llvm::errs() << "===> Detected Races:\n";
-      for (auto const &race : report) {
+      for (auto const &race : report.races) {
         llvm::errs() << race << "\n";
       }
       llvm::errs() << "\n";

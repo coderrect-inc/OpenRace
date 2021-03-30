@@ -86,15 +86,25 @@ void to_json(json &j, const Race &race);
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Race &race);
 
-using Report = std::set<Race>;
+class Report {
+ public:
+  std::set<Race> races;
+
+  Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> rawRaces);
+
+  inline bool empty() { return races.empty(); };
+  inline std::size_t size() { return races.size(); };
+
+  void dumpReport(const std::string &path = "race.json") const;
+};
+
 class Reporter {
-  std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> races;
+  std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> racepairs;
 
  public:
   void collect(const WriteEvent *e1, const MemAccessEvent *e2);
 
   [[nodiscard]] Report getReport() const;
-  void dumpReport() const;
 };
 
 }  // namespace race

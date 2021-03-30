@@ -49,10 +49,11 @@ int main(int argc, char** argv) {
 
   // TODO: should output to json or something and let something else handle displaying results
   llvm::outs() << "==== Races ====\n";
-  for (auto const& race : report) {
+  for (auto const& race : report.races) {
     llvm::outs() << race << "\n";
   }
   llvm::outs() << "Total Races Detected: " << report.size() << "\n";
+  report.dumpReport();
   llvm::outs() << "JSON Report generated at ./races.json";
 
   return 0;
