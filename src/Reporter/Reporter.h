@@ -95,7 +95,7 @@ class Report {
   inline bool empty() { return races.empty(); };
   inline std::size_t size() { return races.size(); };
 
-  void dumpReport(const std::string &path = "race.json") const;
+  void dumpReport(const std::string &path = "races.json") const;
 };
 
 class Reporter {
