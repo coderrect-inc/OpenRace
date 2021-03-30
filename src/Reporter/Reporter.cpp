@@ -51,7 +51,7 @@ void race::to_json(json &j, const RaceAccess &access) {
   if (access.location.has_value()) {
     j = access.location.value();
   } else {
-    j = json{{"filename", ""}, {"dir", ""}, {"line", 0}, {"col", 0}};
+    llvm_unreachable("The report we serialize to JSON should only include races with valid locations");
   }
 };
 
