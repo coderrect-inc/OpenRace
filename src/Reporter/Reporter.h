@@ -11,21 +11,25 @@ limitations under the License.
 
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <optional>
 
 #include "Trace/ProgramTrace.h"
 
 namespace race {
 
+using json = nlohmann::json;
+
 struct SourceLoc {
   llvm::StringRef filename;
+  llvm::StringRef directory;
   unsigned int line;
   unsigned int col;
 
   SourceLoc() = delete;
   SourceLoc(llvm::StringRef filename, unsigned int line, unsigned int col) : filename(filename), line(line), col(col) {}
   explicit SourceLoc(const llvm::DILocation *loc)
-      : filename(loc->getFilename()), line(loc->getLine()), col(loc->getColumn()) {}
+      : filename(loc->getFilename()), directory(loc->getDirectory()), line(loc->getLine()), col(loc->getColumn()) {}
 
   inline bool operator==(const SourceLoc &other) const {
     return filename == other.filename && line == other.line && col == other.col;
@@ -35,8 +39,12 @@ struct SourceLoc {
   bool operator<(const SourceLoc &other) const;
 };
 
+void to_json(json &j, const SourceLoc &loc);
+
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const SourceLoc &loc);
 
+// TODO: for now, RaceAccess only has `inst` in addition to SourceLoc, mostly for debugging purpose.
+// We need to include other debugging information, such as stacktrace in the future
 struct RaceAccess {
   // source location cannot always be identified
   std::optional<SourceLoc> location;
@@ -50,6 +58,8 @@ struct RaceAccess {
   bool operator!=(const RaceAccess &other) const;
   bool operator<(const RaceAccess &other) const;
 };
+
+void to_json(json &j, const RaceAccess &access);
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const std::optional<SourceLoc> &location);
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const RaceAccess &acc);
@@ -72,6 +82,8 @@ struct Race {
   }
 };
 
+void to_json(json &j, const Race &race);
+
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Race &race);
 
 using Report = std::set<Race>;
@@ -82,6 +94,7 @@ class Reporter {
   void collect(const WriteEvent *e1, const MemAccessEvent *e2);
 
   [[nodiscard]] Report getReport() const;
+  void dumpReport() const;
 };
 
 }  // namespace race

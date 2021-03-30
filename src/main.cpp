@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
     llvm::outs() << race << "\n";
   }
   llvm::outs() << "Total Races Detected: " << report.size() << "\n";
+  llvm::outs() << "JSON Report generated at ./races.json";
 
   return 0;
 }

@@ -11,6 +11,8 @@ limitations under the License.
 
 #include "Reporter.h"
 
+#include <fstream>
+
 #include "llvm/IR/DebugInfoMetadata.h"
 
 using namespace race;
@@ -34,12 +36,24 @@ bool SourceLoc::operator<(const SourceLoc &other) const {
   return col < other.col;
 }
 
+void race::to_json(json &j, const SourceLoc &loc) {
+  j = json{{"filename", loc.filename}, {"dir", loc.directory}, {"line", loc.line}, {"col", loc.col}};
+}
+
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc) {
   os << loc.filename << ":" << loc.line << ":" << loc.col;
   return os;
 }
 
 RaceAccess::RaceAccess(const MemAccessEvent *event) : inst(event->getInst()), location(getSourceLoc(event)) {}
+
+void race::to_json(json &j, const RaceAccess &access) {
+  if (access.location.has_value()) {
+    j = access.location.value();
+  } else {
+    j = json{{"filename", ""}, {"dir", ""}, {"line", 0}, {"col", 0}};
+  }
+};
 
 bool RaceAccess::operator==(const RaceAccess &other) const { return location == other.location && inst == other.inst; }
 bool RaceAccess::operator!=(const RaceAccess &other) const { return !(*this == other); }
@@ -67,6 +81,8 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc
   return os;
 }
 
+void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; };
+
 void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) { races.emplace_back(std::make_pair(e1, e2)); }
 
 Report Reporter::getReport() const {
@@ -81,6 +97,15 @@ Report Reporter::getReport() const {
     report.insert(race);
   }
   return report;
+}
+
+void Reporter::dumpReport() const {
+  auto report = getReport();
+  auto path = "races.json";
+  std::ofstream output(path, std::ofstream::out);
+  json reportJSON(report);
+  output << reportJSON;
+  output.close();
 }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {

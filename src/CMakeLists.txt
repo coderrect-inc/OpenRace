@@ -44,7 +44,7 @@ set(racedetect-lib-sources
     Reporter/Reporter.cpp
     RaceDetect.cpp)
 add_library(racedetect-lib STATIC ${racedetect-lib-sources})
-target_link_libraries(racedetect-lib pta)
+target_link_libraries(racedetect-lib pta CONAN_PKG::nlohmann_json)
 target_include_directories(racedetect-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(openrace main.cpp)

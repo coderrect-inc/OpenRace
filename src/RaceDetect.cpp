@@ -68,5 +68,7 @@ Report race::detectRaces(llvm::Module *module) {
 
   llvm::outs() << program << "\n";
 
+  // TODO: this is probably not the best place to call this function
+  reporter.dumpReport();
   return reporter.getReport();
 }
