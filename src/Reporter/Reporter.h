@@ -13,6 +13,7 @@ limitations under the License.
 
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <string>
 
 #include "Trace/ProgramTrace.h"
 
@@ -48,6 +49,7 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const SourceLoc &loc);
 struct RaceAccess {
   // source location cannot always be identified
   std::optional<SourceLoc> location;
+  std::string type;
   const llvm::Instruction *inst;
 
   RaceAccess(const MemAccessEvent *event);

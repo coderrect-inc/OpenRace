@@ -45,11 +45,15 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
   return os;
 }
 
-RaceAccess::RaceAccess(const MemAccessEvent *event) : inst(event->getInst()), location(getSourceLoc(event)) {}
+RaceAccess::RaceAccess(const MemAccessEvent *event)
+    : inst(event->getInst()),
+      location(getSourceLoc(event)),
+      type(event->type == Event::Type::Read ? "read" : "write") {}
 
 void race::to_json(json &j, const RaceAccess &access) {
   if (access.location.has_value()) {
     j = access.location.value();
+    j["type"] = access.type;
   } else {
     llvm_unreachable("The report we serialize to JSON should only include races with valid locations");
   }
