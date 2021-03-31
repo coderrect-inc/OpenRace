@@ -46,9 +46,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
 }
 
 RaceAccess::RaceAccess(const MemAccessEvent *event)
-    : inst(event->getInst()),
-      location(getSourceLoc(event)),
-      type(event->type == Event::Type::Read ? "read" : "write") {}
+    : inst(event->getInst()), location(getSourceLoc(event)), type(event->type) {}
 
 void race::to_json(json &j, const RaceAccess &access) {
   if (access.location.has_value()) {
