@@ -39,9 +39,9 @@ After opening the PR we will assign the correct reviewer to review the change.
 
 ## Developer Workflow
 
-We are tracking what needs to be worked on via [GitHub Issues](https://github.com/coderrect-inc/OpenRace/issues) and we are tracking what is actively being developed on the [dev board](https://github.com/coderrect-inc/OpenRace/projects/1).
+We are tracking what needs to be worked on via [GitHub Issues](https://github.com/coderrect-inc/OpenRace/issues).
 
-If you want to contribute but aren't sure how, look for unassigned issues in the [issue tracker](https://github.com/coderrect-inc/OpenRace/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee) or for un-started issues on the [dev board](https://github.com/coderrect-inc/OpenRace/projects/1).
+If you want to contribute but aren't sure how, search for issues with the [good first issue](https://github.com/coderrect-inc/OpenRace/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) label.
 
 If you find an issue that look interesting feel free to leave a comment to prevent duplicate efforts, or a comment asking for guidance about how to get started.
 
