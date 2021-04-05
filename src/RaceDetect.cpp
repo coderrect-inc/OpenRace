@@ -13,6 +13,7 @@ limitations under the License.
 
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
+#include "Analysis/OmpArrayIndex.h"
 #include "Analysis/SharedMemory.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
@@ -32,6 +33,7 @@ Report race::detectRaces(llvm::Module *module) {
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
+  race::OmpArrayIndexAnalysis aia;
 
   for (auto const sharedObj : sharedmem.getSharedObjects()) {
     auto threadedWrites = sharedmem.getThreadedWrites(sharedObj);
@@ -45,6 +47,7 @@ Report race::detectRaces(llvm::Module *module) {
         if (wtid == rtid) continue;
         for (auto write : writes) {
           for (auto read : reads) {
+            aia.canIndexAlias(write, read);
             if (isRace(write, read, happensbefore, lockset)) {
               reporter.collect(write, read);
             }
@@ -58,6 +61,7 @@ Report race::detectRaces(llvm::Module *module) {
         for (auto write : writes) {
           for (auto otherWrite : otherWrites) {
             if (isRace(write, otherWrite, happensbefore, lockset)) {
+              aia.canIndexAlias(write, otherWrite);
               reporter.collect(write, otherWrite);
             }
           }

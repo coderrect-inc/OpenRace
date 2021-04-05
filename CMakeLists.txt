@@ -32,6 +32,7 @@ llvm_map_components_to_libnames(llvm_libs
         support
         transformutils
         codegen
+        passes
 
         # needed when link llvm as shared library
         AggressiveInstCombine

@@ -27,6 +27,8 @@ class ProgramTrace {
 
   [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
 
+  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return threads.at(tid)->getEvent(eid); }
+
   explicit ProgramTrace(llvm::Module *, llvm::StringRef entryName = "main");
   ~ProgramTrace() = default;
   ProgramTrace(const ProgramTrace &) = delete;

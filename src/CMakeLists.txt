@@ -35,6 +35,7 @@ set(racedetect-lib-sources
     Analysis/HappensBeforeGraph.cpp
     Analysis/LockSet.cpp
     Analysis/SharedMemory.cpp
+    Analysis/OmpArrayIndex.cpp
     IR/Builder.cpp
     IR/IR.cpp
     Trace/Event.cpp
