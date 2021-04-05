@@ -13,12 +13,20 @@ limitations under the License.
 
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <string>
 
 #include "Trace/ProgramTrace.h"
 
 namespace race {
 
 using json = nlohmann::json;
+
+// map Event::Type values to JSON as strings
+// NOTE: only handles Read/Write because MemAccessEvent can only be one of them
+NLOHMANN_JSON_SERIALIZE_ENUM(Event::Type, {
+                                              {Event::Type::Read, "Read"},
+                                              {Event::Type::Write, "Write"},
+                                          })
 
 struct SourceLoc {
   llvm::StringRef filename;
@@ -48,6 +56,7 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const SourceLoc &loc);
 struct RaceAccess {
   // source location cannot always be identified
   std::optional<SourceLoc> location;
+  Event::Type type;
   const llvm::Instruction *inst;
 
   RaceAccess(const MemAccessEvent *event);
