@@ -202,4 +202,13 @@ class UnlockIRImpl : public UnlockIR {
 // create a type alias.
 using PthreadMutexUnlock = UnlockIRImpl;
 using PthreadSpinUnlock = UnlockIRImpl;
+
+// ==================================================================
+// ================= Other Implementations =======================
+// ==================================================================
+
+// No special API or info needed from these. Just include them IR to see where omp loops start/end
+using OmpForInit = CallIR;
+using OmpForFini = CallIR;
+
 }  // namespace race

@@ -11,6 +11,29 @@ limitations under the License.
 
 #include "PreProcessing/PreProcessing.h"
 
+#include <llvm/Passes/PassBuilder.h>
+
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
-void preprocess(llvm::Module &module) { duplicateOpenMPForks(module); }
+void preprocess(llvm::Module &module) {
+  llvm::PassBuilder pb;
+
+  llvm::LoopAnalysisManager lam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::CGSCCAnalysisManager cgam;
+  llvm::ModuleAnalysisManager mam;
+
+  pb.registerModuleAnalyses(mam);
+  pb.registerCGSCCAnalyses(cgam);
+  pb.registerFunctionAnalyses(fam);
+  pb.registerLoopAnalyses(lam);
+  pb.crossRegisterProxies(lam, fam, cgam, mam);
+
+  auto fpm = pb.buildFunctionSimplificationPipeline(llvm::PassBuilder::O1, llvm::PassBuilder::ThinLTOPhase::None);
+  auto mpm = pb.buildModuleSimplificationPipeline(llvm::PassBuilder::O1, llvm::PassBuilder::ThinLTOPhase::None);
+  mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
+
+  mpm.run(module, mam);
+
+  duplicateOpenMPForks(module);
+}

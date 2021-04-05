@@ -51,3 +51,19 @@ bool OmpArrayIndexAnalysis::canIndexAlias(const race::MemAccessEvent* event1, co
   llvm::errs() << "unsure so reporting alias\n";
   return true;
 }
+
+bool OmpArrayIndexAnalysis::isInOmpLoop(const race::MemAccessEvent* event) const {
+  // Currently only return true if in omp for loop in this function
+  // because array index analysis only works within one function
+  // TODO: support omp loop being in call higher in callstack
+
+  auto const func = event->getInst()->getFunction();
+  for (auto const& basicblock : func->getBasicBlockList()) {
+    for (auto const& inst : basicblock.getInstList()) {
+      auto callbase = llvm::dyn_cast<llvm::CallBase>(&inst);
+      if (!callbase) continue;
+      auto const func = callbase->getCalledFunction();
+      if (!func->hasName()) continue;
+    }
+  }
+}

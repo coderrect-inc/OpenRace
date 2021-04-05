@@ -24,6 +24,8 @@ class OmpArrayIndexAnalysis {
  public:
   OmpArrayIndexAnalysis();
   bool canIndexAlias(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
+
+  bool isInOmpLoop(const race::MemAccessEvent* event) const;
 };
 
 }

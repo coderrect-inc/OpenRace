@@ -44,7 +44,9 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 
 // TODO: need different system for storing and organizing these "recognizers"
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
-bool isLLVMDebug(const llvm::StringRef &funcName) { return funcName.equals("llvm.dbg.declare"); }
+bool isLLVMDebug(const llvm::StringRef &funcName) {
+  return funcName.equals("llvm.dbg.declare") || funcName.equals("llvm.dbg.value");
+}
 }  // namespace
 
 FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
@@ -104,6 +106,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
         } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
           instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
+        } else if (OpenMPModel::isForStaticInit(funcName)) {
+          instructions.push_back(std::make_shared<OmpForInit>(callInst));
+        } else if (OpenMPModel::isForStaticFini(funcName)) {
+          instructions.push_back(std::make_shared<OmpForFini>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
