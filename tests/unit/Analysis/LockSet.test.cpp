@@ -76,12 +76,12 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
 
   auto const &thread = threads.at(0);
   auto const &events = thread->getEvents();
-  REQUIRE(events.size() == 16);
+  REQUIRE(events.size() == 13);
 
   race::LockSet lockset(program);
 
-  std::array<size_t, 7> sharedIdxs = {4, 5, 6, 7, 8, 10, 11};
-  std::array<size_t, 5> emptyIdxs = {0, 1, 13, 14, 15};
+  std::array<size_t, 4> sharedIdxs = {4, 5, 7, 8};
+  std::array<size_t, 5> emptyIdxs = {0, 1, 10, 11, 12};
 
   for (auto sharedIt = sharedIdxs.begin(), sharedEnd = sharedIdxs.end(); sharedIt != sharedEnd; ++sharedIt) {
     // Check it shares lock with self
