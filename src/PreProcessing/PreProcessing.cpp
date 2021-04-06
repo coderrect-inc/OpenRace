@@ -42,11 +42,6 @@ void preprocess(llvm::Module &module) {
   pb.registerLoopAnalyses(lam);
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  // auto fpm = pb.buildFunctionSimplificationPipeline(llvm::PassBuilder::O1, llvm::PassBuilder::ThinLTOPhase::None);
-  // auto mpm = pb.buildModuleSimplificationPipeline(llvm::PassBuilder::O1, llvm::PassBuilder::ThinLTOPhase::None);
-  // mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
-  // mpm.run(module, mam);
-
   llvm::FunctionPassManager fpm;
   // fpm.addPass(llvm::SROA());
   fpm.addPass(llvm::EarlyCSEPass(true));
@@ -78,6 +73,4 @@ void preprocess(llvm::Module &module) {
   mpm.run(module, mam);
 
   duplicateOpenMPForks(module);
-
-  // module.dump();
 }

@@ -34,13 +34,6 @@ TEST_CASE("Omp Array Index Alias Analysis", "[unit][omp]") {
   race::ProgramTrace program(module.get());
   race::OmpArrayIndexAnalysis arrayIndexAnalysis;
 
-  // struct PUID {
-  //   race::ThreadID tid;
-  //   race::EventID eid;
-  //   PUID() = default;
-  //   PUID(race::ThreadID tid, race::EventID eid) : tid(tid), eid(eid) {}
-  // }
-
   // TODO: Make Program unique event ID a type in Trace
   using PUID = std::pair<race::ThreadID, race::EventID>;
 

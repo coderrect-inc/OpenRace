@@ -27,21 +27,12 @@ bool OmpArrayIndexAnalysis::canIndexAlias(const race::MemAccessEvent* event1, co
     return false;
   }
 
-  // auto &scev = FAM.getResult<llvm::ScalarEvolutionAnalysis>(*module.getFunction(".omp_outlined._debug__"));
-
   // TODO: get rid of const cast? Also does FAM cache these results (I think it does?)
   auto& scev = FAM.getResult<llvm::ScalarEvolutionAnalysis>(*const_cast<llvm::Function*>(gep1->getFunction()));
+
   auto scev1 = scev.getSCEV(const_cast<llvm::Value*>(llvm::cast<llvm::Value>(gep1)));
   auto scev2 = scev.getSCEV(const_cast<llvm::Value*>(llvm::cast<llvm::Value>(gep2)));
-
-  auto debugprint = [](const race::MemAccessEvent* e, const llvm::SCEV* scev, size_t id) {
-    llvm::errs() << "T" << e->getThread().id << ":" << e->getID() << " GEP" << id << ": " << *scev << "\n";
-  };
-
-  debugprint(event1, scev1, 1);
-  debugprint(event2, scev2, 2);
   auto diff = scev.getMinusSCEV(scev1, scev2);
-  llvm::errs() << "Diff: " << *diff << "\n";
 
   if (auto gap = llvm::dyn_cast<llvm::SCEVConstant>(diff)) {
     return !gap->isZero();
@@ -50,20 +41,4 @@ bool OmpArrayIndexAnalysis::canIndexAlias(const race::MemAccessEvent* event1, co
   // If unsure report they do alias
   llvm::errs() << "unsure so reporting alias\n";
   return true;
-}
-
-bool OmpArrayIndexAnalysis::isInOmpLoop(const race::MemAccessEvent* event) const {
-  // Currently only return true if in omp for loop in this function
-  // because array index analysis only works within one function
-  // TODO: support omp loop being in call higher in callstack
-
-  auto const func = event->getInst()->getFunction();
-  for (auto const& basicblock : func->getBasicBlockList()) {
-    for (auto const& inst : basicblock.getInstList()) {
-      auto callbase = llvm::dyn_cast<llvm::CallBase>(&inst);
-      if (!callbase) continue;
-      auto const func = callbase->getCalledFunction();
-      if (!func->hasName()) continue;
-    }
-  }
 }
