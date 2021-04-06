@@ -128,10 +128,14 @@ Using [conan](https://conan.io) to manage dependencies. Instructions to install 
 To build, run the following:
 
 ```
+# Create and move to build directory
 mkdir build && cd build
+# Use conan to install dependencies
 conan install ..
+# Set build options
 cmake -DLLVM_DIR=$LLVM_DIR ..
-make -j
+# Build the project in parallel
+cmake --build . --parallel
 ```
 
 Feel free to adjust cmake options as you see fit.
