@@ -15,7 +15,7 @@ const llvm::GetElementPtrInst* getArrayAccess(const MemAccessEvent* event) {
 
 OmpArrayIndexAnalysis::OmpArrayIndexAnalysis() { PB.registerFunctionAnalyses(FAM); }
 
-bool OmpArrayIndexAnalysis::canIndexAlias(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2) {
+bool OmpArrayIndexAnalysis::canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2) {
   auto gep1 = getArrayAccess(event1);
   if (!gep1) return false;
 

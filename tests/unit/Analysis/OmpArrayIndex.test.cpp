@@ -59,7 +59,7 @@ TEST_CASE("Omp Array Index Alias Analysis", "[unit][omp]") {
     auto e2 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.second.first, pair.second.second));
 
     UNSCOPED_INFO("Checking no-alias between " << puidStr(pair.first) << " and " << puidStr(pair.second));
-    CHECK_FALSE(arrayIndexAnalysis.canIndexAlias(e1, e2));
+    CHECK_FALSE(arrayIndexAnalysis.canIndexOverlap(e1, e2));
   }
 
   for (auto const &pair : alias) {
@@ -67,6 +67,6 @@ TEST_CASE("Omp Array Index Alias Analysis", "[unit][omp]") {
     auto e2 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.second.first, pair.second.second));
 
     UNSCOPED_INFO("Checking for alias between " << puidStr(pair.first) << " and " << puidStr(pair.second));
-    CHECK(arrayIndexAnalysis.canIndexAlias(e1, e2));
+    CHECK(arrayIndexAnalysis.canIndexOverlap(e1, e2));
   }
 }

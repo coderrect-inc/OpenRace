@@ -23,7 +23,7 @@ class OmpArrayIndexAnalysis {
 
  public:
   OmpArrayIndexAnalysis();
-  bool canIndexAlias(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
+  bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 };
 
 }  // namespace race
