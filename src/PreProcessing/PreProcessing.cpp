@@ -43,7 +43,6 @@ void preprocess(llvm::Module &module) {
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::FunctionPassManager fpm;
-  // fpm.addPass(llvm::SROA());
   fpm.addPass(llvm::EarlyCSEPass(true));
   fpm.addPass(llvm::SimplifyCFGPass());
   fpm.addPass(llvm::InstCombinePass());
@@ -55,7 +54,7 @@ void preprocess(llvm::Module &module) {
   lpmPre.addPass(llvm::LoopInstSimplifyPass());
   lpmPre.addPass(llvm::LoopSimplifyCFGPass());
   lpmPre.addPass(llvm::LoopRotatePass(true));
-  lpmPre.addPass(llvm::LICMPass());  // TODO: might need to add some tuning here
+  lpmPre.addPass(llvm::LICMPass());
   lpmPre.addPass(llvm::SimpleLoopUnswitchPass());
 
   lpmPost.addPass(llvm::IndVarSimplifyPass());
