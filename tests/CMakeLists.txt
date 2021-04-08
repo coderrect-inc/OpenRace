@@ -16,6 +16,8 @@ add_executable(tester
     integration/pthreadrace.test.cpp
     integration/dataracebench.test.cpp
 
+    regression/EmptyThread.test.cpp
+
     # Helper logic
     helpers/ReportChecking.cpp
 )

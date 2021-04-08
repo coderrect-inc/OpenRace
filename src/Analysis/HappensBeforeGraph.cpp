@@ -163,7 +163,10 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
             llvm::errs() << "Could not find fork!\n";
             continue;
           }
-          addSyncEdge(forkEvent, forkedThread->getEvents().front().get());
+          // If thread has no events just leave it out of happens before
+          if (!forkedThread->getEvents().empty()) {
+            addSyncEdge(forkEvent, forkedThread->getEvents().front().get());
+          }
           break;
         }
         case Event::Type::Join: {
@@ -174,7 +177,10 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
             llvm::errs() << "Could not find join!\n";
             continue;
           }
-          addSyncEdge(joinedThread->getEvents().back().get(), joinEvent);
+          // If thread has no events just leave it out of happens before
+          if (!joinedThread->getEvents().empty()) {
+            addSyncEdge(joinedThread->getEvents().back().get(), joinEvent);
+          }
           break;
         }
         case Event::Type::Read:
