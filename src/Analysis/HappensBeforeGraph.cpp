@@ -183,6 +183,7 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
         case Event::Type::Unlock:
         case Event::Type::Call:
         case Event::Type::CallEnd:
+        case Event::Type::ExternCall:
           // Do Nothing
           break;
       }

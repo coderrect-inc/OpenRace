@@ -1,5 +1,6 @@
 #include "Analysis/OmpArrayIndex.h"
 
+#include "LanguageModel/OpenMP.h"
 #include "Trace/Event.h"
 #include "Trace/ThreadTrace.h"
 
@@ -41,4 +42,57 @@ bool OmpArrayIndexAnalysis::canIndexOverlap(const race::MemAccessEvent* event1, 
   // If unsure report they do alias
   llvm::errs() << "unsure so reporting alias\n";
   return true;
+}
+
+const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::getOmpForLoops(const ThreadTrace& thread) {
+  // Check if result is already computed
+  auto it = ompForLoops.find(thread.id);
+  if (it != ompForLoops.end()) {
+    return it->second;
+  }
+
+  // Else find the loop regions
+  auto& loopRegions = ompForLoops[thread.id];
+  std::optional<EventID> start;
+
+  for (auto const& event : thread.getEvents()) {
+    auto const externCall = llvm::dyn_cast<ExternCallEvent>(event.get());
+    if (!externCall || !externCall->getCalledFunction() || !externCall->getCalledFunction()->hasName()) continue;
+    auto const funcName = externCall->getCalledFunction()->getName();
+    if (OpenMPModel::isForStaticInit(funcName)) {
+      assert(!start.has_value() && "encountered two omp for inits in a row");
+      start = event->getID();
+    }
+    if (OpenMPModel::isForStaticFini(funcName)) {
+      assert(start.has_value() && "encountered omp for fini without a matching init");
+      loopRegions.emplace_back(start.value(), event->getID());
+      start.reset();
+    }
+  }
+
+  return loopRegions;
+}
+
+bool OmpArrayIndexAnalysis::isInOmpFor(const race::MemAccessEvent* event) {
+  auto loopRegions = getOmpForLoops(event->getThread());
+  auto const eid = event->getID();
+  for (auto const& region : loopRegions) {
+    if (eid > region.second) {
+      continue;
+    }
+    return eid > region.first;
+  }
+
+  return false;
+}
+
+bool OmpArrayIndexAnalysis::isOmpLoopArrayAccess(const race::MemAccessEvent* event1,
+                                                 const race::MemAccessEvent* event2) {
+  auto gep1 = getArrayAccess(event1);
+  if (!gep1) return false;
+
+  auto gep2 = getArrayAccess(event2);
+  if (!gep2) return false;
+
+  return isInOmpFor(event1) && isInOmpFor(event2);
 }

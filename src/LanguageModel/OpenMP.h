@@ -23,7 +23,7 @@ inline bool isFork(const llvm::CallBase* callInst) {
   if (!func->hasName()) return false;
   return isFork(func->getName());
 }
-inline bool isForStaticInit(llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_init_4"); }
-inline bool isForStaticFini(llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_fini"); }
+inline bool isForStaticInit(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_init_4"); }
+inline bool isForStaticFini(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_fini"); }
 
 }  // namespace OpenMPModel

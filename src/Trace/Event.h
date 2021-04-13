@@ -22,7 +22,7 @@ using EventID = size_t;
 
 class Event {
  public:
-  enum class Type { Read, Write, Fork, Join, Lock, Unlock, Call, CallEnd };
+  enum class Type { Read, Write, Fork, Join, Lock, Unlock, Call, CallEnd, ExternCall };
 
   const Type type;
 
@@ -44,6 +44,7 @@ class Event {
   explicit Event(Type type) : type(type) {}
 };
 
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Event &event);
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Event::Type &type);
 
 class MemAccessEvent : public Event {
@@ -170,6 +171,21 @@ class LeaveCallEvent : public Event {
 
   void print(llvm::raw_ostream &os) const override;
 };
+
+class ExternCallEvent : public Event {
+ protected:
+  ExternCallEvent() : Event(Type::ExternCall) {}
+
+ public:
+  [[nodiscard]] const race::CallIR *getIRInst() const override = 0;
+  [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::ExternCall; }
+
+  void print(llvm::raw_ostream &os) const override;
+};
+
 }  // namespace race
 
 // enum class TEventType { Read, Write, Fork, Join, Call, CallEnd };

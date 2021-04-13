@@ -13,6 +13,11 @@ limitations under the License.
 
 using namespace race;
 
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event &event) {
+  os << event.getID() << " " << event.type << "\t" << *event.getInst();
+  return os;
+}
+
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event::Type &type) {
   switch (type) {
     case Event::Type::Read:
@@ -39,6 +44,11 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event::Type &ty
     case Event::Type::CallEnd:
       os << "EndCall";
       break;
+    case Event::Type::ExternCall:
+      os << "ExternCall";
+      break;
+    default:
+      llvm_unreachable("Did you forget to update Event::Type operator<< ?");
   }
 
   return os;
@@ -80,4 +90,8 @@ void LockEvent::print(raw_ostream &os) const {
 void UnlockEvent::print(raw_ostream &os) const {
   // TODO
   os << "Event: Unlock\n";
+}
+void ExternCallEvent::print(raw_ostream &os) const {
+  // TODO
+  os << "Event: ExternCall\n";
 }

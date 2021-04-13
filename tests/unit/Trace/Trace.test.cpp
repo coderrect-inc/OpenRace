@@ -16,7 +16,8 @@ limitations under the License.
 #include "Trace/ProgramTrace.h"
 
 CATCH_REGISTER_ENUM(race::Event::Type, race::Event::Type::Read, race::Event::Type::Write, race::Event::Type::Fork,
-                    race::Event::Type::Join, race::Event::Type::Call, race::Event::Type::CallEnd)
+                    race::Event::Type::Join, race::Event::Type::Call, race::Event::Type::CallEnd,
+                    race::Event::Type::ExternCall)
 TEST_CASE("ThreadTrace construction", "[unit][event]") {
   const char *modString = R"(
 declare void @print(i64)
@@ -47,12 +48,13 @@ define void @foo() {
 
   auto const &thread = threads.at(0);
   auto const &events = thread->getEvents();
-  REQUIRE(events.size() == 5);
+  REQUIRE(events.size() == 6);
   REQUIRE(events.at(0)->type == race::Event::Type::Call);
   REQUIRE(events.at(1)->type == race::Event::Type::Read);
   REQUIRE(events.at(2)->type == race::Event::Type::Write);
   REQUIRE(events.at(3)->type == race::Event::Type::CallEnd);
   REQUIRE(events.at(4)->type == race::Event::Type::Read);
+  REQUIRE(events.at(5)->type == race::Event::Type::ExternCall);
 }
 
 TEST_CASE("Construct pthread ThreadTrace", "[unit][event]") {

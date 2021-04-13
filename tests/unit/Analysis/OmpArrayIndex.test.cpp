@@ -44,12 +44,12 @@ TEST_CASE("Omp Array Index Alias Analysis", "[unit][omp]") {
   };
 
   std::vector<std::pair<PUID, PUID>> noAlias{
-      {{1, 15}, {2, 15}},  // Writes to A[i]
-      {{1, 15}, {2, 14}},  // Write to A[i] read to A[i]
-      {{1, 18}, {2, 18}},  // Writes to B[i]
+      {{1, 16}, {2, 16}},  // Writes to A[i]
+      {{1, 16}, {2, 15}},  // Write to A[i] read to A[i]
+      {{1, 19}, {2, 19}},  // Writes to B[i]
   };
   std::vector<std::pair<PUID, PUID>> alias{
-      {{1, 18}, {2, 17}},  // Write to B[i] read from B[i+1]
+      {{1, 19}, {2, 18}},  // Write to B[i] read from B[i+1]
   };
 
   llvm::errs() << program << "\n";

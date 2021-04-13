@@ -15,8 +15,7 @@ limitations under the License.
 
 TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
   std::vector<Oracle> oracles = {
-      Oracle("DRB001-antidep1-orig-yes.ll", {"DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:10",
-                                             "DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:12"})};
+      Oracle("DRB001-antidep1-orig-yes.ll", {"DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:12"})};
 
   checkOracles(oracles, "integration/dataracebench/ll/");
 }

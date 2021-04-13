@@ -39,6 +39,7 @@ std::set<const llvm::Value *> heldLocks(const Event *targetEvent) {
       case Event::Type::Join:
       case Event::Type::Call:
       case Event::Type::CallEnd:
+      case Event::Type::ExternCall:
         break;
     }
   }

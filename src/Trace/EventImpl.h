@@ -194,4 +194,24 @@ class LeaveCallEventImpl : public LeaveCallEvent {
   }
 };
 
+class ExternCallEventImpl : public ExternCallEvent {
+  std::shared_ptr<EventInfo> info;
+
+ public:
+  const std::shared_ptr<const CallIR> call;
+  const EventID id;
+
+  ExternCallEventImpl(std::shared_ptr<const CallIR> call, std::shared_ptr<EventInfo> info, EventID id)
+      : info(std::move(info)), call(std::move(call)), id(id) {}
+
+  [[nodiscard]] inline EventID getID() const override { return id; }
+  [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
+
+  [[nodiscard]] const llvm::Function *getCalledFunction() const override {
+    return call->getInst()->getCalledFunction();
+  }
+};
+
 }  // namespace race

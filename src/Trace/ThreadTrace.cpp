@@ -70,6 +70,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 
         if (call->isIndirect()) {
           // TODO: handle indirect
+          llvm::errs() << "Skipping indirect call: " << *call << "\n";
           continue;
         }
 
@@ -83,8 +84,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         }
 
         if (directNode->getTargetFun()->isExtFunction()) {
-          // TODO: LOG skipping external function
-          llvm::errs() << "Skipping external function: " << directNode->getTargetFun()->getName() << "\n";
+          events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
           continue;
         }
 
