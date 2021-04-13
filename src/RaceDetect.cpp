@@ -27,8 +27,6 @@ bool isRace(const race::WriteEvent *write, const race::MemAccessEvent *other, co
     return false;
   }
 
-  llvm::outs() << *write << "\n" << *other << "\n";
-
   if (ompAnalysis.isOmpLoopArrayAccess(write, other)) {
     return ompAnalysis.canIndexOverlap(write, other);
   }
