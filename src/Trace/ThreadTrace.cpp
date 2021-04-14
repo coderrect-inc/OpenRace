@@ -132,9 +132,17 @@ std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
   return forks;
 }
 
-void ThreadTrace::print(llvm::raw_ostream &os) const {
-  os << "Thread " << id << "\n";
-  for (auto const &event : events) {
-    event->print(os);
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ThreadTrace &thread) {
+  os << "---Thread" << thread.id;
+  if (thread.spawnEvent.has_value()) {
+    auto const &spawn = thread.spawnEvent.value();
+    os << "  (Spawned by T" << spawn->getThread().id << ":" << spawn->getID() << ")";
   }
+  os << "\n";
+
+  for (auto const &event : thread.getEvents()) {
+    os << *event << "\n";
+  }
+
+  return os;
 }

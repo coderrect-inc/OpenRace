@@ -35,8 +35,6 @@ class ThreadTrace {
 
   [[nodiscard]] const Event *getEvent(EventID id) const { return events.at(id).get(); }
 
-  void print(llvm::raw_ostream &os) const;
-
   // Constructs the main thread. All others should be built from forkEvent
   // constructor
   ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry);
@@ -54,5 +52,7 @@ class ThreadTrace {
  private:
   std::vector<std::unique_ptr<const Event>> events;
 };
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const ThreadTrace &thread);
 
 }  // namespace race

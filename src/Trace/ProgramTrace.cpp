@@ -56,16 +56,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &t
   os << "===== Program Trace =====\n";
   auto const &threads = trace.getThreads();
   for (auto const &thread : threads) {
-    os << "----T" << thread->id;
-    if (thread->spawnEvent.has_value()) {
-      auto const &spawn = thread->spawnEvent.value();
-      os << "  (Spawned by T" << spawn->getThread().id << ":" << spawn->getID() << ")";
-    }
-    os << "\n";
-    auto const &events = thread->getEvents();
-    for (auto const &event : events) {
-      os << event->getID() << " " << event->type << " " << *event->getInst() << "\n";
-    }
+    os << *thread;
   }
 
   os << "========================\n";
