@@ -21,9 +21,6 @@ limitations under the License.
 
 using namespace race;
 
-bool isRace(const race::WriteEvent *write, const race::MemAccessEvent *other, const HappensBeforeGraph &happensbefore,
-            const LockSet &lockset, OmpArrayIndexAnalysis &ompAnalysis) {}
-
 Report race::detectRaces(llvm::Module *module) {
   race::Reporter reporter;
 
