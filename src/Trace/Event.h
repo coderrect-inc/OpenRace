@@ -163,6 +163,14 @@ class ExternCallEvent : public Event {
   [[nodiscard]] const race::CallIR *getIRInst() const override = 0;
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const = 0;
 
+  // Return name of called function if it has one
+  [[nodiscard]] inline std::optional<llvm::StringRef> getCalledName() const {
+    if (getCalledFunction() && getCalledFunction()->hasName()) {
+      return getCalledFunction()->getName();
+    }
+    return std::nullopt;
+  }
+
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::ExternCall; }
 };
