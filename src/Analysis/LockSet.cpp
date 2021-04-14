@@ -33,13 +33,8 @@ std::set<const llvm::Value *> heldLocks(const Event *targetEvent) {
         locks.erase(unlockEvent->getIRInst()->getLockValue());
         break;
       }
-      case Event::Type::Read:
-      case Event::Type::Write:
-      case Event::Type::Fork:
-      case Event::Type::Join:
-      case Event::Type::Call:
-      case Event::Type::CallEnd:
-      case Event::Type::ExternCall:
+      default:
+        // Do Nothing
         break;
     }
   }
