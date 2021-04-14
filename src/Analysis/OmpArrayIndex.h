@@ -39,7 +39,7 @@ class OmpArrayIndexAnalysis {
   // return true if events are array accesses who's access sets could overlap
   bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
-  // return true if both events are array accesses in same omp loop
+  // return true if both events are array accesses in an omp loop
   bool isOmpLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 };
 
