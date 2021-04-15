@@ -56,20 +56,21 @@ const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::get
   std::optional<EventID> start;
 
   for (auto const& event : thread.getEvents()) {
-    auto const externCall = llvm::dyn_cast<ExternCallEvent>(event.get());
-    if (!externCall) continue;
-
-    auto const funcName = externCall->getCalledName();
-    if (!funcName.has_value()) continue;
-
-    if (OpenMPModel::isForStaticInit(funcName.value())) {
-      assert(!start.has_value() && "encountered two omp for inits in a row");
-      start = event->getID();
-    }
-    if (OpenMPModel::isForStaticFini(funcName.value())) {
-      assert(start.has_value() && "encountered omp for fini without a matching init");
-      loopRegions.emplace_back(start.value(), event->getID());
-      start.reset();
+    switch (event->getIRInst()->type) {
+      case IR::Type::OpenMPForInit: {
+        assert(!start.has_value() && "encountered two omp for inits in a row");
+        start = event->getID();
+        break;
+      }
+      case IR::Type::OpenMPForFini: {
+        assert(start.has_value() && "encountered omp for fini without a matching init");
+        loopRegions.emplace_back(start.value(), event->getID());
+        start.reset();
+        break;
+      }
+      default:
+        // Do Nothing
+        break;
     }
   }
 
