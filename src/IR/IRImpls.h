@@ -187,6 +187,8 @@ class OpenMPJoin : public JoinIR {
 // ================== LockIR Implementations ========================
 // ==================================================================
 
+// LockIRImpl should not be used directly. Instead define a using alias.
+// See PthreadMutexLock below as an example.
 template <IR::Type T>
 class LockIRImpl : public LockIR {
   const unsigned int lockObjectOffset = 0;
@@ -214,6 +216,8 @@ using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
 // ================= UnlockIR Implementations =======================
 // ==================================================================
 
+// UnlockIRImpl should not be used directly. Instead define a using alias.
+// See PthreadMutexUnlock below as an example.
 template <IR::Type T>
 class UnlockIRImpl : public UnlockIR {
   const unsigned int lockObjectOffset = 0;
@@ -241,6 +245,8 @@ using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 // ================= Other Implementations =======================
 // ==================================================================
 
+// CallIRImpl should not be used directly. Instead define a using alias.
+// See OmpForInit below as an example.
 template <const IR::Type T>
 class CallIRImpl : public CallIR {
  public:
