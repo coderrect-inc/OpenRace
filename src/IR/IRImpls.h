@@ -241,18 +241,16 @@ using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 // ================= Other Implementations =======================
 // ==================================================================
 
-// template <const IR::Type T>
-// class CallIRImpl : public CallIR {
-//  public:
-//   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-//   static inline bool classof(const IR *e) { return e->type == T; }
-// };
+template <const IR::Type T>
+class CallIRImpl : public CallIR {
+ public:
+  CallIRImpl(const llvm::CallBase *inst) : CallIR(inst, T) {}
 
-// No special API or info needed from these. Just include them IR to see where omp loops start/end
-// using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
-// using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == T; }
+};
 
-using OmpForInit = CallIR;
-using OmpForFini = CallIR;
+using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
+using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
 
 }  // namespace race

@@ -175,6 +175,10 @@ class UnlockIR : public IR {
 class CallIR : public IR {
   const llvm::CallBase *inst;
 
+ protected:
+  // Constructor for sub types
+  CallIR(const llvm::CallBase *inst, Type ty) : IR(ty), inst(inst) { assert(ty >= Type::Call && ty < Type::END_Call); }
+
  public:
   explicit CallIR(const llvm::CallBase *inst) : IR(Type::Call), inst(inst) {}
 
