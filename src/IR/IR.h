@@ -20,7 +20,36 @@ namespace race {
 
 class IR {
  public:
-  enum class Type { Read, Write, Fork, Lock, Unlock, Join, Call } type;
+  enum class Type {
+    Read,
+    Load,
+    APIRead,
+    END_Read,
+    Write,
+    Store,
+    APIWrite,
+    END_Write,
+    Fork,
+    PthreadCreate,
+    OpenMPFork,
+    END_Fork,
+    Join,
+    PthreadJoin,
+    OpenMPJoin,
+    END_Join,
+    Lock,
+    PthreadMutexLock,
+    PthreadSpinLock,
+    END_Lock,
+    Unlock,
+    PthreadMutexUnlock,
+    PthreadSpinUnlock,
+    END_Unlock,
+    Call,
+    OpenMPForInit,
+    OpenMPForFini,
+    END_Call
+  } type;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const = 0;
 
   [[nodiscard]] virtual llvm::StringRef toString() const;
@@ -43,43 +72,46 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const IR::Type &type);
 // This is a convenience interface so that read/write can be kept in list
 // together
 class MemAccessIR : public IR {
+ protected:
+  using IR::IR;
+
  public:
   [[nodiscard]] virtual const llvm::Value *getAccessedValue() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::Read || e->type == Type::Write; }
+  static inline bool classof(const IR *e) { return e->type >= Type::Read || e->type <= Type::END_Write; }
 
  protected:
   explicit MemAccessIR(Type t) : IR(t) {
-    assert(t == Type::Read || t == Type::Write && "MemAccess constructed with non read/write type!");
+    assert(t >= Type::Read || t <= Type::END_Write && "MemAccess constructed with non read/write type!");
   }
 };
 
 class ReadIR : public MemAccessIR {
  protected:
-  ReadIR() : MemAccessIR(Type::Read) {}
+  using MemAccessIR::MemAccessIR;
 
  public:
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::Read; }
+  static inline bool classof(const IR *e) { return e->type >= Type::Read && e->type < Type::END_Read; }
 };
 
 class WriteIR : public MemAccessIR {
  protected:
-  WriteIR() : MemAccessIR(Type::Write) {}
+  using MemAccessIR::MemAccessIR;
 
  public:
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::Write; }
+  static inline bool classof(const IR *e) { return e->type >= Type::Write && e->type < Type::END_Write; }
 };
 
 class ForkIR : public IR {
  protected:
-  ForkIR() : IR(Type::Fork) {}
+  using IR::IR;
 
  public:
   // Get the handle for the thread being spawned.
@@ -95,12 +127,12 @@ class ForkIR : public IR {
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static bool classof(const IR *e) { return e->type == Type::Fork; }
+  static bool classof(const IR *e) { return e->type >= Type::Fork && e->type < Type::END_Fork; }
 };
 
 class JoinIR : public IR {
  protected:
-  JoinIR() : IR(Type::Join) {}
+  using IR::IR;
 
  public:
   // Get the handle for the thread being joined.
@@ -111,12 +143,12 @@ class JoinIR : public IR {
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static bool classof(const IR *e) { return e->type == Type::Join; }
+  static bool classof(const IR *e) { return e->type >= Type::Join && e->type < Type::END_Join; }
 };
 
 class LockIR : public IR {
  protected:
-  LockIR() : IR(Type::Lock) {}
+  using IR::IR;
 
  public:
   [[nodiscard]] virtual const llvm::Value *getLockValue() const = 0;
@@ -124,12 +156,12 @@ class LockIR : public IR {
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static bool classof(const IR *e) { return e->type == Type::Lock; }
+  static bool classof(const IR *e) { return e->type >= Type::Lock && e->type < Type::END_Lock; }
 };
 
 class UnlockIR : public IR {
  protected:
-  UnlockIR() : IR(Type::Unlock) {}
+  using IR::IR;
 
  public:
   [[nodiscard]] virtual const llvm::Value *getLockValue() const = 0;
@@ -137,7 +169,7 @@ class UnlockIR : public IR {
   void print(llvm::raw_ostream &os) const override;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static bool classof(const IR *e) { return e->type == Type::Unlock; }
+  static bool classof(const IR *e) { return e->type >= Type::Unlock && e->type < Type::END_Unlock; }
 };
 
 class CallIR : public IR {
@@ -153,7 +185,7 @@ class CallIR : public IR {
   [[nodiscard]] inline bool isIndirect() const { return inst->isIndirectCall(); }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static bool classof(const IR *e) { return e->type == Type::Call; }
+  static bool classof(const IR *e) { return e->type >= Type::Call && e->type < Type::END_Call; }
 };
 
 }  // namespace race

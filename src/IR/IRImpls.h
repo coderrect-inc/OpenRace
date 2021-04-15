@@ -25,11 +25,14 @@ class Load : public ReadIR {
   const llvm::LoadInst *inst;
 
  public:
-  explicit Load(const llvm::LoadInst *load) : inst(load) {}
+  explicit Load(const llvm::LoadInst *load) : ReadIR(Type::Load), inst(load) {}
 
   [[nodiscard]] inline const llvm::LoadInst *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::Load; }
 };
 
 class APIRead : public ReadIR {
@@ -40,11 +43,15 @@ class APIRead : public ReadIR {
 
  public:
   // API call that reads one of it's operands, specified by 'operandOffset'
-  APIRead(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
+  APIRead(const llvm::CallBase *inst, unsigned int operandOffset)
+      : ReadIR(Type::APIRead), operandOffset(operandOffset), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getOperand(operandOffset); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::APIRead; }
 };
 
 // ==================================================================
@@ -55,11 +62,14 @@ class Store : public WriteIR {
   const llvm::StoreInst *inst;
 
  public:
-  explicit Store(const llvm::StoreInst *store) : inst(store) {}
+  explicit Store(const llvm::StoreInst *store) : WriteIR(Type::Store), inst(store) {}
 
   [[nodiscard]] inline const llvm::StoreInst *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getPointerOperand(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::Store; }
 };
 
 class APIWrite : public WriteIR {
@@ -70,13 +80,17 @@ class APIWrite : public WriteIR {
 
  public:
   // API call that write to one of it's operands, specified by 'operandOffset'
-  APIWrite(const llvm::CallBase *inst, unsigned int operandOffset) : operandOffset(operandOffset), inst(inst) {}
+  APIWrite(const llvm::CallBase *inst, unsigned int operandOffset)
+      : WriteIR(Type::APIWrite), operandOffset(operandOffset), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] inline const llvm::Value *getAccessedValue() const override {
     return getInst()->getOperand(operandOffset);
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::APIWrite; }
 };
 
 // ==================================================================
@@ -89,7 +103,7 @@ class PthreadCreate : public ForkIR {
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadCreate(const llvm::CallBase *inst) : inst(inst) {}
+  explicit PthreadCreate(const llvm::CallBase *inst) : ForkIR(Type::PthreadCreate), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -100,6 +114,9 @@ class PthreadCreate : public ForkIR {
   [[nodiscard]] const llvm::Value *getThreadEntry() const override {
     return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::PthreadCreate; }
 };
 
 class OpenMPFork : public ForkIR {
@@ -114,7 +131,7 @@ class OpenMPFork : public ForkIR {
   const llvm::CallBase *inst;
 
  public:
-  explicit OpenMPFork(const llvm::CallBase *inst) : inst(inst) {}
+  explicit OpenMPFork(const llvm::CallBase *inst) : ForkIR(Type::OpenMPFork), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -125,6 +142,9 @@ class OpenMPFork : public ForkIR {
   [[nodiscard]] const llvm::Value *getThreadEntry() const override {
     return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
 // ==================================================================
@@ -136,13 +156,16 @@ class PthreadJoin : public JoinIR {
   const llvm::CallBase *inst;
 
  public:
-  explicit PthreadJoin(const llvm::CallBase *inst) : inst(inst) {}
+  explicit PthreadJoin(const llvm::CallBase *inst) : JoinIR(Type::PthreadJoin), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] const llvm::Value *getThreadHandle() const override {
     return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::PthreadJoin; }
 };
 
 // This actually corresponds to a OpenMP fork instruction, as the fork call acts as both a fork and join in one call
@@ -150,64 +173,85 @@ class OpenMPJoin : public JoinIR {
   std::shared_ptr<OpenMPFork> fork;
 
  public:
-  explicit OpenMPJoin(const std::shared_ptr<OpenMPFork> fork) : fork(fork) {}
+  explicit OpenMPJoin(const std::shared_ptr<OpenMPFork> fork) : JoinIR(Type::OpenMPJoin), fork(fork) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
 
   [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
 };
 
 // ==================================================================
 // ================== LockIR Implementations ========================
 // ==================================================================
 
+template <IR::Type T>
 class LockIRImpl : public LockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 
  public:
-  explicit LockIRImpl(const llvm::CallBase *call) : inst(call) {}
+  explicit LockIRImpl(const llvm::CallBase *call) : LockIR(T), inst(call) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] const llvm::Value *getLockValue() const override {
     return inst->getArgOperand(lockObjectOffset)->stripPointerCasts();
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == T; }
 };
 
 // NOTE: if a specific API semantic is the same as default impl,
 // create a type alias.
-using PthreadMutexLock = LockIRImpl;
-using PthreadSpinLock = LockIRImpl;
+using PthreadMutexLock = LockIRImpl<IR::Type::PthreadMutexLock>;
+using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
 
 // ==================================================================
 // ================= UnlockIR Implementations =======================
 // ==================================================================
 
+template <IR::Type T>
 class UnlockIRImpl : public UnlockIR {
   const unsigned int lockObjectOffset = 0;
   const llvm::CallBase *inst;
 
  public:
-  explicit UnlockIRImpl(const llvm::CallBase *call) : inst(call) {}
+  explicit UnlockIRImpl(const llvm::CallBase *call) : UnlockIR(T), inst(call) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] const llvm::Value *getLockValue() const override {
     return inst->getArgOperand(lockObjectOffset)->stripPointerCasts();
   }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == T; }
 };
 
 // NOTE: if a specific API semantic is the same as default impl,
 // create a type alias.
-using PthreadMutexUnlock = UnlockIRImpl;
-using PthreadSpinUnlock = UnlockIRImpl;
+using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
+using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 
 // ==================================================================
 // ================= Other Implementations =======================
 // ==================================================================
 
+// template <const IR::Type T>
+// class CallIRImpl : public CallIR {
+//  public:
+//   // Used for llvm style RTTI (isa, dyn_cast, etc.)
+//   static inline bool classof(const IR *e) { return e->type == T; }
+// };
+
 // No special API or info needed from these. Just include them IR to see where omp loops start/end
+// using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
+// using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
+
 using OmpForInit = CallIR;
 using OmpForFini = CallIR;
 

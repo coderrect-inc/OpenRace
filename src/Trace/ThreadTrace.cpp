@@ -34,65 +34,53 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
   for (auto const &ir : irFunc) {
-    switch (ir->type) {
-      case IR::Type::Read: {
-        std::shared_ptr<const ReadIR> read(ir, llvm::cast<ReadIR>(ir.get()));
-        events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Write: {
-        std::shared_ptr<const WriteIR> write(ir, llvm::cast<WriteIR>(ir.get()));
-        events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Fork: {
-        std::shared_ptr<const ForkIR> fork(ir, llvm::cast<ForkIR>(ir.get()));
-        events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Join: {
-        std::shared_ptr<const JoinIR> join(ir, llvm::cast<JoinIR>(ir.get()));
-        events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Lock: {
-        std::shared_ptr<const LockIR> lock(ir, llvm::cast<LockIR>(ir.get()));
-        events.push_back(std::make_unique<const LockEventImpl>(lock, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Unlock: {
-        std::shared_ptr<const UnlockIR> unlock(ir, llvm::cast<UnlockIR>(ir.get()));
-        events.push_back(std::make_unique<const UnlockEventImpl>(unlock, einfo, events.size()));
-        break;
-      }
-      case IR::Type::Call: {
-        std::shared_ptr<const CallIR> call(ir, llvm::cast<CallIR>(ir.get()));
+    if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
+      std::shared_ptr<const ReadIR> read(ir, readIR);
+      events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
+    } else if (auto writeIR = llvm::dyn_cast<WriteIR>(ir.get())) {
+      std::shared_ptr<const WriteIR> write(ir, writeIR);
+      events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
+    } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
+      std::shared_ptr<const ForkIR> fork(ir, forkIR);
+      events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
+    } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
+      std::shared_ptr<const JoinIR> join(ir, joinIR);
+      events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
+    } else if (auto lockIR = llvm::dyn_cast<LockIR>(ir.get())) {
+      std::shared_ptr<const LockIR> lock(ir, lockIR);
+      events.push_back(std::make_unique<const LockEventImpl>(lock, einfo, events.size()));
+    } else if (auto unlockIR = llvm::dyn_cast<UnlockIR>(ir.get())) {
+      std::shared_ptr<const UnlockIR> lock(ir, unlockIR);
+      events.push_back(std::make_unique<const UnlockEventImpl>(lock, einfo, events.size()));
+    } else if (auto callIR = llvm::dyn_cast<CallIR>(ir.get())) {
+      std::shared_ptr<const CallIR> call(ir, callIR);
 
-        if (call->isIndirect()) {
-          // TODO: handle indirect
-          llvm::errs() << "Skipping indirect call: " << *call << "\n";
-          continue;
-        }
-
-        auto directContext = pta::CT::contextEvolve(context, ir->getInst());
-        auto const directNode = pta.getDirectNodeOrNull(directContext, call->getInst()->getCalledFunction());
-
-        if (directNode == nullptr) {
-          // TODO: LOG unable to get child node
-          llvm::errs() << "Unable to get child node: " << call->getInst()->getCalledFunction()->getName() << "\n";
-          continue;
-        }
-
-        if (directNode->getTargetFun()->isExtFunction()) {
-          events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
-          continue;
-        }
-
-        events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
-        traverseCallNode(directNode, thread, callstack, pta, events);
-        events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
-        break;
+      if (call->isIndirect()) {
+        // TODO: handle indirect
+        llvm::errs() << "Skipping indirect call: " << *call << "\n";
+        continue;
       }
+
+      auto directContext = pta::CT::contextEvolve(context, ir->getInst());
+      auto const directNode = pta.getDirectNodeOrNull(directContext, call->getInst()->getCalledFunction());
+
+      if (directNode == nullptr) {
+        // TODO: LOG unable to get child node
+        llvm::errs() << "Unable to get child node: " << call->getInst()->getCalledFunction()->getName() << "\n";
+        continue;
+      }
+
+      if (directNode->getTargetFun()->isExtFunction()) {
+        events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
+        continue;
+      }
+
+      events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
+      traverseCallNode(directNode, thread, callstack, pta, events);
+      events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
+
+    } else {
+      llvm_unreachable("Should cover all IR types");
     }
   }
 
