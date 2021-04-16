@@ -216,7 +216,7 @@ using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
 // ================= UnlockIR Implementations =======================
 // ==================================================================
 
-// UnlockIRImpl should not be used directly. Instead define a using alias.
+// UnlockIRImpl should not be used directly. Instead define using alias.
 // See PthreadMutexUnlock below as an example.
 template <IR::Type T>
 class UnlockIRImpl : public UnlockIR {
@@ -245,7 +245,7 @@ using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 // ================= Other Implementations =======================
 // ==================================================================
 
-// CallIRImpl should not be used directly. Instead define a using alias.
+// CallIRImpl should not be used directly. Instead define using alias.
 // See OmpForInit below as an example.
 template <const IR::Type T>
 class CallIRImpl : public CallIR {
