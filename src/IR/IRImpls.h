@@ -259,4 +259,7 @@ class CallIRImpl : public CallIR {
 using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
 using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
 
+using OpenMPSingleStart = CallIRImpl<IR::Type::OpenMPSingleStart>;
+using OpenMPSingleEnd = CallIRImpl<IR::Type::OpenMPSingleEnd>;
+
 }  // namespace race
