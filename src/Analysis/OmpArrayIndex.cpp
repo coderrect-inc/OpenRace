@@ -100,3 +100,21 @@ bool OmpArrayIndexAnalysis::isOmpLoopArrayAccess(const race::MemAccessEvent* eve
 
   return isInOmpFor(event1) && isInOmpFor(event2);
 }
+
+bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) {
+  // Check both spawn events are OpenMP forks
+  auto lhsSpawn = lhs->getThread().spawnEvent;
+  if (!lhsSpawn || (lhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+
+  auto rhsSpawn = rhs->getThread().spawnEvent;
+  if (!rhsSpawn || (rhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+
+  // Check they are spawned from same thread
+  if (lhsSpawn.value()->getThread().id != rhsSpawn.value()->getThread().id) return false;
+
+  // Check that they are adjacent. Only matching omp forks can be adjacent, because they are always followed by joins
+  auto const lID = lhsSpawn.value()->getID();
+  auto const rID = rhsSpawn.value()->getID();
+  auto const diff = (lID > rID) ? (lID - rID) : (rID - lID);
+  return diff == 1;
+}

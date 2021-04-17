@@ -41,6 +41,9 @@ class OmpArrayIndexAnalysis {
 
   // return true if both events are array accesses in an omp loop
   bool isOmpLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
+
+  // return true if both events are part of the same omp team
+  bool inSameTeam(const Event* lhs, const Event* rhs);
 };
 
 }  // namespace race
