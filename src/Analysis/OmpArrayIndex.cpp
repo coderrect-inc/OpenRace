@@ -44,6 +44,40 @@ bool OmpArrayIndexAnalysis::canIndexOverlap(const race::MemAccessEvent* event1, 
   return true;
 }
 
+namespace {
+// Get list of (non-nested) event regions
+// template definition can be in cpp as long as we dont expose the template outside of this file
+template <IR::Type Start, IR::Type End>
+std::vector<Region> getRegions(const ThreadTrace& thread) {
+  std::vector<Region> regions;
+
+  std::optional<EventID> start;
+  for (auto const& event : thread.getEvents()) {
+    switch (event->getIRInst()->type) {
+      case Start: {
+        assert(!start.has_value() && "encountered two start types in a row");
+        start = event->getID();
+        break;
+      }
+      case End: {
+        assert(start.has_value() && "encountered end type without a matching start type");
+        regions.emplace_back(start.value(), event->getID());
+        start.reset();
+        break;
+      }
+      default:
+        // Nothing
+        break;
+    }
+  }
+
+  return regions;
+}
+
+auto constexpr getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::OpenMPForFini>;
+auto constexpr getSingleRegions = getRegions<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
+}  // namespace
+
 const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::getOmpForLoops(const ThreadTrace& thread) {
   // Check if result is already computed
   auto it = ompForLoops.find(thread.id);
@@ -52,39 +86,20 @@ const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::get
   }
 
   // Else find the loop regions
-  auto& loopRegions = ompForLoops[thread.id];
-  std::optional<EventID> start;
+  auto const loopRegions = getLoopRegions(thread);
+  ompForLoops[thread.id] = loopRegions;
 
-  for (auto const& event : thread.getEvents()) {
-    switch (event->getIRInst()->type) {
-      case IR::Type::OpenMPForInit: {
-        assert(!start.has_value() && "encountered two omp for inits in a row");
-        start = event->getID();
-        break;
-      }
-      case IR::Type::OpenMPForFini: {
-        assert(start.has_value() && "encountered omp for fini without a matching init");
-        loopRegions.emplace_back(start.value(), event->getID());
-        start.reset();
-        break;
-      }
-      default:
-        // Do Nothing
-        break;
-    }
-  }
-
-  return loopRegions;
+  return ompForLoops.at(thread.id);
 }
 
 bool OmpArrayIndexAnalysis::isInOmpFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
   for (auto const& region : loopRegions) {
-    if (eid > region.second) {
+    if (eid > region.start) {
       continue;
     }
-    return eid > region.first;
+    return eid > region.end;
   }
 
   return false;
@@ -101,7 +116,7 @@ bool OmpArrayIndexAnalysis::isOmpLoopArrayAccess(const race::MemAccessEvent* eve
   return isInOmpFor(event1) && isInOmpFor(event2);
 }
 
-bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) {
+bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) const {
   // Check both spawn events are OpenMP forks
   auto lhsSpawn = lhs->getThread().spawnEvent;
   if (!lhsSpawn || (lhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
@@ -117,4 +132,23 @@ bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) {
   auto const rID = rhsSpawn.value()->getID();
   auto const diff = (lID > rID) ? (lID - rID) : (rID - lID);
   return diff == 1;
+}
+
+bool OmpArrayIndexAnalysis::inSameSingleBlock(const Event* lhs, const Event* rhs) const {
+  assert(inSameTeam(lhs, rhs));
+
+  auto const lID = lhs->getID();
+  auto const rID = rhs->getID();
+
+  // Omp threads in same team will have identical traces so we only need one set of events
+  auto const singleRegions = getSingleRegions(lhs->getThread());
+  for (auto const& region : singleRegions) {
+    // If region contains one, check if it also contains the other
+    if (region.contains(lID)) return region.contains(rID);
+    if (region.contains(rID)) return region.contains(lID);
+
+    // End early if end of this region past both events meaning they will not be in any later regions
+    if (region.end > rID && region.end > lID) return false;
+  }
+  return false;
 }

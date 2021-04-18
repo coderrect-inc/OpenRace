@@ -18,12 +18,21 @@ limitations under the License.
 
 namespace race {
 
+struct Region {
+  EventID start;
+  EventID end;
+
+  Region(EventID start, EventID end) : start(start), end(end) {}
+
+  inline bool contains(EventID e) const { return start <= e && end >= e; }
+};
+
 class OmpArrayIndexAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
 
   // Start/End of omp loop
-  using LoopRegion = std::pair<EventID, EventID>;
+  using LoopRegion = Region;
 
   // per-thread map of omp for loop regions
   std::map<ThreadID, std::vector<LoopRegion>> ompForLoops;
@@ -43,7 +52,11 @@ class OmpArrayIndexAnalysis {
   bool isOmpLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
   // return true if both events are part of the same omp team
-  bool inSameTeam(const Event* lhs, const Event* rhs);
+  bool inSameTeam(const Event* lhs, const Event* rhs) const;
+
+  // return true if both events are in the same single region
+  // Call assumes the events are on different threads but in the same team
+  bool inSameSingleBlock(const Event* lhs, const Event* rhs) const;
 };
 
 }  // namespace race
