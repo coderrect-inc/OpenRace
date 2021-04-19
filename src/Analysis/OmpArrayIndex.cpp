@@ -96,10 +96,9 @@ bool OmpArrayIndexAnalysis::isInOmpFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
   for (auto const& region : loopRegions) {
-    if (eid > region.start) {
-      continue;
-    }
-    return eid > region.end;
+    // Look for eid after start event but before end event
+    // regions are not nested so as soon as eid is past region start we can return answer
+    if (eid > region.start) return eid < region.end;
   }
 
   return false;
