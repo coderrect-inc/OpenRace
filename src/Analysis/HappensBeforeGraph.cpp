@@ -200,6 +200,8 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
           break;
         }
         case Event::Type::Barrier: {
+          auto barrierEvent = llvm::cast<BarrierEvent>(event.get());
+          addBarrierEdge(barrierEvent);
           break;
         }
         default:

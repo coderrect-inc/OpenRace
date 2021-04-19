@@ -114,3 +114,35 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
   CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPSingleStart);
   CHECK(racefunc.at(1)->type == race::IR::Type::OpenMPSingleEnd);
 }
+
+TEST_CASE("Build OpenMP barrier IR") {
+  const char *ModuleString = R"(
+%struct.ident_t = type { i32, i32, i32, i32, i8* }
+@.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
+@0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }
+@1 = private unnamed_addr constant [21 x i8] c";simple.c;main;3;1;;\00"
+
+define internal void @.omp_outlined.(i32* noalias %.global_tid., i32* noalias %.bound_tid., i32* nonnull align 4 dereferenceable(4) %count) {
+    %.kmpc_loc.addr = alloca %struct.ident_t
+    call void @__kmpc_barrier(%struct.ident_t* %.kmpc_loc.addr, i32 0)
+    ret void
+}
+
+declare dso_local void @__kmpc_barrier(%struct.ident_t*, i32)
+)";
+
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  if (!module) {
+    Err.print("error", llvm::errs());
+    FAIL("no module");
+  }
+
+  auto func = module->getFunction(".omp_outlined.");
+
+  auto racefunc = race::generateFunctionSummary(func);
+  REQUIRE(racefunc.size() == 1);
+
+  CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPBarrier);
+}

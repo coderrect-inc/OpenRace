@@ -64,3 +64,57 @@ declare i32 @pthread_join(i64, i8**)
   CHECK(!happensbefore.canReach(thread2.back().get(), thread1.front().get()));
   CHECK(!happensbefore.canReach(thread1.back().get(), thread2.front().get()));
 }
+
+TEST_CASE("HappensBefore Barrier", "[unit][happensbefore]") {
+  const char *ModuleString = R"(
+%struct.ident_t = type { i32, i32, i32, i32, i8* }
+
+@0 = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
+@1 = private unnamed_addr constant %struct.ident_t { i32 0, i32 34, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @0, i32 0, i32 0) }
+@2 = private unnamed_addr constant %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @0, i32 0, i32 0) }
+
+@global = dso_local local_unnamed_addr global i32 0
+
+define dso_local i32 @main() {
+entry:
+  call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* nonnull @2, i32 0, void (i32*, i32*, ...)* bitcast (void (i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*))
+  ret i32 0
+}
+
+define internal void @.omp_outlined.(i32* noalias nocapture readonly %.global_tid., i32* noalias nocapture readnone %.bound_tid.) {
+entry:
+  %0 = load i32, i32* @global
+  %inc = add nsw i32 %0, 1
+  tail call void @__kmpc_barrier(%struct.ident_t* nonnull @1, i32 0)
+  store i32 %inc, i32* @global
+  ret void
+}
+
+declare dso_local void @__kmpc_barrier(%struct.ident_t*, i32)
+declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...)
+)";
+
+  // TODO: Make a way of constructing a program trace containing "logical" operations without depending on actual IR
+  // for now we will use OpenMP barrier
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  if (!module) {
+    Err.print("error", llvm::errs());
+  }
+
+  race::ProgramTrace program(module.get());
+  race::HappensBeforeGraph happensbefore(program);
+
+  REQUIRE(program.getThreads().size() == 3);
+
+  auto const &thread1 = program.getThreads().at(1);
+  auto const &thread2 = program.getThreads().at(2);
+  REQUIRE(thread1->getEvents().size() == 3);
+
+  CHECK(happensbefore.areParallel(thread1->getEvent(0), thread2->getEvent(0)));
+  CHECK(happensbefore.areParallel(thread1->getEvent(2), thread2->getEvent(2)));
+
+  CHECK_FALSE(happensbefore.areParallel(thread1->getEvent(2), thread2->getEvent(0)));
+  CHECK_FALSE(happensbefore.areParallel(thread1->getEvent(0), thread2->getEvent(2)));
+}
