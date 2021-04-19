@@ -152,6 +152,22 @@ const ThreadTrace *getJoinedThread(const JoinEvent *join, const ProgramTrace &pr
 }  // namespace
 
 HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
+  std::map<const llvm::Instruction *, const BarrierEvent *> lastBarrier;
+  auto addBarrierEdge = [&lastBarrier, this](const BarrierEvent *event) {
+    auto const barrierInst = event->getInst();
+
+    auto it = lastBarrier.find(barrierInst);
+    if (it != lastBarrier.end()) {
+      // Add two way sync edge so neither event can happen before the other
+      auto const prevEvent = it->second;
+      addSyncEdge(event, prevEvent);
+      addSyncEdge(prevEvent, event);
+    }
+
+    // Add this event as most recent to hit the barrier
+    lastBarrier[barrierInst] = event;
+  };
+
   for (auto const &thread : program.getThreads()) {
     for (auto const &event : thread->getEvents()) {
       switch (event->type) {
