@@ -183,6 +183,9 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
           }
           break;
         }
+        case Event::Type::Barrier: {
+          break;
+        }
         default:
           // Do Nothing
           break;

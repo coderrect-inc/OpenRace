@@ -37,14 +37,17 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR::Type &type)
     case IR::Type::Fork:
       os << "FORK";
       break;
+    case IR::Type::Join:
+      os << "JOIN";
+      break;
     case IR::Type::Lock:
       os << "LOCK";
       break;
     case IR::Type::Unlock:
       os << "UNLK";
       break;
-    case IR::Type::Join:
-      os << "JOIN";
+    case IR::Type::Barrier:
+      os << "BARR";
       break;
     case IR::Type::Call:
       os << "CALL";
@@ -94,6 +97,8 @@ void UnlockIR::print(llvm::raw_ostream &os) const {
   auto lockName = getValNameHelper(getLockValue());
   os << "IR " << type << " - " << lockName << "\n";
 }
+
+void BarrierIR::print(llvm::raw_ostream &os) const { os << "IR " << type << "\n"; }
 
 llvm::StringRef IR::toString() const {
   std::string s;

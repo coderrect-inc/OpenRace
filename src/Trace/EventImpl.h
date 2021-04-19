@@ -154,6 +154,22 @@ class UnlockEventImpl : public UnlockEvent {
   }
 };
 
+class BarrierEventImpl : public BarrierEvent {
+  std::shared_ptr<EventInfo> info;
+
+ public:
+  const std::shared_ptr<const BarrierIR> barrier;
+  const EventID id;
+
+  BarrierEventImpl(std::shared_ptr<const BarrierIR> barrier, std::shared_ptr<EventInfo> info, EventID id)
+      : info(std::move(info)), barrier(std::move(barrier)), id(id) {}
+
+  [[nodiscard]] inline EventID getID() const override { return id; }
+  [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const race::BarrierIR *getIRInst() const override { return barrier.get(); }
+};
+
 class EnterCallEventImpl : public EnterCallEvent {
   std::shared_ptr<EventInfo> info;
 

@@ -30,4 +30,6 @@ inline bool isForStaticFini(const llvm::StringRef& funcName) { return funcName.e
 inline bool isSingleStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_single"); }
 inline bool isSingleEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_single"); }
 
+inline bool isBarrier(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_barrier"); }
+
 }  // namespace OpenMPModel

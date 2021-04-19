@@ -241,9 +241,23 @@ class UnlockIRImpl : public UnlockIR {
 using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
 using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 
-// ==================================================================
-// ================= Other Implementations =======================
-// ==================================================================
+// =================================================================
+// ================= Barrier Implementations =======================
+// =================================================================
+
+// https://github.com/llvm/llvm-project/blob/d32170dbd5b0d54436537b6b75beaf44324e0c28/openmp/runtime/src/kmp_csupport.cpp#L713
+class OpenMPBarrier : public BarrierIR {
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPBarrier(const llvm::CallBase *call) : BarrierIR(Type::OpenMPBarrier), inst(call) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+};
+
+// =================================================================
+// ================= Other Implementations =========================
+// =================================================================
 
 // CallIRImpl should not be used directly. Instead define using alias.
 // See OmpForInit below as an example.

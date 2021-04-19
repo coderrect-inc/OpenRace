@@ -22,7 +22,7 @@ using EventID = size_t;
 
 class Event {
  public:
-  enum class Type { Read, Write, Fork, Join, Lock, Unlock, Call, CallEnd, ExternCall };
+  enum class Type { Read, Write, Fork, Join, Lock, Unlock, Barrier, Call, CallEnd, ExternCall };
 
   const Type type;
 
@@ -129,6 +129,17 @@ class UnlockEvent : public Event {
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Unlock; }
+};
+
+class BarrierEvent : public Event {
+ protected:
+  BarrierEvent() : Event(Type::Barrier) {}
+
+ public:
+  [[nodiscard]] const race::BarrierIR *getIRInst() const override = 0;
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Barrier; }
 };
 
 class EnterCallEvent : public Event {

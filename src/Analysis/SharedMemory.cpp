@@ -48,13 +48,7 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
           }
           break;
         }
-        case Event::Type::Fork:
-        case Event::Type::Join:
-        case Event::Type::Lock:
-        case Event::Type::Unlock:
-        case Event::Type::Call:
-        case Event::Type::CallEnd:
-        case Event::Type::ExternCall:
+        default:
           // Do Nothing
           break;
       }

@@ -52,6 +52,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     } else if (auto unlockIR = llvm::dyn_cast<UnlockIR>(ir.get())) {
       std::shared_ptr<const UnlockIR> lock(ir, unlockIR);
       events.push_back(std::make_unique<const UnlockEventImpl>(lock, einfo, events.size()));
+    } else if (auto barrierIR = llvm::dyn_cast<BarrierIR>(ir.get())) {
+      std::shared_ptr<const BarrierIR> barrier(ir, barrierIR);
+      events.push_back(std::make_unique<const BarrierEventImpl>(barrier, einfo, events.size()));
     } else if (auto callIR = llvm::dyn_cast<CallIR>(ir.get())) {
       std::shared_ptr<const CallIR> call(ir, callIR);
 
