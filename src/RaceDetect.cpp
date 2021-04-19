@@ -36,8 +36,14 @@ Report race::detectRaces(llvm::Module *module) {
       return;
     }
 
-    if (ompAnalysis.isOmpLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
-      return;
+    if (ompAnalysis.inSameTeam(write, other)) {
+      if (ompAnalysis.isOmpLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
+        return;
+      }
+
+      if (ompAnalysis.inSameSingleBlock(write, other)) {
+        return;
+      }
     }
 
     // Race detected
