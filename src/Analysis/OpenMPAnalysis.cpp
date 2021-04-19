@@ -1,4 +1,4 @@
-#include "Analysis/OmpArrayIndex.h"
+#include "Analysis/OpenMPAnalysis.h"
 
 #include "LanguageModel/OpenMP.h"
 #include "Trace/Event.h"
@@ -14,9 +14,9 @@ const llvm::GetElementPtrInst* getArrayAccess(const MemAccessEvent* event) {
 
 }  // namespace
 
-OmpArrayIndexAnalysis::OmpArrayIndexAnalysis() { PB.registerFunctionAnalyses(FAM); }
+OpenMPAnalysis::OpenMPAnalysis() { PB.registerFunctionAnalyses(FAM); }
 
-bool OmpArrayIndexAnalysis::canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2) {
+bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2) {
   auto gep1 = getArrayAccess(event1);
   if (!gep1) return false;
 
@@ -78,7 +78,7 @@ auto constexpr getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::Op
 auto constexpr getSingleRegions = getRegions<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
 }  // namespace
 
-const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::getOmpForLoops(const ThreadTrace& thread) {
+const std::vector<OpenMPAnalysis::LoopRegion>& OpenMPAnalysis::getOmpForLoops(const ThreadTrace& thread) {
   // Check if result is already computed
   auto it = ompForLoops.find(thread.id);
   if (it != ompForLoops.end()) {
@@ -92,7 +92,7 @@ const std::vector<OmpArrayIndexAnalysis::LoopRegion>& OmpArrayIndexAnalysis::get
   return ompForLoops.at(thread.id);
 }
 
-bool OmpArrayIndexAnalysis::isInOmpFor(const race::MemAccessEvent* event) {
+bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
   for (auto const& region : loopRegions) {
@@ -104,18 +104,17 @@ bool OmpArrayIndexAnalysis::isInOmpFor(const race::MemAccessEvent* event) {
   return false;
 }
 
-bool OmpArrayIndexAnalysis::isOmpLoopArrayAccess(const race::MemAccessEvent* event1,
-                                                 const race::MemAccessEvent* event2) {
+bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2) {
   auto gep1 = getArrayAccess(event1);
   if (!gep1) return false;
 
   auto gep2 = getArrayAccess(event2);
   if (!gep2) return false;
 
-  return isInOmpFor(event1) && isInOmpFor(event2);
+  return inParallelFor(event1) && inParallelFor(event2);
 }
 
-bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) const {
+bool OpenMPAnalysis::inSameTeam(const Event* lhs, const Event* rhs) const {
   // Check both spawn events are OpenMP forks
   auto lhsSpawn = lhs->getThread().spawnEvent;
   if (!lhsSpawn || (lhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
@@ -133,7 +132,7 @@ bool OmpArrayIndexAnalysis::inSameTeam(const Event* lhs, const Event* rhs) const
   return diff == 1;
 }
 
-bool OmpArrayIndexAnalysis::inSameSingleBlock(const Event* lhs, const Event* rhs) const {
+bool OpenMPAnalysis::inSameSingleBlock(const Event* lhs, const Event* rhs) const {
   assert(inSameTeam(lhs, rhs));
 
   auto const lID = lhs->getID();

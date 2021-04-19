@@ -27,7 +27,7 @@ struct Region {
   inline bool contains(EventID e) const { return start <= e && end >= e; }
 };
 
-class OmpArrayIndexAnalysis {
+class OpenMPAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
 
@@ -40,16 +40,16 @@ class OmpArrayIndexAnalysis {
   // get cached list of loop regions, else create them
   const std::vector<LoopRegion>& getOmpForLoops(const ThreadTrace& trace);
 
-  bool isInOmpFor(const race::MemAccessEvent* event);
+  bool inParallelFor(const race::MemAccessEvent* event);
 
  public:
-  OmpArrayIndexAnalysis();
+  OpenMPAnalysis();
 
   // return true if events are array accesses who's access sets could overlap
   bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
   // return true if both events are array accesses in an omp loop
-  bool isOmpLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
+  bool isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
   // return true if both events are part of the same omp team
   bool inSameTeam(const Event* lhs, const Event* rhs) const;

@@ -13,7 +13,7 @@ limitations under the License.
 
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
-#include "Analysis/OmpArrayIndex.h"
+#include "Analysis/OpenMPAnalysis.h"
 #include "Analysis/SharedMemory.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
@@ -28,7 +28,7 @@ Report race::detectRaces(llvm::Module *module) {
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
-  race::OmpArrayIndexAnalysis ompAnalysis;
+  race::OpenMPAnalysis ompAnalysis;
 
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
@@ -37,7 +37,7 @@ Report race::detectRaces(llvm::Module *module) {
     }
 
     if (ompAnalysis.inSameTeam(write, other)) {
-      if (ompAnalysis.isOmpLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
+      if (ompAnalysis.isLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
         return;
       }
 
