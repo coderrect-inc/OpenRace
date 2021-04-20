@@ -96,9 +96,9 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
   for (auto const& region : loopRegions) {
-    // Look for eid after start event but before end event
-    // regions are not nested so as soon as eid is past region start we can return answer
-    if (eid > region.start) return eid < region.end;
+    if (region.contains(eid)) return true;
+    // Break early if we pass the eid without finding matching region
+    if (region.end > eid) return false;
   }
 
   return false;
