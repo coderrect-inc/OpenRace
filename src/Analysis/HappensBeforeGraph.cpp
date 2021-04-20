@@ -55,7 +55,7 @@ using namespace race;
 namespace {
 const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &program) {
   for (auto const &thread : program.getThreads()) {
-    if (thread->spawnEvent.has_value() && thread->spawnEvent.value() == fork) {
+    if (thread->spawnSite.has_value() && thread->spawnSite.value() == fork) {
       return thread.get();
     }
   }

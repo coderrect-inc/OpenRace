@@ -116,10 +116,10 @@ bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent* event1, const
 
 bool OpenMPAnalysis::inSameTeam(const Event* event1, const Event* event2) const {
   // Check both spawn events are OpenMP forks
-  auto e1Spawn = event1->getThread().spawnEvent;
+  auto e1Spawn = event1->getThread().spawnSite;
   if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
 
-  auto e2Spawn = event2->getThread().spawnEvent;
+  auto e2Spawn = event2->getThread().spawnSite;
   if (!e2Spawn || (e2Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
 
   // Check they are spawned from same thread
