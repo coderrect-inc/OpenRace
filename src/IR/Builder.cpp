@@ -142,6 +142,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (isLLVMDebug(funcName)) {
           // Skip
         } else {
+          // Used to make sure we are not implicitly ignoring any OpenMP features
+          // We should instead make sure we take the correct action for any OpenMP call
+          assert(!OpenMPModel::isOpenMP(funcName) && "Unhandled OpenMP Call!");
+
           instructions.push_back(std::make_shared<CallIR>(callInst));
         }
       }
