@@ -112,7 +112,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 103 master
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
-      // 108 atomic
+      Oracle("DRB108-atomic-orig-no.ll", {}),
       // 109-110 ordered
       Oracle("DRB111-linearmissing-orig-yes.ll",
              {
@@ -137,7 +137,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 137-138 simd
       // 139 section + critical
       // 140-141 reduction
-      // 142-143 atomic
+      // 142-143 critical
       // 144-164 target
       // 165-168 cannot be built
       // 169 multi-dimen array
