@@ -61,6 +61,89 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB039-truedepsingleelement-orig-yes.c:62:9 DRB039-truedepsingleelement-orig-yes.c:62:15"}),
       Oracle("DRB040-truedepsingleelement-var-yes.ll",
              {"DRB040-truedepsingleelement-var-yes.c:63:9 DRB040-truedepsingleelement-var-yes.c:63:15"}),
+      // 41-44 are really complex array accesses
+      Oracle("DRB045-doall1-orig-no.ll", {}),
+      // 46 multi-dimen array
+      Oracle("DRB047-doallchar-orig-no.ll", {}), Oracle("DRB048-firstprivate-orig-no.ll", {}),
+      Oracle("DRB049-fprintf-orig-no.ll", {}), Oracle("DRB050-functionparameter-orig-no.ll", {}),
+      // 51 path based on get_thread_num
+      // 52 indirect array
+      // 53-54 multi-dimen array
+      // 55-58 complex array access
+      // 59 FP caused by last private??
+      // 60-64 multi-dimen array
+      // 65 reduce
+      Oracle("DRB066-pointernoaliasing-orig-no.ll", {}), Oracle("DRB067-restrictpointer1-orig-no.ll", {}),
+      Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
+      // 69 section and locks
+      // 70 simd
+      // 71 target
+      // 72 task
+      // 73 multi-dimen array
+      // 74 critical and flush
+      // 75 path based on get_thread_num
+      // 76 reduce
+      Oracle("DRB077-single-orig-no.ll", {}),
+      // 78-79 task
+      Oracle("DRB080-func-arg-orig-yes.ll",
+             {"DRB080-func-arg-orig-yes.c:59:6 DRB080-func-arg-orig-yes.c:59:6",    // read-write
+              "DRB080-func-arg-orig-yes.c:59:6 DRB080-func-arg-orig-yes.c:59:6"}),  // write-write
+      Oracle("DRB081-func-arg-orig-no.ll", {}),
+      Oracle("DRB082-declared-in-func-orig-yes.ll",
+             {"DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5",    // read-write
+              "DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5"}),  // write-write
+      Oracle("DRB083-declared-in-func-orig-no.ll", {}),
+      // 84 omp critical
+      // 85 threadprivate + copyin + critical
+      // 86-87 threadprivate
+      // 88-89 PTA Fails ??
+      // 90 missed read-write race
+      // 91 threadprivate + critical + copyin
+      // 92 critical
+      // 93 collapse + multi-dimen
+      // 94 ordered + depend sink
+      // 95 taskloop
+      // 96 collapse + multi-dimen
+      // 97 target
+      // 98 simd + collpase
+      // 99 target
+      // 100-101 task
+      // 102 threadprivate + copyprivate
+      // 103 master
+      Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
+      // 105-107 task
+      // 108 atomic
+      // 109-110 ordered
+      Oracle("DRB111-linearmissing-orig-yes.ll",
+             {
+                 "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:67:7",  // read-write
+                 "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6",  // read-write
+                 "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6"   // write-write
+             }),
+      // 112 linear
+      // 113 multi-dimen array
+      // 114 omp if
+      // 115 simd
+      // 116 target
+      // 117 task
+      // 118-119 nest lock
+      Oracle("DRB120-barrier-orig-no.ll", {}),
+      // 121 reduction
+      // 122-123 task
+      // 124 master
+      Oracle("DRB125-single-orig-no.ll", {}),
+      // 125-26 section
+      // 127-136 task
+      // 137-138 simd
+      // 139 section + critical
+      // 140-141 reduction
+      // 142-143 atomic
+      // 144-164 target
+      // 165-168 cannot be built
+      // 169 multi-dimen array
+      // 170 multi-dimen array
+      // 171 threadprivate + tid path
+      // 172 critical
   };
 
   checkOracles(oracles, "integration/dataracebench/ll/");
