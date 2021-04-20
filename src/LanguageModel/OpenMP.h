@@ -32,4 +32,7 @@ inline bool isSingleEnd(const llvm::StringRef& funcName) { return funcName.equal
 
 inline bool isBarrier(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_barrier"); }
 
+// Used only for debug to try and catch unhandled OpenMP calls
+inline bool isOpenMP(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc"); }
+
 }  // namespace OpenMPModel
