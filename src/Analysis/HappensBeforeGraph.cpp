@@ -156,10 +156,10 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
   // e.g.
   //   T1       T2
   //   barr <-> barr
-  // This enforces a happens-before ordering that modles barrier behaviour
+  // This enforces a happens-before ordering that models barrier behaviour
 
   // To do this, as we traverse over the program threads we keep a map of
-  // the last event that corresponds to each barrier. If there is already a
+  // the last event that corresponds to each barrier. If there is already
   // an event in the map (meaning a previous event has visited this barrier)
   // the dual-edge is added between the prev event and the current event,
   // and the current event is added to the map so that the next event to reach
