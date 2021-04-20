@@ -24,7 +24,7 @@ struct Region {
 
   Region(EventID start, EventID end) : start(start), end(end) {}
 
-  inline bool contains(EventID e) const { return start <= e && e <= end; }
+  inline bool contains(EventID e) const { return end >= e && e >= start; }
 };
 
 class OpenMPAnalysis {
