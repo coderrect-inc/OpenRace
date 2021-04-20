@@ -138,15 +138,19 @@ bool OpenMPAnalysis::inSameSingleBlock(const Event* event1, const Event* event2)
   auto const eid1 = event1->getID();
   auto const eid2 = event2->getID();
 
+  // Trace events are ordered, so we can save time by finding the region containing the smaller
+  // ID first, and then checking if that region also contains the bigger ID.
+  auto const minID = (eid1 < eid2) ? eid1 : eid2;
+  auto const maxID = (eid1 > eid2) ? eid1 : eid2;
+
   // Omp threads in same team will have identical traces so we only need one set of events
   auto const singleRegions = getSingleRegions(event1->getThread());
   for (auto const& region : singleRegions) {
     // If region contains one, check if it also contains the other
-    if (region.contains(eid1)) return region.contains(eid2);
-    if (region.contains(eid2)) return region.contains(eid1);
+    if (region.contains(minID)) return region.contains(maxID);
 
-    // End early if end of this region past both events meaning they will not be in any later regions
-    if (region.end > eid2 && region.end > eid1) return false;
+    // End early if end of this region passes smaller event ID
+    if (region.end > minID) return false;
   }
   return false;
 }
