@@ -24,7 +24,7 @@ struct Region {
 
   Region(EventID start, EventID end) : start(start), end(end) {}
 
-  inline bool contains(EventID e) const { return start <= e && end >= e; }
+  inline bool contains(EventID e) const { return start <= e && e <= end; }
 };
 
 class OpenMPAnalysis {
@@ -52,11 +52,11 @@ class OpenMPAnalysis {
   bool isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
   // return true if both events are part of the same omp team
-  bool inSameTeam(const Event* lhs, const Event* rhs) const;
+  bool inSameTeam(const Event* event1, const Event* event2) const;
 
   // return true if both events are in the same single region
   // Call assumes the events are on different threads but in the same team
-  bool inSameSingleBlock(const Event* lhs, const Event* rhs) const;
+  bool inSameSingleBlock(const Event* event1, const Event* event2) const;
 };
 
 }  // namespace race

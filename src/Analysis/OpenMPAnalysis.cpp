@@ -96,9 +96,9 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
   for (auto const& region : loopRegions) {
-    // Look for eid after start event but before end event
-    // regions are not nested so as soon as eid is past region start we can return answer
-    if (eid > region.start) return eid < region.end;
+    if (region.contains(eid)) return true;
+    // Break early if we pass the eid without finding matching region
+    if (region.end > eid) return false;
   }
 
   return false;
@@ -114,39 +114,43 @@ bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent* event1, const
   return inParallelFor(event1) && inParallelFor(event2);
 }
 
-bool OpenMPAnalysis::inSameTeam(const Event* lhs, const Event* rhs) const {
+bool OpenMPAnalysis::inSameTeam(const Event* event1, const Event* event2) const {
   // Check both spawn events are OpenMP forks
-  auto lhsSpawn = lhs->getThread().spawnEvent;
-  if (!lhsSpawn || (lhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  auto e1Spawn = event1->getThread().spawnEvent;
+  if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
 
-  auto rhsSpawn = rhs->getThread().spawnEvent;
-  if (!rhsSpawn || (rhsSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  auto e2Spawn = event2->getThread().spawnEvent;
+  if (!e2Spawn || (e2Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
 
   // Check they are spawned from same thread
-  if (lhsSpawn.value()->getThread().id != rhsSpawn.value()->getThread().id) return false;
+  if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;
 
   // Check that they are adjacent. Only matching omp forks can be adjacent, because they are always followed by joins
-  auto const lID = lhsSpawn.value()->getID();
-  auto const rID = rhsSpawn.value()->getID();
-  auto const diff = (lID > rID) ? (lID - rID) : (rID - lID);
+  auto const eid1 = e1Spawn.value()->getID();
+  auto const eid2 = e2Spawn.value()->getID();
+  auto const diff = (eid1 > eid2) ? (eid1 - eid2) : (eid2 - eid1);
   return diff == 1;
 }
 
-bool OpenMPAnalysis::inSameSingleBlock(const Event* lhs, const Event* rhs) const {
-  assert(inSameTeam(lhs, rhs));
+bool OpenMPAnalysis::inSameSingleBlock(const Event* event1, const Event* event2) const {
+  assert(inSameTeam(event1, event2));
 
-  auto const lID = lhs->getID();
-  auto const rID = rhs->getID();
+  auto const eid1 = event1->getID();
+  auto const eid2 = event2->getID();
+
+  // Trace events are ordered, so we can save time by finding the region containing the smaller
+  // ID first, and then checking if that region also contains the bigger ID.
+  auto const minID = (eid1 < eid2) ? eid1 : eid2;
+  auto const maxID = (eid1 > eid2) ? eid1 : eid2;
 
   // Omp threads in same team will have identical traces so we only need one set of events
-  auto const singleRegions = getSingleRegions(lhs->getThread());
+  auto const singleRegions = getSingleRegions(event1->getThread());
   for (auto const& region : singleRegions) {
     // If region contains one, check if it also contains the other
-    if (region.contains(lID)) return region.contains(rID);
-    if (region.contains(rID)) return region.contains(lID);
+    if (region.contains(minID)) return region.contains(maxID);
 
-    // End early if end of this region past both events meaning they will not be in any later regions
-    if (region.end > rID && region.end > lID) return false;
+    // End early if end of this region passes smaller event ID
+    if (region.end > minID) return false;
   }
   return false;
 }

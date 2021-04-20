@@ -152,6 +152,18 @@ const ThreadTrace *getJoinedThread(const JoinEvent *join, const ProgramTrace &pr
 }  // namespace
 
 HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
+  // Barriers are handled by adding two edges between each barrier event
+  // e.g.
+  //   T1       T2
+  //   barr <-> barr
+  // This enforces a happens-before ordering that modles barrier behaviour
+
+  // To do this, as we traverse over the program threads we keep a map of
+  // the last event that corresponds to each barrier. If there is already a
+  // an event in the map (meaning a previous event has visited this barrier)
+  // the dual-edge is added between the prev event and the current event,
+  // and the current event is added to the map so that the next event to reach
+  // this barrier will add the dual-edge with the curent event.
   std::map<const llvm::Instruction *, const BarrierEvent *> lastBarrier;
   auto addBarrierEdge = [&lastBarrier, this](const BarrierEvent *event) {
     auto const barrierInst = event->getInst();
@@ -166,6 +178,9 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
 
     // Add this event as most recent to hit the barrier
     lastBarrier[barrierInst] = event;
+
+    // FIXME: This logic will likely need to be updated for non-omp barriers
+    assert(event->getIRInst()->type == IR::Type::OpenMPBarrier && "Check that non-omp barriers work correctly");
   };
 
   for (auto const &thread : program.getThreads()) {
