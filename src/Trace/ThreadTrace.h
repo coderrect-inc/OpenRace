@@ -27,8 +27,9 @@ class ThreadTrace {
  public:
   const ThreadID id;
   const ProgramTrace &program;
-  // Main thread does not have spawnEvent
-  const std::optional<const ForkEvent *> spawnEvent;
+  // The fork event that created this thread
+  // Optional because main thread does not have a spawn site
+  const std::optional<const ForkEvent *> spawnSite;
 
   [[nodiscard]] const std::vector<std::unique_ptr<const Event>> &getEvents() const { return events; }
   [[nodiscard]] std::vector<const ForkEvent *> getForkEvents() const;

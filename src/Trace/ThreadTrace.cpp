@@ -100,12 +100,12 @@ std::vector<std::unique_ptr<const Event>> buildEventTrace(const ThreadTrace &thr
 }  // namespace
 
 ThreadTrace::ThreadTrace(const race::ProgramTrace &program, const pta::CallGraphNodeTy *entry)
-    : id(0), program(program), spawnEvent(std::nullopt), events(buildEventTrace(*this, entry, program.pta)) {}
+    : id(0), program(program), spawnSite(std::nullopt), events(buildEventTrace(*this, entry, program.pta)) {}
 
 ThreadTrace::ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry)
     : id(id),
       program(spawningEvent->getThread().program),
-      spawnEvent(spawningEvent),
+      spawnSite(spawningEvent),
       events(buildEventTrace(*this, entry, program.pta)) {
   auto const entries = spawningEvent->getThreadEntry();
   auto it = std::find(entries.begin(), entries.end(), entry);
@@ -125,8 +125,8 @@ std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ThreadTrace &thread) {
   os << "---Thread" << thread.id;
-  if (thread.spawnEvent.has_value()) {
-    auto const &spawn = thread.spawnEvent.value();
+  if (thread.spawnSite.has_value()) {
+    auto const &spawn = thread.spawnSite.value();
     os << "  (Spawned by T" << spawn->getThread().id << ":" << spawn->getID() << ")";
   }
   os << "\n";
