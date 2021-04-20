@@ -21,6 +21,12 @@ limitations under the License.
 static llvm::cl::opt<std::string> InputFilename(llvm::cl::Positional, llvm::cl::desc("<input bitcode file>"),
                                                 llvm::cl::init("-"), llvm::cl::value_desc("filename"));
 
+static llvm::cl::opt<std::string> DumpPreproccessedIR("dump-ir", cl::desc("Dump the preprocessed IR"),
+                                                      cl::value_desc("destination file"));
+
+static llvm::cl::opt<std::string> DumpJSON("json", cl::desc("Dump JSON race report"),
+                                           cl::value_desc("destination file"));
+
 int main(int argc, char** argv) {
   llvm::InitLLVM X(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv);
@@ -41,7 +47,11 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  auto report = race::detectRaces(module.get());
+  race::DetectRaceConfig config;
+  if (!DumpPreproccessedIR.empty()) {
+    config.dumpPreprocessedIR = DumpPreproccessedIR;
+  }
+  auto report = race::detectRaces(module.get(), config);
   if (report.empty()) {
     llvm::outs() << "No races detected.\n";
     return 0;
@@ -53,8 +63,11 @@ int main(int argc, char** argv) {
     llvm::outs() << race << "\n";
   }
   llvm::outs() << "Total Races Detected: " << report.size() << "\n";
-  report.dumpReport();
-  llvm::outs() << "JSON Report generated at ./races.json\n";
+
+  if (!DumpJSON.empty()) {
+    report.dumpReport();
+    llvm::outs() << "JSON Report generated at ./races.json\n";
+  }
 
   return 0;
 }

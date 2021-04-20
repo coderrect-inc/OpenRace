@@ -21,14 +21,26 @@ limitations under the License.
 
 using namespace race;
 
-Report race::detectRaces(llvm::Module *module) {
-  race::Reporter reporter;
-
+Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::ProgramTrace program(module);
+
+  if (config.dumpPreprocessedIR.has_value()) {
+    std::error_code err;
+    llvm::raw_fd_ostream outfile(config.dumpPreprocessedIR.value(), err);
+    if (err) {
+      llvm::errs() << "Error dumping preprocessed IR!\n";
+    } else {
+      program.getModule().print(outfile, nullptr);
+      outfile.close();
+    }
+  }
+
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
   race::OpenMPAnalysis ompAnalysis;
+
+  race::Reporter reporter;
 
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {

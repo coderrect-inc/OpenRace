@@ -15,6 +15,11 @@ limitations under the License.
 
 namespace race {
 
-Report detectRaces(llvm::Module *module);
+struct DetectRaceConfig {
+  // writes preprocessedIR to a file specified by the string
+  std::optional<std::string> dumpPreprocessedIR;
+};
+
+Report detectRaces(llvm::Module *module, DetectRaceConfig config = DetectRaceConfig());
 
 }  // namespace race

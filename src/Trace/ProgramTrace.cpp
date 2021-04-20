@@ -16,7 +16,7 @@ limitations under the License.
 
 using namespace race;
 
-ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) {
+ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : module(module) {
   // Run preprocessing on module
   preprocess(*module);
 

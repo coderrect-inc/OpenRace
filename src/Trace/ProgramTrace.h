@@ -22,6 +22,8 @@ namespace race {
 class ProgramTrace {
   std::vector<std::unique_ptr<ThreadTrace>> threads;
 
+  llvm::Module *module;
+
  public:
   pta::PTA pta;
 
@@ -29,7 +31,10 @@ class ProgramTrace {
 
   [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return threads.at(tid)->getEvent(eid); }
 
-  explicit ProgramTrace(llvm::Module *, llvm::StringRef entryName = "main");
+  // Get the module after preprocessing has been run
+  [[nodiscard]] const Module &getModule() const { return *module; }
+
+  explicit ProgramTrace(llvm::Module *module, llvm::StringRef entryName = "main");
   ~ProgramTrace() = default;
   ProgramTrace(const ProgramTrace &) = delete;
   ProgramTrace(ProgramTrace &&) = delete;  // Need to update threads because
