@@ -178,6 +178,9 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
 
     // Add this event as most recent to hit the barrier
     lastBarrier[barrierInst] = event;
+
+    // FIXME: This logic will likely need to be updated for non-omp barriers
+    assert(event->getIRInst()->type == IR::Type::OpenMPBarrier && "Check that non-omp barriers work correctly");
   };
 
   for (auto const &thread : program.getThreads()) {
