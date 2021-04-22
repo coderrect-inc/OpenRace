@@ -19,7 +19,9 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 Please note, the tool is still in the early stages of development and does not support many features yet.
 
-Until our first release, the easiest way to run the tool is through the `coderrect/openrace` docker image:
+Until our first release, the easiest way to run the tool is through the `coderrect/openrace` docker image.
+
+On a linux machine with docker installed you can run the following bash commands:
 
 ```
 > docker pull coderrect/openrace
