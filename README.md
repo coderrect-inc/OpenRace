@@ -85,6 +85,11 @@ The OpenRace tool takes LLVM IR as input. Generate the LLVM IR for pthread-simpl
 pthread-simple.c pthread-simple.ll
 ```
 
+Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce an [LLVM IR](https://llvm.org/docs/LangRef.html#abstract) file for a project with multiple files. 
+
+Generating LLVM IR for large projects is outside the scope of this tool (for now).
+
+
 Then the .ll file can be passed as input directly to the OpenRace tool.
 
 ```
