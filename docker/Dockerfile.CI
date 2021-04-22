@@ -54,3 +54,6 @@ ENV DEBIAN_FRONTEND=
 
 # Install conan
 RUN pip3 install conan
+
+# Create soft link for clang-10
+RUN ln -s /usr/bin/clang-10 /usr/bin/clang
