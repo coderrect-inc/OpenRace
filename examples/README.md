@@ -11,11 +11,12 @@ openrace simplethread.ll
 ...
 ==== Races ====
 simplethread.c:8:9 simplethread.c:8:9
-          store i32 %3, i32* @global, align 4, !dbg !55
-          %2 = load i32, i32* @global, align 4, !dbg !55
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          %0 = load i32, i32* @global, align 4, !dbg !53
 simplethread.c:8:9 simplethread.c:8:9
-          store i32 %3, i32* @global, align 4, !dbg !55
-          store i32 %3, i32* @global, align 4, !dbg !55
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          store i32 %inc, i32* @global, align 4, !dbg !53
+Total Races Detected: 2
 ```
 
 For more details on running the tool, see our main [README](https://github.com/coderrect-inc/OpenRace#readme).
