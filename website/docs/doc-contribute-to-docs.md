@@ -104,5 +104,6 @@ You should have the following things installed:
 Then you should be able to preview your docs using:
 ```bash
 cd website
+yarn install
 yarn start
 ```
