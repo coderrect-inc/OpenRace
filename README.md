@@ -128,28 +128,7 @@ Static analysis looks at the source code directly and can reason about all possi
 
 # Building
 
-Using [conan](https://conan.io) to manage dependencies. Instructions to install conan can be found [here](https://conan.io/downloads.html).
-
-To build, run the following:
-
-```
-# Create and move to build directory
-mkdir build && cd build
-# Use conan to install dependencies
-conan install ..
-# Set build options
-cmake -DLLVM_DIR=$LLVM_DIR ..
-# Build the project in parallel
-cmake --build . --parallel
-```
-
-Feel free to adjust cmake options as you see fit.
-
-The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake` for LLVM version 10.0.1. LLVM 10.0.1 can be acquired either by downloading a prebuilt version, or building from source.
-
-To downloadLLVM 10.0.1, go to LLVM's [download page](https://releases.llvm.org/download.html) and select the correct version for your system. After downloading, `LLVMConfig.cmake` will be located at `<INSTALL_PREFIX>/lib/cmake/llvm/LLVMConfig.cmake` where `<INSTALL_PREFIX>` is the install prefix of the downloaded version of LLVM. 
-
-To build LLVM 10.0.1 from source check our [documentation page](https://coderrect-inc.github.io/OpenRace/#building-the-project). After building LLVM 10.0.1, `LLVMConfig.cmake` will be located at `<LLVM_BUILD_ROOT>/lib/cmake/llvm/LLVMConfig.cmake` where `<LLVM_BUILD_ROOT>` is the root of the LLVM build tree. For more information, optoins, and detail on building LLVM, see their [documentation](https://www.llvm.org/docs/CMake.html).
+See our guide on [setting up a development environment](https://coderrect-inc.github.io/OpenRace/doc-setup-dev-env) for OpenRace.
 
 # Additional Information
 
