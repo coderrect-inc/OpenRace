@@ -130,6 +130,24 @@ Static analysis looks at the source code directly and can reason about all possi
 
 See our guide on [setting up a development environment](https://coderrect-inc.github.io/OpenRace/doc-setup-dev-env) for OpenRace.
 
+# Coderrect Scanner Reports
+
+The goal of OpenRace is to eventually replace the closed source [Coderrect Scanner](https://coderrect.com/download/) in functionality.
+
+For reference, links to automatically generated Coderrect Scanner reports are shown below.
+
+Please note the reports:
+ - are automatically generated
+ - have not been reviewed by us
+ - have not been reviewed by the project maintainers unless otherwise noted
+ - may contain false positives
+ - may miss real races
+ - are intended only for evaluating the closed source scanner.
+
+[Bitcoin](http://cloud.coderrect.com/9459274ab6ea4da4bcc261a9cce18f61/bitcoind/bitcoind.html) ([v0.2.1](https://github.com/bitcoin/bitcoin/releases/tag/v0.21.0)) - [Redis](http://cloud.coderrect.com/79449cbe5ed9498f89ee92fcf03ac135/redis-server/redis-server.html) ([6.2.2](https://github.com/redis/redis/releases/tag/6.2.2)) - [CovidSim](http://cloud.coderrect.com/9e491bba57ba4c16acfa35c05d2485d7/CovidSim/CovidSim.html) ([v0.15.0](https://github.com/mrc-ide/covid-sim/releases/tag/v0.15.0)) - [LevelDB](http://cloud.coderrect.com/107afdad94a6403e8091f4019bbf9fb5/db_test/db_test.html) ([1.23](https://github.com/google/leveldb/releases/tag/1.23))
+
+See more Coderrect Scanner reports and confirmed bugs at [coderrect.com/openscan/](https://coderrect.com/openscan/)
+
 # Additional Information
 
 - [OpenRace Documentation](https://coderrect-inc.github.io/OpenRace/)
