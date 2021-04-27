@@ -68,7 +68,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB032-truedepfirstdimension-var-yes.c:69:14 DRB032-truedepfirstdimension-var-yes.c:69:15"}),
       // DRB 033 and 034 complex array index function
       // DRB 35 and 36 FP on write to a[i] ??
-      // 37 and 38 multi-dimen
+      Oracle("DRB037-truedepseconddimension-orig-yes.ll",
+             {"DRB037-truedepseconddimension-orig-yes.c:63:14 DRB037-truedepseconddimension-orig-yes.c:63:15"}),
+      Oracle("DRB038-truedepseconddimension-var-yes.ll",
+             {"DRB038-truedepseconddimension-var-yes.c:65:14 DRB038-truedepseconddimension-var-yes.c:65:15"}),
       Oracle("DRB039-truedepsingleelement-orig-yes.ll",
              {"DRB039-truedepsingleelement-orig-yes.c:62:9 DRB039-truedepsingleelement-orig-yes.c:62:15"}),
       Oracle("DRB040-truedepsingleelement-var-yes.ll",
@@ -80,10 +83,13 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB049-fprintf-orig-no.ll", {}), Oracle("DRB050-functionparameter-orig-no.ll", {}),
       // 51 path based on get_thread_num
       // 52 indirect array
-      // 53-54 multi-dimen array
+      // Oracle("DRB053-inneronly1-orig-no.ll", {}), // FP multi-dimen array
+      // Oracle("DRB054-inneronly2-orig-no.ll", {}), // FP multi-dimen array
       // 55-58 complex array access
       // 59 FP caused by last private??
-      // 60-64 multi-dimen array
+      Oracle("DRB060-matrixmultiply-orig-no.ll", {}), Oracle("DRB061-matrixvector1-orig-no.ll", {}),
+      // 62 reduction
+      // 63-64 FP by multi-dimen array
       // 65 reduce
       Oracle("DRB066-pointernoaliasing-orig-no.ll", {}), Oracle("DRB067-restrictpointer1-orig-no.ll", {}),
       Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
@@ -91,7 +97,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 70 simd
       // 71 target
       // 72 task
-      // 73 multi-dimen array
+      // 73 Broken Debug Info
       // 74 critical and flush
       // 75 path based on get_thread_num
       // 76 reduce
@@ -112,10 +118,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 90 missed read-write race
       // 91 threadprivate + critical + copyin
       // 92 critical
-      // 93 collapse + multi-dimen
+      Oracle("DRB093-doall2-collapse-orig-no.ll", {}),
       // 94 ordered + depend sink
       // 95 taskloop
-      // 96 collapse + multi-dimen
+      // 96 collapse + taskloop + multi-dimen
       // 97 target
       // 98 simd + collpase
       // 99 target
@@ -133,7 +139,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6"   // write-write
              }),
       // 112 linear
-      // 113 multi-dimen array
+      Oracle("DRB113-default-orig-no.ll", {}),
       // 114 omp if
       // 115 simd
       // 116 target
@@ -152,8 +158,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 142-143 critical
       // 144-164 target
       // 165-168 cannot be built
-      // 169 multi-dimen array
-      // 170 multi-dimen array
+      // 169 multi-dimen array // Missed TP
+      Oracle("DRB170-nestedloops-orig-no.ll", {}),
       // 171 threadprivate + tid path
       // 172 critical
   };
