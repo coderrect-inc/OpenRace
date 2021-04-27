@@ -1,11 +1,11 @@
-FROM gcc:10.2.0 AS build
+FROM ubuntu:20.04 AS build
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y \
-    cmake git make python-pip \
+    cmake git make python3 build-essential ninja-build \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -19,7 +19,7 @@ RUN git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.g
 RUN mkdir -p /llvm-project/build
 WORKDIR /llvm-project/build
 RUN cmake \
-    -DLLVM_ENABLE_PROJECTS="clang" \
+    -DLLVM_ENABLE_PROJECTS="" \
     -DLLVM_TARGETS_TO_BUILD="X86" \
     -DCMAKE_CXX_STANDARD="17" \
     -DLLVM_INCLUDE_EXAMPLES=OFF \
@@ -28,11 +28,12 @@ RUN cmake \
     -DLLVM_APPEND_VC_REV=OFF \
     -DLLVM_OPTIMIZED_TABLEGEN=ON \
     -DCMAKE_BUILD_TYPE=Release \
+    -G Ninja \
     ../llvm
 RUN cmake --build . --parallel
 RUN cmake --build . --target install
 
-FROM gcc:10.2.0
+FROM ubuntu:20.04
 
 # Copy llvm which was built before
 COPY --from=build /usr/local /usr/local
@@ -42,7 +43,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y \
-    cmake make python-pip \
+    cmake make git python3-pip clang-10 \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -52,4 +53,7 @@ RUN apt-get update \
 ENV DEBIAN_FRONTEND=
 
 # Install conan
-RUN pip install conan
+RUN pip3 install conan
+
+# Create soft link for clang-10
+RUN ln -s /usr/bin/clang-10 /usr/bin/clang

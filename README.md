@@ -21,34 +21,33 @@ Please note, the tool is still in the early stages of development and does not s
 
 Until our first release, the easiest way to run the tool is through the `coderrect/openrace` docker image.
 
-On a linux machine with docker installed you can run the following bash commands:
-
-```
+```shell
 > docker pull coderrect/openrace
-> docker run -i --rm coderrect/openrace openrace < simplepthread.ll
+> docker run -it --rm coderrect/openrace
+# Now we are inside the docker image
+/OpenRace/examples# make
+clang-10 -S -emit-llvm -g -fopenmp simplethread.c
+openrace simplethread.ll
+...
 ==== Races ====
-pthreadsimple.c:8:9 pthreadsimple.c:8:9
+simplethread.c:8:9 simplethread.c:8:9
           store i32 %inc, i32* @global, align 4, !dbg !53
           %0 = load i32, i32* @global, align 4, !dbg !53
-pthreadsimple.c:8:9 pthreadsimple.c:8:9
+simplethread.c:8:9 simplethread.c:8:9
           store i32 %inc, i32* @global, align 4, !dbg !53
           store i32 %inc, i32* @global, align 4, !dbg !53
 Total Races Detected: 2
 ```
 
-The tool takes an LLVM IR file as input. The IR must be generated using clang 10.0.1.
+The examples directory contains a few sample files and a Makefile to make running the examples easy.
 
-To generate LLVM IR for a single file, run
+To run the OpenRace tool on the `simplethread.c` example, just run `make simplethread`. This works for any of the samples in the examples directory.
 
-```
-> clang -S -emit-llvm -g file.cpp
-```
-
-Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce an [LLVM IR](https://llvm.org/docs/LangRef.html#abstract) file for a project with multiple files. 
-
-Generating LLVM IR for large projects is outside the scope of this tool (for now).
+The `coderrect/openrace` docker image contains all the required tools to build and run the provided examples.
 
 # End-to-End Example
+
+This section steps through the process of building an example source file and scanning it with the OpenRace tool.
 
 ```
 // pthread-simple.c
@@ -78,7 +77,7 @@ int main() {
 ```
 The OpenRace tool takes LLVM IR as input. Generate the LLVM IR for pthread-simple.c with the following command.
 
-**Note**: Make sure `clang --version` shows clang 10.0.1
+**Note**: Make sure `clang --version` shows clang 10.0.x
 
 ```
 > clang -S -emit-llvm -g pthread-simple.c
@@ -86,11 +85,15 @@ The OpenRace tool takes LLVM IR as input. Generate the LLVM IR for pthread-simpl
 pthread-simple.c pthread-simple.ll
 ```
 
-OpenRace can be run either by building the tool, or using our pre-built docker image.
+Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce an [LLVM IR](https://llvm.org/docs/LangRef.html#abstract) file for a project with multiple files. 
+
+Generating LLVM IR for large projects is outside the scope of this tool (for now).
+
+
+Then the .ll file can be passed as input directly to the OpenRace tool.
 
 ```
-> docker pull coderrect/openrace
-> docker run -i --rm coderrect/openrace openrace < pthread-simple.ll
+> openrace pthread-simple.ll
 ==== Races ====
 pthreadsimple.c:8:9 pthreadsimple.c:8:9
           store i32 %inc, i32* @global, align 4, !dbg !53
@@ -125,28 +128,25 @@ Static analysis looks at the source code directly and can reason about all possi
 
 # Building
 
-Using [conan](https://conan.io) to manage dependencies. Instructions to install conan can be found [here](https://conan.io/downloads.html).
+See our guide on [setting up a development environment](https://coderrect-inc.github.io/OpenRace/doc-setup-dev-env) for OpenRace.
 
-To build, run the following:
+# Coderrect Scanner Reports
 
-```
-# Create and move to build directory
-mkdir build && cd build
-# Use conan to install dependencies
-conan install ..
-# Set build options
-cmake -DLLVM_DIR=$LLVM_DIR ..
-# Build the project in parallel
-cmake --build . --parallel
-```
+The goal of OpenRace is to eventually replace the closed source [Coderrect Scanner](https://coderrect.com/download/) in functionality.
 
-Feel free to adjust cmake options as you see fit.
+For reference, links to automatically generated Coderrect Scanner reports are shown below.
 
-The only required option is `LLVM_DIR` which should point to the directory containing `LLVMConfig.cmake` for LLVM version 10.0.1. LLVM 10.0.1 can be acquired either by downloading a prebuilt version, or building from source.
+Please note the reports:
+ - are automatically generated
+ - have not been reviewed by us
+ - have not been reviewed by the project maintainers unless otherwise noted
+ - may contain false positives
+ - may miss real races
+ - are intended only for evaluating the closed source scanner.
 
-To downloadLLVM 10.0.1, go to LLVM's [download page](https://releases.llvm.org/download.html) and select the correct version for your system. After downloading, `LLVMConfig.cmake` will be located at `<INSTALL_PREFIX>/lib/cmake/llvm/LLVMConfig.cmake` where `<INSTALL_PREFIX>` is the install prefix of the downloaded version of LLVM. 
+[Bitcoin](http://cloud.coderrect.com/9459274ab6ea4da4bcc261a9cce18f61/bitcoind/bitcoind.html) ([v0.2.1](https://github.com/bitcoin/bitcoin/releases/tag/v0.21.0)) - [Redis](http://cloud.coderrect.com/79449cbe5ed9498f89ee92fcf03ac135/redis-server/redis-server.html) ([6.2.2](https://github.com/redis/redis/releases/tag/6.2.2)) - [CovidSim](http://cloud.coderrect.com/9e491bba57ba4c16acfa35c05d2485d7/CovidSim/CovidSim.html) ([v0.15.0](https://github.com/mrc-ide/covid-sim/releases/tag/v0.15.0)) - [LevelDB](http://cloud.coderrect.com/107afdad94a6403e8091f4019bbf9fb5/db_test/db_test.html) ([1.23](https://github.com/google/leveldb/releases/tag/1.23))
 
-To build LLVM 10.0.1 from source check our [documentation page](https://coderrect-inc.github.io/OpenRace/#building-the-project). After building LLVM 10.0.1, `LLVMConfig.cmake` will be located at `<LLVM_BUILD_ROOT>/lib/cmake/llvm/LLVMConfig.cmake` where `<LLVM_BUILD_ROOT>` is the root of the LLVM build tree. For more information, optoins, and detail on building LLVM, see their [documentation](https://www.llvm.org/docs/CMake.html).
+See more Coderrect Scanner reports and confirmed bugs at [coderrect.com/openscan/](https://coderrect.com/openscan/)
 
 # Additional Information
 

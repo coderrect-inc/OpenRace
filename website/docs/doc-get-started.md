@@ -4,48 +4,101 @@ title: Get Started with Coderrect OpenRace
 slug: /
 ---
 
-## Building the Project
-Currently, the only way to get started with Coderrect OpenRace is building the project.
+OpenRace is an in development C/C++ data race detection tool.
 
-Coderrect requires **LLVM 10.0.x** to build. You can either installed a pre-built LLVM10 or build it on your own.
+This project aims to have a clean and extensible design to facilitate community contributions.
 
-First make sure you have `git`, `cmake` and `make` installed on your local environment.
+OpenRace is an open source implementation of the [Coderrect Scanner][CS] which is a C/C++/Fortran data race detection tool. The open source tool is currently behind the original scanner in terms of feature support, but we are actively developing and expect OpenRace to eventually replace the closed source implementation of [Coderrect Scanner][CS].
 
-The script below builds and installs LLVM 10.0.1:
+[CS]: https://coderrect.com/overview/
 
-```bash
-git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.git
-cd llvm-project && mkdir build && cd build
-cmake \
-    -DLLVM_TARGETS_TO_BUILD="X86" \
-    -DCMAKE_CXX_STANDARD="17" \
-    -DLLVM_INCLUDE_EXAMPLES=OFF \
-    -DLLVM_INCLUDE_TESTS=OFF \
-    -DLLVM_INCLUDE_BENCHMARKS=OFF \
-    -DLLVM_APPEND_VC_REV=OFF \
-    -DLLVM_OPTIMIZED_TABLEGEN=ON \
-    -DCMAKE_BUILD_TYPE=Release \
-    ../llvm
-make -j
+[![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
+
+# Running
+
+Please note, the tool is still in the early stages of development and does not support many features yet.
+
+Until our first release, the easiest way to run the tool is through the `coderrect/openrace` docker image.
+
+```shell
+> docker pull coderrect/openrace
+> docker run -it --rm coderrect/openrace
+# Now we are inside the docker image
+/OpenRace/examples# make
+clang-10 -S -emit-llvm -g -fopenmp simplethread.c
+openrace simplethread.ll
+...
+==== Races ====
+simplethread.c:8:9 simplethread.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          %0 = load i32, i32* @global, align 4, !dbg !53
+simplethread.c:8:9 simplethread.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          store i32 %inc, i32* @global, align 4, !dbg !53
+Total Races Detected: 2
 ```
 
-In order to build Coderrect OpenRace, we need to specify the directory `LLVM_DIR` containing `LLVMConfig.cmake`, which should be `/path/to/llvm-project/build/lib/cmake/llvm/`.
+The examples directory contains a few sample files and a Makefile to make running the examples easy.
 
-Now for building Coderrect OpenRace, you need to first install `conan` as package manager.
+To run the OpenRace tool on the `simplethread.c` example, just run `make simplethread`. This works for any of the samples in the examples directory.
 
-Coderrect OpenRace shoule be able to build with any C++ compiler with C++17 support.
-We recommend using a compiler same or newer than **gcc9/clang10**.
-The script below builds Coderrect OpenRace:
+The `coderrect/openrace` docker image contains all the required tools to build and run the provided examples.
 
-```bash
-git clone https://github.com/coderrect-inc/OpenRace.git
-mkdir build && cd build
-conan install ..
-cmake -DLLVM_DIR=/path/to/llvm-project/build/lib/cmake/llvm/ ..
-make -j
+# End-to-End Example
+
+This section steps through the process of building an example source file and scanning it with the OpenRace tool.
+
+```
+// pthread-simple.c
+#include <pthread.h>
+
+int global;
+pthread_mutex_t mutex;
+int global_locked;
+
+void *foo(void *a) {
+  global++;
+  pthread_mutex_lock(&mutex);
+  global_locked++;
+  pthread_mutex_unlock(&mutex);
+  return 0;
+}
+
+int main() {
+  pthread_t t1, t2;
+  pthread_mutex_t mutex;
+
+  pthread_create(&t1, 0, foo, 0);
+  pthread_create(&t2, 0, foo, 0);
+  pthread_join(t1, 0);
+  pthread_join(t2, 0);
+}
+```
+The OpenRace tool takes LLVM IR as input. Generate the LLVM IR for pthread-simple.c with the following command.
+
+**Note**: Make sure `clang --version` shows clang 10.0.x
+
+```
+> clang -S -emit-llvm -g pthread-simple.c
+> ls
+pthread-simple.c pthread-simple.ll
 ```
 
-Now you have successfully built Coderrect OpenRace! Run our tester to check out its current status:
+Something like [WLLVM](https://github.com/travitch/whole-program-llvm) can be used to produce an [LLVM IR](https://llvm.org/docs/LangRef.html#abstract) file for a project with multiple files. 
+
+Generating LLVM IR for large projects is outside the scope of this tool (for now).
+
+
+Then the .ll file can be passed as input directly to the OpenRace tool.
+
 ```
-./bin/tester
+> openrace pthread-simple.ll
+==== Races ====
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          %0 = load i32, i32* @global, align 4, !dbg !53
+pthreadsimple.c:8:9 pthreadsimple.c:8:9
+          store i32 %inc, i32* @global, align 4, !dbg !53
+          store i32 %inc, i32* @global, align 4, !dbg !53
+Total Races Detected: 2
 ```
