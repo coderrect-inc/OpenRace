@@ -144,7 +144,7 @@ Please note the reports:
  - may miss real races
  - are intended only for evaluating the closed source scanner.
 
-[Bitcoin](https://github.com/bitcoin/bitcoin/releases/tag/v0.21.0) ([v0.2.1](https://github.com/bitcoin/bitcoin/releases/tag/v0.21.0)) - [Redis](http://cloud.coderrect.com/79449cbe5ed9498f89ee92fcf03ac135/redis-server/redis-server.html) ([6.2.2](https://github.com/redis/redis/releases/tag/6.2.2)) - [CovidSim](http://cloud.coderrect.com/9e491bba57ba4c16acfa35c05d2485d7/CovidSim/CovidSim.html) ([v0.15.0](https://github.com/mrc-ide/covid-sim/releases/tag/v0.15.0)) - [LevelDB](http://cloud.coderrect.com/107afdad94a6403e8091f4019bbf9fb5/db_test/db_test.html) ([1.23](https://github.com/google/leveldb/releases/tag/1.23))
+[Bitcoin](http://cloud.coderrect.com/9459274ab6ea4da4bcc261a9cce18f61/bitcoind/bitcoind.html) ([v0.2.1](https://github.com/bitcoin/bitcoin/releases/tag/v0.21.0)) - [Redis](http://cloud.coderrect.com/79449cbe5ed9498f89ee92fcf03ac135/redis-server/redis-server.html) ([6.2.2](https://github.com/redis/redis/releases/tag/6.2.2)) - [CovidSim](http://cloud.coderrect.com/9e491bba57ba4c16acfa35c05d2485d7/CovidSim/CovidSim.html) ([v0.15.0](https://github.com/mrc-ide/covid-sim/releases/tag/v0.15.0)) - [LevelDB](http://cloud.coderrect.com/107afdad94a6403e8091f4019bbf9fb5/db_test/db_test.html) ([1.23](https://github.com/google/leveldb/releases/tag/1.23))
 
 See more Coderrect Scanner reports and confirmed bugs at [coderrect.com/openscan/](https://coderrect.com/openscan/)
 
