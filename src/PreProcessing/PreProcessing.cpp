@@ -26,6 +26,7 @@ limitations under the License.
 #include <llvm/Transforms/Scalar/SimpleLoopUnswitch.h>
 #include <llvm/Transforms/Scalar/SimplifyCFG.h>
 
+#include "PreProcessing/Passes/CanonicalizeGEPPass.h"
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
 void preprocess(llvm::Module &module) {
@@ -66,6 +67,7 @@ void preprocess(llvm::Module &module) {
 
   fpm.addPass(llvm::MemCpyOptPass());
   fpm.addPass(llvm::SCCPPass());
+  fpm.addPass(NewGEPPass());
 
   llvm::ModulePassManager mpm;
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));

@@ -159,3 +159,14 @@ bool CanonicalizeGEPPass::runOnFunction(Function &F) {
 char CanonicalizeGEPPass::ID = 0;
 static RegisterPass<CanonicalizeGEPPass> CIP("", "Canonicalize GetElementPtr instruction", true, /*CFG only*/
                                              false /*is analysis*/);
+
+llvm::PreservedAnalyses NewGEPPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) {
+  IRBuilder<NoFolder> builder(F.getContext());
+  bool changed = false;
+  changed |= expandNestedGEP(F, builder);
+  changed |= splitVariableGEP(F, builder);
+  if (!changed) return PreservedAnalyses::all();
+
+  // TODO: what should this actually return?
+  return PreservedAnalyses::none();
+}

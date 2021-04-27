@@ -17,7 +17,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
   std::vector<Oracle> oracles = {
       Oracle("DRB001-antidep1-orig-yes.ll", {"DRB001-antidep1-orig-yes.c:58:10 DRB001-antidep1-orig-yes.c:58:12"}),
       Oracle("DRB002-antidep1-var-yes.ll", {"DRB002-antidep1-var-yes.c:67:9 DRB002-antidep1-var-yes.c:67:10"}),
-      // DRB 3 and 4 are multi-dimen array
+      Oracle("DRB003-antidep2-orig-yes.ll", {"DRB003-antidep2-orig-yes.c:67:15 DRB003-antidep2-orig-yes.c:67:18"}),
+      Oracle("DRB004-antidep2-var-yes.ll", {"DRB004-antidep2-var-yes.c:70:15 DRB004-antidep2-var-yes.c:70:18"}),
       // DRB 5-8 are indirect array access
       Oracle("DRB009-lastprivatemissing-orig-yes.ll",
              {"DRB009-lastprivatemissing-orig-yes.c:59:6 DRB009-lastprivatemissing-orig-yes.c:59:6"}),
