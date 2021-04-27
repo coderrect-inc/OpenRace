@@ -132,7 +132,7 @@ See our guide on [setting up a development environment](https://coderrect-inc.gi
 
 # Coderrect Scanner Reports
 
-The goal of OpenRace is to eventually replace the closed source Coderrect Scanner in functionality.
+The goal of OpenRace is to eventually replace the closed source [Coderrect Scanner](https://coderrect.com/download/) in functionality.
 
 For reference, links to automatically generated Coderrect Scanner reports are shown below.
 
@@ -151,6 +151,8 @@ Please note the reports:
 [CovidSim](http://cloud.coderrect.com/9e491bba57ba4c16acfa35c05d2485d7/CovidSim/CovidSim.html) ([v0.15.0](https://github.com/mrc-ide/covid-sim/releases/tag/v0.15.0))
 
 [LevelDB](http://cloud.coderrect.com/107afdad94a6403e8091f4019bbf9fb5/db_test/db_test.html) ([1.23](https://github.com/google/leveldb/releases/tag/1.23))
+
+See more Coderrect Scanner reports and confirmed bugs at [coderrect.com/openscan/](https://coderrect.com/openscan/)
 
 # Additional Information
 
