@@ -67,7 +67,7 @@ void preprocess(llvm::Module &module) {
 
   fpm.addPass(llvm::MemCpyOptPass());
   fpm.addPass(llvm::SCCPPass());
-  fpm.addPass(NewGEPPass());
+  fpm.addPass(CanonicalizeGEPPass());
 
   llvm::ModulePassManager mpm;
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
