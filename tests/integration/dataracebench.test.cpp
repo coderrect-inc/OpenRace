@@ -35,16 +35,24 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
                  "DRB012-minusminus-var-yes.c:74:16 DRB012-minusminus-var-yes.c:74:16"   // write-write
              }),
       Oracle("DRB013-nowait-orig-yes.ll", {"DRB013-nowait-orig-yes.c:72:12 DRB013-nowait-orig-yes.c:75:13"}),
-      // DRB 14 and 15 are multi-dimen array
+      Oracle("DRB014-outofbounds-orig-yes.ll",
+             {"DRB014-outofbounds-orig-yes.c:75:14 DRB014-outofbounds-orig-yes.c:75:15"}),
+      Oracle("DRB015-outofbounds-var-yes.ll",
+             {"DRB015-outofbounds-var-yes.c:80:14 DRB015-outofbounds-var-yes.c:80:15"}),
       Oracle("DRB016-outputdep-orig-yes.ll", {"DRB016-outputdep-orig-yes.c:74:6 DRB016-outputdep-orig-yes.c:73:12",
                                               "DRB016-outputdep-orig-yes.c:74:6 DRB016-outputdep-orig-yes.c:74:6"}),
       Oracle("DRB017-outputdep-var-yes.ll", {"DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:71:12",
                                              "DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:72:6"}),
-      // DRB 18 and 19 array index fails
+      // DRB 18 and 19 array index fails // misses the race on output
       Oracle("DRB020-privatemissing-var-yes.ll",
              {"DRB020-privatemissing-var-yes.c:65:9 DRB020-privatemissing-var-yes.c:65:9",
               "DRB020-privatemissing-var-yes.c:66:10 DRB020-privatemissing-var-yes.c:65:10"}),
-      // DRB 21 and 22 are multi-dimen array
+      Oracle("DRB021-reductionmissing-orig-yes.ll",
+             {"DRB021-reductionmissing-orig-yes.c:70:11 DRB021-reductionmissing-orig-yes.c:70:11",    // write-write
+              "DRB021-reductionmissing-orig-yes.c:70:11 DRB021-reductionmissing-orig-yes.c:70:13"}),  // read-write
+      Oracle("DRB022-reductionmissing-var-yes.ll",
+             {"DRB022-reductionmissing-var-yes.c:72:11 DRB022-reductionmissing-var-yes.c:72:11",
+              "DRB022-reductionmissing-var-yes.c:72:11 DRB022-reductionmissing-var-yes.c:72:13"}),
       // DRB 23 is sections
       // DRB 24 and 25 are simd
       // DRB 26 is target
@@ -54,7 +62,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
               "DRB028-privatemissing-orig-yes.c:66:10 DRB028-privatemissing-orig-yes.c:65:10"}),
       Oracle("DRB029-truedep1-orig-yes.ll", {"DRB029-truedep1-orig-yes.c:64:11 DRB029-truedep1-orig-yes.c:64:12"}),
       Oracle("DRB030-truedep1-var-yes.ll", {"DRB030-truedep1-var-yes.c:68:11 DRB030-truedep1-var-yes.c:68:12"}),
-      // DRB 031 032 multi-dimen
+      Oracle("DRB031-truedepfirstdimension-orig-yes.ll",
+             {"DRB031-truedepfirstdimension-orig-yes.c:66:14 DRB031-truedepfirstdimension-orig-yes.c:66:15"}),
+      Oracle("DRB032-truedepfirstdimension-var-yes.ll",
+             {"DRB032-truedepfirstdimension-var-yes.c:69:14 DRB032-truedepfirstdimension-var-yes.c:69:15"}),
       // DRB 033 and 034 complex array index function
       // DRB 35 and 36 FP on write to a[i] ??
       // 37 and 38 multi-dimen

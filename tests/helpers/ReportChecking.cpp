@@ -101,11 +101,11 @@ void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {
       REQUIRE(module.get() != nullptr);
 
       auto report = race::detectRaces(module.get());
-      llvm::errs() << "===> Detected Races:\n";
-      for (auto const &race : report.races) {
-        llvm::errs() << race << "\n";
-      }
-      llvm::errs() << "\n";
+      // llvm::errs() << "===> Detected Races:\n";
+      // for (auto const &race : report.races) {
+      //   llvm::errs() << race << "\n";
+      // }
+      // llvm::errs() << "\n";
 
       for (auto const &expectedRace : oracle.expectedRaces) {
         CHECK(reportContains(report, expectedRace));
