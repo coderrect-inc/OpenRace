@@ -130,6 +130,28 @@ Static analysis looks at the source code directly and can reason about all possi
 
 See our guide on [setting up a development environment](https://coderrect-inc.github.io/OpenRace/doc-setup-dev-env) for OpenRace.
 
+# Coderrect Scanner Reports
+
+The goal of OpenRace is to eventually replace the closed source Coderrect Scanner in functionality.
+
+For reference, links to automatically generated Coderrect Scanner reports are shown below.
+
+Please note the reports:
+ - are automatically generated
+ - have not been reviewed by us
+ - have not been reviewed by the project maintainers unless otherwise noted
+ - may contain false positives
+ - may miss real races
+ - are intended only for evaluating the closed source scanner.
+
+Bitcoin
+Redis
+Memcached
+Linux Kernel
+
+CovidSim
+// 1-2 more OpenMP projects
+
 # Additional Information
 
 - [OpenRace Documentation](https://coderrect-inc.github.io/OpenRace/)
