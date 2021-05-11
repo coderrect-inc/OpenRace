@@ -84,7 +84,7 @@ If you need to read some data from a file ina  test, assume the working director
 
 The easiest way to run the tests is to run `ctest` in the build directory after building the project.
 
-The test binary is `build/bin/tester`. If running the binary directly, the working directory should be set to `tests/data` so that test can find their input files.
+The test binary is `build/bin/tester`. If running the binary directly, the working directory should be set to `tests/data` so that tests can find their input files.
 
 This configuration has been set up already and can be done automatically by running `ctest` directly.
 
