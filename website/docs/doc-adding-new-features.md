@@ -71,7 +71,7 @@ All tests and test related data are stored under the `tests/` folder.
 
 All test files are named like `<topic>.test.cpp` where topic is the thing being tested.
 
-The tests themselves are then split into categories by subfolder. There are two main categories: unit and integration. The data folder contains input files that are consued by some of the tests.
+The tests themselves are then split into categories by subfolder. There are two main categories: unit and integration. The data folder contains input files that are consumed by some of the tests.
 
 Unit tests cover the functionality of a specific component, such as PointerAnalysis or Trace construction. Because unit tests correspond directly to components in the code, the structure of the unit test folder closely matches the structure of the src folder.
 
