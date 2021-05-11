@@ -43,7 +43,7 @@ The core analyses are:
 - **HappensBefore** analysis determines if two events could potentially happen in parallel.
 - **LockSet** tracks what locks are held by an event during execution, and can be used to find if two events share a common lock.
 
-See the [Analysis](#analysis) section for more detail.
+See the [Analysis](#analysis) section for more details.
 
  ### Race Detection
 
@@ -70,13 +70,13 @@ See the [RaceDetect](#racedetect) section.
 
 ### Generate Report
 
-finally a report needs to be generated so that any detected races can be displayed to the user or reported to some tool.
+Finally, a report needs to be generated so that any detected races can be displayed to the user or reported to some tool.
 
 See the [Reporter](#reporter) section.
 
 ## Project Layout
 
-This section describes code by each subdirectory in `src`. Tog et an idea of the flow of execution through the program, see the Logical Overview above.
+This section describes code by each subdirectory in `src`. To get an idea of the flow of execution through the program, see the Logical Overview above.
 
 The most important directories are:
  - [**`IR`**](#ir) for converting the input into a format we can analyze
@@ -109,7 +109,7 @@ This directory contains some common code for demangling C++ function names.
 
 ### IR
 
-This folder contains interfaces describing logical operations (`IR.h`), implementations of those interfaces (`IRImpls.h`), and a function that takes an LLVM Function an constructs a list of logical operations (`Builder.h`).
+This folder contains interfaces describing logical operations (`IR.h`), implementations of those interfaces (`IRImpls.h`), and a function that takes an LLVM Function and constructs a list of logical operations (`Builder.h`).
 
 In the context of race detection, most of the LLVM IR instructions are not needed.
 
@@ -143,7 +143,7 @@ read %0
 write %0
 ```
 
-So the code in the IR directory focuses on extracting only the LLVM instructions needed for race detection, and wrapping them in a common set of interfaces (read. write, fork, join) that can be consumed more easily be later analyses.
+So the code in the IR directory focuses on extracting only the LLVM instructions needed for race detection, and wrapping them in a common set of interfaces (read, write, fork, join) that can be consumed more easily by later analyses.
 
 The logical operation interfaces are wrappers around LLVM Instructions, and return values in terms of LLVM IR. Logical operations will later be converted to program events, which answer questions in terms of static program execution.
 
@@ -211,7 +211,7 @@ When a match is found, the corresponding concrete impl is constructed and added 
 
 The LanguageModel directory contains code related to recognizing certain language or framework features in LLVM IR.
 
-Most of the file in this directory recognize specific API calls. For example, pthread.h contains a list of "recognizers".
+Most of the files in this directory recognize specific API calls. For example, pthread.h contains a list of "recognizers".
 
 ```cpp
 // pthread.h
@@ -223,7 +223,7 @@ bool isPthreadJoin(llvm::StringRef name);
 
 These recognizers are used to determine if the function being called is a certain API call (e..g. pthread create or join). The majority of the code in LanguageModel are recognizers like this for various libraries or frameworks.
 
-The only exception are the `RaceModel.*` files.
+The only exceptions are the `RaceModel.*` files.
 
 #### RaceModel
 
@@ -237,13 +237,13 @@ void *entry(void *arg) {...}
 pthread_create(t, NULL, entry, &val);
 ```
 
-Pointer analysis needs to know that the call to pthread_create will cause the `entry` function to be executed, and that the `arg` passed to entry function points to the memory location of `val`.
+Pointer analysis needs to know that the call to pthread_create will cause the `entry` function to be executed, and that the `arg` passed to the entry function points to the memory location of `val`.
 
 The RaceModel class is used to extend PointerAnalysis with the information necessary to build a correct call graph and link function arguments.
 
 The two functions that control this are:
  - **`interceptFunction`** which decides how each function is expanded in the call graph
- - **`interceptCallSite`** which links pointer from the call site to the called function
+ - **`interceptCallSite`** which links the pointer from the call site to the called function
 
 As any example, to tell Pointer Analysis that a call to `pthread_create(t, NULL, entry, &val)` should result in the `entry` function being visited next in the call graph, `interceptFunction` can be modified to include the following code.
 
@@ -302,7 +302,7 @@ Trace contains the logic for simulating execution and creating a static program 
 
 The important code in this directory are `Event`, `ThreadTrace`, and `ProgramTrace`.
 
-The `Event` contains a list of interfaces, similar to the `IR.h` file (see the [IR](#ir) section). Each Event interface wraps an IR type. Where IR interfaces return values in the context of LLVM IR, events return value in the context of the simulated execution.
+The `Event` contains a list of interfaces, similar to the `IR.h` file (see the [IR](#ir) section). Each Event interface wraps an IR type. Where IR interfaces return values in the context of LLVM IR, events return values in the context of the simulated execution.
 
 As an example, look at the following interface for a read at IR and Event levels.
 
@@ -319,9 +319,9 @@ public:
 };
 ```
 
-The ReadIR interface returns the `llvm::Value` being accessed, but the Event interface returns the a list of abstract locations in memory that could potentially be accessed.
+The ReadIR interface returns the `llvm::Value` being accessed, but the Event interface returns a list of abstract locations in memory that could potentially be accessed.
 
-This is key difference between IR and Events. IR interfaces are just wrappers around LLVM IR instructions, but Events represent actual program events and their simulated execution.
+This is the key difference between IR and Events. IR interfaces are just wrappers around LLVM IR instructions, but Events represent actual program events and their simulated execution.
 
 Lastly, to construct a list of simulated events (e.g. a trace), a function in `ThreadTrace` takes an entry function as input, traverses the Race IR and builds the simulated trace for a given thread.
 
