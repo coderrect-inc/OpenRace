@@ -11,7 +11,7 @@ We test all of our builds using Ubuntu 20.04 and most of our core team is using 
 
 This guide will give instructions based on Ubuntu 20.04.
 
-To build follow this guide on setting up a dev environment you will need:
+To follow this guide on setting up a dev environment you will need:
  - A modern C++ compiler (gcc/clang)
  - [Ninja Build](https://ninja-build.org/)
  - [Conan](https://conan.io/downloads.html)
@@ -34,7 +34,7 @@ gcc --version
 
 Conan is used to automatically manage OpenRace's dependencies (except for LLVM).
 
-If you already have python and pip installed, the easiest way to install conan is by running either of the following:
+If you already have python and pip installed, the easiest way to install Conan is by running either of the following:
 
 ```shell
 # Python2
@@ -160,7 +160,7 @@ Total Test time (real) =  29.24 sec
 
 Tests can also be executed manually using the`bin/tester` executable. 
 
-Many of the tests read IR files and expect to be run from the `/tests/data` directory. Keep this in mind if running tests manually. 
+Many of the tests read IR files and are expected to be run from the `/tests/data` directory. Keep this in mind if running tests manually. 
 
 ```shell
 OpenRace/tests/data> ../../build/bin/tester
@@ -183,7 +183,7 @@ Unit tests are for testing individual components. For example, there are tests f
 
 Integrations tests check the end-to-end functionality. These tests read in some program's IR, run race detection, and check that the resulting report is correct.
 
-Any time code is added, tests should also likely be added to cover the new code. In most cases is likely that both unit and integration tests should be added.
+Any time code is added, tests should also likely be added to cover the new code. In most cases it is likely that both unit and integration tests should be added.
 
 For example, when adding support for `pthread_create`, a unit test should be added to check that the llvm IR call to `pthread_create` is correctly recognized, and an integration test for a simple program using `pthread_create` should be added. -->
 
