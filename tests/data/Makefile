@@ -22,7 +22,7 @@ all: unit integration
 
 unit: unit/Analysis/simpleloop.ll
 
-integration: dataracebench pthreadrace
+integration: dataracebench pthreadrace openmp
 
 DRB_C_SRC=$(wildcard integration/dataracebench/*.c)
 DRB_C_OUT=$(DRB_C_SRC:.c=.ll)
@@ -36,6 +36,10 @@ PTHREAD_C_OUT=$(PTHREAD_C_SRC:.c=.ll)
 PTHREAD_CXX_OUT=$(PTHREAD_CXX_SRC:.cpp=.ll)
 pthreadrace: $(PTHREAD_C_OUT) $(PTHREAD_CXX_OUT)
 
+OMP_SRC=$(wildcard integration/openmp/*.c)
+OMP_OUT=$(OMP_SRC:.c=.ll)
+openmp: $(OMP_OUT)
+
 clean:
-	@rm -f $(PTHREAD_C_OUT) $(PTHREAD_CXX_OUT) $(DRB_C_OUT) $(DRB_CXX_OUT)
+	@rm -f $(PTHREAD_C_OUT) $(PTHREAD_CXX_OUT) $(DRB_C_OUT) $(DRB_CXX_OUT) $(OMP_OUT)
 	
