@@ -26,7 +26,8 @@ struct TestRace {
   static std::vector<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
 
   // Check if location of TestRace matches the actual race
-  bool equals(const race::Race &race) const;
+  // if path is set, strip path from start of each race location
+  bool equals(const race::Race &race, llvm::StringRef path = "") const;
 
   bool operator==(const TestRace &other) const { return first == other.first && second == other.second; }
   bool operator<(const TestRace &other) const {
@@ -49,6 +50,9 @@ struct Oracle {
 
   // races are converted to TestRace using TestRace::fromString
   Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races);
+
+  // Remove path from beggining of each SourceLoc in expectedRaces
+  void stripPath(llvm::StringRef path);
 };
 
 // Generate race report and check that it meets expected for each oracle

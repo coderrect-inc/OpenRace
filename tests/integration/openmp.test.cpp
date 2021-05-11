@@ -26,5 +26,5 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
              }),
   };
 
-  checkOracles(oracles, "integration/openmp/ll/");
+  checkOracles(oracles, "integration/openmp/");
 }
