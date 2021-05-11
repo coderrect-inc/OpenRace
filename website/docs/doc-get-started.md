@@ -4,7 +4,7 @@ title: Get Started with Coderrect OpenRace
 slug: /
 ---
 
-OpenRace is an in development C/C++ data race detection tool.
+OpenRace is an in-development C/C++ data race detection tool.
 
 This project aims to have a clean and extensible design to facilitate community contributions.
 
