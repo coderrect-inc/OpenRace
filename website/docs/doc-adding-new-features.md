@@ -77,7 +77,7 @@ Unit tests cover the functionality of a specific component, such as PointerAnaly
 
 Integration tests are testing the tool as a whole. Most of the integration tests read in some benchmark file, generate a race report, and then check that the race report matches what is expected.
 
-If you need to read some data from a file ina  test, assume the working directory to be `tests/data`. This is the working directory used when CMake runs the test binary.
+If you need to read some data from a file in a  test, assume the working directory to be `tests/data`. This is the working directory used when CMake runs the test binary.
 
 
 ### Running Tests
