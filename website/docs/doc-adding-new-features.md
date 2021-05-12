@@ -71,20 +71,20 @@ All tests and test related data are stored under the `tests/` folder.
 
 All test files are named like `<topic>.test.cpp` where topic is the thing being tested.
 
-The tests themselves are then split into categories by subfolder. There are two main categories: unit and integration. The data folder contains input files that are consued by some of the tests.
+The tests themselves are then split into categories by subfolder. There are two main categories: unit and integration. The data folder contains input files that are consumed by some of the tests.
 
 Unit tests cover the functionality of a specific component, such as PointerAnalysis or Trace construction. Because unit tests correspond directly to components in the code, the structure of the unit test folder closely matches the structure of the src folder.
 
 Integration tests are testing the tool as a whole. Most of the integration tests read in some benchmark file, generate a race report, and then check that the race report matches what is expected.
 
-If you need to read some data from a file ina  test, assume the working directory to be `tests/data`. This is the working directory used when CMake runs the test binary.
+If you need to read some data from a file in a  test, assume the working directory to be `tests/data`. This is the working directory used when CMake runs the test binary.
 
 
 ### Running Tests
 
 The easiest way to run the tests is to run `ctest` in the build directory after building the project.
 
-The test binary is `build/bin/tester`. If running the binary directly, the working directory should be set to `tests/data` so that test can find their input files.
+The test binary is `build/bin/tester`. If running the binary directly, the working directory should be set to `tests/data` so that tests can find their input files.
 
 This configuration has been set up already and can be done automatically by running `ctest` directly.
 
