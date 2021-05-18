@@ -22,5 +22,5 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
       Oracle("pthread-simple-yes.ll", {"pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9",
                                        "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9"})};
 
-  checkOracles(oracles, "integration/pthreadrace/ll/");
+  checkOracles(oracles, "integration/pthreadrace/");
 }

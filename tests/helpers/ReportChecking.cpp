@@ -60,27 +60,41 @@ std::vector<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings
   return out;
 }
 
-bool TestRace::equals(const race::Race &race) const {
+namespace {
+
+race::SourceLoc trimPath(const race::SourceLoc &original, llvm::StringRef path) {
+  if (path.empty() || !original.filename.startswith(path)) return original;
+
+  race::SourceLoc trimmedLoc(original);
+  trimmedLoc.filename = trimmedLoc.filename.substr(path.size());
+  return trimmedLoc;
+}
+
+}  // namespace
+
+bool TestRace::equals(const race::Race &race, llvm::StringRef path) const {
   if (race.missingLocation()) return false;
 
-  return race.first.location.value() == first && race.second.location.value() == second;
+  auto const expectedFirst = trimPath(race.first.location.value(), path);
+  auto const expectedSecond = trimPath(race.second.location.value(), path);
+
+  return expectedFirst == first && expectedSecond == second;
 }
 
-bool reportContains(const race::Report &report, TestRace race) {
-  return std::find_if(report.races.begin(), report.races.end(),
-                      [&](const race::Race &reportRace) { return race.equals(reportRace); }) != report.races.end();
-}
-bool reportContains(const race::Report &report, std::vector<TestRace> races) {
+// Check that report contains each expected race
+// if path is set, strip path from all sourceloc in race report
+bool reportContains(const race::Report &report, std::vector<TestRace> expectedRaces, llvm::StringRef path = "") {
   // loop over report, removing any matched races from the list of test races
   for (auto const &reportRace : report.races) {
-    auto it = std::find_if(races.begin(), races.end(), [&](const TestRace &race) { return race.equals(reportRace); });
-    if (it != races.end()) {
-      races.erase(it);
-      if (races.empty()) break;
+    auto it = std::find_if(expectedRaces.begin(), expectedRaces.end(),
+                           [&](const TestRace &race) { return race.equals(reportRace, path); });
+    if (it != expectedRaces.end()) {
+      expectedRaces.erase(it);
+      if (expectedRaces.empty()) break;
     }
   }
 
-  return races.empty();
+  return expectedRaces.empty();
 }
 
 Oracle::Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races) : filename(filename) {
@@ -107,10 +121,8 @@ void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {
       // }
       // llvm::errs() << "\n";
 
-      for (auto const &expectedRace : oracle.expectedRaces) {
-        CHECK(reportContains(report, expectedRace));
-      }
-      CHECK(report.size() == oracle.expectedRaces.size());
+      REQUIRE(report.size() == oracle.expectedRaces.size());
+      CHECK(reportContains(report, oracle.expectedRaces, llPath));
     }
   }
 }

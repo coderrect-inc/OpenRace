@@ -161,5 +161,5 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 172 critical
   };
 
-  checkOracles(oracles, "integration/dataracebench/ll/");
+  checkOracles(oracles, "integration/dataracebench/");
 }
