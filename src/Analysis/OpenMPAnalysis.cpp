@@ -78,6 +78,7 @@ class OpenMPLoopManager {
     return it == ompStaticInitBlocks.end() ? nullptr : it->second;
   }
 
+  // TODO: handle dynamic dispatch for loop
   inline CallBase *getStaticInitCallIfExist(const Loop *L) const {
     if (L->getLoopPreheader() == nullptr) {
       return nullptr;
@@ -88,25 +89,18 @@ class OpenMPLoopManager {
   }
 
   std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const CallBase *initForCall) const;
+
+  // TODO: handle dynamic dispatch for loop
+  inline bool isOMPForLoop(const Loop *L) const {
+    return this->getStaticInitCallIfExist(L) != nullptr;
+  }
+
 };
 
 }  // namespace
 
-static CallBase *getOMPStaticInitCall(const Loop *L, const OpenMPLoopManager &ompManger) {
-  if (L->getLoopPreheader() != nullptr && L->getLoopPreheader()->getUniquePredecessor() != nullptr) {
-    // find the corresponding static init call
-    return ompManger.getStaticInitCallIfExist(L->getLoopPreheader()->getUniquePredecessor());
-  }
-  return nullptr;
-}
-
-// TODO: handle dynamic dispatch for loop
-static inline bool isOMPForLoop(const Loop *L, const OpenMPLoopManager &ompManager) {
-  return getOMPStaticInitCall(L, ompManager) != nullptr;
-}
-
 template <typename PredTy>
-static const SCEV *FindSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
+static const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   struct FindClosure {
     const SCEV *Found = nullptr;
     PredTy Pred;
@@ -129,15 +123,15 @@ static const SCEV *FindSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
 }
 
 static inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
-  return FindSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
+  return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
 }
 
 static const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
   // get the outter-most loop (omp loop should always be the outter-most
   // loop
-  auto omp = FindSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
+  auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
     if (auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(S)) {
-      if (isOMPForLoop(addRec->getLoop(), ompManager)) {
+      if (ompManager.isOMPForLoop(addRec->getLoop())) {
         return true;
       }
     }
