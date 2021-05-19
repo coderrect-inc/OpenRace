@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <llvm/IR/IntrinsicInst.h>
 
-#include "PointerAnalysis/Program/InterceptResult.h"
+#include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
 
 namespace llvm::legacy {
 class PassManager;

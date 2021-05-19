@@ -18,7 +18,7 @@ limitations under the License.
 #include <llvm/IR/Value.h>
 
 #include "PointerAnalysis/Graph/CallGraph.h"
-#include "PointerAnalysis/Program/InterceptResult.h"
+#include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
 
 namespace pta {
 

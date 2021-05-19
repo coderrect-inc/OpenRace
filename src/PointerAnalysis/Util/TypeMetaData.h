@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <llvm/ADT/SmallVector.h>
 
-#include "PointerAnalysis/Models/MemoryModel/AllocSite.h"
+#include "PointerAnalysis/Program/AllocSite.h"
 
 namespace llvm {
 

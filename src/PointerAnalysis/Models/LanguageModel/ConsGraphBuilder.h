@@ -25,10 +25,9 @@ limitations under the License.
 #include "PointerAnalysis/Graph/ConstraintGraph/ConstraintGraph.h"
 #include "PointerAnalysis/Models/LanguageModel/PtrNodeManager.h"
 #include "PointerAnalysis/Models/MemoryModel/MemModelTrait.h"
-#include "PointerAnalysis/Models/MemoryModel/Object.h"
-#include "PointerAnalysis/Models/MemoryModel/SpecialObjects/MapObject.h"
 #include "PointerAnalysis/Program/CallSite.h"
 #include "PointerAnalysis/Program/CtxModule.h"
+#include "PointerAnalysis/Program/Object.h"
 #include "PointerAnalysis/Program/Pointer.h"
 //#include "aser/PreProcessing/Passes/RemoveExceptionHandlerPass.h"
 #include "Logging/Log.h"
@@ -462,9 +461,6 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
   friend SubClass;
   friend llvm::CtxInstVisitor<ctx, SubClass>;
-
-  template <typename Key, typename PT>
-  friend class MapObject;
 
  protected:
   inline void constructConsGraph() {

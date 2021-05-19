@@ -18,7 +18,6 @@ limitations under the License.
 #include "CGObjNode.h"
 #include "CGPtrNode.h"
 #include "PointerAnalysis/Graph/GraphBase/GraphBase.h"
-#include "PointerAnalysis/Program/Program.h"
 #include "PointerAnalysis/Util/Statistics.h"
 #include "llvm/Support/DOTGraphTraits.h"
 

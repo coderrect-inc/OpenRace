@@ -27,7 +27,7 @@ struct InterceptResult {
   enum class Option {
     EXPAND_BODY,    // analyze and expand the body of the function
     ONLY_CALLSITE,  // do not analyze into the function body, but keep the
-                    // callsite
+                    // callsite (so that there is a callnode in the callgraph)
     IGNORE_FUN,     // ignore the function completely (no callnode in the
                     // callgraph).
   };

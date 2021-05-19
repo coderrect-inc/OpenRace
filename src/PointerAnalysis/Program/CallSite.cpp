@@ -37,7 +37,6 @@ const Function* pta::CallSite::resolveTargetFunction(const Value* calledValue) {
     if (auto function = dyn_cast<Function>(globalSymbol)) {
       return function;
     }
-    LOG_ERROR("Unhandled Global Alias. alias={}", *globalAlias);
     llvm_unreachable(
         "resolveTargetFunction matched globalAlias but symbol was not "
         "Function");
@@ -46,7 +45,5 @@ const Function* pta::CallSite::resolveTargetFunction(const Value* calledValue) {
   if (isa<UndefValue>(calledValue)) {
     return nullptr;
   }
-  LOG_ERROR("Unable to resolveTargetFunction from calledValue. called={}", *calledValue);
-  // return nullptr;
   llvm_unreachable("Unable to resolveTargetFunction from calledValue");
 }

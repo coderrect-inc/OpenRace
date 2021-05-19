@@ -88,7 +88,7 @@ class CGNodeBase {
 
   Self *superNode;  // the super node
   llvm::SparseBitVector<> childNodes;
-
+  // whether the node is immutable (the points-to set should not be updated)
   bool isImmutable;
 #define USE_NODE_ID_FOR_CONSTRAINTS
 #ifdef USE_NODE_ID_FOR_CONSTRAINTS
@@ -119,8 +119,7 @@ class CGNodeBase {
       // this --store--> node
       // this --copy--> node
       // this --offset--> node
-      // all these constraints will update the points-to set of an immutable
-      // node
+      // all these constraints will update the points-to set of an immutable node
       return false;
     }
     auto src = this->getSuperNode();
@@ -385,131 +384,6 @@ class CGNodeBase {
   friend class GraphBase<Self, Constraints>;
   friend class ConstraintGraph<ctx>;
 };
-
-// `above` --- number of lines above the target line
-// `below` --- number of lines below the target line
-static std::string getPTACodeSnippet(std::string directory, std::string filename, unsigned line, unsigned col,
-                                     unsigned above, unsigned below) {
-  assert(above >= 0 && below >= 0);
-  // source code file path
-  std::string absPath = directory + "/" + filename;
-  // counter for how many lines we have to go through from line 1
-  unsigned rest = line + below;
-  // a simple ring-buffer to store before the target line code
-  std::vector<std::string> buf(above);
-  unsigned idx = 0;
-
-  std::stringstream raw;
-  std::ifstream input(absPath);
-
-  for (std::string ln; std::getline(input, ln);) {
-    --rest;
-    // either hit or had already hit the target line
-    // need to construct the output
-    if (rest < below + 1) {
-      // just hit the target source line
-      // append the previous lines to the output
-      if (rest == below) {
-        // `n` is the number of lines we need to append before target line
-        // e.g. if target line is 5, the span is 3
-        // then we need to append 3 lines (line 2,3,4)
-        // if the target line is 5, the span is 7
-        // then we append 4 lines (that's all we have)
-        unsigned n = line > above ? above : (line - 1);
-        for (unsigned i = 0; i < n; i++) {
-          raw << " " << line - above + i << "|" << buf[(idx + above - i) % above] << "\n";
-        }
-        raw << ">";
-      }
-      // had already hit the target line
-      else {
-        raw << " ";
-      }
-      raw << (line + below - rest) << "|" << ln << "\n";
-      if (rest < 0) {
-        break;
-      }
-    }
-    // haven't hit the target line
-    // store the current line into ring-buffer
-    if (above > 0) {
-      buf[idx] = ln;
-      idx = (idx + 1) % above;
-    }
-  }
-  return raw.str();
-}
-
-// JEFF: for test debug
-static std::string getPTASourceLocSnippet(const Value *val) {
-  if (val == NULL) return "null";
-
-  unsigned line = 0;
-  unsigned col = 0;
-  std::string filename;
-  std::string directory;
-  // variable name
-  // for now this will only be set for AllocaInst
-  // so that we can know the shared variable name (if it's a stack variable)
-  std::string name;
-
-  if (const Instruction *inst = llvm::dyn_cast<Instruction>(val)) {
-    if (MDNode *N = inst->getMetadata("dbg")) {
-      llvm::DILocation *loc = llvm::cast<llvm::DILocation>(N);
-      line = loc->getLine();
-      // this col number is inaccurate
-      col = loc->getColumn();
-      filename = loc->getFilename().str();
-      directory = loc->getDirectory().str();
-      // get the accurate col number
-      // col = getAccurateCol(directory, filename, line, col,
-      // isa<StoreInst>(inst));
-    } else if (isa<AllocaInst>(inst)) {
-      // TODO: there must be other insts than AllocaInst
-      // that can be a shared variable
-      for (DbgInfoIntrinsic *DII : FindDbgAddrUses(const_cast<Instruction *>(inst))) {
-        if (llvm::DbgDeclareInst *DDI = llvm::dyn_cast<llvm::DbgDeclareInst>(DII)) {
-          llvm::DIVariable *DIVar = llvm::cast<llvm::DIVariable>(DDI->getVariable());
-          line = DIVar->getLine();
-          col = 0;
-          filename = DIVar->getFilename().str();
-          directory = DIVar->getDirectory().str();
-          name = DIVar->getName().str();
-          break;
-        }
-      }
-    }
-  } else if (const GlobalVariable *gvar = llvm::dyn_cast<llvm::GlobalVariable>(val)) {
-    // find the debuggin information for global variables
-    llvm::NamedMDNode *CU_Nodes = gvar->getParent()->getNamedMetadata("llvm.dbg.cu");
-    if (CU_Nodes) {
-      // iterate over all the !DICompileUnit
-      // each of whom has a field called globals to indicate all the debugging
-      // info for global variables
-      for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-        llvm::DICompileUnit *CUNode = llvm::cast<llvm::DICompileUnit>(CU_Nodes->getOperand(i));
-        for (llvm::DIGlobalVariableExpression *GV : CUNode->getGlobalVariables()) {
-          llvm::DIGlobalVariable *DGV = GV->getVariable();
-          // DGV->getLinkageName() is the mangled name
-          if (DGV->getName() == gvar->getName() || DGV->getLinkageName() == gvar->getName()) {
-            line = DGV->getLine();
-            col = 0;
-            filename = DGV->getFilename().str();
-            directory = DGV->getDirectory().str();
-            name = DGV->getName() == gvar->getName() ? DGV->getName().str() : DGV->getLinkageName().str();
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  llvm::outs() << "name: " << name << " dir: " << directory << " file: " << filename << " line: " << line << "\n";
-  auto snippet = getPTACodeSnippet(directory, filename, line, 0, 2, 2);
-
-  return snippet;
-  // return SourceInfo(val, line, col, filename, directory, name);
-}
 
 }  // namespace pta
 

@@ -107,14 +107,6 @@ class LangModelBase : public ConsGraphBuilder<ctx, MemModel, PtsTy, SubClass> {
   using ObjNode = typename Super::ObjNode;
   using PtrNode = typename Super::PtrNode;
 
-  template <typename KeyT>
-  [[nodiscard]] inline MapObject<KeyT, Self> *getOrAllocMapObj(const ctx *context, const void *tag) {
-    using MapObjKeyT = std::pair<const ctx *, const void *>;
-    static llvm::DenseMap<MapObjKeyT, MapObject<KeyT, Self>> mapObjMap;
-
-    return &mapObjMap.try_emplace(std::make_pair(context, tag), *this).first->second;
-  }
-
   // return true if the function need to be expanded in callgraph.
   inline InterceptResult overrideFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
                                           const llvm::Instruction *callsite) {
