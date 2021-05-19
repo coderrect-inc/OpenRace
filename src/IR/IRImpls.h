@@ -207,6 +207,27 @@ class LockIRImpl : public LockIR {
   static inline bool classof(const IR *e) { return e->type == T; }
 };
 
+class OpenMPCriticalStart: public LockIR {
+  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L1157
+  // @param loc  source location information
+  // @param global_tid  global thread number
+  // @param crit identity of the critical section. This could be a pointer to a lock
+  // associated with the critical section, or some other suitably unique value
+  const unsigned int identityOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPCriticalStart(const llvm::CallBase *call) : LockIR(Type::OpenMPCriticalStart), inst(call) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getLockValue() const override {
+    return inst->getArgOperand(identityOffset)->stripPointerCasts();
+  }
+
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPCriticalStart; }
+};
+
 // NOTE: if a specific API semantic is the same as default impl,
 // create a type alias.
 using PthreadMutexLock = LockIRImpl<IR::Type::PthreadMutexLock>;
@@ -234,6 +255,27 @@ class UnlockIRImpl : public UnlockIR {
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == T; }
+};
+
+class OpenMPCriticalEnd : public UnlockIR {
+  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L1512
+  // @param loc  source location information
+  // @param global_tid  global thread number
+  // @param crit identity of the critical section. This could be a pointer to a lock
+  // associated with the critical section, or some other suitably unique value
+  const unsigned int identityOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPCriticalEnd(const llvm::CallBase *call) : UnlockIR(Type::OpenMPCriticalEnd), inst(call) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getLockValue() const override {
+    return inst->getArgOperand(identityOffset)->stripPointerCasts();
+  }
+
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPCriticalEnd; }
 };
 
 // NOTE: if a specific API semantic is the same as default impl,

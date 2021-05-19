@@ -76,3 +76,54 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
     }
   }
 }
+
+TEST_CASE("Construct critical ThreadTrace", "[unit][event]") {
+  const char *ModuleString = R"(
+%struct.ident_t = type { i32, i32, i32, i32, i8* }
+@.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
+@0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
+@.gomp_critical_user_.var = common global [8 x i32] zeroinitializer
+
+define dso_local i32 @main() #0 {
+  call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* @0, i32 0, void (i32*, i32*, ...)* bitcast (void (i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*))
+  ret i32 0
+}
+
+define internal void @.omp_outlined.(i32* noalias %0, i32* noalias %1)#1 {
+  %3 = alloca i32*, align 8
+  %4 = alloca i32*, align 8
+  store i32* %0, i32** %3, align 8
+  store i32* %1, i32** %4, align 8
+  %5 = load i32*, i32** %3, align 8
+  %6 = load i32, i32* %5, align 4
+  call void @__kmpc_critical(%struct.ident_t* @0, i32 %6, [8 x i32]* @.gomp_critical_user_.var)
+  call void @__kmpc_end_critical(%struct.ident_t* @0, i32 %6, [8 x i32]* @.gomp_critical_user_.var)
+  ret void
+}
+
+declare dso_local void @__kmpc_critical(%struct.ident_t*, i32, [8 x i32]*)
+declare dso_local void @__kmpc_end_critical(%struct.ident_t*, i32, [8 x i32]*)
+declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...)
+)";
+
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  if (!module) {
+    Err.print("error", llvm::errs());
+  }
+
+  race::ProgramTrace program(module.get());
+  auto const &threads = program.getThreads();
+  REQUIRE(threads.size() == 3);
+
+  auto const &thread = threads.at(1);
+  auto const &events = thread->getEvents();
+  REQUIRE(events.size() == 3);
+
+  auto const &critical = events.at(1);
+  CHECK(critical->type == race::Event::Type::Lock);
+
+  auto const &endcritical = events.at(2);
+  CHECK(endcritical->type == race::Event::Type::Unlock);
+}

@@ -5,7 +5,7 @@ title: Setting Up Dev Environment
 
 ## Setting Up Dependencies
 
-It is **highly** recommended that development be done on Linux.
+It is **highly** recommended that the development be done on Linux.
 
 We test all of our builds using Ubuntu 20.04 and most of our core team is using Manjaro, though any recent linux based OS should work.
 

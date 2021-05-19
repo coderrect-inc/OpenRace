@@ -114,13 +114,17 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5",    // read-write
               "DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5"}),  // write-write
       Oracle("DRB083-declared-in-func-orig-no.ll", {}),
-      // 84 omp critical
+      Oracle("DRB084-threadprivatemissing-orig-yes.ll",
+             {"DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:7",    // write-write
+              "DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:8"}),  // read-write
       // 85 threadprivate + copyin + critical
       // 86-87 threadprivate
       // 88-89 PTA Fails ??
       // 90 missed read-write race
       // 91 threadprivate + critical + copyin
-      // 92 critical
+      Oracle("DRB092-threadprivatemissing2-orig-yes.ll",
+             {"DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:11",    // write-write
+              "DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:12"}),  // read-write
       Oracle("DRB093-doall2-collapse-orig-no.ll", {}),
       // 94 ordered + depend sink
       // 95 taskloop
@@ -163,7 +167,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
       // 171 threadprivate + tid path
-      // 172 critical
+      Oracle("DRB172-critical2-orig-no.ll", {}),
   };
 
   checkOracles(oracles, "integration/dataracebench/");
