@@ -8,9 +8,6 @@
 using namespace race;
 using namespace llvm;
 
-#define KMPC_STATIC_INIT_PREFIX "__kmpc_for_static_init"
-#define KMPC_DISPATCH_INIT_PREFIX "__kmpc_dispatch_init"
-
 namespace {
 
 const llvm::GetElementPtrInst *getArrayAccess(const MemAccessEvent *event) {
@@ -225,9 +222,9 @@ void OpenMPLoopManager::init() {
       if (auto call = dyn_cast<CallBase>(&I)) {
         if (call->getCalledFunction() != nullptr && call->getCalledFunction()->hasName()) {
           auto funcName = call->getCalledFunction()->getName();
-          if (funcName.startswith(KMPC_STATIC_INIT_PREFIX)) {
+          if (OpenMPModel::isForStaticInit(funcName)) {
             this->ompStaticInitBlocks.insert(std::make_pair(&BB, call));
-          } else if (funcName.startswith(KMPC_DISPATCH_INIT_PREFIX)) {
+          } else if (OpenMPModel::isForDispatchInit(funcName)) {
             this->ompDispatchInitBlocks.insert(std::make_pair(&BB, call));
           }
         }
@@ -267,10 +264,10 @@ Optional<int64_t> OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, cons
 
 std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoopBound(const CallBase *initForCall) const {
   Value *ompLB = nullptr, *ompUB = nullptr;  // up bound and lower bound
-  if (initForCall->getCalledFunction()->getName().startswith(KMPC_STATIC_INIT_PREFIX)) {
+  if (OpenMPModel::isForStaticInit(initForCall->getCalledFunction()->getName())) {
     ompLB = initForCall->getArgOperand(4);
     ompUB = initForCall->getArgOperand(5);
-  } else if (initForCall->getCalledFunction()->getName().startswith(KMPC_DISPATCH_INIT_PREFIX)) {
+  } else if (OpenMPModel::isForDispatchInit(initForCall->getCalledFunction()->getName())) {
     ompLB = initForCall->getArgOperand(3);
     ompUB = initForCall->getArgOperand(4);
   } else {
