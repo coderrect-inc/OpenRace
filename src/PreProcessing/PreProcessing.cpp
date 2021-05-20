@@ -11,7 +11,6 @@ limitations under the License.
 
 #include "PreProcessing/PreProcessing.h"
 
-#include <llvm/Analysis/ScopedNoAliasAA.h>
 #include <llvm/Analysis/TypeBasedAliasAnalysis.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
