@@ -11,6 +11,7 @@ limitations under the License.
 
 #include "OMPConstantPropPass.h"
 
+#include "LanguageModel/OpenMP.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -209,7 +210,7 @@ static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT
   }
 
   // special case, the omp_outlined function calls use a pointer but only reads it
-  if (F.getName().startswith(".omp_outlined.")) {
+  if (OpenMPModel::isOutlined(F.getName())) {
     for (int i = 2; i < F.arg_size(); i++) {
       // skip the first two args: i32* noalias %.global_tid., i32* noalias %.bound_tid.
       if (!F.getArg(i)->getType()->isPointerTy()) {
