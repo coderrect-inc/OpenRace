@@ -38,7 +38,8 @@ class Event {
   [[nodiscard]] virtual const ThreadTrace &getThread() const = 0;
   [[nodiscard]] virtual const race::IR *getIRInst() const = 0;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const { return getIRInst()->getInst(); }
-  [[nodiscard]] const llvm::Function *getFunction() const { return getIRInst()->getInst()->getFunction(); }
+  [[nodiscard]] const llvm::Function *getFunction() const { return getInst()->getFunction(); }
+
  protected:
   explicit Event(Type type) : type(type) {}
 };
