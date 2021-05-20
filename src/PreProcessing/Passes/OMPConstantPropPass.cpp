@@ -310,20 +310,3 @@ PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM)
   PA.preserve<DominatorTreeAnalysis>();
   return PA;
 }
-
-bool LegacyOMPConstantPropPass::runOnModule(Module &M) {
-  auto GetTLI = [this](Function &F) -> const TargetLibraryInfo & {
-    return this->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
-  };
-
-  auto GetDT = [this](Function &F) -> const DominatorTree & {
-    return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
-  };
-
-  return runOMPCP(M, GetTLI, GetDT);
-}
-
-char LegacyOMPConstantPropPass::ID = 0;
-static RegisterPass<LegacyOMPConstantPropPass> OCP("Constant Propagation for OMP callbacks",
-                                                   "Constant Propagation for OMP callbacks", true, /*CFG only*/
-                                                   false /*is analysis*/);
