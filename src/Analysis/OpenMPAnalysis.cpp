@@ -397,12 +397,8 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
     if (std::all_of(gaps.begin(), gaps.end(), [](const SCEV *expr) -> bool {
           if (auto constExpr = dyn_cast<SCEVConstant>(expr)) {
-            if (constExpr->getAPInt().isNonPositive()) {
-              // the gaps are smaller or equal to zero
-              return false;
-            } else {
-              return true;
-            }
+            // the gaps are smaller or equal to zero
+            return !constExpr->getAPInt().isNonPositive();
           }
           return false;
         })) {
