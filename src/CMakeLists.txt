@@ -14,8 +14,8 @@ set(pta-lib-sources
         PointerAnalysis/Models/MemoryModel/DefaultHeapModel.cpp
         PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.cpp
         PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/ArrayLayout.cpp
-        PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/FSLayouts.cpp
-        PointerAnalysis/Models/MemoryModel/CppMemModel/RewriteModeledAPIPass.cpp
+        PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Layouts.cpp
+        PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.cpp
         PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.cpp
         PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.cpp
         PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.cpp         )

@@ -23,7 +23,7 @@ limitations under the License.
 
 #include "Demangler/Demangler.h"
 #include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
-#include "PointerAnalysis/Models/MemoryModel/CppMemModel/RewriteModeledAPIPass.h"
+#include "PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSCanonicalizer.h"
@@ -149,6 +149,7 @@ class CppMemModel : public FSMemModel<ctx> {
       }
     }
 
+    // TODO: this is a little bit too complicated, refactor it
     auto vectorElemT = VectorAPI::resolveVecElemType(type);
     if (vectorElemT && VectorAPI::isSupportedElementType(vectorElemT)) {
       auto vector = new Vector<ctx>(vectorElemT);

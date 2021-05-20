@@ -13,7 +13,7 @@ limitations under the License.
 // Created by peiming on 7/23/20.
 //
 
-#include "PointerAnalysis/Models/MemoryModel/CppMemModel/RewriteModeledAPIPass.h"
+#include "RewriteModeledAPIPass.h"
 
 #include <llvm/IR/IRBuilder.h>
 

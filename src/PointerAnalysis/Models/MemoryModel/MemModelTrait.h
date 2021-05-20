@@ -19,10 +19,10 @@ limitations under the License.
 
 #include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
 
-namespace llvm::legacy {
-class PassManager;
-}
+namespace llvm::legacy { class PassManager; }
+
 namespace pta {
+
 template <typename ctx>
 class CtxFunction;
 
@@ -35,7 +35,6 @@ struct MemModelTrait {
   // object type
   using ObjectTy = typename MemModel::UnknownTypeError;
   // canonializer
-
   using Canonicalizer = typename MemModel::UnknownTypeError;
   /*
   //  ** required fields begin
@@ -44,7 +43,7 @@ struct MemModelTrait {
   // whether all BitCast will be collapse
   static const bool COLLAPSE_BITCAST = false;
   // whether type information is necessary, we need type information to build
-  the memory layout static const bool NEED_TYPE_INFO = false;
+  // the memory layout static const bool NEED_TYPE_INFO = false;
   // ** required fields end
   */
 

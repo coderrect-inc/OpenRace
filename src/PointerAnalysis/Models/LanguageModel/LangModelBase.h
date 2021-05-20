@@ -35,12 +35,6 @@ class LangModelBase : public ConsGraphBuilder<ctx, MemModel, PtsTy, SubClass> {
     llvm_unreachable("SubClass should override the function!");
   }
 
-  //    // determine whether the API is a heap allocation API
-  //    inline bool isExtHeapAllocAPI(const llvm::Function *F, const
-  //    llvm::Instruction *callSite) {
-  //        llvm_unreachable("SubClass should override the function!");
-  //    }
-
   // modelling the heap allocation
   inline void interceptHeapAllocSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
                                      const llvm::Instruction *callsite) {

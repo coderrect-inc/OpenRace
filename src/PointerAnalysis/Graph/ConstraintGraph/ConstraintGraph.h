@@ -18,7 +18,6 @@ limitations under the License.
 #include "CGObjNode.h"
 #include "CGPtrNode.h"
 #include "PointerAnalysis/Graph/GraphBase/GraphBase.h"
-#include "PointerAnalysis/Util/Statistics.h"
 #include "llvm/Support/DOTGraphTraits.h"
 
 #define DEBUG_TYPE "pta-cons-graph"
@@ -39,11 +38,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
   struct OnNewConstraintCallBack {
     virtual void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) = 0;
   };
-
-  LOCAL_STATISTIC(NumObjNode, "Number of Object Nodes");
-  LOCAL_STATISTIC(NumPtrNode, "Number of Pointer Nodes");
-  LOCAL_STATISTIC(NumConstraints, "Number of Constrains");
-  LOCAL_STATISTIC(NumNodes, "Number of Nodes in Total");
 
  private:
   OnNewConstraintCallBack *callBack;
@@ -96,7 +90,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
           // the edge is actually adding to the super node
           callBack->onNewConstraint(anonNode, dst->getSuperNode(), Constraints::copy);
         }
-        NumConstraints++;
         return true;
       }
       return false;
@@ -105,7 +98,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       if (callBack && newEdge) {
         // the edge is actually adding to the super node
         callBack->onNewConstraint(src->getSuperNode(), dst->getSuperNode(), constraint);
-        NumConstraints++;
       }
 
       return newEdge;
@@ -164,7 +156,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
     PT::onNewNodeCreation(node->getNodeID());
 
     if (node->getType() == CGNodeKind::ObjNode) {
-      NumObjNode++;
       // create an anon node which take the address of the node
       // Convention! objnode_id + 1 = anonomyous node
       CGPtrNode<ctx> *anonNode = addCGNode<CGPtrNode<ctx>, PT>();
@@ -177,10 +168,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
         assert(objVec.size() == node->getObjectID());
         objVec.push_back(node);
       }
-    } else {
-      NumPtrNode++;
     }
-    NumNodes++;
     return node;
   }
 
