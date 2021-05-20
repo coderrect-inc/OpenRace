@@ -90,10 +90,8 @@ class OpenMPLoopManager {
   inline bool isOMPForLoop(const Loop *L) const { return this->getStaticInitCallIfExist(L) != nullptr; }
 };
 
-}  // namespace
-
 template <typename PredTy>
-static const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
+const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   struct FindClosure {
     const SCEV *Found = nullptr;
     PredTy Pred;
@@ -115,11 +113,11 @@ static const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   return FC.Found;
 }
 
-static inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
+inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
   return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
 }
 
-static const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
+const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
   // get the outter-most loop (omp loop should always be the outter-most
   // loop
   auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
@@ -134,10 +132,12 @@ static const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMP
   return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
-static const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
+const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
   auto step = root->getOperand(1);
   return SE.getAddRecExpr(SE.getAddExpr(root->getOperand(0), step), step, root->getLoop(), root->getNoWrapFlags());
 }
+
+}  // namespace
 
 const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
   auto result = super::visit(S);

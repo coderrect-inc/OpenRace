@@ -32,7 +32,9 @@ using namespace llvm;
 
 DEBUG_COUNTER(CPCounter, "constprop-transform", "Controls which instructions are killed");
 
-static inline bool hasGlobalOverwritten(GlobalVariable *GV) {
+namespace {
+
+inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   for (auto user : GV->users()) {
     if (isa<StoreInst>(user)) {
       return true;
@@ -41,7 +43,7 @@ static inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   return false;
 }
 
-static bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
+bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   // Initialize the worklist to all of the instructions ready to process...
   SmallPtrSet<Instruction *, 16> WorkList;
   // The SmallVector of WorkList ensures that we do iteration at stable order.
@@ -102,7 +104,7 @@ static bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   return Changed;
 }
 
-static StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
+StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
   StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
     if (auto SI = llvm::dyn_cast<llvm::StoreInst>(user)) {
@@ -122,7 +124,7 @@ static StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, co
   return storeInst;
 }
 
-static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
+bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
   if (F.arg_empty() || F.use_empty()) return false;  // No arguments? Early exit.
 
   // For each argument, keep track of its constant value and whether it is a
@@ -257,8 +259,8 @@ static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT
   return MadeChange;
 }
 
-static bool runOMPCP(Module &M, std::function<const TargetLibraryInfo &(Function &)> GetTLI,
-                     std::function<const DominatorTree &(Function &)> GetDT) {
+bool runOMPCP(Module &M, std::function<const TargetLibraryInfo &(Function &)> GetTLI,
+              std::function<const DominatorTree &(Function &)> GetDT) {
   bool Changed = false, LocalChange = true, functionChanged = true;
 
   for (Function &F : M) {
@@ -295,6 +297,7 @@ static bool runOMPCP(Module &M, std::function<const TargetLibraryInfo &(Function
   }
   return Changed;
 }
+}  // namespace
 
 PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM) {
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
