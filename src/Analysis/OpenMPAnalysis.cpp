@@ -297,11 +297,9 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return false;
   }
 
+  // TODO: get rid of const cast?
   auto &targetFun = *const_cast<llvm::Function *>(gep1->getFunction());
   OpenMPLoopManager ompManager(FAM, targetFun);
-
-  // TODO: get rid of const cast? Also does FAM cache these results (I think it does?)
-  auto &LI = FAM.getResult<LoopAnalysis>(targetFun);
   auto &scev = FAM.getResult<ScalarEvolutionAnalysis>(targetFun);
 
   BitExtSCEVRewriter rewriter(scev);
