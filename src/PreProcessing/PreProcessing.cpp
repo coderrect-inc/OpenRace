@@ -11,8 +11,8 @@ limitations under the License.
 
 #include "PreProcessing/PreProcessing.h"
 
-#include <llvm/Analysis/TypeBasedAliasAnalysis.h>
 #include <llvm/Analysis/ScopedNoAliasAA.h>
+#include <llvm/Analysis/TypeBasedAliasAnalysis.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
@@ -42,6 +42,7 @@ static void markOMPDebugAlwaysInline(llvm::Module &module) {
 }
 
 void preprocess(llvm::Module &module) {
+  // inline debug omp to make inter-procedural constant propagation easier
   markOMPDebugAlwaysInline(module);
 
   llvm::PassBuilder pb;
@@ -58,7 +59,7 @@ void preprocess(llvm::Module &module) {
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::FunctionPassManager fpm;
-  fpm.addPass(llvm::SROA());
+  fpm.addPass(llvm::SROA());  // This pass causes some accesses to be optimized out
   fpm.addPass(llvm::EarlyCSEPass(true));
   fpm.addPass(llvm::SimplifyCFGPass());
   fpm.addPass(llvm::InstCombinePass());
@@ -79,10 +80,8 @@ void preprocess(llvm::Module &module) {
   fpm.addPass(llvm::SimplifyCFGPass());
   fpm.addPass(llvm::InstCombinePass());
   fpm.addPass(llvm::createFunctionToLoopPassAdaptor(std::move(lpmPost)));
-
   fpm.addPass(llvm::MemCpyOptPass());
   fpm.addPass(llvm::SCCPPass());
-  //fpm.addPass(CanonicalizeGEPPass());
 
   llvm::ModulePassManager mpm;
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
