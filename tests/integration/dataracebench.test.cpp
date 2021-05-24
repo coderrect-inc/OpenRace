@@ -123,11 +123,11 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB085-threadprivate-orig-no.ll", {}),
       // 86-87 threadprivate
       Oracle("DRB086-static-data-member-orig-yes.ll",
-             {"DRB086-static-data-member-orig-yes.c:72:13 DRB086-static-data-member-orig-yes.c:72:13",
-              "DRB086-static-data-member-orig-yes.c:72:13 DRB086-static-data-member-orig-yes.c:72:13"}),
+             {"DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13",
+              "DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13"}),
       Oracle("DRB087-static-data-member2-orig-yes.ll",
-             {"DRB087-static-data-member2-orig-yes.c:74:13 DRB087-static-data-member2-orig-yes.c:74:13",
-              "DRB087-static-data-member2-orig-yes.c:74:13 DRB087-static-data-member2-orig-yes.c:74:13"}),
+             {"DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13",
+              "DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13"}),
       // 88-89 PTA Fails ??
       // 90 missed read-write race
       // 91 threadprivate + critical + copyin
