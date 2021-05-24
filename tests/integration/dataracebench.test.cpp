@@ -119,9 +119,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
           "DRB084-threadprivatemissing-orig-yes.ll",
           {"DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:7",    // write-write
            "DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:8"}),  // read-write
-      // 85 threadprivate + copyin + critical
       Oracle("DRB085-threadprivate-orig-no.ll", {}),
-      // 86-87 threadprivate
       Oracle("DRB086-static-data-member-orig-yes.ll",
              {"DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13",
               "DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13"}),
@@ -130,7 +128,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
               "DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13"}),
       // 88-89 PTA Fails ??
       // 90 missed read-write race
-      // 91 threadprivate + critical + copyin
+      Oracle("DRB091-threadprivate2-orig-no.ll", {}),
       Oracle(
           "DRB092-threadprivatemissing2-orig-yes.ll",
           {"DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:11",  // write-write
@@ -143,7 +141,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 98 simd + collpase
       // 99 target
       // 100-101 task
-      // 102 threadprivate + copyprivate
+      // 102 threadprivate + copyprivate => Oracle("DRB102-copyprivate-orig-no.ll", {}),
       // 103 master
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
@@ -177,7 +175,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
-      // 171 threadprivate + tid path
+      // 171 threadprivate // path condition
       Oracle("DRB172-critical2-orig-no.ll", {}),
   };
 
