@@ -28,6 +28,15 @@ bool hasNoAliasMD(const llvm::Instruction *inst) {
   return AAMD.NoAlias != nullptr;
 }
 
+bool hasThreadLocalOperand(const llvm::Instruction *inst) {
+  auto ptr = getPointerOperand(inst);
+  assert(ptr);
+  if (auto global = llvm::dyn_cast<llvm::GlobalVariable>(ptr)) {
+    return global->isThreadLocal();
+  }
+  return false;
+}
+
 // Assuming ompForkCall points to a OpenMP fork call, the next inst should be a duplicate omp fork call
 // this returns that omp fork or null if the next inst is not a omp fork call
 std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
@@ -66,12 +75,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-        if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst)) {
+        if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst) || hasThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-        if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst)) {
+        if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst) || hasThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
