@@ -56,6 +56,8 @@ class IR {
     OpenMPSingleStart,
     OpenMPSingleEnd,
     OpenMPReduce,
+    OpenMPMasterStart,
+    OpenMPMasterEnd,
     END_Call
   } type;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const = 0;

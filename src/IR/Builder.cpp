@@ -117,6 +117,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
+        } else if (OpenMPModel::isMasterStart(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPMasterStart>(callInst));
+        } else if (OpenMPModel::isMasterEnd(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
           instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName)) {
