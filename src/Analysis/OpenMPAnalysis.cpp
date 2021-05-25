@@ -59,8 +59,7 @@ class OpenMPLoopManager {
  public:
   // constructor
   OpenMPLoopManager(AnalysisManager<Function> &FAM, Function &fun)
-      : F(&fun),
-        DT(&FAM.getResult<DominatorTreeAnalysis>(fun)) {
+      : F(&fun), DT(&FAM.getResult<DominatorTreeAnalysis>(fun)) {
     init();
   }
 
@@ -88,16 +87,11 @@ class OpenMPLoopManager {
   std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const CallBase *initForCall) const;
 
   // TODO: handle dynamic dispatch for loop
-  inline bool isOMPForLoop(const Loop *L) const {
-    return this->getStaticInitCallIfExist(L) != nullptr;
-  }
-
+  inline bool isOMPForLoop(const Loop *L) const { return this->getStaticInitCallIfExist(L) != nullptr; }
 };
 
-}  // namespace
-
 template <typename PredTy>
-static const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
+const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   struct FindClosure {
     const SCEV *Found = nullptr;
     PredTy Pred;
@@ -119,11 +113,11 @@ static const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   return FC.Found;
 }
 
-static inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
+inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
   return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
 }
 
-static const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
+const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
   // get the outter-most loop (omp loop should always be the outter-most
   // loop
   auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
@@ -138,11 +132,12 @@ static const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMP
   return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
-static const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
+const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
   auto step = root->getOperand(1);
-  return SE.getAddRecExpr(SE.getAddExpr(root->getOperand(0), step), step,
-                          root->getLoop(), root->getNoWrapFlags());
+  return SE.getAddRecExpr(SE.getAddExpr(root->getOperand(0), step), step, root->getLoop(), root->getNoWrapFlags());
 }
+
+}  // namespace
 
 const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
   auto result = super::visit(S);
@@ -185,7 +180,7 @@ const SCEV *BitExtSCEVRewriter::rewriteCastExpr(const SCEVCastExpr *Expr) {
   return Operand == Expr->getOperand() ? Expr : buildCastExpr(Operand, Expr->getType());
 }
 
-const llvm::SCEV * SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) {
+const llvm::SCEV *SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) {
   // stop at the OpenMP Loop
   if (Expr->getLoop() == ompLoop) {
     return Expr;
@@ -262,7 +257,8 @@ Optional<int64_t> OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, cons
   }
 }
 
-std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoopBound(const CallBase *initForCall) const {
+std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoopBound(
+    const CallBase *initForCall) const {
   Value *ompLB = nullptr, *ompUB = nullptr;  // up bound and lower bound
   if (OpenMPModel::isForStaticInit(initForCall->getCalledFunction()->getName())) {
     ompLB = initForCall->getArgOperand(4);
@@ -301,11 +297,9 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return false;
   }
 
+  // TODO: get rid of const cast?
   auto &targetFun = *const_cast<llvm::Function *>(gep1->getFunction());
   OpenMPLoopManager ompManager(FAM, targetFun);
-
-  // TODO: get rid of const cast? Also does FAM cache these results (I think it does?)
-  auto &LI = FAM.getResult<LoopAnalysis>(targetFun);
   auto &scev = FAM.getResult<ScalarEvolutionAnalysis>(targetFun);
 
   BitExtSCEVRewriter rewriter(scev);
@@ -398,22 +392,16 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     auto n1 = getNextIterSCEV(omp1, scev);
     auto n2 = getNextIterSCEV(omp2, scev);
 
-    std::vector<const SCEV *> gaps = {scev.getMinusSCEV(n1, b1),
-                                      scev.getMinusSCEV(n1, b2),
-                                      scev.getMinusSCEV(n2, b1),
+    std::vector<const SCEV *> gaps = {scev.getMinusSCEV(n1, b1), scev.getMinusSCEV(n1, b2), scev.getMinusSCEV(n2, b1),
                                       scev.getMinusSCEV(n2, b2)};
 
-    if (std::all_of(gaps.begin(), gaps.end(), [](const SCEV *expr)->bool {
+    if (std::all_of(gaps.begin(), gaps.end(), [](const SCEV *expr) -> bool {
           if (auto constExpr = dyn_cast<SCEVConstant>(expr)) {
-            if (constExpr->getAPInt().isNonPositive()) {
-              // the gaps are smaller or equal to zero
-              return false;
-            } else {
-              return true;
-            }
+            // the gaps are smaller or equal to zero
+            return !constExpr->getAPInt().isNonPositive();
           }
-          return false; })) {
-
+          return false;
+        })) {
       // then there is no race
       return false;
     }
@@ -428,7 +416,7 @@ namespace {
 
 // return true if both events belong to the same OpenMP team
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
-bool _inSameTeam(const Event* event1, const Event* event2) {
+bool _inSameTeam(const Event *event1, const Event *event2) {
   // Check both spawn events are OpenMP forks
   auto e1Spawn = event1->getThread().spawnSite;
   if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
@@ -480,10 +468,10 @@ auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::O
 // return true if event is inside of a region marked by Start and End
 // see getRegions for more detail on regions
 template <IR::Type Start, IR::Type End>
-bool in(const race::Event* event) {
+bool in(const race::Event *event) {
   auto const regions = getRegions<Start, End>(event->getThread());
   auto const eid = event->getID();
-  for (auto const& region : regions) {
+  for (auto const &region : regions) {
     if (region.contains(eid)) return true;
     // Break early if we pass the eid without finding matching region
     if (region.end > eid) return false;
@@ -494,7 +482,7 @@ bool in(const race::Event* event) {
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
 template <IR::Type Start, IR::Type End>
-bool inSame(const Event* event1, const Event* event2) {
+bool inSame(const Event *event1, const Event *event2) {
   assert(_inSameTeam(event1, event2) && "events must be in same omp team");
 
   auto const eid1 = event1->getID();
@@ -507,7 +495,7 @@ bool inSame(const Event* event1, const Event* event2) {
 
   // Omp threads in same team will have identical traces so we only need one set of events
   auto const regions = getRegions<Start, End>(event1->getThread());
-  for (auto const& region : regions) {
+  for (auto const &region : regions) {
     // If region contains one, check if it also contains the other
     if (region.contains(minID)) return region.contains(maxID);
 
@@ -557,18 +545,18 @@ bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const
   return inParallelFor(event1) && inParallelFor(event2);
 }
 
-bool OpenMPAnalysis::inSameTeam(const Event* event1, const Event* event2) const { return _inSameTeam(event1, event2); }
+bool OpenMPAnalysis::inSameTeam(const Event *event1, const Event *event2) const { return _inSameTeam(event1, event2); }
 
-bool OpenMPAnalysis::inSameSingleBlock(const Event* event1, const Event* event2) const {
+bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
 }
 
-std::vector<const llvm::BasicBlock*>& ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {
+std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {
   assert(reduceBlocks.find(reduce) == reduceBlocks.end() &&
          "Should not call compute if results have already been computed");
 
   // compute results, cache them, then return them
-  auto& blocks = reduceBlocks[reduce];
+  auto &blocks = reduceBlocks[reduce];
 
   /* We are expecting the reduce code produced by clang to follow a specific pattern:
     -------------------------------------------------
@@ -608,8 +596,8 @@ std::vector<const llvm::BasicBlock*>& ReduceAnalysis::computeGuardedBlocks(Reduc
   // Default dest marks the end of the reduce
   auto const exitBlock = switchInst->getDefaultDest();
 
-  std::vector<const llvm::BasicBlock*> worklist;
-  std::set<const llvm::BasicBlock*> visited;
+  std::vector<const llvm::BasicBlock *> worklist;
+  std::set<const llvm::BasicBlock *> visited;
   for (auto const succ : successors(switchInst)) {
     worklist.push_back(succ);
   }
@@ -641,7 +629,7 @@ std::vector<const llvm::BasicBlock*>& ReduceAnalysis::computeGuardedBlocks(Reduc
   return blocks;
 }
 
-const std::vector<const llvm::BasicBlock*>& ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const {
+const std::vector<const llvm::BasicBlock *> &ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const {
   // Check cache first
   if (auto it = reduceBlocks.find(reduce); it != reduceBlocks.end()) {
     return it->second;
@@ -651,14 +639,14 @@ const std::vector<const llvm::BasicBlock*>& ReduceAnalysis::getReduceBlocks(Redu
   return computeGuardedBlocks(reduce);
 }
 
-bool ReduceAnalysis::reduceContains(const llvm::Instruction* reduce, const llvm::Instruction* inst) const {
-  auto const& blocks = getReduceBlocks(reduce);
+bool ReduceAnalysis::reduceContains(const llvm::Instruction *reduce, const llvm::Instruction *inst) const {
+  auto const &blocks = getReduceBlocks(reduce);
   return std::find(blocks.begin(), blocks.end(), inst->getParent()) != blocks.end();
 }
 
-bool OpenMPAnalysis::inSameReduce(const Event* event1, const Event* event2) const {
+bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) const {
   // Find reduce events
-  for (auto const& event : event1->getThread().getEvents()) {
+  for (auto const &event : event1->getThread().getEvents()) {
     // If an event e is inside of a reduce block it must occur *after* the reduce event
     // so, if either event is encountered before finding a reduce that contains both event1 and event2
     // we know that they are not in the same reduce block

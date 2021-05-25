@@ -37,6 +37,7 @@ set(racedetect-lib-sources
     Analysis/LockSet.cpp
     Analysis/SharedMemory.cpp
     Analysis/OpenMPAnalysis.cpp
+    Analysis/SimpleAlias.cpp
     IR/Builder.cpp
     IR/IR.cpp
     Trace/Event.cpp

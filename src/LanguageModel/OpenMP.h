@@ -41,10 +41,7 @@ inline bool isForStaticInit(const llvm::StringRef& funcName) {
 }
 inline bool isForStaticFini(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_fini"); }
 
-inline bool isForDispatchInit(const llvm::StringRef& funcName) {
-  return funcName.startswith("__kmpc_dispatch_init");
-}
-
+inline bool isForDispatchInit(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_init"); }
 
 inline bool isSingleStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_single"); }
 inline bool isSingleEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_single"); }
@@ -69,5 +66,11 @@ inline bool isNoEffect(const llvm::StringRef& funcName) {
 
 // Used only for debug to try and catch unhandled OpenMP calls
 inline bool isOpenMP(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc"); }
+
+// Matches any OpenMP outlined functions, including the outer debug outlined functions
+inline bool isOutlined(const llvm::StringRef& funcName) { return funcName.startswith(".omp_outlined."); }
+
+// When OpenMP is compiled with debug info an outer "debug" outline function is generated
+inline bool isDebugOutlined(const llvm::StringRef& funcName) { return funcName.startswith(".omp_outlined._debug"); }
 
 }  // namespace OpenMPModel

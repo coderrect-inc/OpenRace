@@ -8,21 +8,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-//
-// Created by peiming on 5/11/21.
-//
 
-#ifndef OPENRACE_OMPCONSTANTPROPPASS_H
-#define OPENRACE_OMPCONSTANTPROPPASS_H
+#pragma once
 
-#include <llvm/Analysis/TargetLibraryInfo.h>
-#include <llvm/IR/Dominators.h>
-#include <llvm/Pass.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Passes/PassBuilder.h>
 
-class OMPConstantPropPass : public llvm::PassInfoMixin<OMPConstantPropPass> {
+#include "Trace/Event.h"
+
+namespace race {
+
+// This class is a simple wrapper for LLVM's ScopedNoAliasAA Pass
+class SimpleAlias {
+  llvm::PassBuilder PB;
+  llvm::FunctionAnalysisManager FAM;
+
  public:
-  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
+  SimpleAlias() { PB.registerFunctionAnalyses(FAM); }
+
+  // return true if the memory accessed by each instruction cannot alias
+  bool mustNotAlias(const WriteEvent *write, const MemAccessEvent *other);
 };
 
-#endif  // OPENRACE_OMPCONSTANTPROPPASS_H
+}  // namespace race

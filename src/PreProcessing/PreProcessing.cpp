@@ -12,7 +12,6 @@ limitations under the License.
 #include "PreProcessing/PreProcessing.h"
 
 #include <llvm/Analysis/TypeBasedAliasAnalysis.h>
-#include <llvm/Analysis/ScopedNoAliasAA.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
@@ -29,19 +28,23 @@ limitations under the License.
 #include <llvm/Transforms/Scalar/SimpleLoopUnswitch.h>
 #include <llvm/Transforms/Scalar/SimplifyCFG.h>
 
+#include "LanguageModel/OpenMP.h"
 #include "PreProcessing/Passes/CanonicalizeGEPPass.h"
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 #include "PreProcessing/Passes/OMPConstantPropPass.h"
 
-static void markOMPDebugAlwaysInline(llvm::Module &module) {
+namespace {
+void markOMPDebugAlwaysInline(llvm::Module &module) {
   for (auto &F : module) {
-    if (!F.isDeclaration() && F.getName().startswith(".omp_outlined._debug")) {
+    if (!F.isDeclaration() && OpenMPModel::isDebugOutlined(F.getName())) {
       F.addFnAttr(llvm::Attribute::AttrKind::AlwaysInline);
     }
   }
 }
+}  // namespace
 
 void preprocess(llvm::Module &module) {
+  // inline debug omp to make inter-procedural constant propagation easier
   markOMPDebugAlwaysInline(module);
 
   llvm::PassBuilder pb;
@@ -58,7 +61,7 @@ void preprocess(llvm::Module &module) {
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::FunctionPassManager fpm;
-  fpm.addPass(llvm::SROA());
+  fpm.addPass(llvm::SROA());  // This pass causes some accesses to be optimized out
   fpm.addPass(llvm::EarlyCSEPass(true));
   fpm.addPass(llvm::SimplifyCFGPass());
   fpm.addPass(llvm::InstCombinePass());
@@ -79,17 +82,13 @@ void preprocess(llvm::Module &module) {
   fpm.addPass(llvm::SimplifyCFGPass());
   fpm.addPass(llvm::InstCombinePass());
   fpm.addPass(llvm::createFunctionToLoopPassAdaptor(std::move(lpmPost)));
-
   fpm.addPass(llvm::MemCpyOptPass());
   fpm.addPass(llvm::SCCPPass());
-  //fpm.addPass(CanonicalizeGEPPass());
 
   llvm::ModulePassManager mpm;
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
   mpm.addPass(llvm::AlwaysInlinerPass());
   mpm.addPass(OMPConstantPropPass());
-
-  mpm.run(module, mam);
 
   // CanonicalizeGEPPass has to run after OMPConstantPropPass
   // as it will expand constant expression
@@ -98,9 +97,9 @@ void preprocess(llvm::Module &module) {
   // or simply call a function just like duplicateOpenMPForks below?
   llvm::FunctionPassManager fpmPost;
   fpmPost.addPass(CanonicalizeGEPPass());
-  for (auto &F : module) {
-    fpmPost.run(F, fam);
-  }
+  mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpmPost)));
+
+  mpm.run(module, mam);
 
   duplicateOpenMPForks(module);
 }

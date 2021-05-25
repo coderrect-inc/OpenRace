@@ -1,9 +1,17 @@
-//
-// Created by peiming on 5/11/21.
-//
+/* Copyright 2021 Coderrect Inc. All Rights Reserved.
+Licensed under the GNU Affero General Public License, version 3 or later (“AGPL”), as published by the Free Software
+Foundation. You may not use this file except in compliance with the License. You may obtain a copy of the License at
+https://www.gnu.org/licenses/agpl-3.0.en.html
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
 
 #include "OMPConstantPropPass.h"
 
+#include "LanguageModel/OpenMP.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -24,7 +32,9 @@ using namespace llvm;
 
 DEBUG_COUNTER(CPCounter, "constprop-transform", "Controls which instructions are killed");
 
-static inline bool hasGlobalOverwritten(GlobalVariable *GV) {
+namespace {
+
+inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   for (auto user : GV->users()) {
     if (isa<StoreInst>(user)) {
       return true;
@@ -33,7 +43,7 @@ static inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   return false;
 }
 
-static bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
+bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   // Initialize the worklist to all of the instructions ready to process...
   SmallPtrSet<Instruction *, 16> WorkList;
   // The SmallVector of WorkList ensures that we do iteration at stable order.
@@ -94,7 +104,7 @@ static bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   return Changed;
 }
 
-static StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
+StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
   StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
     if (auto SI = llvm::dyn_cast<llvm::StoreInst>(user)) {
@@ -114,7 +124,7 @@ static StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, co
   return storeInst;
 }
 
-static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
+bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
   if (F.arg_empty() || F.use_empty()) return false;  // No arguments? Early exit.
 
   // For each argument, keep track of its constant value and whether it is a
@@ -202,7 +212,7 @@ static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT
   }
 
   // special case, the omp_outlined function calls use a pointer but only reads it
-  if (F.getName().startswith(".omp_outlined.")) {
+  if (OpenMPModel::isOutlined(F.getName())) {
     for (int i = 2; i < F.arg_size(); i++) {
       // skip the first two args: i32* noalias %.global_tid., i32* noalias %.bound_tid.
       if (!F.getArg(i)->getType()->isPointerTy()) {
@@ -215,9 +225,9 @@ static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT
 
         // the omp.onlined function should only have one use of callsite?
         AbstractCallSite ACS(&U);
-        auto param = ACS.getCallArgOperand(i);
+        auto V = ACS.getCallArgOperand(i);
 
-        auto SI = findUniqueDominatedStoreDef(param, ACS.getCallSite().getInstruction(), DT);
+        auto SI = findUniqueDominatedStoreDef(V, ACS.getCallSite().getInstruction(), DT);
         if (SI == nullptr) break;
 
         if (auto defVal = dyn_cast<Constant>(SI->getValueOperand())) {
@@ -249,9 +259,11 @@ static bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT
   return MadeChange;
 }
 
-static bool runOMPCP(Module &M, std::function<const TargetLibraryInfo &(Function &)> GetTLI,
-                     std::function<const DominatorTree &(Function &)> GetDT) {
-  bool Changed = false, LocalChange = true, functionChanged = true;
+bool runOpenMPConstantPropagation(Module &M, std::function<const TargetLibraryInfo &(Function &)> GetTLI,
+                                  std::function<const DominatorTree &(Function &)> GetDT) {
+  bool Changed = false;
+  bool ArgPropagated = true;
+  bool FunctionChanged = true;
 
   for (Function &F : M) {
     const TargetLibraryInfo &TLI = GetTLI(F);
@@ -260,33 +272,34 @@ static bool runOMPCP(Module &M, std::function<const TargetLibraryInfo &(Function
 
   // propagate constant into function arguement
   SmallSet<Function *, 8> changedFunction;
-  while (functionChanged) {
-    while (LocalChange) {
-      LocalChange = false;
+  while (FunctionChanged) {
+    while (ArgPropagated) {
+      ArgPropagated = false;
       for (Function &F : M) {
         if (!F.isDeclaration()) {
           // Delete any klingons.
           F.removeDeadConstantUsers();
           if (PropagateConstantsIntoArguments(F, GetDT(F), GetTLI(F))) {
             changedFunction.insert(&F);
-            LocalChange = true;
+            ArgPropagated = true;
           }
         }
       }
-      Changed |= LocalChange;
+      Changed |= ArgPropagated;
     }
 
-    functionChanged = false;
+    FunctionChanged = false;
     // propagate constant inside the function
     if (!changedFunction.empty()) {
       for (Function *F : changedFunction) {
         const TargetLibraryInfo &TLI = GetTLI(*F);
-        functionChanged |= intraConstantProp(*F, TLI);
+        FunctionChanged |= intraConstantProp(*F, TLI);
       }
     }
   }
   return Changed;
 }
+}  // namespace
 
 PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM) {
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
@@ -294,7 +307,7 @@ PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM)
 
   auto GetDT = [&FAM](Function &F) -> const DominatorTree & { return FAM.getResult<DominatorTreeAnalysis>(F); };
 
-  if (!runOMPCP(M, GetTLI, GetDT)) {
+  if (!runOpenMPConstantPropagation(M, GetTLI, GetDT)) {
     return PreservedAnalyses::all();
   }
 
@@ -303,20 +316,3 @@ PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM)
   PA.preserve<DominatorTreeAnalysis>();
   return PA;
 }
-
-bool LegacyOMPConstantPropPass::runOnModule(Module &M) {
-  auto GetTLI = [this](Function &F) -> const TargetLibraryInfo & {
-    return this->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
-  };
-
-  auto GetDT = [this](Function &F) -> const DominatorTree & {
-    return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
-  };
-
-  return runOMPCP(M, GetTLI, GetDT);
-}
-
-char LegacyOMPConstantPropPass::ID = 0;
-static RegisterPass<LegacyOMPConstantPropPass> OCP("Constant Propagation for OMP callbacks",
-                                                   "Constant Propagation for OMP callbacks", true, /*CFG only*/
-                                                   false /*is analysis*/);

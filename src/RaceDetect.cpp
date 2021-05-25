@@ -17,6 +17,7 @@ limitations under the License.
 #include "Analysis/LockSet.h"
 #include "Analysis/OpenMPAnalysis.h"
 #include "Analysis/SharedMemory.h"
+#include "Analysis/SimpleAlias.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
@@ -40,6 +41,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
+  race::SimpleAlias simpleAlias;
   race::OpenMPAnalysis ompAnalysis;
 
   race::Reporter reporter;
@@ -57,18 +59,8 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       return;
     }
 
-    if (write->getFunction() == other->getFunction()) {
-      // since this is a function pass
-      llvm::AAQueryInfo aaqi;
-      auto& AAResult = FAM.getResult<llvm::ScopedNoAliasAA>(*(const_cast<llvm::Function *>(write->getFunction())));
-
-      auto memLoc1 = MemoryLocation::getOrNone(write->getInst());
-      auto memLoc2 = MemoryLocation::getOrNone(other->getInst());
-      if (memLoc1.hasValue() && memLoc2.hasValue()) {
-        if (AAResult.alias(memLoc1.getValue(), memLoc1.getValue(), aaqi) == AliasResult::NoAlias) {
-          return;
-        }
-      }
+    if (simpleAlias.mustNotAlias(write, other)) {
+      return;
     }
 
     if (ompAnalysis.inSameTeam(write, other)) {
