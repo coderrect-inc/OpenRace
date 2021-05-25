@@ -10,33 +10,23 @@ limitations under the License.
 ==============================================================================*/
 
 //
-// Created by peiming on 7/21/20.
+// Created by peiming on 7/23/20.
 //
 
-#ifndef PTA_INTERCEPTRESULT_H
-#define PTA_INTERCEPTRESULT_H
+#ifndef PTA_REWRITEMODELEDAPIPASS_H
+#define PTA_REWRITEMODELEDAPIPASS_H
 
-// forward declaration
-namespace llvm {
-class Value;
-}
+#include <llvm/Pass.h>
+namespace pta::cpp {
 
-namespace pta {
+class RewriteModeledAPIPass : public llvm::FunctionPass {
+ public:
+  static char ID;
+  explicit RewriteModeledAPIPass() : llvm::FunctionPass(ID) {}
 
-struct InterceptResult {
-  enum class Option {
-    EXPAND_BODY,    // analyze and expand the body of the function
-    ONLY_CALLSITE,  // do not analyze into the function body, but keep the
-                    // callsite
-    IGNORE_FUN,     // ignore the function completely (no callnode in the
-                    // callgraph).
-  };
-
-  const llvm::Value *redirectTo;
-  Option option;
-
-  InterceptResult(const llvm::Value *target, Option opt) : redirectTo(target), option(opt) {}
+  bool runOnFunction(llvm::Function &F) override;
 };
 
 }  // namespace pta
+
 #endif

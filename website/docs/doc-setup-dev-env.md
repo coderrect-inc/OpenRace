@@ -32,10 +32,10 @@ gcc --version
 
 ### Install Conan
 
-Conan is used to automatically manage OpenRace's dependencies (except for LLVM).
+Conan is used to automatically manage OpenRace's dependencies (except for LLVM). Here are two ways to install Conan. 
 
-If you already have python and pip installed, the easiest way to install Conan is by running either of the following:
 
+The easiest way is through python and pip if you already have them installed:
 ```shell
 # Python2
 pip install conan
@@ -43,7 +43,7 @@ pip install conan
 pip3 install conan
 ```
 
-On Ubuntu, the binary can also be directly downloaded and installed.
+Alternatively, you can also obtain the package binary and install Conan from there:
 ``` shell
 # Download
 curl -L -O https://github.com/conan-io/conan/releases/latest/download/conan-ubuntu-64.deb
@@ -127,8 +127,6 @@ The rest are just some options set to save time/space when building.
 
 You may also wish to additionally add `-DCMAKE_INSTALL_PREFIX="/some/other/prefix"` to install to a specific location, such as `$HOME/.local`.
 
-For the next steps, please ensure that you have the built `clang` as the default used by your system by prepending it to your `PATH` variable.
-
 
 ## Building OpenRace
 
@@ -163,6 +161,7 @@ The cmake options do the following:
  Should point to a directory containing `LLVMConfig.cmake`. See the "Install LLVM 10.0.X" section above.
  - `CMAKE_CXX_COMPILER=$(which clang)`
  Should point to the `clang` built in the previous step. See the "Install LLVM 10.0.X" section above.
+
 
 
 ## Running Tests

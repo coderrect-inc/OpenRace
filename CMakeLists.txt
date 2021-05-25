@@ -3,24 +3,18 @@ project(OpenRace
         VERSION 0.0.1
         LANGUAGES CXX)
 
-if (NOT EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    message(WARNING "conanbuildinfo.cmake not found; attempting generation...")
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake"
+            "${CMAKE_BINARY_DIR}/conan.cmake")
+endif()
 
-    if (UNIX)
-        execute_process(COMMAND conan install .. -s compiler=clang -s compiler.version=10
-                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                RESULT_VARIABLE CONAN_RESULT_FAILURE)
-        if (CONAN_RESULT_FAILURE)
-            message(FATAL_ERROR "Unable to generate conanbuildinfo.cmake; see log for details (if there's no output, conan may not be available on your system; make sure it's in your PATH!).")
-        endif ()
-    else ()
-        message(FATAL_ERROR "Unable to generate conanbuildinfo.cmake; please generate with `conan install .. -s compiler=" clang" -s compiler.version="10.0.1"` or equivalent for your operating system before attempting to build.")
-    endif ()
+include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-endif ()
-
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+conan_cmake_run(REQUIRES catch2/2.13.4
+                         nlohmann_json/3.9.1
+                BASIC_SETUP
+                CMAKE_TARGETS)
 
 list(APPEND CMAKE_PREFIX_PATH ${LLVM_DIR})
 find_package(LLVM 10.0.1 REQUIRED CONFIG)

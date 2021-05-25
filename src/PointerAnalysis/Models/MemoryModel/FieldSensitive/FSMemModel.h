@@ -18,15 +18,13 @@ limitations under the License.
 #include <llvm/Support/Allocator.h>
 
 #include "Logging/Log.h"
+#include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
 #include "PointerAnalysis/Models/LanguageModel/PtrNodeManager.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/CppMemModel.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSCanonicalizer.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSObject.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/MemLayoutManager.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/MemBlock.h"
-#include "PointerAnalysis/Models/MemoryModel/SpecialObjects/MapObject.h"
-#include "PointerAnalysis/Program/InterceptResult.h"
-#include "PointerAnalysis/Util/ConstExprVisitor.h"
 #include "PointerAnalysis/Util/Util.h"
 
 extern cl::opt<bool> CONFIG_USE_FI_MODE;

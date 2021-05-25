@@ -15,7 +15,7 @@ limitations under the License.
 #ifndef PTA_FIOBJECT_H
 #define PTA_FIOBJECT_H
 
-#include "PointerAnalysis/Models/MemoryModel/AllocSite.h"
+#include "PointerAnalysis/Program/AllocSite.h"
 
 namespace pta {
 
