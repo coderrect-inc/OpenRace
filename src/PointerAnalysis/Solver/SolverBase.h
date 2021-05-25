@@ -207,7 +207,6 @@ class SolverBase {
   bool processStore(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
 
-    ProcessedStore++;
     bool changed = false;
     for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID()); it != ie; it++) {
       auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
@@ -220,9 +219,6 @@ class SolverBase {
       }
     }
 
-    if (changed) {
-      EffectiveStore++;
-    }
     return changed;
   }
 

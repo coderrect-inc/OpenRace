@@ -70,59 +70,6 @@ static size_t indexBetweenArrays(const std::map<size_t, ArrayLayout *> &arrays, 
   return lOffset;
 }
 
-size_t MemLayout::indexPhysicalOffset(size_t &pOffset) const {
-  if (!this->hasArray()) {
-    // fast path
-    // if the memory block does not have array ==> physical offset == layout
-    // offset
-    return pOffset;
-  } else if (pOffset >= maxPOffset) {
-    // invalid offset (exceed the max physical offset)
-    return std::numeric_limits<size_t>::max();
-  } else {
-    // :-(, now we have to translate the physical offset
-    return indexBetweenArrays(this->subArrays, pOffset);
-  }
-}
-
-// merge a sub-layout into current memory layout
-void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, size_t lOffset) {
-  for (auto elem : subLayout->elementLayout) {
-    elementLayout.set(elem + lOffset);
-  }
-  for (auto elem : subLayout->pointerLayout) {
-    pointerLayout.set(elem + lOffset);
-  }
-  for (auto elem : subLayout->specialLayout) {
-    specialLayout.set(elem + pOffset);
-  }
-
-  assert(elementLayout.contains(pointerLayout));
-
-  // TODO: make sure there is no overlapping between arrays
-  // merge the array layout
-  if (mIsArray) {
-    assert(subArrays.size() == 1 && subArrays.begin()->first == 0);
-    subArrays.begin()->second->mergeSubArrays(subLayout->subArrays, 0);
-  } else {
-    for (auto subArray : subLayout->subArrays) {
-      subArrays.insert(std::make_pair(subArray.first + pOffset, subArray.second));
-    }
-  }
-}
-
-size_t ArrayLayout::indexPhysicalOffset(size_t &pOffset) const {
-  if (this->hasSubArrays()) {
-    pOffset = pOffset % this->getElementSize();
-    return indexBetweenArrays(this->subArrays, pOffset);
-  } else {
-    assert(pOffset <= this->getArraySize());
-    // we do not distinguish elements in the arrays.
-    pOffset = pOffset % this->getElementSize();
-    return pOffset;
-  }
-}
-
 static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members, size_t pOffset, vector<StringRef> &pathVec) {
   for (auto member : members) {
     if (pOffset >= member->getOffsetInBits() && pOffset < member->getOffsetInBits() + getDISize(member)) {
@@ -161,6 +108,46 @@ static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members, size_
   // should be unreachable
   pathVec.clear();
   return;
+}
+
+size_t MemLayout::indexPhysicalOffset(size_t &pOffset) const {
+  if (!this->hasArray()) {
+    // fast path
+    // if the memory block does not have array ==> physical offset == layout
+    // offset
+    return pOffset;
+  } else if (pOffset >= maxPOffset) {
+    // invalid offset (exceed the max physical offset)
+    return std::numeric_limits<size_t>::max();
+  } else {
+    // :-(, now we have to translate the physical offset
+    return indexBetweenArrays(this->subArrays, pOffset);
+  }
+}
+// merge a sub-layout into current memory layout
+void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, size_t lOffset) {
+  for (auto elem : subLayout->elementLayout) {
+    elementLayout.set(elem + lOffset);
+  }
+  for (auto elem : subLayout->pointerLayout) {
+    pointerLayout.set(elem + lOffset);
+  }
+  for (auto elem : subLayout->specialLayout) {
+    specialLayout.set(elem + pOffset);
+  }
+
+  assert(elementLayout.contains(pointerLayout));
+
+  // TODO: make sure there is no overlapping between arrays
+  // merge the array layout
+  if (mIsArray) {
+    assert(subArrays.size() == 1 && subArrays.begin()->first == 0);
+    subArrays.begin()->second->mergeSubArrays(subLayout->subArrays, 0);
+  } else {
+    for (auto subArray : subLayout->subArrays) {
+      subArrays.insert(std::make_pair(subArray.first + pOffset, subArray.second));
+    }
+  }
 }
 
 // NOTE: this might be expensive! call it with caution
@@ -205,6 +192,18 @@ std::string MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const
   }
 
   return "";
+}
+
+size_t ArrayLayout::indexPhysicalOffset(size_t &pOffset) const {
+  if (this->hasSubArrays()) {
+    pOffset = pOffset % this->getElementSize();
+    return indexBetweenArrays(this->subArrays, pOffset);
+  } else {
+    assert(pOffset <= this->getArraySize());
+    // we do not distinguish elements in the arrays.
+    pOffset = pOffset % this->getElementSize();
+    return pOffset;
+  }
 }
 
 }  // namespace pta
