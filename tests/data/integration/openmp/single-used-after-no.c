@@ -11,7 +11,7 @@ int main()
       x = 1;
     }
 
-    printf("init=%d\n", x);
+    printf("x=%d\n", x);
   }
 
   return 0;
