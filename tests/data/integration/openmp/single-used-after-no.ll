@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
 @1 = private unnamed_addr constant [54 x i8] c";integration/openmp/single-used-after-no.c;main;9;1;;\00", align 1
-@.str.1 = private unnamed_addr constant [9 x i8] c"init=%d\0A\00", align 1
+@.str.1 = private unnamed_addr constant [6 x i8] c"x=%d\0A\00", align 1
 @2 = private unnamed_addr constant [54 x i8] c";integration/openmp/single-used-after-no.c;main;7;1;;\00", align 1
 
 ; Function Attrs: nounwind uwtable
@@ -74,7 +74,7 @@ omp_if.end:                                       ; preds = %omp_if.then, %entry
   store i8* getelementptr inbounds ([54 x i8], [54 x i8]* @1, i32 0, i32 0), i8** %8, align 8, !dbg !47, !tbaa !20
   call void @__kmpc_barrier(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !47
   %9 = load i32, i32* %2, align 4, !dbg !48, !tbaa !15
-  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str.1, i64 0, i64 0), i32 %9), !dbg !49
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.1, i64 0, i64 0), i32 %9), !dbg !49
   ret void, !dbg !50
 }
 
@@ -173,7 +173,7 @@ attributes #5 = { nounwind }
 !45 = distinct !DILexicalBlock(scope: !42, file: !1, line: 9, column: 1)
 !46 = !DILocation(line: 12, column: 5, scope: !44)
 !47 = !DILocation(line: 9, column: 19, scope: !45)
-!48 = !DILocation(line: 14, column: 25, scope: !42)
+!48 = !DILocation(line: 14, column: 22, scope: !42)
 !49 = !DILocation(line: 14, column: 5, scope: !42)
 !50 = !DILocation(line: 15, column: 3, scope: !25)
 !51 = distinct !DISubprogram(name: ".omp_outlined.", scope: !1, file: !1, line: 8, type: !26, scopeLine: 8, flags: DIFlagPrototyped | DIFlagAllCallsDescribed, spFlags: DISPFlagLocalToUnit | DISPFlagDefinition | DISPFlagOptimized, unit: !0, retainedNodes: !52)
