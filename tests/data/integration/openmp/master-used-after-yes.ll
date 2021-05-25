@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
 @1 = private unnamed_addr constant [55 x i8] c";integration/openmp/master-used-after-yes.c;main;9;1;;\00", align 1
-@.str.1 = private unnamed_addr constant [9 x i8] c"init=%d\0A\00", align 1
+@.str.1 = private unnamed_addr constant [6 x i8] c"x=%d\0A\00", align 1
 @2 = private unnamed_addr constant [55 x i8] c";integration/openmp/master-used-after-yes.c;main;7;1;;\00", align 1
 
 ; Function Attrs: nounwind uwtable
@@ -71,7 +71,7 @@ omp_if.then:                                      ; preds = %entry
 
 omp_if.end:                                       ; preds = %omp_if.then, %entry
   %8 = load i32, i32* %2, align 4, !dbg !47, !tbaa !15
-  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str.1, i64 0, i64 0), i32 %8), !dbg !48
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.1, i64 0, i64 0), i32 %8), !dbg !48
   ret void, !dbg !49
 }
 
@@ -167,7 +167,7 @@ attributes #5 = { nounwind }
 !44 = distinct !DILexicalBlock(scope: !45, file: !1, line: 10, column: 5)
 !45 = distinct !DILexicalBlock(scope: !42, file: !1, line: 9, column: 1)
 !46 = !DILocation(line: 12, column: 5, scope: !44)
-!47 = !DILocation(line: 14, column: 25, scope: !42)
+!47 = !DILocation(line: 14, column: 22, scope: !42)
 !48 = !DILocation(line: 14, column: 5, scope: !42)
 !49 = !DILocation(line: 15, column: 3, scope: !25)
 !50 = distinct !DISubprogram(name: ".omp_outlined.", scope: !1, file: !1, line: 8, type: !26, scopeLine: 8, flags: DIFlagPrototyped | DIFlagAllCallsDescribed, spFlags: DISPFlagLocalToUnit | DISPFlagDefinition | DISPFlagOptimized, unit: !0, retainedNodes: !51)
