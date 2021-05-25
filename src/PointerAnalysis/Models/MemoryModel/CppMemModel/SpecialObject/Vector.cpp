@@ -25,8 +25,7 @@ limitations under the License.
 
 using namespace llvm;
 
-namespace pta {
-namespace cpp {
+namespace pta::cpp {
 
 std::map<StringRef, VectorAPI::APIKind> VectorAPI::VecAPIMap = {
     {"push_back", APIKind::PUSH_BACK},       {"begin", APIKind::IT_BEGIN}, {"end", APIKind::IT_END},
@@ -88,5 +87,4 @@ const Type *VectorAPI::resolveVecElemType(const Type *T) {
   return nullptr;
 }
 
-}  // namespace cpp
 }  // namespace pta

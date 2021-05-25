@@ -23,6 +23,7 @@ namespace pta {
 
 template <typename ctx>
 class CallGraphNode;
+
 template <typename ctx>
 class CtxModule;
 

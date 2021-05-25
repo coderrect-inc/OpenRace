@@ -89,11 +89,11 @@ class MemAccessIR : public IR {
   [[nodiscard]] virtual const llvm::Value *getAccessedValue() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type >= Type::Read || e->type <= Type::END_Write; }
+  static inline bool classof(const IR *e) { return e->type >= Type::Read && e->type <= Type::END_Write; }
 
  protected:
   explicit MemAccessIR(Type t) : IR(t) {
-    assert(t >= Type::Read || t <= Type::END_Write && "MemAccess constructed with non read/write type!");
+    assert(t >= Type::Read && t <= Type::END_Write && "MemAccess constructed with non read/write type!");
   }
 };
 

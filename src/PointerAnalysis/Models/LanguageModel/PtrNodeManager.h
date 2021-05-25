@@ -102,22 +102,6 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
     return ret;
   }
 
-  //    // a tagged anonmynous pointer
-  //    inline PtrNode *getOrCreateTaggedAnonPtrNode(const ctx *C, const void
-  //    *V) {
-  //        auto it = taggedAnonPtrMap.find(std::make_pair(C, V));
-  //        if (it != taggedAnonPtrMap.end()) {
-  //            return it->second;
-  //        }
-  //
-  //        // create the anonomyous pointer
-  //        auto ret = consGraph->template addCGNode<PtrNode, PT>();
-  //        auto result =
-  //        taggedAnonPtrMap.insert(std::make_pair(std::make_pair(C, V), ret));
-  //        assert(result.second);
-  //        return ret;
-  //    }
-
   template <typename Canonicalizer>
   inline PtrNode *getPtrNode(const ctx *C, const llvm::Value *V) {
     V = Canonicalizer::canonicalize(V);

@@ -22,7 +22,8 @@ namespace pta {
 template <typename T>
 class SingleInstanceOwner {
  protected:
-  std::unordered_set<T> innerSet;  // TODO: maybe other container is faster?
+  // TODO: maybe other container is faster?
+  std::unordered_set<T> innerSet;
   using iterator = typename std::unordered_set<T>::iterator;
 
   // create if does not exist

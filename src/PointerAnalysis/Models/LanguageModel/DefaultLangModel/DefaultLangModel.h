@@ -17,8 +17,8 @@ limitations under the License.
 
 #include "DefaultExtFunctions.h"
 #include "Logging/Log.h"
-#include "PointerAnalysis/Models/DefaultHeapModel.h"
 #include "PointerAnalysis/Models/LanguageModel/LangModelBase.h"
+#include "PointerAnalysis/Models/MemoryModel/DefaultHeapModel.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldInsensitive/FIMemModel.h"
 #include "PointerAnalysis/Program/CtxModule.h"
 #include "PointerAnalysis/Solver/PointsTo/BitVectorPTS.h"

@@ -21,8 +21,8 @@ limitations under the License.
 
 #include "PointerAnalysis/Context/CtxTrait.h"
 #include "PointerAnalysis/Graph/ConstraintGraph/ConstraintGraph.h"
-#include "PointerAnalysis/Models/MemoryModel/AllocSite.h"
-#include "PointerAnalysis/Models/MemoryModel/Object.h"
+#include "PointerAnalysis/Program/AllocSite.h"
+#include "PointerAnalysis/Program/Object.h"
 
 namespace pta {
 

@@ -101,8 +101,6 @@ class CGPtrNode : public CGNodeBase<ctx> {
       }
     }
 
-    // os << "\n" << getPTASourceLocSnippet(u.ptr->getValue());  // JEFF
-
     return os.str();
   }
 
