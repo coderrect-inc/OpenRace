@@ -59,7 +59,8 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       }
 
       // Certain omp blocks cannot race with themselves
-      if (ompAnalysis.inSameSingleBlock(write, other) || ompAnalysis.inSameReduce(write, other) || ompAnalysis.inSameMasterBlock(write, other)) {
+      if (ompAnalysis.inSameSingleBlock(write, other) || ompAnalysis.inSameReduce(write, other) ||
+          ompAnalysis.bothInMasterBlock(write, other)) {
         return;
       }
     }

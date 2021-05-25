@@ -139,7 +139,7 @@ bool inSame(const Event* event1, const Event* event2) {
 }
 
 auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
-auto const _inSameMasterBlock = inSame<IR::Type::OpenMPMasterStart, IR::Type::OpenMPMasterEnd>;
+auto const _inMasterBlock = in<IR::Type::OpenMPMasterStart, IR::Type::OpenMPMasterEnd>;
 
 }  // namespace
 
@@ -185,8 +185,9 @@ bool OpenMPAnalysis::inSameSingleBlock(const Event* event1, const Event* event2)
   return _inSameSingleBlock(event1, event2);
 }
 
-bool OpenMPAnalysis::inSameMasterBlock(const Event* event1, const Event* event2) const {
-  return _inSameMasterBlock(event1, event2);
+bool OpenMPAnalysis::bothInMasterBlock(const Event* event1, const Event* event2) const {
+  assert(_inSameTeam(event1, event2) && "events must be in same omp team");
+  return _inMasterBlock(event1) && _inMasterBlock(event2);
 }
 
 std::vector<const llvm::BasicBlock*>& ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {

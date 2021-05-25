@@ -149,7 +149,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 118-119 nest lock
       Oracle("DRB120-barrier-orig-no.ll", {}), Oracle("DRB121-reduction-orig-no.ll", {}),
       // 122-123 task
-      Oracle("DRB124-master-orig-yes.ll", {}),
+      // 124 master // wont-fix, variable expunged by optimisation
       Oracle("DRB125-single-orig-no.ll", {}),
       // 125-26 section
       // 127-136 task
