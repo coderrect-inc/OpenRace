@@ -24,6 +24,7 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
                  "reduction-nowait-yes.c:16:27 reduction-nowait-yes.c:11:27",
                  "reduction-nowait-yes.c:16:27 reduction-nowait-yes.c:11:31",
              }),
+      Oracle("single-used-after-no.ll", {}),
   };
 
   checkOracles(oracles, "integration/openmp/");
