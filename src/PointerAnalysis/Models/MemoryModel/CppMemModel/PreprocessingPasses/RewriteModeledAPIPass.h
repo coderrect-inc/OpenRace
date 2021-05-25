@@ -17,8 +17,7 @@ limitations under the License.
 #define PTA_REWRITEMODELEDAPIPASS_H
 
 #include <llvm/Pass.h>
-namespace pta {
-namespace cpp {
+namespace pta::cpp {
 
 class RewriteModeledAPIPass : public llvm::FunctionPass {
  public:
@@ -28,7 +27,6 @@ class RewriteModeledAPIPass : public llvm::FunctionPass {
   bool runOnFunction(llvm::Function &F) override;
 };
 
-}  // namespace cpp
 }  // namespace pta
 
 #endif
