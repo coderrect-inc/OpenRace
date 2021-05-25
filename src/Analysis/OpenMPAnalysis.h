@@ -26,6 +26,13 @@ struct Region {
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 };
+struct RegionLessThan{
+    inline bool operator() (const Region& struct1, const Region& struct2)
+    {
+        return (struct1.end < struct2.end);
+    }
+};
+
 
 class ReduceAnalysis {
   using ReduceInst = const llvm::Instruction*;
