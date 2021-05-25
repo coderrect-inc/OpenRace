@@ -32,10 +32,10 @@ gcc --version
 
 ### Install Conan
 
-Conan is used to automatically manage OpenRace's dependencies (except for LLVM).
+Conan is used to automatically manage OpenRace's dependencies (except for LLVM). Here are two ways to install Conan. 
 
-If you already have python and pip installed, the easiest way to install Conan is by running either of the following:
 
+The easiest way is through python and pip if you already have them installed:
 ```shell
 # Python2
 pip install conan
@@ -43,7 +43,7 @@ pip install conan
 pip3 install conan
 ```
 
-On Ubuntu, the binary can also be directly downloaded and installed.
+Alternatively, you can also obtain the package binary and install Conan from there:
 ``` shell
 # Download
 curl -L -O https://github.com/conan-io/conan/releases/latest/download/conan-ubuntu-64.deb
@@ -83,7 +83,7 @@ export LLVM_DIR=/usr/lib/llvm-10/lib/cmake/llvm/
 git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.git
 mkdir -p llvm-project/build && cd llvm-project/build
 # Configure the build with CMake
-cmake
+cmake \
     -DLLVM_TARGETS_TO_BUILD="X86" \
     -DCMAKE_CXX_STANDARD="17" \
     -DLLVM_INCLUDE_EXAMPLES=OFF \
