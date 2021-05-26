@@ -12,7 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 1/16/20.
 //
-#include "PointerAnalysis/Models/DefaultHeapModel.h"
+#include "PointerAnalysis/Models/MemoryModel/DefaultHeapModel.h"
 
 #include <PointerAnalysis/Program/CallSite.h>
 #include <llvm/IR/Instructions.h>

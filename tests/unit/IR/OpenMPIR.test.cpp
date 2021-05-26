@@ -186,3 +186,42 @@ declare dso_local void @__kmpc_end_critical(%struct.ident_t*, i32, [8 x i32]*)
   CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPCriticalStart);
   CHECK(racefunc.at(5)->type == race::IR::Type::OpenMPCriticalEnd);
 }
+
+TEST_CASE("Build OpenMP master IR") {
+  const char *ModuleString = R"(
+%struct.ident_t = type { i32, i32, i32, i32, i8* }
+@.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
+@0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
+
+define internal void @.omp_outlined.(i32* noalias %0, i32* noalias %1) {
+  %3 = alloca i32*, align 8
+  %4 = alloca i32*, align 8
+  store i32* %0, i32** %3, align 8
+  store i32* %1, i32** %4, align 8
+  %5 = load i32*, i32** %3, align 8
+  %6 = load i32, i32* %5, align 4
+  %7 = call i32 @__kmpc_master(%struct.ident_t* @0, i32 %6)
+  call void @__kmpc_end_master(%struct.ident_t* @0, i32 %6)
+  ret void
+}
+
+declare dso_local void @__kmpc_end_master(%struct.ident_t*, i32)
+declare dso_local i32 @__kmpc_master(%struct.ident_t*, i32)
+)";
+
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  if (!module) {
+    Err.print("error", llvm::errs());
+    FAIL("no module");
+  }
+
+  auto func = module->getFunction(".omp_outlined.");
+
+  auto racefunc = race::generateFunctionSummary(func);
+  REQUIRE(racefunc.size() == 6);
+
+  CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPMasterStart);
+  CHECK(racefunc.at(5)->type == race::IR::Type::OpenMPMasterEnd);
+}

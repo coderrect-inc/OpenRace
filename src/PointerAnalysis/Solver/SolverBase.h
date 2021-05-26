@@ -25,7 +25,6 @@ limitations under the License.
 #include "PointerAnalysis/Graph/ConstraintGraph/ConstraintGraph.h"
 #include "PointerAnalysis/Models/MemoryModel/MemModelTrait.h"
 #include "PointerAnalysis/Solver/PointsTo/BitVectorPTS.h"
-#include "PointerAnalysis/Util/Statistics.h"
 
 extern llvm::cl::opt<bool> ConfigPrintConstraintGraph;
 extern llvm::cl::opt<bool> ConfigPrintCallGraph;
@@ -44,16 +43,6 @@ class SolverBase {
     __attribute__((always_inline)) void operator()(Args &&...) {}
   };
   std::unique_ptr<LangModel> langModel;
-
-  LOCAL_STATISTIC(ProcessedCopy, "Number of Processed Copy Edges");
-  LOCAL_STATISTIC(ProcessedLoad, "Number of Processed Load Edges");
-  LOCAL_STATISTIC(ProcessedStore, "Number of Processed Store Edges");
-  LOCAL_STATISTIC(ProcessedOffset, "Number of Processed Offset Edges");
-
-  LOCAL_STATISTIC(EffectiveCopy, "Number of Effective Copy Edges");
-  LOCAL_STATISTIC(EffectiveLoad, "Number of Effective Load Edges");
-  LOCAL_STATISTIC(EffectiveStore, "Number of Effective Store Edges");
-  LOCAL_STATISTIC(EffectiveOffset, "Number of Effective Offset Edges");
 
  public:
   using LMT = LangModelTrait<LangModel>;
@@ -76,8 +65,7 @@ class SolverBase {
   ConsGraphTy *consGraph;
   llvm::SparseBitVector<> updatedFunPtrs;
 
-  // TODO: the intersection on pts should be done through PtsTrait for better
-  // extensibility
+  // TODO: the intersection on pts should be done through PtsTrait for better extensibility
   llvm::DenseMap<PtrNodeTy *, PtsTy> handledGEPMap;
 
   inline void updateFunPtr(NodeID indirectNode) { updatedFunPtrs.set(indirectNode); }
@@ -101,14 +89,12 @@ class SolverBase {
   template <typename CallBack = Noop>
   inline bool processOffset(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
-    ProcessedOffset++;
 
     // TODO: use llvm::cast in debugging build
     // gep for sure create a pointer node
     auto ptrNode = static_cast<CGPtrNode<ctx> *>(dst);
-    // assert(ptrNode);
 
-    // we must be handling a getelemntptr instruction if we are indexing a
+    // we must be handling a GEP instruction if we are indexing a
     // object
     auto idx = llvm::cast<const llvm::Instruction>(ptrNode->getPointer()->getValue());
     // assert(gep);
@@ -158,139 +144,20 @@ class SolverBase {
         // but the visualization of the constraint graph will be affected.
         this->consGraph->addConstraints(fieldObj, ptrNode, Constraints::addr_of);
 #endif
-
-        // TODO: stop calling callback if the obj offset is non-pointer
-        // auto ptrElemType =
-        // ptrNode->getPointer()->getValue()->getType()->getPointerElementType();
-        // auto offsetType =
-        // fieldObj->getObject()->getOffsetType(idx->getModule()->getDataLayout());
-
-        // auto offsetType =
-        // fieldObj->getObject()->getOffsetType()->getPointerElementType();
-        // offset is calculate by the size? offset / 4
-        // auto offsetType = objElemType->getContainedType(loffset);  // JEFF
-        // not sure (34860 is there a bug?)
-
-        //                if (nodeVec.size() > 10) {
-        //                    auto printOffsetType = offsetType;
-        //                    if (offsetType == nullptr) {
-        //                        printOffsetType = ptrElemType;
-        //                        // for scalar object and the field-insensitive
-        //                        object, the type can be null; llvm::outs() <<
-        //                        "offsetType: null\n";
-        //                    }
-        //
-        //                    llvm::outs() << "\nptrElemType: " << *ptrElemType
-        //                    << "\nobjElemType: " << *objElemType << "\n"
-        //                                 << "    poffset: " << poffset << "
-        //                                 loffset: " << loffset
-        //                                 << "  offsetType: " <<
-        //                                 *printOffsetType << "\n";
-        //
-        //                    llvm::outs() << "PTA offset update size: " <<
-        //                    nodeVec.size()
-        //                                 << " ptr: " << ptrNode->toString()
-        //                                 //<< " value: " << *ptr->getValue()
-        //                                 << "\nfieldObj: " <<
-        //                                 fieldObj->toString()  //<< " value: "
-        //                                 << *fieldObj->getValue()
-        //                                 << "\n"; // JEFF
-        //                }
-        // i8 is a special pointer?
-        // if (ptrElemType->isIntegerTy(8) || ptrElemType->isPointerTy() ||
-        // ptrElemType->isStructTy() ||
-        //     ptrElemType->isFunctionTy())  // JEFF
-        // {
-        //                    if (nodeVec.size() > 10000)
-        //                        llvm::outs() << "Large PTA offset update size:
-        //                        " << nodeVec.size()
-        //                                     << " ptr: " <<
-        //                                     ptrNode->toString()         //<<
-        //                                     " value: " << *ptr->getValue()
-        //                                     << "\nfieldObj: " <<
-        //                                     fieldObj->toString()  //<< "
-        //                                     value: " << *fieldObj->getValue()
-        //                                     << "\n"; // JEFF
-
-        // JEFF TODO: get the type of fieldObj->offet
-        // Peiming: We do not need to do type filtering here, because the type
-        // filtering has already been conducted before indexing the object,
-        // incompatible object will be filter out already
-        //                    if (nodeVec.size() == 1 ||
-        //                    isZeroOffsetTypeInRootType(offsetType,
-        //                                                                          ptrElemType,
-        //                                                                          idx->getModule()->getDataLayout()))
-        //                                                                          {
         callBack(fieldObj, ptrNode);
         changed = true;
-        //                    }
-        //}
       }
     }
 
-    //        // JEFF debug
-    //        if (!changed) {
-    //            llvm::outs() << "NO-MATCHED-OFFSET-TYPE: debugging (size=" <<
-    //            nodeVec.size() << ")...\n";
-    //            // something is wrong
-    //            for (auto objNode : nodeVec) {
-    //                // this might create new object, thus modify the points-to
-    //                set auto *fieldObj =
-    //                llvm::cast_or_null<ObjNodeTy>(LMT::indexObject(this->getLangModel(),
-    //                objNode, idx)); if (fieldObj == nullptr) {
-    //                    continue;
-    //                }
-    //                auto ptrElemType =
-    //                ptrNode->getPointer()->getValue()->getType()->getPointerElementType();
-    //                auto objElemType =
-    //                fieldObj->getObject()->getValue()->getType()->getPointerElementType();
-    //                auto poffset = fieldObj->getObject()->getPOffset();
-    //                auto loffset = fieldObj->getObject()->getLOffset();
-    //
-    //                auto offsetType =
-    //                fieldObj->getObject()->getOffsetType(idx->getModule()->getDataLayout());
-    //                {
-    //                    auto printOffsetType = offsetType;
-    //                    if (offsetType == nullptr) {
-    //                        printOffsetType = ptrElemType;
-    //                        // for scalar object and the field-insensitive
-    //                        object, the type can be null; llvm::outs() <<
-    //                        "offsetType: null\n";
-    //                    }
-    //
-    //                    llvm::outs() << "\nptrElemType: " << *ptrElemType <<
-    //                    "\nobjElemType: " << *objElemType << "\n"
-    //                                 << "    poffset: " << poffset << "
-    //                                 loffset: " << loffset
-    //                                 << "  offsetType: " << *printOffsetType
-    //                                 << "\n";
-    //
-    //                    llvm::outs() << "PTA offset update size: " <<
-    //                    nodeVec.size()
-    //                                 << " ptr: " << ptrNode->toString() //<< "
-    //                                 value: " << *ptr->getValue()
-    //                                 << "\nfieldObj: " << fieldObj->toString()
-    //                                 //<< " value: " << *fieldObj->getValue()
-    //                                 << "\n"; // JEFF
-    //                }
-    //                break;  // print the first one only
-    //            }
-    //        }
-
-    if (changed) {
-      EffectiveOffset++;
-    }
     return changed;
   }
 
-  // TODO: only process diff pts
   // src --LOAD-->dst
   // for every node in pts(src):
   //     node --COPY--> dst
   template <typename CallBack = Noop>
   bool processLoad(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
-    ProcessedLoad++;
 
     bool changed = false;
     for (auto it = PT::begin(src->getNodeID()), ie = PT::end(src->getNodeID()); it != ie; it++) {
@@ -302,9 +169,6 @@ class SolverBase {
       }
     }
 
-    if (changed) {
-      EffectiveLoad++;
-    }
     return changed;
   }
 
@@ -343,7 +207,6 @@ class SolverBase {
   bool processStore(CGNodeTy *src, CGNodeTy *dst, CallBack callBack = Noop{}) {
     assert(!src->hasSuperNode() && !dst->hasSuperNode());
 
-    ProcessedStore++;
     bool changed = false;
     for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID()); it != ie; it++) {
       auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
@@ -356,9 +219,6 @@ class SolverBase {
       }
     }
 
-    if (changed) {
-      EffectiveStore++;
-    }
     return changed;
   }
 
@@ -433,11 +293,6 @@ class SolverBase {
 
     consGraph = LMT::getConsGraph(langModel.get());
 
-    //        if (ConfigPrintConstraintGraph) {
-    //            WriteGraphToFile("ConstraintGraph_Initial",
-    //            *this->getConsGraph());
-    //        }
-
     LOG_INFO("Pointer Analysis Starting to Solve");
 
     // subclass might override solve() directly for more aggressive overriding
@@ -451,9 +306,11 @@ class SolverBase {
     if (ConfigPrintConstraintGraph) {
       WriteGraphToFile("ConstraintGraph_Final", *this->getConsGraph());
     }
+
     if (ConfigPrintCallGraph) {
       WriteGraphToFile("CallGraph_Final", *this->getCallGraph());
     }
+
     if (ConfigDumpPointsToSet) {
       // dump the points to set of every pointers
       dumpPointsTo();
@@ -462,7 +319,7 @@ class SolverBase {
     return false;
   }
 
-  CGNodeTy *getCGNode(const ctx *context, const llvm::Value *V) const {
+  inline CGNodeTy *getCGNode(const ctx *context, const llvm::Value *V) const {
     NodeID id = LMT::getSuperNodeIDForValue(langModel.get(), context, V);
     return (*consGraph)[id];
   }
@@ -543,6 +400,7 @@ class SolverBase {
     }
     return false;
   }
+
   [[nodiscard]] bool alias(const ctx *c1, const llvm::Value *v1, const ctx *c2, const llvm::Value *v2) const {
     assert(v1->getType()->isPointerTy() && v2->getType()->isPointerTy());
 
@@ -595,8 +453,7 @@ class SolverBase {
   [[nodiscard]] inline const llvm::Module *getLLVMModule() const { return LMT::getLLVMModule(this->getLangModel()); }
 
   [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNode(const ctx *C, const llvm::Function *F) {
-    return LMT::getDirectNode(this->getLangModel(), C,
-                              F);  //->getDirectNode(C, F);
+    return LMT::getDirectNode(this->getLangModel(), C, F);
   }
 
   [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNodeOrNull(const ctx *C, const llvm::Function *F) const {
@@ -611,23 +468,19 @@ class SolverBase {
 
 template <typename LangModel, typename SubClass>
 constexpr bool SolverBase<LangModel, SubClass>::processAddrOf(CGNodeTy *src, CGNodeTy *dst) const {
-#ifndef NDEBUG
   // should already been handled
   assert(!PT::insert(dst->getNodeID(), src->getNodeID()));
-#endif
   return false;
 }
 
 // site. pts(dst) |= pts(src);
 template <typename LangModel, typename SubClass>
 bool SolverBase<LangModel, SubClass>::processCopy(CGNodeTy *src, CGNodeTy *dst) {
-  ProcessedCopy++;
   if (PT::unionWith(dst->getNodeID(), src->getNodeID())) {
     if (dst->isFunctionPtr()) {
       // node used for indirect call
       this->updateFunPtr(dst->getNodeID());
     }
-    EffectiveCopy++;
     return true;
   }
   return false;

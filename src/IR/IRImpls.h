@@ -320,4 +320,7 @@ using OpenMPSingleEnd = CallIRImpl<IR::Type::OpenMPSingleEnd>;
 
 using OpenMPReduce = CallIRImpl<IR::Type::OpenMPReduce>;
 
+using OpenMPMasterStart = CallIRImpl<IR::Type::OpenMPMasterStart>;
+using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
+
 }  // namespace race

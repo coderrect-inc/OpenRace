@@ -20,7 +20,6 @@ limitations under the License.
 
 #include "PointerAnalysis/Graph/GraphBase/GraphBase.h"
 #include "PointerAnalysis/Program/CtxFunction.h"
-#include "PointerAnalysis/Program/Program.h"
 #include "PointerAnalysis/Util/Util.h"
 
 namespace pta {

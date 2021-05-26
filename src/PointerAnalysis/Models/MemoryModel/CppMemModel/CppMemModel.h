@@ -22,12 +22,12 @@ limitations under the License.
 // to handle more languages such as Rust/Fortran
 
 #include "Demangler/Demangler.h"
-#include "PointerAnalysis/Models/MemoryModel/CppMemModel/RewriteModeledAPIPass.h"
+#include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
+#include "PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSCanonicalizer.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSMemModel.h"
-#include "PointerAnalysis/Program/InterceptResult.h"
 #include "PointerAnalysis/Util/TypeMetaData.h"
 
 extern cl::opt<bool> CONFIG_VTABLE_MODE;
@@ -149,6 +149,7 @@ class CppMemModel : public FSMemModel<ctx> {
       }
     }
 
+    // TODO: this is a little bit too complicated, refactor it
     auto vectorElemT = VectorAPI::resolveVecElemType(type);
     if (vectorElemT && VectorAPI::isSupportedElementType(vectorElemT)) {
       auto vector = new Vector<ctx>(vectorElemT);

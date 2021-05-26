@@ -52,7 +52,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
   assert(CT::contextEvolve(caller->getContext(), callsite) == callee->getContext());
 
   auto const call = llvm::dyn_cast<llvm::CallBase>(callsite);
-  if (!call || !call->getFunction() || !call->getFunction()->hasName()) return false;
+  if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 
   auto const funcName = call->getCalledFunction()->getName();
 

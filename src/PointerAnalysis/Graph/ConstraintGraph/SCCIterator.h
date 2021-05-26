@@ -30,7 +30,7 @@ namespace pta {
 // cons -> which kind of constraints we need to sort on
 // reverse -> whether we should DFS the graph in reverse order (so that the scc
 // iterator is in topo order)
-//            otherwise it will be in reverse topo-order
+// otherwise it will be in reverse topo-order
 template <typename ctx, Constraints cons, bool reverse>
 class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, reverse>, std::forward_iterator_tag,
                                                       const std::vector<CGNodeBase<ctx> *>> {
