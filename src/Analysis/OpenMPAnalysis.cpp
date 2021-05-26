@@ -13,6 +13,8 @@ const llvm::GetElementPtrInst* getArrayAccess(const MemAccessEvent* event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
+bool regionEndLessThan(const Region& region1, const Region& region2) { return region1.end < region2.end; }
+
 }  // namespace
 
 OpenMPAnalysis::OpenMPAnalysis() { PB.registerFunctionAnalyses(FAM); }
@@ -104,7 +106,7 @@ template <IR::Type Start, IR::Type End>
 bool in(const race::Event* event) {
   auto const regions = getRegions<Start, End>(event->getThread());
   auto const eid = event->getID();
-  auto it = lower_bound (regions.begin(), regions.end(), Region(eid, eid),  RegionLessThan());
+  auto it = lower_bound (regions.begin(), regions.end(), Region(eid, eid),  regionEndLessThan);
   if (it != regions.end()){
     if (it->contains (eid))
       return true;
@@ -128,7 +130,7 @@ bool inSame(const Event* event1, const Event* event2) {
 
   // Omp threads in same team will have identical traces so we only need one set of events
   auto const regions = getRegions<Start, End>(event1->getThread());
-  auto it = lower_bound (regions.begin(), regions.end(), Region (minID, minID), RegionLessThan());
+  auto it = lower_bound (regions.begin(), regions.end(), Region (minID, minID), regionEndLessThan);
   if (it != regions.end()){
     if (it->contains (minID)){
       return it->contains (maxID);
@@ -158,8 +160,8 @@ const std::vector<OpenMPAnalysis::LoopRegion>& OpenMPAnalysis::getOmpForLoops(co
 bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
-  Region temp (eid, eid);
-  auto it = lower_bound (loopRegions.begin(), loopRegions.end(), temp, RegionLessThan());
+
+  auto it = lower_bound (loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
   if (it != loopRegions.end()){
 	if (it->contains (eid))
 	  return true;
