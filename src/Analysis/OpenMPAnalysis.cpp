@@ -373,6 +373,19 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
         return true;
       }
 
+      /* When the loopStep is greater than distance, overlapping accesses are not possible
+        Consider the following loop
+          for (int i = 0; i < N; i+=2)
+            A[i] = i;
+            A[i+1] = i;
+        The two accesses being considered are A[i] and A[i+1].
+        The distance between these two accesses is 1
+        As long as the step is greater than this distance there will be no overlap
+          i=0 {0, 1} | i=2 {2, 3} | i=4 {4, 5} | ...
+        But iof the loopstep is not greater, there may be an overlap.
+        Consider a loopstep of 1
+          i=0 {0, 1} | i=1 {1, 2} | ...
+        Iterations 0 and 1 both access A at an offset of 1*/
       if (distance < loopStep) {
         return false;
       }
@@ -384,13 +397,14 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
         int64_t upperBound = std::abs(bounds.second.getValue());
 
         // if both bound are resolvable
+        // FIXME: why do we need to divide by loopstep?
         if (std::max(lowerBound, upperBound) < (distance / loopStep)) {
           return false;
         }
       }
     }
   } else {
-    // the parallel loop has nested loop inside
+    // FIXME: what is this check doing and why does it work?
     SCEVBoundApplier boundApplier(omp1->getLoop(), scev);
 
     // this scev represent the largest array elements that will be accessed in the nested loop
