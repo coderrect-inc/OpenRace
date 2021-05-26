@@ -306,8 +306,8 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
   auto scev1 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep1)));
   auto scev2 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep2)));
 
-  // the rewriter here move the bit extension operation into the deepest scopy
-  // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewrited to
+  // the rewriter here move sext adn zext operations into the deepest scope
+  // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewritten to
   //   ==> (4 + (8 * (sext i32 %storemerge2 to i64)) + %a)
   // this will simplied the scev expression as sext and zext are considered as variable instead of constant
   // during the computation between two scev expression.
@@ -321,7 +321,7 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
   }
 
   if (diff->isZero()) {
-    // simplest case, two access the same element, no race for sure
+    // simplest case, array access patterns are perfectly aligned an there is not overlap
     return false;
   }
 
