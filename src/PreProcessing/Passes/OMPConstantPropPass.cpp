@@ -44,6 +44,8 @@ inline bool hasGlobalOverwritten(GlobalVariable *GV) {
 }
 
 bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
+  // based on ConstantPropagation in lib/Transforms/Scalar/ConstantProp.cpp
+
   // Initialize the worklist to all of the instructions ready to process...
   SmallPtrSet<Instruction *, 16> WorkList;
   // The SmallVector of WorkList ensures that we do iteration at stable order.
@@ -104,6 +106,7 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   return Changed;
 }
 
+// if there is a single store instruction that dominates I and is a user of V, return it, else return nullptr.
 StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
   StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
@@ -124,6 +127,7 @@ StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const Dom
   return storeInst;
 }
 
+// If a function is only ever called with constant value arguments, propogate those constant values into the function
 bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
   if (F.arg_empty() || F.use_empty()) return false;  // No arguments? Early exit.
 
@@ -158,12 +162,22 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
       if (ArgumentConstants[i].second) continue;
 
       Value *V = ACS.getCallArgOperand(i);
+      // Ignore recursive calls passing argument down.
+      if (V == &*Arg) continue;
+
       Constant *C = dyn_cast_or_null<Constant>(V);
+      if (C == nullptr) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
+        if (++NumNonconstant == ArgumentConstants.size()) return false;
+        ArgumentConstants[i].second = true;
+        continue;
+      }
 
       // Mismatched argument type is undefined behavior. Simply bail out
       // to avoid handling of such situations below (avoiding
       // asserts/crashes).
-      if (C && Arg->getType() != C->getType()) return false;
+      if (Arg->getType() != C->getType()) return false;
 
       // We can only propagate thread independent values through
       // callbacks. This is different to direct/indirect call sites
@@ -171,47 +185,48 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
       // callee is the same. For callbacks this is not guaranteed, thus a
       // thread dependent value could be different for the caller and
       // callee, making it invalid to propagate.
-      if (C && ACS.isCallbackCall() && C->isThreadDependent()) {
-        // Argument became non-constant. If all arguments are
-        // non-constant now, give up on this function.
+      if (ACS.isCallbackCall() && C->isThreadDependent()) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
         if (++NumNonconstant == ArgumentConstants.size()) return false;
-
         ArgumentConstants[i].second = true;
         continue;
       }
 
-      if (C && ArgumentConstants[i].first == nullptr) {
-        ArgumentConstants[i].first = C;  // First constant seen.
-      } else if (C && ArgumentConstants[i].first == C) {
-        // Still the constant value we think it is.
-      } else if (V == &*Arg) {
-        // Ignore recursive calls passing argument down.
-      } else {
-        // Argument became non-constant.  If all arguments are
-        // non-constant now, give up on this function.
+      // A different constant has been passed to this arg already
+      if (ArgumentConstants[i].first != nullptr) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
         if (++NumNonconstant == ArgumentConstants.size()) return false;
         ArgumentConstants[i].second = true;
+        continue;
       }
+
+      // record the first constant seen for this argument
+      ArgumentConstants[i].first = C;
     }
   }
 
   // If we got to this point, there is a constant argument!
   assert(NumNonconstant != ArgumentConstants.size());
   bool MadeChange = false;
-  Function::arg_iterator AI = F.arg_begin();
-  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI) {
+  Function::arg_iterator Arg = F.arg_begin();
+  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++Arg) {
     // Do we have a constant argument?
-    if (ArgumentConstants[i].second || AI->use_empty() || AI->hasInAllocaAttr() ||
-        (AI->hasByValAttr() && !F.onlyReadsMemory()))
+    // FIXME: why can we skip (hasByValAttr && !onlyReadsMemory)
+    if (ArgumentConstants[i].second || Arg->use_empty() || Arg->hasInAllocaAttr() ||
+        (Arg->hasByValAttr() && !F.onlyReadsMemory()))
       continue;
 
     Value *V = ArgumentConstants[i].first;
-    if (!V) V = UndefValue::get(AI->getType());
-    AI->replaceAllUsesWith(V);
+    if (!V) V = UndefValue::get(Arg->getType());
+    Arg->replaceAllUsesWith(V);
     MadeChange = true;
   }
 
   // special case, the omp_outlined function calls use a pointer but only reads it
+  // omp outlined passes shared variables by pointer, and never modifies where the pointer points to
+  // In this case, we can propogate the value of the pointer into the omp.outlined function
   if (OpenMPModel::isOutlined(F.getName())) {
     for (int i = 2; i < F.arg_size(); i++) {
       // skip the first two args: i32* noalias %.global_tid., i32* noalias %.bound_tid.
@@ -223,7 +238,7 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
         User *UR = U.getUser();
         if (isa<BlockAddress>(UR)) continue;
 
-        // the omp.onlined function should only have one use of callsite?
+        // the omp.outlined function should only have one use of callsite?
         AbstractCallSite ACS(&U);
         auto V = ACS.getCallArgOperand(i);
 

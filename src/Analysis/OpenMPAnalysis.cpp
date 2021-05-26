@@ -63,7 +63,6 @@ class OpenMPLoopManager {
     init();
   }
 
-  void rebuildWith(AnalysisManager<Function> &FAM, Function &F);
   // getter
   [[nodiscard]] inline Function *getTargetFunction() const { return F; }
 
@@ -84,7 +83,12 @@ class OpenMPLoopManager {
     return getStaticInitCallIfExist(initBlock);
   }
 
+  std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const Loop *L) const {
+    return resolveOMPLoopBound(getStaticInitCallIfExist(L));
+  }
   std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const CallBase *initForCall) const;
+
+  const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root) const;
 
   // TODO: handle dynamic dispatch for loop
   inline bool isOMPForLoop(const Loop *L) const { return this->getStaticInitCallIfExist(L) != nullptr; }
@@ -115,21 +119,6 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
 
 inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
   return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
-}
-
-const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
-  // get the outter-most loop (omp loop should always be the outter-most
-  // loop
-  auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
-    if (auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(S)) {
-      if (ompManager.isOMPForLoop(addRec->getLoop())) {
-        return true;
-      }
-    }
-    return false;
-  });
-
-  return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
 const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
@@ -197,17 +186,6 @@ const llvm::SCEV *SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *
     }
   }
   return Expr;
-}
-
-void OpenMPLoopManager::rebuildWith(AnalysisManager<Function> &FAM, Function &fun) {
-  this->F = &fun;
-  // this->LI = &FAM.getResult<LoopAnalysis>(fun);
-  this->DT = &FAM.getResult<DominatorTreeAnalysis>(fun);
-
-  ompDispatchInitBlocks.clear();
-  ompStaticInitBlocks.clear();
-
-  init();
 }
 
 void OpenMPLoopManager::init() {
@@ -283,6 +261,21 @@ std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoo
   return std::make_pair(LB, UB);
 }
 
+const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) const {
+  // get the outter-most loop (omp loop should always be the outter-most
+  // loop within an OpenMP region)
+  auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
+    if (auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(S)) {
+      if (this->isOMPForLoop(addRec->getLoop())) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
+}
+
 OpenMPAnalysis::OpenMPAnalysis() { PB.registerFunctionAnalyses(FAM); }
 
 bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
@@ -299,14 +292,14 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
   // TODO: get rid of const cast?
   auto &targetFun = *const_cast<llvm::Function *>(gep1->getFunction());
-  OpenMPLoopManager ompManager(FAM, targetFun);
   auto &scev = FAM.getResult<ScalarEvolutionAnalysis>(targetFun);
 
   BitExtSCEVRewriter rewriter(scev);
   auto scev1 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep1)));
   auto scev2 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep2)));
-  // the rewriter here move the bit extension operation into the deepest scopy
-  // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewrited to
+
+  // the rewriter here move sext adn zext operations into the deepest scope
+  // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewritten to
   //   ==> (4 + (8 * (sext i32 %storemerge2 to i64)) + %a)
   // this will simplied the scev expression as sext and zext are considered as variable instead of constant
   // during the computation between two scev expression.
@@ -320,16 +313,18 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
   }
 
   if (diff->isZero()) {
-    // simplest case, two access the same element, no race for sure
+    // simplest case, array access patterns are perfectly aligned an there is not overlap
     return false;
   }
 
-  // strip off the scev
-  auto omp1 = getOMPLoopSCEV(scev1, ompManager);
-  auto omp2 = getOMPLoopSCEV(scev2, ompManager);
+  OpenMPLoopManager ompManager(FAM, targetFun);
 
-  // the scev expression does not contains openmp for loop
-  if (!omp1 && !omp2) {
+  // Get the SCEV expression containing only OpenMP loop induction variable.
+  auto omp1 = ompManager.getOMPLoopSCEV(scev1);
+  auto omp2 = ompManager.getOMPLoopSCEV(scev2);
+
+  // the scev expression does not contains OpenMP for loop
+  if (!omp1 || !omp2) {
     return true;
   }
 
@@ -337,19 +332,36 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return true;
   }
 
-  // different openmp loop, should never happen though
+  // different OpenMP loop, should never happen though
   if (omp1->getLoop() != omp2->getLoop()) {
     return true;
   }
 
-  // some SCEV is in the form %base + {expr,+,%strip}<omp.loop>
-  // since here the gap between two accesses are constant, the variable %base can simply be ignored.
+  /* stripSCEVBaseAddr simplifies SCEV expressions when there is a nested parallel loop
+
+  float A[N][N];
+  for (int i = 0; ....)
+   #pragma omp parallel for
+   for (int j = 0; ...)
+      A[i][j] = ...
+
+  Before Strip:
+  ((160 * (sext i32 %14 to i64))<nsw> + {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>)
+  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+                  Base
+  After Strip:
+                                        {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>
+
+  From OpenMP's perspective there is no multi-dimensional array in this case.
+  The outlined OpenMP region will see (i*sizeof(float)) + A as the base address and j as the *only* induction variable.
+  stripSCEVBaseAddr strips (i*sizeof(float)) from the SCEV.
+
+  Because this base value is constant with regard to the OpenMP region, the stripped portion can be safely ignored. */
   scev1 = stripSCEVBaseAddr(scev1);
   scev2 = stripSCEVBaseAddr(scev2);
 
+  // This will be true when the parallel loop is nested in a non-parallel outer loop
   if (omp1 == scev1 && omp2 == scev2) {
-    // the outside-most loop are the parallel loop as well instead of being parallel loop nested in a
-    // nested loop.
     uint64_t distance = diff->getAPInt().abs().getLimitedValue();
     auto step = omp1->getOperand(1);
 
@@ -361,32 +373,45 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
         return true;
       }
 
+      /* When the loopStep is greater than distance, overlapping accesses are not possible
+        Consider the following loop
+          for (int i = 0; i < N; i+=2)
+            A[i] = i;
+            A[i+1] = i;
+        The two accesses being considered are A[i] and A[i+1].
+        The distance between these two accesses is 1
+        As long as the step is greater than this distance there will be no overlap
+          i=0 {0, 1} | i=2 {2, 3} | i=4 {4, 5} | ...
+        But iof the loopstep is not greater, there may be an overlap.
+        Consider a loopstep of 1
+          i=0 {0, 1} | i=1 {1, 2} | ...
+        Iterations 0 and 1 both access A at an offset of 1*/
       if (distance < loopStep) {
         return false;
       }
 
-      CallBase *initForCall = ompManager.getStaticInitCallIfExist(omp1->getLoop());
-      auto bounds = ompManager.resolveOMPLoopBound(initForCall);
+      auto bounds = ompManager.resolveOMPLoopBound(omp1->getLoop());
       if (bounds.first.hasValue() && bounds.second.hasValue()) {
-        // do we need special handling for negetive bound?
+        // do we need special handling for negative bound?
         int64_t lowerBound = std::abs(bounds.first.getValue());
         int64_t upperBound = std::abs(bounds.second.getValue());
 
         // if both bound are resolvable
+        // FIXME: why do we need to divide by loopstep?
         if (std::max(lowerBound, upperBound) < (distance / loopStep)) {
           return false;
         }
       }
     }
   } else {
-    // the parallel loop has nested loop inside
+    // FIXME: what is this check doing and why does it work?
     SCEVBoundApplier boundApplier(omp1->getLoop(), scev);
 
     // this scev represent the largest array elements that will be accessed in the nested loop
     auto b1 = boundApplier.visit(scev1);
     auto b2 = boundApplier.visit(scev2);
 
-    // thus if the largest index is smaller than the smallest index in the next openmp loop iteration
+    // thus if the largest index is smaller than the smallest index in the next OpenMP loop iteration
     // there is no race
     // TODO: negative loop? are they canonicalized?
     auto n1 = getNextIterSCEV(omp1, scev);
