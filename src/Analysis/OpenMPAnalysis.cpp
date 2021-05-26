@@ -119,7 +119,7 @@ inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
 
 const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root, const OpenMPLoopManager &ompManager) {
   // get the outter-most loop (omp loop should always be the outter-most
-  // loop
+  // loop within an OpenMP region)
   auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
     if (auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(S)) {
       if (ompManager.isOMPForLoop(addRec->getLoop())) {
@@ -305,6 +305,7 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
   BitExtSCEVRewriter rewriter(scev);
   auto scev1 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep1)));
   auto scev2 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep2)));
+
   // the rewriter here move the bit extension operation into the deepest scopy
   // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewrited to
   //   ==> (4 + (8 * (sext i32 %storemerge2 to i64)) + %a)
@@ -324,12 +325,12 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return false;
   }
 
-  // strip off the scev
+  // Get the SCEV expression containing only OpenMP loop induction variable.
   auto omp1 = getOMPLoopSCEV(scev1, ompManager);
   auto omp2 = getOMPLoopSCEV(scev2, ompManager);
 
-  // the scev expression does not contains openmp for loop
-  if (!omp1 && !omp2) {
+  // the scev expression does not contains OpenMP for loop
+  if (!omp1 || !omp2) {
     return true;
   }
 
@@ -337,19 +338,36 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return true;
   }
 
-  // different openmp loop, should never happen though
+  // different OpenMP loop, should never happen though
   if (omp1->getLoop() != omp2->getLoop()) {
     return true;
   }
 
-  // some SCEV is in the form %base + {expr,+,%strip}<omp.loop>
-  // since here the gap between two accesses are constant, the variable %base can simply be ignored.
+  /* stripSCEVBaseAddr simplifies SCEV expressions when there is a nested parallel loop
+
+  float A[N][N];
+  for (int i = 0; ....)
+   #pragma omp parallel for
+   for (int j = 0; ...)
+      A[i][j] = ...
+
+  Before Strip:
+  ((160 * (sext i32 %14 to i64))<nsw> + {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>)
+  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+                  Base
+  After Strip:
+                                        {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>
+
+  From OpenMP's perspective there is no multi-dimensional array in this case.
+  The outlined OpenMP region will see (i*sizeof(float)) + A as the base address and j as the *only* induction variable.
+  stripSCEVBaseAddr strips (i*sizeof(float)) from the SCEV.
+
+  Because this base value is constant with regard to the OpenMP region, the stripped portion can be safely ignored. */
   scev1 = stripSCEVBaseAddr(scev1);
   scev2 = stripSCEVBaseAddr(scev2);
 
+  // This will be true when the parallel loop is nested in a non-parallel outer loop
   if (omp1 == scev1 && omp2 == scev2) {
-    // the outside-most loop are the parallel loop as well instead of being parallel loop nested in a
-    // nested loop.
     uint64_t distance = diff->getAPInt().abs().getLimitedValue();
     auto step = omp1->getOperand(1);
 

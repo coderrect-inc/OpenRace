@@ -104,6 +104,7 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   return Changed;
 }
 
+// if there is a single store instruction that dominates I and is a user of V, return it, else return nullptr.
 StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
   StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
@@ -201,6 +202,7 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
   Function::arg_iterator AI = F.arg_begin();
   for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI) {
     // Do we have a constant argument?
+    // FIXME: why can we skip (hasByValAttr && !onlyReadsMemory)
     if (ArgumentConstants[i].second || AI->use_empty() || AI->hasInAllocaAttr() ||
         (AI->hasByValAttr() && !F.onlyReadsMemory()))
       continue;
@@ -212,6 +214,8 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
   }
 
   // special case, the omp_outlined function calls use a pointer but only reads it
+  // omp outlined passes shared variables by pointer, and never modifies where the pointer points to
+  // In this case, we can propogate the value of the pointer into the omp.outlined function
   if (OpenMPModel::isOutlined(F.getName())) {
     for (int i = 2; i < F.arg_size(); i++) {
       // skip the first two args: i32* noalias %.global_tid., i32* noalias %.bound_tid.
@@ -223,7 +227,7 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
         User *UR = U.getUser();
         if (isa<BlockAddress>(UR)) continue;
 
-        // the omp.onlined function should only have one use of callsite?
+        // the omp.outlined function should only have one use of callsite?
         AbstractCallSite ACS(&U);
         auto V = ACS.getCallArgOperand(i);
 
