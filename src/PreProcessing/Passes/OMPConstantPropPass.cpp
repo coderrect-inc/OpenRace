@@ -210,17 +210,17 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
   // If we got to this point, there is a constant argument!
   assert(NumNonconstant != ArgumentConstants.size());
   bool MadeChange = false;
-  Function::arg_iterator AI = F.arg_begin();
-  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI) {
+  Function::arg_iterator Arg = F.arg_begin();
+  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++Arg) {
     // Do we have a constant argument?
     // FIXME: why can we skip (hasByValAttr && !onlyReadsMemory)
-    if (ArgumentConstants[i].second || AI->use_empty() || AI->hasInAllocaAttr() ||
-        (AI->hasByValAttr() && !F.onlyReadsMemory()))
+    if (ArgumentConstants[i].second || Arg->use_empty() || Arg->hasInAllocaAttr() ||
+        (Arg->hasByValAttr() && !F.onlyReadsMemory()))
       continue;
 
     Value *V = ArgumentConstants[i].first;
-    if (!V) V = UndefValue::get(AI->getType());
-    AI->replaceAllUsesWith(V);
+    if (!V) V = UndefValue::get(Arg->getType());
+    Arg->replaceAllUsesWith(V);
     MadeChange = true;
   }
 
