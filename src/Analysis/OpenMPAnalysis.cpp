@@ -106,10 +106,9 @@ template <IR::Type Start, IR::Type End>
 bool in(const race::Event* event) {
   auto const regions = getRegions<Start, End>(event->getThread());
   auto const eid = event->getID();
-  auto it = lower_bound (regions.begin(), regions.end(), Region(eid, eid),  regionEndLessThan);
-  if (it != regions.end()){
-    if (it->contains (eid))
-      return true;
+  auto it = lower_bound(regions.begin(), regions.end(), Region(eid, eid), regionEndLessThan);
+  if (it != regions.end()) {
+    if (it->contains(eid)) return true;
   }
   return false;
 }
@@ -130,10 +129,10 @@ bool inSame(const Event* event1, const Event* event2) {
 
   // Omp threads in same team will have identical traces so we only need one set of events
   auto const regions = getRegions<Start, End>(event1->getThread());
-  auto it = lower_bound (regions.begin(), regions.end(), Region (minID, minID), regionEndLessThan);
-  if (it != regions.end()){
-    if (it->contains (minID)){
-      return it->contains (maxID);
+  auto it = lower_bound(regions.begin(), regions.end(), Region(minID, minID), regionEndLessThan);
+  if (it != regions.end()) {
+    if (it->contains(minID)) {
+      return it->contains(maxID);
     }
   }
   return false;
@@ -162,10 +161,9 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent* event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
 
-  auto it = lower_bound (loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
-  if (it != loopRegions.end()){
-	if (it->contains (eid))
-	  return true;
+  auto it = lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
+  if (it != loopRegions.end()) {
+    if (it->contains(eid)) return true;
   }
 
   return false;

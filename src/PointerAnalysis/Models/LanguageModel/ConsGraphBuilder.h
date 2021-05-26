@@ -22,6 +22,7 @@ limitations under the License.
 
 #include <unordered_map>
 
+#include "Logging/Log.h"
 #include "PointerAnalysis/Graph/ConstraintGraph/ConstraintGraph.h"
 #include "PointerAnalysis/Models/LanguageModel/PtrNodeManager.h"
 #include "PointerAnalysis/Models/MemoryModel/MemModelTrait.h"
@@ -29,7 +30,6 @@ limitations under the License.
 #include "PointerAnalysis/Program/CtxModule.h"
 #include "PointerAnalysis/Program/Object.h"
 #include "PointerAnalysis/Program/Pointer.h"
-#include "Logging/Log.h"
 #include "PointerAnalysis/Util/CtxInstVisitor.h"
 #include "PointerAnalysis/Util/GraphWriter.h"
 #include "PointerAnalysis/Util/SingleInstanceOwner.h"

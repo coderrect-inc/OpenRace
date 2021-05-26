@@ -192,6 +192,6 @@ class Vector : public FSObject<ctx> {
   friend CppMemModel<ctx>;
 };
 
-}  // namespace pta
+}  // namespace pta::cpp
 
 #endif

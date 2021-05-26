@@ -75,12 +75,14 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-        if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst) || hasThreadLocalOperand(loadInst)) {
+        if (loadInst->isAtomic() || loadInst->isVolatile() || hasNoAliasMD(loadInst) ||
+            hasThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-        if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst) || hasThreadLocalOperand(storeInst)) {
+        if (storeInst->isAtomic() || storeInst->isVolatile() || hasNoAliasMD(storeInst) ||
+            hasThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
@@ -136,11 +138,11 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isReduceNowaitStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
-        } else if (OpenMPModel::isCriticalStart(funcName)){
+        } else if (OpenMPModel::isCriticalStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
-        }else if (OpenMPModel::isCriticalEnd(funcName)){
+        } else if (OpenMPModel::isCriticalEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalEnd>(callInst));
-        }else if (OpenMPModel::isFork(funcName)) {
+        } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
           auto twinOmpFork = getTwinOmpFork(callInst);

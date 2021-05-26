@@ -87,4 +87,4 @@ const Type *VectorAPI::resolveVecElemType(const Type *T) {
   return nullptr;
 }
 
-}  // namespace pta
+}  // namespace pta::cpp

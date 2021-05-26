@@ -94,4 +94,4 @@ bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
 
 char RewriteModeledAPIPass::ID = 0;
 static RegisterPass<RewriteModeledAPIPass> RMP("", "", false, /*CFG only*/ false /*is analysis*/);
-}  // namespace pta
+}  // namespace pta::cpp

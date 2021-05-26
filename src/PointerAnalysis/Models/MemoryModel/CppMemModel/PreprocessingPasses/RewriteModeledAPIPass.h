@@ -27,6 +27,6 @@ class RewriteModeledAPIPass : public llvm::FunctionPass {
   bool runOnFunction(llvm::Function &F) override;
 };
 
-}  // namespace pta
+}  // namespace pta::cpp
 
 #endif

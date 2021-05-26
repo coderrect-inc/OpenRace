@@ -19,7 +19,9 @@ limitations under the License.
 
 #include "PointerAnalysis/Models/LanguageModel/InterceptResult.h"
 
-namespace llvm::legacy { class PassManager; }
+namespace llvm::legacy {
+class PassManager;
+}
 
 namespace pta {
 

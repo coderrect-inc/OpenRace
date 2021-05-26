@@ -15,14 +15,14 @@ limitations under the License.
 
 #include "Util.h"
 
-#include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/ArrayLayout.h"
-
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
 #include <llvm/IR/GlobalAlias.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/Support/CommandLine.h>
+
+#include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/ArrayLayout.h"
 
 using namespace llvm;
 

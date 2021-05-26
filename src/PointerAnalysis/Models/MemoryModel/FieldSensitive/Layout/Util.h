@@ -17,13 +17,14 @@ limitations under the License.
 #define OPENRACE_UTIL_H
 
 #include <stddef.h>
+
 #include <map>
 
-//forward declarations
+// forward declarations
 namespace llvm {
 class GetElementPtrInst;
 class DataLayout;
-}
+}  // namespace llvm
 
 namespace pta {
 
@@ -32,5 +33,5 @@ class ArrayLayout;
 size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout &DL);
 bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize);
 
-}
+}  // namespace pta
 #endif  // OPENRACE_UTIL_H
