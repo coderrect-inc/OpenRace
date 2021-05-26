@@ -44,6 +44,8 @@ inline bool hasGlobalOverwritten(GlobalVariable *GV) {
 }
 
 bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
+  // based on ConstantPropagation in lib/Transforms/Scalar/ConstantProp.cpp
+
   // Initialize the worklist to all of the instructions ready to process...
   SmallPtrSet<Instruction *, 16> WorkList;
   // The SmallVector of WorkList ensures that we do iteration at stable order.
@@ -125,6 +127,7 @@ StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const Dom
   return storeInst;
 }
 
+// If a function is only ever called with constant value arguments, propogate those constant values into the function
 bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
   if (F.arg_empty() || F.use_empty()) return false;  // No arguments? Early exit.
 
@@ -159,12 +162,22 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
       if (ArgumentConstants[i].second) continue;
 
       Value *V = ACS.getCallArgOperand(i);
+      // Ignore recursive calls passing argument down.
+      if (V == &*Arg) continue;
+
       Constant *C = dyn_cast_or_null<Constant>(V);
+      if (C == nullptr) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
+        if (++NumNonconstant == ArgumentConstants.size()) return false;
+        ArgumentConstants[i].second = true;
+        continue;
+      }
 
       // Mismatched argument type is undefined behavior. Simply bail out
       // to avoid handling of such situations below (avoiding
       // asserts/crashes).
-      if (C && Arg->getType() != C->getType()) return false;
+      if (Arg->getType() != C->getType()) return false;
 
       // We can only propagate thread independent values through
       // callbacks. This is different to direct/indirect call sites
@@ -172,27 +185,25 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
       // callee is the same. For callbacks this is not guaranteed, thus a
       // thread dependent value could be different for the caller and
       // callee, making it invalid to propagate.
-      if (C && ACS.isCallbackCall() && C->isThreadDependent()) {
-        // Argument became non-constant. If all arguments are
-        // non-constant now, give up on this function.
+      if (ACS.isCallbackCall() && C->isThreadDependent()) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
         if (++NumNonconstant == ArgumentConstants.size()) return false;
-
         ArgumentConstants[i].second = true;
         continue;
       }
 
-      if (C && ArgumentConstants[i].first == nullptr) {
-        ArgumentConstants[i].first = C;  // First constant seen.
-      } else if (C && ArgumentConstants[i].first == C) {
-        // Still the constant value we think it is.
-      } else if (V == &*Arg) {
-        // Ignore recursive calls passing argument down.
-      } else {
-        // Argument became non-constant.  If all arguments are
-        // non-constant now, give up on this function.
+      // A different constant has been passed to this arg already
+      if (ArgumentConstants[i].first != nullptr) {
+        // Argument became non-constant.
+        // If all arguments are non-constant now, give up on this function.
         if (++NumNonconstant == ArgumentConstants.size()) return false;
         ArgumentConstants[i].second = true;
+        continue;
       }
+
+      // record the first constant seen for this argument
+      ArgumentConstants[i].first = C;
     }
   }
 
