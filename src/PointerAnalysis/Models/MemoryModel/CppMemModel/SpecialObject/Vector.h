@@ -33,8 +33,7 @@ namespace llvm {
 class CallBase;
 }
 
-namespace pta {
-namespace cpp {
+namespace pta::cpp {
 
 // forward declaration
 template <typename ctx>
@@ -193,7 +192,6 @@ class Vector : public FSObject<ctx> {
   friend CppMemModel<ctx>;
 };
 
-}  // namespace cpp
-}  // namespace pta
+}  // namespace pta::cpp
 
 #endif

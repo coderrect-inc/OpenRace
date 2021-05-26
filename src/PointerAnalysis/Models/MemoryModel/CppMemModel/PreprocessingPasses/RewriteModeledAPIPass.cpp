@@ -13,7 +13,7 @@ limitations under the License.
 // Created by peiming on 7/23/20.
 //
 
-#include "PointerAnalysis/Models/MemoryModel/CppMemModel/RewriteModeledAPIPass.h"
+#include "RewriteModeledAPIPass.h"
 
 #include <llvm/IR/IRBuilder.h>
 
@@ -24,8 +24,7 @@ using namespace llvm;
 
 extern cl::opt<bool> CONFIG_VTABLE_MODE;
 
-namespace pta {
-namespace cpp {
+namespace pta::cpp {
 
 inline bool isVTableVariable(const llvm::Value *g) {
   if (g->hasName()) {
@@ -95,6 +94,4 @@ bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
 
 char RewriteModeledAPIPass::ID = 0;
 static RegisterPass<RewriteModeledAPIPass> RMP("", "", false, /*CFG only*/ false /*is analysis*/);
-}  // namespace cpp
-
-}  // namespace pta
+}  // namespace pta::cpp

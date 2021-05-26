@@ -1,27 +1,25 @@
 set(pta-lib-sources
-    PointerAnalysis/Context/Context.cpp
-    PointerAnalysis/Model/MemModels.cpp
-    PointerAnalysis/Solver/PointsToSet.cpp
-    PointerAnalysis/Program/Program.cpp
-    PointerAnalysis/Model/DefaultLangModel.cpp
-    PointerAnalysis/Model/FieldSensitive/FSLayouts.cpp
-    PointerAnalysis/Model/DefaultHeapModel.cpp
-    PointerAnalysis/Model/CppMemModel/SpecialObject/Vector.cpp
-    PointerAnalysis/Model/CppMemModel/SpecialObject/VTablePtr.cpp
     PointerAnalysis/CMDOptions.cpp
-    PointerAnalysis/Model/CppMemModel/RewriteModeledAPIPass.cpp
     PointerAnalysis/Util/Util.cpp
     PointerAnalysis/Util/TypeMetaData.cpp
-
-    PreProcessing/Passes/OMPConstantPropPass.cpp
+    PointerAnalysis/Program/CallSite.cpp
+    PointerAnalysis/Solver/PointsToSet.cpp
+    PreProcessing/PreProcessing.cpp
     PreProcessing/Passes/CanonicalizeGEPPass.cpp
     PreProcessing/Passes/InsertGlobalCtorCallPass.cpp
     PreProcessing/Passes/LoweringMemCpyPass.cpp
+    PreProcessing/Passes/OMPConstantPropPass.cpp
     PreProcessing/Passes/RemoveExceptionHandlerPass.cpp
     PreProcessing/Passes/DuplicateOpenMPForks.cpp
-    PreProcessing/PreProcessing.cpp
-    
-    LanguageModel/RaceModel.cpp)
+    PointerAnalysis/Models/MemoryModel/Canonicalizer.cpp
+    PointerAnalysis/Models/MemoryModel/DefaultHeapModel.cpp
+    PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.cpp
+    PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Layouts.cpp
+    PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.cpp
+    PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.cpp
+    PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.cpp
+    PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.cpp
+)
 
 add_library(pta STATIC ${pta-lib-sources})
 target_link_libraries(pta ${llvm_libs} pthread)
@@ -33,6 +31,7 @@ target_compile_features(pta PUBLIC cxx_std_17)
 
 
 set(racedetect-lib-sources
+    LanguageModel/RaceModel.cpp
     Analysis/HappensBeforeGraph.cpp
     Analysis/LockSet.cpp
     Analysis/SharedMemory.cpp

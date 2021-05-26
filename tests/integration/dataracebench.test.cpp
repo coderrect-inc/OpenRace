@@ -45,9 +45,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
                                              "DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:72:6"}),
       // DRB 18 and 19 array index fails // misses the race on output
       // FIXME: the racy object is opted out by SROA
-//      Oracle("DRB020-privatemissing-var-yes.ll",
-//             {"DRB020-privatemissing-var-yes.c:65:9 DRB020-privatemissing-var-yes.c:65:9",
-//              "DRB020-privatemissing-var-yes.c:66:10 DRB020-privatemissing-var-yes.c:65:10"}),
+      //      Oracle("DRB020-privatemissing-var-yes.ll",
+      //             {"DRB020-privatemissing-var-yes.c:65:9 DRB020-privatemissing-var-yes.c:65:9",
+      //              "DRB020-privatemissing-var-yes.c:66:10 DRB020-privatemissing-var-yes.c:65:10"}),
       Oracle("DRB021-reductionmissing-orig-yes.ll",
              {"DRB021-reductionmissing-orig-yes.c:70:11 DRB021-reductionmissing-orig-yes.c:70:11",    // write-write
               "DRB021-reductionmissing-orig-yes.c:70:11 DRB021-reductionmissing-orig-yes.c:70:13"}),  // read-write
@@ -60,9 +60,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // DRB 27 is task
 
       // FIXME: the racy object is opted out by SROA
-//      Oracle("DRB028-privatemissing-orig-yes.ll",
-//             {"DRB028-privatemissing-orig-yes.c:65:9 DRB028-privatemissing-orig-yes.c:65:9",
-//              "DRB028-privatemissing-orig-yes.c:66:10 DRB028-privatemissing-orig-yes.c:65:10"}),
+      //      Oracle("DRB028-privatemissing-orig-yes.ll",
+      //             {"DRB028-privatemissing-orig-yes.c:65:9 DRB028-privatemissing-orig-yes.c:65:9",
+      //              "DRB028-privatemissing-orig-yes.c:66:10 DRB028-privatemissing-orig-yes.c:65:10"}),
       Oracle("DRB029-truedep1-orig-yes.ll", {"DRB029-truedep1-orig-yes.c:64:11 DRB029-truedep1-orig-yes.c:64:12"}),
       Oracle("DRB030-truedep1-var-yes.ll", {"DRB030-truedep1-var-yes.c:68:11 DRB030-truedep1-var-yes.c:68:12"}),
       Oracle("DRB031-truedepfirstdimension-orig-yes.ll",
@@ -83,20 +83,26 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB045-doall1-orig-no.ll", {}),
       // 46 multi-dimen array
       Oracle("DRB046-doall2-orig-no.ll", {}),
-      Oracle("DRB047-doallchar-orig-no.ll", {}), Oracle("DRB048-firstprivate-orig-no.ll", {}),
-      Oracle("DRB049-fprintf-orig-no.ll", {}), Oracle("DRB050-functionparameter-orig-no.ll", {}),
+      Oracle("DRB047-doallchar-orig-no.ll", {}),
+      Oracle("DRB048-firstprivate-orig-no.ll", {}),
+      Oracle("DRB049-fprintf-orig-no.ll", {}),
+      Oracle("DRB050-functionparameter-orig-no.ll", {}),
       // 51 path based on get_thread_num
       // 52 indirect array
-      Oracle("DRB053-inneronly1-orig-no.ll", {}), // multi-dimen array
-      Oracle("DRB054-inneronly2-orig-no.ll", {}), // multi-dimen array
+      Oracle("DRB053-inneronly1-orig-no.ll", {}),  // multi-dimen array
+      Oracle("DRB054-inneronly2-orig-no.ll", {}),  // multi-dimen array
       // 55-58 complex array access
       // 59 FP caused by last private??
-      Oracle("DRB060-matrixmultiply-orig-no.ll", {}), Oracle("DRB061-matrixvector1-orig-no.ll", {}),
+      Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
+      Oracle("DRB061-matrixvector1-orig-no.ll", {}),
       // 62 reduction
       // 63-64 multi-dimen array
-      Oracle("DRB063-outeronly1-orig-no.ll", {}), Oracle("DRB064-outeronly2-orig-no.ll", {}),
-      Oracle("DRB065-pireduction-orig-no.ll", {}), Oracle("DRB066-pointernoaliasing-orig-no.ll", {}),
-      Oracle("DRB067-restrictpointer1-orig-no.ll", {}), Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
+      Oracle("DRB063-outeronly1-orig-no.ll", {}),
+      Oracle("DRB064-outeronly2-orig-no.ll", {}),
+      Oracle("DRB065-pireduction-orig-no.ll", {}),
+      Oracle("DRB066-pointernoaliasing-orig-no.ll", {}),
+      Oracle("DRB067-restrictpointer1-orig-no.ll", {}),
+      Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
       // 69 section and locks
       // 70 simd
       // 71 target
@@ -104,7 +110,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 73 Broken Debug Info
       // 74 critical and flush
       // 75 path based on get_thread_num
-      Oracle("DRB076-flush-orig-no.ll", {}), Oracle("DRB077-single-orig-no.ll", {}),
+      Oracle("DRB076-flush-orig-no.ll", {}),
+      Oracle("DRB077-single-orig-no.ll", {}),
       // 78-79 task
       Oracle("DRB080-func-arg-orig-yes.ll",
              {"DRB080-func-arg-orig-yes.c:59:6 DRB080-func-arg-orig-yes.c:59:6",    // read-write
@@ -114,17 +121,24 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5",    // read-write
               "DRB082-declared-in-func-orig-yes.c:57:5 DRB082-declared-in-func-orig-yes.c:57:5"}),  // write-write
       Oracle("DRB083-declared-in-func-orig-no.ll", {}),
-      Oracle("DRB084-threadprivatemissing-orig-yes.ll",
-             {"DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:7",    // write-write
-              "DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:8"}),  // read-write
-      // 85 threadprivate + copyin + critical
-      // 86-87 threadprivate
+      Oracle(
+          "DRB084-threadprivatemissing-orig-yes.ll",
+          {"DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:7",    // write-write
+           "DRB084-threadprivatemissing-orig-yes.c:61:7 DRB084-threadprivatemissing-orig-yes.c:61:8"}),  // read-write
+      Oracle("DRB085-threadprivate-orig-no.ll", {}),
+      Oracle("DRB086-static-data-member-orig-yes.ll",
+             {"DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13",
+              "DRB086-static-data-member-orig-yes.cpp:72:13 DRB086-static-data-member-orig-yes.cpp:72:13"}),
+      Oracle("DRB087-static-data-member2-orig-yes.ll",
+             {"DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13",
+              "DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13"}),
       // 88-89 PTA Fails ??
       // 90 missed read-write race
-      // 91 threadprivate + critical + copyin
-      Oracle("DRB092-threadprivatemissing2-orig-yes.ll",
-             {"DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:11",    // write-write
-              "DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:12"}),  // read-write
+      Oracle("DRB091-threadprivate2-orig-no.ll", {}),
+      Oracle(
+          "DRB092-threadprivatemissing2-orig-yes.ll",
+          {"DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:11",  // write-write
+           "DRB092-threadprivatemissing2-orig-yes.c:68:11 DRB092-threadprivatemissing2-orig-yes.c:68:12"}),  // read-write
       Oracle("DRB093-doall2-collapse-orig-no.ll", {}),
       // 94 ordered + depend sink
       // 95 taskloop
@@ -133,8 +147,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 98 simd + collpase
       // 99 target
       // 100-101 task
-      // 102 threadprivate + copyprivate
-      // 103 master
+      // 102 threadprivate + copyprivate => Oracle("DRB102-copyprivate-orig-no.ll", {}),
+      Oracle("DRB103-master-orig-no.ll", {}),
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
       Oracle("DRB108-atomic-orig-no.ll", {}),
@@ -152,9 +166,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 116 target
       // 117 task
       // 118-119 nest lock
-      Oracle("DRB120-barrier-orig-no.ll", {}), Oracle("DRB121-reduction-orig-no.ll", {}),
+      Oracle("DRB120-barrier-orig-no.ll", {}),
+      Oracle("DRB121-reduction-orig-no.ll", {}),
       // 122-123 task
-      // 124 master
+      // 124 master // wont-fix, variable expunged by optimisation
       Oracle("DRB125-single-orig-no.ll", {}),
       // 125-26 section
       // 127-136 task
@@ -166,7 +181,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
-      // 171 threadprivate + tid path
+      // 171 threadprivate // path condition
       Oracle("DRB172-critical2-orig-no.ll", {}),
   };
 

@@ -10,25 +10,28 @@ limitations under the License.
 ==============================================================================*/
 
 //
-// Created by peiming on 7/23/20.
+// Created by peiming on 5/19/21.
 //
 
-#ifndef PTA_REWRITEMODELEDAPIPASS_H
-#define PTA_REWRITEMODELEDAPIPASS_H
+#ifndef OPENRACE_UTIL_H
+#define OPENRACE_UTIL_H
 
-#include <llvm/Pass.h>
+#include <stddef.h>
+
+#include <map>
+
+// forward declarations
+namespace llvm {
+class GetElementPtrInst;
+class DataLayout;
+}  // namespace llvm
+
 namespace pta {
-namespace cpp {
 
-class RewriteModeledAPIPass : public llvm::FunctionPass {
- public:
-  static char ID;
-  explicit RewriteModeledAPIPass() : llvm::FunctionPass(ID) {}
+class ArrayLayout;
 
-  bool runOnFunction(llvm::Function &F) override;
-};
+size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout &DL);
+bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize);
 
-}  // namespace cpp
 }  // namespace pta
-
-#endif
+#endif  // OPENRACE_UTIL_H

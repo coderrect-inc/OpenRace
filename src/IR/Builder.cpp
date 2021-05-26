@@ -12,9 +12,9 @@ limitations under the License.
 #include "IR/Builder.h"
 
 #include <llvm/Analysis/PostDominators.h>
+#include <llvm/Analysis/ScopedNoAliasAA.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
-#include <llvm/Analysis/ScopedNoAliasAA.h>
 
 #include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
@@ -27,6 +27,15 @@ bool hasNoAliasMD(const llvm::Instruction *inst) {
   llvm::AAMDNodes AAMD;
   inst->getAAMetadata(AAMD);
   return AAMD.NoAlias != nullptr;
+}
+
+bool hasThreadLocalOperand(const llvm::Instruction *inst) {
+  auto ptr = getPointerOperand(inst);
+  assert(ptr);
+  if (auto global = llvm::dyn_cast<llvm::GlobalVariable>(ptr)) {
+    return global->isThreadLocal();
+  }
+  return false;
 }
 
 // Assuming ompForkCall points to a OpenMP fork call, the next inst should be a duplicate omp fork call
@@ -67,12 +76,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-        if (loadInst->isAtomic() || loadInst->isVolatile()) {
+        if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-        if (storeInst->isAtomic() || storeInst->isVolatile()) {
+        if (storeInst->isAtomic() || storeInst->isVolatile() || hasThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
@@ -118,17 +127,21 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
+        } else if (OpenMPModel::isMasterStart(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPMasterStart>(callInst));
+        } else if (OpenMPModel::isMasterEnd(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
           instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isReduceNowaitStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
-        } else if (OpenMPModel::isCriticalStart(funcName)){
+        } else if (OpenMPModel::isCriticalStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
-        }else if (OpenMPModel::isCriticalEnd(funcName)){
+        } else if (OpenMPModel::isCriticalEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalEnd>(callInst));
-        }else if (OpenMPModel::isFork(funcName)) {
+        } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
           auto twinOmpFork = getTwinOmpFork(callInst);

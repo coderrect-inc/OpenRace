@@ -207,7 +207,7 @@ class LockIRImpl : public LockIR {
   static inline bool classof(const IR *e) { return e->type == T; }
 };
 
-class OpenMPCriticalStart: public LockIR {
+class OpenMPCriticalStart : public LockIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L1157
   // @param loc  source location information
   // @param global_tid  global thread number
@@ -319,5 +319,8 @@ using OpenMPSingleStart = CallIRImpl<IR::Type::OpenMPSingleStart>;
 using OpenMPSingleEnd = CallIRImpl<IR::Type::OpenMPSingleEnd>;
 
 using OpenMPReduce = CallIRImpl<IR::Type::OpenMPReduce>;
+
+using OpenMPMasterStart = CallIRImpl<IR::Type::OpenMPMasterStart>;
+using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
 
 }  // namespace race

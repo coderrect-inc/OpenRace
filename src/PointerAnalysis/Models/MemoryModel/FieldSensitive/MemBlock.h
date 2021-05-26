@@ -21,9 +21,10 @@ limitations under the License.
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/CommandLine.h>
 
-#include "PointerAnalysis/Models/MemoryModel/AllocSite.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/FSObject.h"
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/MemLayout.h"
+#include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.h"
+#include "PointerAnalysis/Program/AllocSite.h"
 #include "PointerAnalysis/Util/Util.h"
 
 extern cl::opt<bool> USE_MEMLAYOUT_FILTERING;
@@ -44,10 +45,6 @@ template <typename ctx>
 class ScalarMemBlock;
 template <typename ctx>
 class AggregateMemBlock;
-
-size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout &DL);
-
-bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize);
 
 enum class MemBlockKind {
   // Array, Structure

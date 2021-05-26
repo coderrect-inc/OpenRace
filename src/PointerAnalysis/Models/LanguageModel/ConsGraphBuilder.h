@@ -22,16 +22,14 @@ limitations under the License.
 
 #include <unordered_map>
 
+#include "Logging/Log.h"
 #include "PointerAnalysis/Graph/ConstraintGraph/ConstraintGraph.h"
 #include "PointerAnalysis/Models/LanguageModel/PtrNodeManager.h"
 #include "PointerAnalysis/Models/MemoryModel/MemModelTrait.h"
-#include "PointerAnalysis/Models/MemoryModel/Object.h"
-#include "PointerAnalysis/Models/MemoryModel/SpecialObjects/MapObject.h"
 #include "PointerAnalysis/Program/CallSite.h"
 #include "PointerAnalysis/Program/CtxModule.h"
+#include "PointerAnalysis/Program/Object.h"
 #include "PointerAnalysis/Program/Pointer.h"
-//#include "aser/PreProcessing/Passes/RemoveExceptionHandlerPass.h"
-#include "Logging/Log.h"
 #include "PointerAnalysis/Util/CtxInstVisitor.h"
 #include "PointerAnalysis/Util/GraphWriter.h"
 #include "PointerAnalysis/Util/SingleInstanceOwner.h"
@@ -187,15 +185,10 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
       // since indirect call resolution will add more elements to the pts
       // and thus corrupt the iterator
       typename PT::PtsTy pointsTo(PT::getPointsTo(ptrID));
-      // llvm::outs() << " funcPtr pta size:" << pointsTo.count()
-      //              << " graph nodes: " <<
-      //              funPtrNode->getIndirectNodes().size() << "\n";
 
       // TODO: track if the points-to of a funcPtr has changed?
       // TODO: maintain a map from funcPtr to its newly added function object?
-      // JEFF: this can be redundant since pointsTo is repeatedly traversed??
       uint8_t count = 0;
-      // bool applyLimit = true;
 
       for (auto it = pointsTo.begin(), eit = pointsTo.end(); it != eit; it++) {
         // count++;
@@ -399,21 +392,6 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
     module->buildInitCallGraph(beforeNewNode, onNewDirect, onNewInDirect, onNewEdge);
   }
 
-  // [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNode(const ctx *C,
-  // const llvm::Function *F) {
-  //     return module->getDirectNode(C, F);
-  // }
-
-  // [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNodeOrNull(const
-  // ctx *C, const llvm::Function *F) {
-  //     return module->getDirectNodeOrNull(C, F);
-  // }
-
-  // [[nodiscard]] inline const CallGraphNode<ctx> *getInDirectNode(const ctx
-  // *C, const llvm::Instruction *I) {
-  //     return module->getInDirectNode(C, I);
-  // }
-
   inline const llvm::Module *getLLVMModule() const { return this->module->getLLVMModule(); }
 
   inline llvm::StringRef getEntryName() const { return this->module->getEntryName(); }
@@ -436,16 +414,14 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
     CGNodeBase<ctx> *nullObj = ALLOCATE(NullObj, module->getLLVMModule());
     CGNodeBase<ctx> *uniObj = ALLOCATE(UniObj, module->getLLVMModule());
 
-    // uncomments this if you want the special nodes to appear in the points to
-    // set
-    // TODO: add a parameters for this.
-    /*
+    // enable this if you want the special nodes to appear in the points to set
+#ifdef SPECIAL_NODE_IN_PTS
     consGraph->addConstraints(nullObj, nullPtrNode, Constraints::addr_of);
     PT::insert(nullPtrNode->getNodeID(), nullObj->getNodeID());
 
     consGraph->addConstraints(uniObj, uniPtrNode, Constraints::addr_of);
     PT::insert(uniPtrNode->getNodeID(), uniObj->getNodeID());
-    */
+#endif
   }
 
   [[nodiscard]] inline const CallGraphNode<ctx> *getDirectNode(const ctx *C, const llvm::Function *F) const {
@@ -462,9 +438,6 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
   friend SubClass;
   friend llvm::CtxInstVisitor<ctx, SubClass>;
-
-  template <typename Key, typename PT>
-  friend class MapObject;
 
  protected:
   inline void constructConsGraph() {
@@ -560,13 +533,6 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
         return;
       }
 
-      // assert(dst != uniPtrNode->getPointer()->getValue() && "store into
-      // universal ptr?"); assert(dst != nullPtrNode->getPointer()->getValue()
-      // && "store into null ptr?");
-
-      // it is possible for src and dst to be the same
-      // for example, the address of a field can be store into another field
-      // assert(src != dst);
 #endif
       CGPtrNode<ctx> *srcNode = this->getOrCreatePtrNode(context, operand);
       CGPtrNode<ctx> *dstNode = this->getOrCreatePtrNode(context, I.getPointerOperand());
