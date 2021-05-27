@@ -46,7 +46,6 @@ TEST_CASE("OpenMP Array Index Analysis Integration Tests", "[integration][omp]")
 TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
   std::vector<Oracle> oracles = {
       Oracle("lock-set-unset-no.ll", {}),
-      // Oracle("reduction-yes.ll", {/*TODO*/}), // Need to handle openmp master first
       Oracle("lock-set-unset-yes.ll",
              {
                  "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",

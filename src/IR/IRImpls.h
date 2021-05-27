@@ -232,6 +232,8 @@ class OpenMPCriticalStart : public LockIR {
 // create a type alias.
 using PthreadMutexLock = LockIRImpl<IR::Type::PthreadMutexLock>;
 using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
+
+// https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L2549
 using OpenMPSetLock = LockIRImpl<IR::Type::OpenMPSetLock>;
 // ==================================================================
 // ================= UnlockIR Implementations =======================
@@ -282,6 +284,8 @@ class OpenMPCriticalEnd : public UnlockIR {
 // create a type alias.
 using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
 using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
+
+// https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L2752
 using OpenMPUnsetLock = UnlockIRImpl<IR::Type::OpenMPUnsetLock>;
 // =================================================================
 // ================= Barrier Implementations =======================
