@@ -232,7 +232,7 @@ class OpenMPCriticalStart : public LockIR {
 // create a type alias.
 using PthreadMutexLock = LockIRImpl<IR::Type::PthreadMutexLock>;
 using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
-
+using OpenMPSetLock = LockIRImpl<IR::Type::OpenMPSetLock>;
 // ==================================================================
 // ================= UnlockIR Implementations =======================
 // ==================================================================
@@ -282,7 +282,7 @@ class OpenMPCriticalEnd : public UnlockIR {
 // create a type alias.
 using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
 using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
-
+using OpenMPUnsetLock    = UnlockIRImpl<IR::Type::OpenMPUnsetLock>;
 // =================================================================
 // ================= Barrier Implementations =======================
 // =================================================================
