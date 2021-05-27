@@ -17,6 +17,7 @@ limitations under the License.
 #include <llvm/IR/Instructions.h>
 
 #include "IR/IRImpls.h"
+#include "LanguageModel/LLVMInstrinsics.h"
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
 
@@ -56,19 +57,6 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 
 // TODO: need different system for storing and organizing these "recognizers"
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
-bool isLLVMDebug(const llvm::StringRef &funcName) {
-  return funcName.equals("llvm.dbg.declare") || funcName.equals("llvm.dbg.value");
-}
-bool isLLVMLifetime(const llvm::StringRef &funcName) { return funcName.startswith("llvm.lifetime"); }
-bool isLLVMStackSave(const llvm::StringRef &funcName) { return funcName.equals("llvm.stacksave"); }
-bool isLLVMStackRestore(const llvm::StringRef &funcName) { return funcName.equals("llvm.stackrestore"); }
-bool isLLVMMemcpy(const llvm::StringRef &funcName) { return funcName.startswith("llvm.memcpy"); }
-
-// returns true for llvm APIS that have no effect on race detection
-bool isLLVMNoEffect(const llvm::StringRef &funcName) {
-  return isLLVMDebug(funcName) || isLLVMLifetime(funcName) || isLLVMStackSave(funcName) || isLLVMStackRestore(funcName);
-}
-
 }  // namespace
 
 FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
@@ -116,9 +104,9 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
         // TODO: System for users to register new function recognizers here
         auto funcName = calledFunc->getName();
-        if (isLLVMNoEffect(funcName)) {
+        if (LLVMModel::isNoEffect(funcName)) {
           /* Do nothing */
-        } else if (isLLVMMemcpy(funcName)) {
+        } else if (LLVMModel::isMemcpy(funcName)) {
           instructions.push_back(std::make_shared<LLVMMemcpyRead>(callInst));
           instructions.push_back(std::make_shared<LLVMMemcpyWrite>(callInst));
         } else if (PthreadModel::isPthreadCreate(funcName)) {
