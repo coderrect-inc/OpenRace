@@ -282,7 +282,7 @@ class OpenMPCriticalEnd : public UnlockIR {
 // create a type alias.
 using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
 using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
-using OpenMPUnsetLock    = UnlockIRImpl<IR::Type::OpenMPUnsetLock>;
+using OpenMPUnsetLock = UnlockIRImpl<IR::Type::OpenMPUnsetLock>;
 // =================================================================
 // ================= Barrier Implementations =======================
 // =================================================================
