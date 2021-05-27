@@ -187,3 +187,44 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
     CHECK(unlock->getLockValue()->getName() == "mutex");
   }
 }
+
+TEST_CASE("Builder LLVM Intrinsics", "[unit][IR]") {
+  const char *ModuleString = R"(
+
+define void @foo() {
+  %src = alloca i8
+  %dst = alloca i8
+  call void @llvm.lifetime.start.p0i8(i64 4, i8* nonnull %src)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dst, i8* %src, i32 1, i1 false)
+  call void @llvm.lifetime.end.p0i8(i64 4, i8* nonnull %src)
+
+  ret void
+}
+
+declare void @llvm.lifetime.start.p0i8(i64 immarg, i8* nocapture)
+declare void @llvm.lifetime.end.p0i8(i64 immarg, i8* nocapture)
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* noalias nocapture writeonly, i8* noalias nocapture readonly, i32, i1 immarg)
+
+)";
+
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  auto func = module->getFunction("foo");
+
+  auto racefunc = race::generateFunctionSummary(func);
+
+  REQUIRE(racefunc.size() == 2);
+
+  SECTION("Memcpy read") {
+    auto memcpyRead = llvm::dyn_cast<race::LLVMMemcpyRead>(racefunc.at(0).get());
+    REQUIRE(memcpyRead != nullptr);
+    CHECK(memcpyRead->getAccessedValue()->getName() == "src");
+  }
+
+  SECTION("Memcpy write") {
+    auto memcpyWrite = llvm::dyn_cast<race::LLVMMemcpyWrite>(racefunc.at(1).get());
+    REQUIRE(memcpyWrite != nullptr);
+    CHECK(memcpyWrite->getAccessedValue()->getName() == "dst");
+  }
+}
