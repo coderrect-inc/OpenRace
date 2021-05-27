@@ -141,6 +141,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
         } else if (OpenMPModel::isCriticalEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalEnd>(callInst));
+        } else if (OpenMPModel::isSetLock(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
+        } else if (OpenMPModel::isUnsetLock(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
