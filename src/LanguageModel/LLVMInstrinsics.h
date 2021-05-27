@@ -28,4 +28,4 @@ inline bool isNoEffect(const llvm::StringRef &funcName) {
   return isDebug(funcName) || isLifetime(funcName) || isStackSave(funcName) || isStackRestore(funcName);
 }
 
-};
+}  // namespace LLVMModel
