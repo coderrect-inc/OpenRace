@@ -54,6 +54,22 @@ class APIRead : public ReadIR {
   static inline bool classof(const IR *e) { return e->type == Type::APIRead; }
 };
 
+class LLVMMemcpyRead : public ReadIR {
+  // https://llvm.org/docs/LangRef.html#llvm-memcpy-intrinsic
+  const unsigned srcOperand = 1;
+  const llvm::CallBase *inst;
+
+ public:
+  LLVMMemcpyRead(const llvm::CallBase *inst) : ReadIR(Type::LLVMMemcpyRead), inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getOperand(srcOperand); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::LLVMMemcpyRead; }
+};
+
 // ==================================================================
 // ================= WriteIR Implementations ========================
 // ==================================================================
@@ -91,6 +107,22 @@ class APIWrite : public WriteIR {
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == Type::APIWrite; }
+};
+
+class LLVMMemcpyWrite : public WriteIR {
+  // https://llvm.org/docs/LangRef.html#llvm-memcpy-intrinsic
+  const unsigned srcOperand = 0;
+  const llvm::CallBase *inst;
+
+ public:
+  LLVMMemcpyWrite(const llvm::CallBase *inst) : WriteIR(Type::LLVMMemcpyWrite), inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] inline const llvm::Value *getAccessedValue() const override { return inst->getOperand(srcOperand); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::LLVMMemcpyWrite; }
 };
 
 // ==================================================================

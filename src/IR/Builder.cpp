@@ -59,6 +59,15 @@ bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"
 bool isLLVMDebug(const llvm::StringRef &funcName) {
   return funcName.equals("llvm.dbg.declare") || funcName.equals("llvm.dbg.value");
 }
+bool isLLVMLifetime(const llvm::StringRef &funcName) { return funcName.startswith("llvm.lifetime"); }
+bool isLLVMStackSave(const llvm::StringRef &funcName) { return funcName.equals("llvm.stacksave"); }
+bool isLLVMStackRestore(const llvm::StringRef &funcName) { return funcName.equals("llvm.stackrestore"); }
+bool isLLVMMemcpy(const llvm::StringRef &funcName) { return funcName.startswith("llvm.memcpy"); }
+
+// returns true for llvm APIS that have no effect on race detection
+bool isLLVMNoEffect(const llvm::StringRef &funcName) {
+  return isLLVMDebug(funcName) || isLLVMLifetime(funcName) || isLLVMStackSave(funcName) || isLLVMStackRestore(funcName);
+}
 
 }  // namespace
 
@@ -107,7 +116,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
         // TODO: System for users to register new function recognizers here
         auto funcName = calledFunc->getName();
-        if (PthreadModel::isPthreadCreate(funcName)) {
+        if (isLLVMNoEffect(funcName)) {
+          /* Do nothing */
+        } else if (isLLVMMemcpy(funcName)) {
+          instructions.push_back(std::make_shared<LLVMMemcpyRead>(callInst));
+          instructions.push_back(std::make_shared<LLVMMemcpyWrite>(callInst));
+        } else if (PthreadModel::isPthreadCreate(funcName)) {
           instructions.push_back(std::make_shared<PthreadCreate>(callInst));
         } else if (PthreadModel::isPthreadJoin(funcName)) {
           instructions.push_back(std::make_shared<PthreadJoin>(callInst));
@@ -164,8 +178,6 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
-        } else if (isLLVMDebug(funcName)) {
-          // Skip
         } else {
           // Used to make sure we are not implicitly ignoring any OpenMP features
           // We should instead make sure we take the correct action for any OpenMP call
