@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/16/20.
 //
 
-#ifndef PTA_DEFAULTHEAPMODEL_H
-#define PTA_DEFAULTHEAPMODEL_H
+#pragma once
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
@@ -71,5 +70,3 @@ class DefaultHeapModel {
 };
 
 }  // namespace pta
-
-#endif

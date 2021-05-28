@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 11/8/19.
 //
-#ifndef PTA_ITERATORS_H
-#define PTA_ITERATORS_H
+#pragma once
 
 #include <llvm/ADT/iterator.h>
 
@@ -289,5 +288,3 @@ class NodeIDWrapperEdgeIterator
 };
 
 }  // namespace pta
-
-#endif

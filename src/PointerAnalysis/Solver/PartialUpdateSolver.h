@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 2/25/20.
 //
-#ifndef PTA_PARTIALUPDATESOLVER_H
-#define PTA_PARTIALUPDATESOLVER_H
+#pragma once
 
 #include <stack>
 
@@ -371,5 +370,3 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
 //        true, true);
 
 }  // namespace pta
-
-#endif

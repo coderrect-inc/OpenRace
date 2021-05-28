@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/6/20.
 //
 
-#ifndef PTA_CANONICALIZEGEPPASS_H
-#define PTA_CANONICALIZEGEPPASS_H
+#pragma once
 
 #include <llvm/IR/PassManager.h>
 
@@ -53,5 +52,3 @@ class LegacyCanonicalizeGEPPass : public llvm::FunctionPass {
 
   bool runOnFunction(llvm::Function &F) override;
 };
-
-#endif

@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 7/23/20.
 //
 
-#ifndef PTA_PTRNODEMANAGER_H
-#define PTA_PTRNODEMANAGER_H
+#pragma once
 #include <unordered_map>
 
 #include "PointerAnalysis/Program/CtxFunction.h"
@@ -182,4 +181,3 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
 };
 
 }  // namespace pta
-#endif

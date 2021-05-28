@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 8/29/19.
 //
-#ifndef PTA_SINGLEINSTANCEOWNER_H
-#define PTA_SINGLEINSTANCEOWNER_H
+#pragma once
 
 #include <unordered_set>
 
@@ -85,5 +84,3 @@ class SingleInstanceOwner {
 };
 
 }  // namespace pta
-
-#endif

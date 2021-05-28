@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 8/14/19.
 //
-#ifndef PTA_CALLGRAPH_H
-#define PTA_CALLGRAPH_H
+#pragma once
 
 #include <llvm/ADT/GraphTraits.h>
 #include <llvm/Support/DOTGraphTraits.h>
@@ -181,5 +180,3 @@ struct DOTGraphTraits<const pta::CallGraph<ctx>> : public DefaultDOTGraphTraits 
 };
 
 }  // namespace llvm
-
-#endif

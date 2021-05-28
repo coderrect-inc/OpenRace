@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 10/22/19.
 //
-#ifndef PTA_MEMMODELTRAIT_H
-#define PTA_MEMMODELTRAIT_H
+#pragma once
 
 #include <llvm/IR/IntrinsicInst.h>
 
@@ -201,5 +200,3 @@ struct MemModelHelper {
 };
 
 }  // namespace pta
-
-#endif
