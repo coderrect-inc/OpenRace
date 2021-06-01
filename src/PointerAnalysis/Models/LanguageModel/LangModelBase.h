@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/16/20.
 //
 
-#ifndef PTA_LANGMODELBASE_H
-#define PTA_LANGMODELBASE_H
+#pragma once
 
 #include "ConsGraphBuilder.h"
 #include "PointerAnalysis/Util/Util.h"
@@ -271,4 +270,3 @@ struct LangModelTrait<LangModelBase<ctx, MemModel, PtsTy, SubClass>> {
 };
 
 }  // namespace pta
-#endif

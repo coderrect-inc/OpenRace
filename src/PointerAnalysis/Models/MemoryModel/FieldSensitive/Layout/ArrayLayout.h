@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/3/20.
 //
 
-#ifndef PTA_ARRAYLAYOUT_H
-#define PTA_ARRAYLAYOUT_H
+#pragma once
 
 #include <cassert>
 #include <limits>
@@ -75,5 +74,3 @@ class ArrayLayout {
 };
 
 }  // namespace pta
-
-#endif

@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/2/20.
 //
 
-#ifndef PTA_FSCANONICALIZER_H
-#define PTA_FSCANONICALIZER_H
+#pragma once
 
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Intrinsics.h>
@@ -29,5 +28,3 @@ class FSCanonicalizer {
 };
 
 }  // namespace pta
-
-#endif

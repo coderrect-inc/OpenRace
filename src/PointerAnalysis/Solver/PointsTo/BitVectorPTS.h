@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 9/9/19.
 //
-#ifndef PTA_BITVECTORPTS_H
-#define PTA_BITVECTORPTS_H
+#pragma once
 
 #include <llvm/ADT/SparseBitVector.h>
 
@@ -158,5 +157,3 @@ class BitVectorPTS {
 }  // namespace pta
 
 DEFINE_PTS_TRAIT(pta::BitVectorPTS)
-
-#endif

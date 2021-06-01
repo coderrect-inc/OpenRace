@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/22/20.
 //
 
-#ifndef PTA_LOWERINGMEMCPYPASS_H
-#define PTA_LOWERINGMEMCPYPASS_H
+#pragma once
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Pass.h>
@@ -39,5 +38,3 @@ class LoweringMemCpyPass : public llvm::ModulePass {
 
   bool runOnModule(llvm::Module &) override;
 };
-
-#endif

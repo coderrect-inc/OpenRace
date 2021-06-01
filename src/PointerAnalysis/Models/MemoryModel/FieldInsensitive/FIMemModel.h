@@ -22,8 +22,7 @@ limitations under the License.
 // for field-sensitive memory langModel
 // one memory block -> multiple static objects
 
-#ifndef PTA_FIMEMMODEL_H
-#define PTA_FIMEMMODEL_H
+#pragma once
 
 #include <llvm/IR/LegacyPassManager.h>
 
@@ -176,5 +175,3 @@ struct MemModelTrait<FIMemModel<ctx>> : public MemModelHelper<FIMemModel<ctx>> {
 };
 
 }  // namespace pta
-
-#endif

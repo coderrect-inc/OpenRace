@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 10/30/19.
 //
-#ifndef PTA_CTXMODULE_H
-#define PTA_CTXMODULE_H
+#pragma once
 
 #include <llvm/IR/Value.h>
 
@@ -366,5 +365,3 @@ class CtxModule {
 };
 
 }  // namespace pta
-
-#endif

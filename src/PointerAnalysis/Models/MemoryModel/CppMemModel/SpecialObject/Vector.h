@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 7/21/20.
 //
 
-#ifndef PTA_VECTOR_H
-#define PTA_VECTOR_H
+#pragma once
 
 #include <llvm/IR/Type.h>
 
@@ -193,5 +192,3 @@ class Vector : public FSObject<ctx> {
 };
 
 }  // namespace pta::cpp
-
-#endif

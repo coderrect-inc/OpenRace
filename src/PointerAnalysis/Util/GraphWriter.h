@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 9/3/19.
 //
-#ifndef PTA_GRAPHWRITER_H
-#define PTA_GRAPHWRITER_H
+#pragma once
 
 // a little modification on llvm build-in callgraph writer
 
@@ -269,5 +268,3 @@ void WriteGraphToFile(const std::string &graphName, const GraphType &graph, bool
 }
 
 }  // namespace pta
-
-#endif

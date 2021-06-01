@@ -15,8 +15,7 @@ limitations under the License.
 // Modified from llvm::InstVisitor
 // instead of just visiting an instruction, it visit the instruction with
 // context
-#ifndef PTA_CTXINSTVISITOR_H
-#define PTA_CTXINSTVISITOR_H
+#pragma once
 
 #include "PointerAnalysis/Program/CtxFunction.h"
 //#include "llvm/IR/CallSite.h"
@@ -347,5 +346,3 @@ class CtxInstVisitor {
 #undef DELEGATE
 
 }  // namespace llvm
-
-#endif

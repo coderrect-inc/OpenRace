@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 11/19/19.
 //
-#ifndef PTA_KCALLSITE_H
-#define PTA_KCALLSITE_H
+#pragma once
 
 #include <llvm/ADT/Hashing.h>
 #include <llvm/Support/raw_ostream.h>
@@ -148,5 +147,3 @@ struct hash<pta::KCallSite<K>> {
 };
 
 }  // namespace std
-
-#endif
