@@ -8,12 +8,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-//
-// Created by peiming on 5/11/21.
-//
-
-#ifndef OPENRACE_OMPCONSTANTPROPPASS_H
-#define OPENRACE_OMPCONSTANTPROPPASS_H
+#pragma once
 
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/IR/Dominators.h>
@@ -24,5 +19,3 @@ class OMPConstantPropPass : public llvm::PassInfoMixin<OMPConstantPropPass> {
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif  // OPENRACE_OMPCONSTANTPROPPASS_H

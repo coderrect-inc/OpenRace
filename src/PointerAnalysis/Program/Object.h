@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 6/17/20.
-//
-
-#ifndef PTA_OBJECT_H
-#define PTA_OBJECT_H
+#pragma once
 
 #include "PointerAnalysis/Graph/NodeID.def"
 
@@ -75,4 +70,3 @@ template <typename ctx, typename SubClass>
 ObjID Object<ctx, SubClass>::CurID = 0;
 
 }  // namespace pta
-#endif

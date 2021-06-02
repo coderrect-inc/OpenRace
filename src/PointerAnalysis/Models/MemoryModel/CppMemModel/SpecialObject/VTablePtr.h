@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*///
 
-//
-// Created by peiming on 8/26/20.
-//
-
 // The class represent the vtable pointer stored at the first byte of the object
 // it can only points to one specific vtable pointer.
 #include "Logging/Log.h"
@@ -20,8 +16,7 @@ limitations under the License.
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/MemBlock.h"
 #include "PointerAnalysis/Util/TypeMetaData.h"
 
-#ifndef PTA_VTABLEPTR_H
-#define PTA_VTABLEPTR_H
+#pragma once
 
 namespace pta {
 
@@ -138,4 +133,3 @@ class VTablePtr : public FSObject<ctx> {
 };
 
 }  // namespace pta
-#endif

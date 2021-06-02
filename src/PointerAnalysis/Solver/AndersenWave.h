@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/16/19.
-//
-#ifndef PTA_ANDERSENWAVE_H
-#define PTA_ANDERSENWAVE_H
+#pragma once
 
 #include "PointerAnalysis/Graph/ConstraintGraph/SCCIterator.h"
 #include "SolverBase.h"
@@ -99,5 +95,3 @@ class AndersenWave : public SolverBase<LangModel, AndersenWave<LangModel>> {
 };
 
 }  // namespace pta
-
-#endif

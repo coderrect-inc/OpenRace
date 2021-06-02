@@ -9,14 +9,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/3/19.
-//
 // Modified from llvm::InstVisitor
 // instead of just visiting an instruction, it visit the instruction with
 // context
-#ifndef PTA_CTXINSTVISITOR_H
-#define PTA_CTXINSTVISITOR_H
+#pragma once
 
 #include "PointerAnalysis/Program/CtxFunction.h"
 //#include "llvm/IR/CallSite.h"
@@ -347,5 +343,3 @@ class CtxInstVisitor {
 #undef DELEGATE
 
 }  // namespace llvm
-
-#endif

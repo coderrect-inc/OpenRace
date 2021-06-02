@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/30/19.
-//
-#ifndef PTA_CTXFUNCTION_H
-#define PTA_CTXFUNCTION_H
+#pragma once
 
 #include <llvm/Support/CommandLine.h>
 
@@ -146,5 +142,3 @@ class InDirectCallSite {
 };
 
 }  // namespace pta
-
-#endif

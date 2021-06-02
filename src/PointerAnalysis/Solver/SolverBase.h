@@ -11,8 +11,7 @@ limitations under the License.
 
 // the basic framework for andersen-based algorithm, including common routines
 // override neccessary ones, and the call will be STATICALLY redirected to it
-#ifndef PTA_SOLVERBASE_H
-#define PTA_SOLVERBASE_H
+#pragma once
 
 #define DEBUG_TYPE "pta"
 
@@ -489,5 +488,3 @@ bool SolverBase<LangModel, SubClass>::processCopy(CGNodeTy *src, CGNodeTy *dst) 
 }  // namespace pta
 
 #undef DEBUG_TYPE
-
-#endif

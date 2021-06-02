@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/3/19.
-//
-#ifndef PTA_FIOBJECT_H
-#define PTA_FIOBJECT_H
+#pragma once
 
 #include "PointerAnalysis/Program/AllocSite.h"
 
@@ -106,5 +102,3 @@ struct hash<pta::FIObject<ctx>> {
 };
 
 }  // namespace std
-
-#endif

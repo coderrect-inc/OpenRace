@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
-#ifndef PTA_GRAPHBASE_H
-#define PTA_GRAPHBASE_H
+#pragma once
 
 #include <llvm/ADT/GraphTraits.h>
 
@@ -347,5 +343,3 @@ struct GraphTraits<Inverse<pta::GraphBase<NodeType, EdgeType>>> {
 };
 
 }  // namespace llvm
-
-#endif

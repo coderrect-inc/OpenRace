@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 1/22/20.
-//
-
 #include "PreProcessing/Passes/LoweringMemCpyPass.h"
 
 #include <llvm/IR/IRBuilder.h>
@@ -23,21 +19,20 @@ limitations under the License.
 
 #include <array>
 
-#include "Logging/Log.h"
-
 using namespace std;
 using namespace llvm;
 
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
 
-void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst, SmallVector<Value *, 5> &idx,
-                                            IRBuilder<NoFolder> &builder) {
+namespace {
+void lowerMemCpyForType(Type *type, Value *src, Value *dst, SmallVector<Value *, 5> &idx, llvm::Type *idxType,
+                        IRBuilder<NoFolder> &builder) {
   switch (type->getTypeID()) {
     case llvm::Type::StructTyID: {
       auto structType = static_cast<const StructType *>(type);
       for (int i = 0; i < structType->getNumElements(); i++) {
         idx.push_back(ConstantInt::get(idxType, i));
-        lowerMemCpyForType(structType->getElementType(i), src, dst, idx, builder);
+        lowerMemCpyForType(structType->getElementType(i), src, dst, idx, idxType, builder);
         idx.pop_back();
       }
       break;
@@ -45,7 +40,7 @@ void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst, 
     case llvm::Type::ArrayTyID: {
       auto arrayType = static_cast<const ArrayType *>(type);
       idx.push_back(ConstantInt::get(idxType, 0));
-      lowerMemCpyForType(arrayType->getElementType(), src, dst, idx, builder);
+      lowerMemCpyForType(arrayType->getElementType(), src, dst, idx, idxType, builder);
       idx.pop_back();
       break;
     }
@@ -61,7 +56,6 @@ void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst, 
     // case llvm::Type::ScalableVectorTyID: {
     case llvm::Type::VectorTyID: {
       // simply skip vector type
-      LOG_TRACE("Unhandled Vector Type. type={}", type);
       break;
     }
     default:
@@ -70,89 +64,89 @@ void LoweringMemCpyPass::lowerMemCpyForType(Type *type, Value *src, Value *dst, 
   }
 }
 
-bool LoweringMemCpyPass::runOnModule(llvm::Module &M) {
+bool doLoweringMemcpy(llvm::Module &M) {
   if (CONFIG_USE_FI_MODE) {
     return false;
   }
 
-  // LOG_DEBUG(); // TODO add progress message?
-  if (idxType == nullptr) {
-    // use i32 to index getelementptr
-    // TODO: does it matter to use i32 instead of i64?
-    idxType = IntegerType::get(M.getContext(), 32);
-  }
-
   bool changed = false;
+
+  // use i32 to index getelementptr
+  // TODO: does it matter to use i32 instead of i64?
+  auto const idxType = llvm::IntegerType::get(M.getContext(), 32);
   auto &DL = M.getDataLayout();
   IRBuilder<NoFolder> builder(M.getContext());
 
-  array<StringRef, 2> MemCpys{"llvm.memcpy.p0i8.p0i8.i32", "llvm.memcpy.p0i8.p0i8.i64"};
+  constexpr array<StringRef, 2> MemCpys{"llvm.memcpy.p0i8.p0i8.i32", "llvm.memcpy.p0i8.p0i8.i64"};
   for (StringRef MemCpyName : MemCpys) {
     Function *memcpy = M.getFunction(MemCpyName);
-    if (memcpy != nullptr) {
-      vector<Instruction *> instToRemove;
-      for (auto user : memcpy->users()) {
-        if (auto *callInst = dyn_cast<CallInst>(user)) {
-          Value *dst = callInst->getArgOperand(0);
-          Value *src = callInst->getArgOperand(1);
-          Value *len = callInst->getArgOperand(2);
+    if (memcpy == nullptr) continue;
 
-          auto constLen = dyn_cast<ConstantInt>(len);
-          auto dstBitCast = dyn_cast<BitCastInst>(dst);
-          auto srcBitCast = dyn_cast<BitCastInst>(src);
+    vector<Instruction *> instToRemove;
+    for (auto user : memcpy->users()) {
+      auto *callInst = llvm::dyn_cast<llvm::CallInst>(user);
+      if (callInst == nullptr) continue;
+      Value *dst = callInst->getArgOperand(0);
+      Value *src = callInst->getArgOperand(1);
+      Value *len = callInst->getArgOperand(2);
 
-          if (constLen && dstBitCast && srcBitCast) {
-            // we only lowering memcpy that uses
-            // 1, constant length
-            // 2, We can infer the type of dst and source, and theirs is the
-            // same
-            Type *dstType = dstBitCast->getSrcTy();
-            Type *srcType = srcBitCast->getSrcTy();
+      auto constLen = dyn_cast<ConstantInt>(len);
+      auto dstBitCast = dyn_cast<BitCastInst>(dst);
+      auto srcBitCast = dyn_cast<BitCastInst>(src);
 
-            if (dstType == srcType) {
-              Type *elemType = dstType->getPointerElementType();
-              if (DL.getTypeAllocSize(elemType) == constLen->getSExtValue()) {
-                changed = true;
-                builder.SetInsertPoint(callInst);
+      // Cannot lower memcpy if not constLen and on bitcast operands
+      if (!constLen || !dstBitCast || !srcBitCast) continue;
 
-                SmallVector<Value *, 5> idx;
-                idx.push_back(ConstantInt::get(idxType, 0));
+      // Cannot lower memcpy if src and dst are not same type
+      Type *dstType = dstBitCast->getSrcTy();
+      Type *srcType = srcBitCast->getSrcTy();
+      if (dstType != srcType) continue;
 
-                lowerMemCpyForType(elemType, srcBitCast->getOperand(0), dstBitCast->getOperand(0), idx, builder);
+      Type *elemType = dstType->getPointerElementType();
+      if (DL.getTypeAllocSize(elemType) != constLen->getSExtValue()) continue;
 
-                // do some simple cleanups
-                // callInst->eraseFromParent();
-                instToRemove.push_back(callInst);
-                if (srcBitCast->getNumUses() == 0) {
-                  // srcBitCast->eraseFromParent();
-                  if (auto srcInst = llvm::dyn_cast<BitCastInst>(src)) {
-                    instToRemove.push_back(srcInst);
-                  }
-                }
-                if (dstBitCast->getNumUses() == 0) {  // src might be equal to dst
-                  // dstBitCast->eraseFromParent();
-                  if (auto dstInst = llvm::dyn_cast<BitCastInst>(dst)) {
-                    if (dstInst->getParent() != nullptr) {
-                      instToRemove.push_back(dstInst);
-                    }
-                  }
-                }
-              }
-            }
+      SmallVector<Value *, 5> idx;
+      idx.push_back(ConstantInt::get(idxType, 0));
+      builder.SetInsertPoint(callInst);
+      lowerMemCpyForType(elemType, srcBitCast->getOperand(0), dstBitCast->getOperand(0), idx, idxType, builder);
+      changed = true;
+
+      // do some simple cleanups
+      instToRemove.push_back(callInst);
+      if (srcBitCast->getNumUses() == 0) {
+        if (auto srcInst = llvm::dyn_cast<BitCastInst>(src)) {
+          instToRemove.push_back(srcInst);
+        }
+      }
+      if (dstBitCast->getNumUses() == 0) {  // src might be equal to dst
+        if (auto dstInst = llvm::dyn_cast<BitCastInst>(dst)) {
+          if (dstInst->getParent() != nullptr) {
+            instToRemove.push_back(dstInst);
           }
         }
       }
-
-      for (auto inst : instToRemove) {
-        inst->eraseFromParent();
-      }
-
-      instToRemove.clear();
     }
+
+    for (auto inst : instToRemove) {
+      inst->eraseFromParent();
+    }
+    instToRemove.clear();
   }
+
   return changed;
 }
+}  // namespace
 
-char LoweringMemCpyPass::ID = 0;
-static RegisterPass<LoweringMemCpyPass> LMCPY("", "Lowering MemCpy call", false, /*CFG only*/
-                                              false /*is analysis*/);
+llvm::PreservedAnalyses LoweringMemcpyPass::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
+  bool changed = doLoweringMemcpy(M);
+  if (changed) {
+    return PreservedAnalyses::none();
+  }
+  return PreservedAnalyses::all();
+}
+
+bool LoweringMemCpyLegacyPass::runOnModule(llvm::Module &M) { return doLoweringMemcpy(M); }
+
+char LoweringMemCpyLegacyPass::ID = 0;
+static RegisterPass<LoweringMemCpyLegacyPass> LMCPY("", "Lowering MemCpy call", false, /*CFG only*/
+                                                    false /*is analysis*/);

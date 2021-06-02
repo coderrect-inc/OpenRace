@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 5/19/21.
-//
-
-#ifndef OPENRACE_UTIL_H
-#define OPENRACE_UTIL_H
+#pragma once
 
 #include <stddef.h>
 
@@ -34,4 +29,3 @@ size_t getGEPStepSize(const llvm::GetElementPtrInst *GEP, const llvm::DataLayout
 bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize);
 
 }  // namespace pta
-#endif  // OPENRACE_UTIL_H

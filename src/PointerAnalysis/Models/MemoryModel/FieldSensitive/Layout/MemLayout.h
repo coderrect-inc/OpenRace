@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/18/19.
-//
-
-#ifndef PTA_MEMLAYOUT_H
-#define PTA_MEMLAYOUT_H
+#pragma once
 
 #include <llvm/ADT/BitVector.h>
 #include <llvm/ADT/SparseBitVector.h>
@@ -173,5 +168,3 @@ class MemLayout {
 };
 
 }  // namespace pta
-
-#endif

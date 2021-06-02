@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/2/19.
-//
-#ifndef PTA_CGOBJNODE_H
-#define PTA_CGOBJNODE_H
+#pragma once
 
 #include "CGNodeBase.h"
 
@@ -73,5 +69,3 @@ class CGObjNode : public CGNodeBase<ctx> {
 };
 
 }  // namespace pta
-
-#endif

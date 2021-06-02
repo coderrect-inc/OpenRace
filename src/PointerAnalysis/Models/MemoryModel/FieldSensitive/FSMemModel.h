@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/18/19.
-//
-#ifndef PTA_FSMEMMODEL_H
-#define PTA_FSMEMMODEL_H
+#pragma once
 
 #include <llvm/Support/Allocator.h>
 
@@ -612,4 +608,3 @@ struct MemModelTrait<FSMemModel<ctx>> : MemModelHelper<FSMemModel<ctx>> {
 };
 
 }  // namespace pta
-#endif
