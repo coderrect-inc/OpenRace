@@ -177,7 +177,7 @@ class GraphWriter {
     // Output all of the edges now
     edge_iterator EI = GTraits::child_edge_begin(Node);
     edge_iterator EE = GTraits::child_edge_end(Node);
-    //bz: seems like the 2nd param of writeEdge will not exceed max int
+    // bz: seems like the 2nd param of writeEdge will not exceed max int
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) 
       if (!DTraits.isNodeHidden(GTraits::edge_dest(*EI))) writeEdge(Node, (int)i, EI);
     for (; EI != EE; ++EI)
