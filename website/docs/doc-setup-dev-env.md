@@ -58,12 +58,6 @@ For more information or examples on installing [Conan](https://conan.io/download
 
 LLVM will need to be built from source. 
 
-The LLVM build will include a file named `LLVMConfig.cmake`. You will need to save the directory containing this file in order to build OpenRace.
-
-In this guide we save it into the `LLVM_DIR` environment variable.
-
-#### From Source
-
 ```shell
 # Get the source code
 git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.git
@@ -102,6 +96,10 @@ Builds LLVM in Release mode; use Debug instead to make debugging easier
 Building using Ninja Build
 
 The rest are just some options set to save time/space when building.
+
+The LLVM build will also include a file named `LLVMConfig.cmake`. You will need to save the directory containing this file in order to build OpenRace.
+
+In this guide we save it into the `LLVM_DIR` environment variable.
 
 
 ## Building OpenRace
