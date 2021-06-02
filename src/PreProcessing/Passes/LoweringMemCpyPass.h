@@ -9,32 +9,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 1/22/20.
-//
-
 #pragma once
 
-#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 
-namespace llvm {
+class LoweringMemcpyPass : public llvm::PassInfoMixin<LoweringMemcpyPass> {
+ public:
+  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
-template <typename T, unsigned N>
-class SmallVector;
-class NoFolder;
-}  // namespace llvm
-
-class LoweringMemCpyPass : public llvm::ModulePass {
- private:
-  llvm::Type *idxType = nullptr;
-
-  void lowerMemCpyForType(llvm::Type *type, llvm::Value *src, llvm::Value *dst,
-                          llvm::SmallVector<llvm::Value *, 5> &idx, llvm::IRBuilder<llvm::NoFolder> &builder);
-
+// Kept for PTA unit test only
+class LoweringMemCpyLegacyPass : public llvm::ModulePass {
  public:
   static char ID;
-  explicit LoweringMemCpyPass() : llvm::ModulePass(ID) {}
+  explicit LoweringMemCpyLegacyPass() : llvm::ModulePass(ID) {}
 
   bool runOnModule(llvm::Module &) override;
 };

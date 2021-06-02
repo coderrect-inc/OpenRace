@@ -17,6 +17,7 @@ limitations under the License.
 #include <llvm/IR/Instructions.h>
 
 #include "IR/IRImpls.h"
+#include "LanguageModel/LLVMInstrinsics.h"
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
 
@@ -56,10 +57,6 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 
 // TODO: need different system for storing and organizing these "recognizers"
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
-bool isLLVMDebug(const llvm::StringRef &funcName) {
-  return funcName.equals("llvm.dbg.declare") || funcName.equals("llvm.dbg.value");
-}
-
 }  // namespace
 
 FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
@@ -107,7 +104,9 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
         // TODO: System for users to register new function recognizers here
         auto funcName = calledFunc->getName();
-        if (PthreadModel::isPthreadCreate(funcName)) {
+        if (LLVMModel::isNoEffect(funcName)) {
+          /* Do nothing */
+        } else if (PthreadModel::isPthreadCreate(funcName)) {
           instructions.push_back(std::make_shared<PthreadCreate>(callInst));
         } else if (PthreadModel::isPthreadJoin(funcName)) {
           instructions.push_back(std::make_shared<PthreadJoin>(callInst));
@@ -168,8 +167,6 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
-        } else if (isLLVMDebug(funcName)) {
-          // Skip
         } else {
           // Used to make sure we are not implicitly ignoring any OpenMP features
           // We should instead make sure we take the correct action for any OpenMP call
