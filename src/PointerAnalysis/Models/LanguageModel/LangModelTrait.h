@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 10/19/19.
 //
-#ifndef PTA_LANGMODELTRAIT_H
-#define PTA_LANGMODELTRAIT_H
+#pragma once
 
 #include <llvm/IR/LegacyPassManager.h>
 
@@ -71,5 +70,3 @@ struct LangModelTrait {
 };
 
 }  // namespace pta
-
-#endif

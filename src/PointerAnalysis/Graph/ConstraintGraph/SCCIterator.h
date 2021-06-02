@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 9/16/19.
 //
-#ifndef PTA_SCCITERATOR_H
-#define PTA_SCCITERATOR_H
+#pragma once
 
 #include <llvm/ADT/BitVector.h>
 
@@ -320,5 +319,3 @@ SCCIterator<ctx, cons, reverse> scc_end(const ConstraintGraph<ctx> &G, const llv
 }
 
 }  // namespace pta
-
-#endif

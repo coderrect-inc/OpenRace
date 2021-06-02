@@ -6,8 +6,7 @@
  * Web address: http://polybench.sourceforge.net
  * License: /LICENSE.OSU.txt
  */
-#ifndef ADI_H
-# define ADI_H
+#pragma once
 
 /* Default to STANDARD_DATASET. */
 # if !defined(TINY_DATASET) && !defined(MINI_DATASET) && !defined(SMALL_DATASET) && !defined(LARGE_DATASET) && !defined(EXTRALARGE_DATASET)
@@ -55,6 +54,3 @@
 #  define DATA_TYPE double
 #  define DATA_PRINTF_MODIFIER "%0.2lf "
 # endif
-
-
-#endif /* !ADI */

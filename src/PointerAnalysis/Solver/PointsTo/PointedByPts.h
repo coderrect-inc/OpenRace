@@ -14,8 +14,7 @@ limitations under the License.
 //
 
 // the pts data structure that also stores pointed by information
-#ifndef PTA_POINTEDBYPTS_H
-#define PTA_POINTEDBYPTS_H
+#pragma once
 
 #include "PTSTrait.h"
 
@@ -151,5 +150,3 @@ class PointedByPts {
 }  // namespace pta
 
 DEFINE_PTS_TRAIT(pta::PointedByPts)
-
-#endif

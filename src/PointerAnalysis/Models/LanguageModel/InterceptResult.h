@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 7/21/20.
 //
 
-#ifndef PTA_INTERCEPTRESULT_H
-#define PTA_INTERCEPTRESULT_H
+#pragma once
 
 // forward declaration
 namespace llvm {
@@ -39,4 +38,3 @@ struct InterceptResult {
 };
 
 }  // namespace pta
-#endif

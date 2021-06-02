@@ -20,8 +20,7 @@ limitations under the License.
 #include "PointerAnalysis/Models/MemoryModel/FieldSensitive/MemBlock.h"
 #include "PointerAnalysis/Util/TypeMetaData.h"
 
-#ifndef PTA_VTABLEPTR_H
-#define PTA_VTABLEPTR_H
+#pragma once
 
 namespace pta {
 
@@ -138,4 +137,3 @@ class VTablePtr : public FSObject<ctx> {
 };
 
 }  // namespace pta
-#endif

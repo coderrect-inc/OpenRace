@@ -21,8 +21,7 @@
  * See README or utilities/polybench.c for additional options.
  *
  */
-#ifndef POLYBENCH_H
-# define POLYBENCH_H
+#pragma once
 
 # include <stdlib.h>
 
@@ -198,6 +197,3 @@ extern void polybench_papi_print();
 
 /* Function prototypes. */
 extern void* polybench_alloc_data(unsigned long long int n, int elt_size);
-
-
-#endif /* !POLYBENCH_H */

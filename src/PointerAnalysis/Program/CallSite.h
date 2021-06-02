@@ -12,8 +12,7 @@ limitations under the License.
 //
 // Created by peiming on 11/5/19.
 //
-#ifndef PTA_CALLSITE_H
-#define PTA_CALLSITE_H
+#pragma once
 
 #include <llvm/IR/Instructions.h>
 
@@ -83,5 +82,3 @@ class CallSite {
 };
 
 }  // namespace pta
-
-#endif

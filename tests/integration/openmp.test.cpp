@@ -42,3 +42,17 @@ TEST_CASE("OpenMP Array Index Analysis Integration Tests", "[integration][omp]")
 
   checkOracles(oracles, "integration/openmp/");
 }
+
+TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("lock-set-unset-no.ll", {}),
+      Oracle("lock-set-unset-yes.ll",
+             {
+                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
+                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
+             }),
+      
+      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})
+  };
+  checkOracles(oracles, "integration/openmp/");
+}

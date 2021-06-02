@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 1/10/20.
 //
 
-#ifndef PTA_REMOVEEXCEPTIONHANDLERPASS_H
-#define PTA_REMOVEEXCEPTIONHANDLERPASS_H
+#pragma once
 
 #include <llvm/Pass.h>
 
@@ -26,5 +25,3 @@ class RemoveExceptionHandlerPass : public llvm::FunctionPass {
   bool runOnFunction(llvm::Function &F) override;
   bool doInitialization(llvm::Module &M) override;
 };
-
-#endif

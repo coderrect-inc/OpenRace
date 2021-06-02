@@ -13,8 +13,7 @@ limitations under the License.
 // Created by peiming on 11/19/19.
 //
 
-#ifndef PTA_KORIGIN_H
-#define PTA_KORIGIN_H
+#pragma once
 
 #include <llvm/ADT/StringSet.h>
 
@@ -118,5 +117,3 @@ struct hash<pta::KOrigin<K, L>> {
 };
 
 }  // namespace std
-
-#endif
