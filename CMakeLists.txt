@@ -48,6 +48,8 @@ llvm_map_components_to_libnames(llvm_libs
         demangle
         mc)
 
+include(cmake/CompilerWarnings.cmake)
+
 add_subdirectory(src)
 
 include(CTest)
