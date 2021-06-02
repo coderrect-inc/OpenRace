@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/3/19.
-//
 // Modified from llvm::InstVisitor
 // instead of just visiting an instruction, it visit the instruction with
 // context

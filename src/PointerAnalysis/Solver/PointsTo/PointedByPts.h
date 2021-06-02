@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/23/19.
-//
-
 // the pts data structure that also stores pointed by information
 #pragma once
 

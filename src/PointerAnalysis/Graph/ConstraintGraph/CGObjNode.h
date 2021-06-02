@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/2/19.
-//
 #pragma once
 
 #include "CGNodeBase.h"

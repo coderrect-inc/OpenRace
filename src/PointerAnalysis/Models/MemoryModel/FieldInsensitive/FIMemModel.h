@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-
 // FIXME: this class need to be updated to work!
 // memory langModel build the connection between memory block and static object
 

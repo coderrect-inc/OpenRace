@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/3/19.
-//
 #pragma once
 
 // a little modification on llvm build-in callgraph writer
