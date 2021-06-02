@@ -26,6 +26,7 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
              }),
       Oracle("master-used-after-yes.ll", {"master-used-after-yes.c:11:9 master-used-after-yes.c:14:22"}),
       Oracle("single-used-after-no.ll", {}),
+      Oracle("duplicate-omp-fork.ll", {}),
   };
 
   checkOracles(oracles, "integration/openmp/");
@@ -36,7 +37,7 @@ TEST_CASE("OpenMP Array Index Analysis Integration Tests", "[integration][omp]")
       Oracle("array-index-simple.ll", {"array-index-simple.c:8:10 array-index-simple.c:8:12"}),
       Oracle("array-index-inner-yes.ll", {"array-index-inner-yes.c:10:15 array-index-inner-yes.c:10:17"}),
       Oracle("array-index-outer-yes.ll", {"array-index-outer-yes.c:10:15 array-index-outer-yes.c:10:17"}),
-      //Oracle("array-multi-dimen-no.ll", {}), // FP on i?
+      // Oracle("array-multi-dimen-no.ll", {}), // FP on i?
       Oracle("array-stride-2.ll", {}),
   };
 
@@ -51,8 +52,7 @@ TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
                  "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
                  "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
              }),
-      
-      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})
-  };
+
+      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})};
   checkOracles(oracles, "integration/openmp/");
 }
