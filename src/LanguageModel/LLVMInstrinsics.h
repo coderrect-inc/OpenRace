@@ -25,7 +25,8 @@ inline bool isMemcpy(const llvm::StringRef &funcName) { return funcName.startswi
 
 // returns true for llvm APIS that have no effect on race detection
 inline bool isNoEffect(const llvm::StringRef &funcName) {
-  return isDebug(funcName) || isLifetime(funcName) || isStackSave(funcName) || isStackRestore(funcName);
+  return isDebug(funcName) || isLifetime(funcName) || isStackSave(funcName) || isStackRestore(funcName) ||
+         isMemcpy(funcName);
 }
 
 }  // namespace LLVMModel

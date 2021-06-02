@@ -106,9 +106,6 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         auto funcName = calledFunc->getName();
         if (LLVMModel::isNoEffect(funcName)) {
           /* Do nothing */
-        } else if (LLVMModel::isMemcpy(funcName)) {
-          instructions.push_back(std::make_shared<LLVMMemcpyRead>(callInst));
-          instructions.push_back(std::make_shared<LLVMMemcpyWrite>(callInst));
         } else if (PthreadModel::isPthreadCreate(funcName)) {
           instructions.push_back(std::make_shared<PthreadCreate>(callInst));
         } else if (PthreadModel::isPthreadJoin(funcName)) {
