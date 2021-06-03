@@ -1,20 +1,19 @@
 version: 2
-machine:
-  docker_layer_caching: true
 jobs:
-  build:
-    docker: 
-      - image: coderrect/openrace-env
+  build_docker:
+    machine:
+      docker_layer_caching: true
     parallelism: 2
     steps:
       - checkout
       - run:
           name: Setup cmake and build artifacts
           command: |
+            docker build -t coderrect/openrace-env .
             pwd
             mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
-            cmake --build .
+            cmake --build . --parallel
             ctest
     persist_to_workspace:
       root: .
