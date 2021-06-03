@@ -1,11 +1,14 @@
-version: 2
-
+version: 2.1
+executors:
+  docker-publisher:
+    docker:
+      - image: coderrect/openrace-env:stretch
 jobs:
   build:
-    docker: 
-      - image: coderrect/openrace-env:latest
+    executor: docker-publisher
     steps:
       - checkout
+      - setup_remote_docker
       - run:
           name: Setup cmake and build artifacts
           command: |
@@ -14,11 +17,6 @@ jobs:
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build .
             ctest
-    persist_to_workspace:
-      root: .
-      paths: 
-       - bin
-       - DartConfiguration.tcl
   test:
     docker: 
      - image: coderrect/openrace-env
