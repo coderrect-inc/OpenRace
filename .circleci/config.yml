@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker: 
-      - image: coderrect/openrace-env
+      - image: coderrect/openrace-env:latest
     steps:
       - checkout
       - run:
