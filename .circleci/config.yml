@@ -4,6 +4,7 @@ jobs:
   build:
     docker: 
       - image: coderrect/openrace-env
+    parallelism: 4
     steps:
       - checkout
       - run:
