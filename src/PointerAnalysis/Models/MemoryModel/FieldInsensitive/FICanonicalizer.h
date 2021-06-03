@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/3/19.
-//
-#ifndef PTA_FICANONICALIZER_H
-#define PTA_FICANONICALIZER_H
+#pragma once
 
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Intrinsics.h>
@@ -30,5 +26,3 @@ class FICanonicalizer {
 };
 
 }  // namespace pta
-
-#endif

@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/26/19.
-//
-#ifndef PTA_CONSTRAINTGRAPH_H
-#define PTA_CONSTRAINTGRAPH_H
+#pragma once
 
 #include "CGObjNode.h"
 #include "CGPtrNode.h"
@@ -241,5 +237,3 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
 }  // namespace llvm
 
 #undef DEBUG_TYPE
-
-#endif

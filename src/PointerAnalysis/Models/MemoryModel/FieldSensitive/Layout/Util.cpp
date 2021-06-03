@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 5/19/21.
-//
-
 #include "Util.h"
 
 #include <llvm/IR/DataLayout.h>

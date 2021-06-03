@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/13/20.
-//
-
-#ifndef PTA_CPPMEMMODEL_H
-#define PTA_CPPMEMMODEL_H
+#pragma once
 
 // TODO: there are a lot of things to do to model C++'s memory model accurately
 // besides vtable e.g., runtime type information + class hirachy, so we put it
@@ -305,5 +300,3 @@ struct MemModelTrait<cpp::CppMemModel<ctx>> : MemModelHelper<cpp::CppMemModel<ct
 #undef super
 
 }  // namespace pta
-
-#endif

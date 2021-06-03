@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 4/2/20.
-//
-#ifndef PTA_HYBRIDCTX_H
-#define PTA_HYBRIDCTX_H
+#pragma once
 
 #include <llvm/ADT/STLExtras.h>
 
@@ -110,4 +106,3 @@ struct hash<pta::HybridCtx<Args...>> {
 };
 
 }  // namespace std
-#endif

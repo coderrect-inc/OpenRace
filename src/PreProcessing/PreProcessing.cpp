@@ -31,6 +31,7 @@ limitations under the License.
 #include "LanguageModel/OpenMP.h"
 #include "PreProcessing/Passes/CanonicalizeGEPPass.h"
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
+#include "PreProcessing/Passes/LoweringMemCpyPass.h"
 #include "PreProcessing/Passes/OMPConstantPropPass.h"
 
 namespace {
@@ -86,6 +87,7 @@ void preprocess(llvm::Module &module) {
   fpm.addPass(llvm::SCCPPass());
 
   llvm::ModulePassManager mpm;
+  mpm.addPass(LoweringMemcpyPass());
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpm)));
   mpm.addPass(llvm::AlwaysInlinerPass());
   mpm.addPass(OMPConstantPropPass());

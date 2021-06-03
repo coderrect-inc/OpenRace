@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/19/19.
-//
-#ifndef PTA_NOCTX_H
-#define PTA_NOCTX_H
+#pragma once
 
 #include <string>
 
@@ -41,5 +37,3 @@ struct CtxTrait<NoCtx> {
 };
 
 }  // namespace pta
-
-#endif

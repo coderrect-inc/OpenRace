@@ -7,7 +7,7 @@ title: Setting Up Dev Environment
 
 It is **highly** recommended that the development be done on Linux.
 
-We test all of our builds using Ubuntu 20.04 and most of our core team is using Manjaro, though any recent linux based OS should work.
+We test all of our builds using Ubuntu 20.04, though any recent linux based OS should work.
 
 This guide will give instructions based on Ubuntu 20.04.
 
@@ -54,35 +54,9 @@ dpkg -i conan-ubuntu-64.deb
 For more information or examples on installing [Conan](https://conan.io/downloads.html), see their [installation instructions](https://docs.conan.io/en/latest/installation.html).
 
 
-### Install LLVM 10.0.x
+### Install LLVM 10.0.1
 
-There are two ways to get LLVM:
- - From package manager (Ubuntu 20.04 only)
- - Build from source
-
-The easy/quick way is to install from package manager, though it may not work on all systems. In most cases LLVM will likely need to be built from source.
-
-In either case, LLVM will include a file named `LLVMConfig.cmake`. You will need to save the directory containing this file in order to build OpenRace.
-
-In this guide we save it into the `LLVM_DIR` environment variable.
-
-<!--
-
-#### Package Manager
-
-This section is unstable and does not build the codebase as of 05/24/2021.
-
-```shell
-# Install LLVM 10
-sudo apt update
-sudo apt install -y llvm-10
-# Save location of LLVMConfig.cmake
-export LLVM_DIR=/usr/lib/llvm-10/lib/cmake/llvm/
-```
-
--->
-
-#### From Source
+LLVM will need to be built from source. 
 
 ```shell
 # Get the source code
@@ -98,14 +72,15 @@ cmake \
     -DLLVM_APPEND_VC_REV=OFF \
     -DLLVM_OPTIMIZED_TABLEGEN=ON \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=install \
     -G Ninja \
     ../llvm
 # Build and Install
 cmake --build . --parallel
 cmake --build . --target install
-# Save location of LLVMConfig.cmake
-export LLVM_DIR=$(pwd)/
-# if using a custom prefix, set LLVM_DIR to ${prefix}/lib/cmake/llvm
+# Save directory containing LLVMConfig.cmake
+export LLVM_DIR=$(pwd)/install/lib/cmake/llvm
+# if using a custom install prefix, set LLVM_DIR to ${prefix}/lib/cmake/llvm
 ```
 
 There are a lot of CMake options to customize the LLVM build. See [LLVM's page on CMake](https://www.llvm.org/docs/CMake.html) for more options.
@@ -122,7 +97,9 @@ Building using Ninja Build
 
 The rest are just some options set to save time/space when building.
 
-You may also wish to additionally add `-DCMAKE_INSTALL_PREFIX="/some/other/prefix"` to install to a specific location, such as `$HOME/.local`.
+The LLVM build will also include a file named `LLVMConfig.cmake`. You will need to save the directory containing this file in order to build OpenRace.
+
+In this guide we save it into the `LLVM_DIR` environment variable.
 
 
 ## Building OpenRace
@@ -134,7 +111,7 @@ As a backup, you may also build from the shell using the following:
 ```shell
 # Get the source code
 git clone https://github.com/coderrect-inc/OpenRace.git
-mkdir build && cd build
+mkdir OpenRace/build && cd OpenRace/build
 # Configure build with cmake
 cmake \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -154,7 +131,7 @@ The cmake options do the following:
  - `CMAKE_BUILD_TYPE=Debug`  
  Builds the project in debug mode. This makes it is easier to debug if/when issues occur.
  - `LLVM_DIR=$LLVM_DIR`  
- Should point to a directory containing `LLVMConfig.cmake`. See the "Install LLVM 10.0.X" section above.
+ Should point to a directory containing `LLVMConfig.cmake`. See the "Install LLVM 10.0.1" section above.
 
 
 ## Running Tests

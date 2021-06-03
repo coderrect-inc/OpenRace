@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/21/20.
-//
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.h"
 
 #include <llvm/ADT/StringRef.h>

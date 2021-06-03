@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 3/14/20.
-//
-
-#ifndef PTA_INSERTGLOBALCTORCALLPASS_H
-#define PTA_INSERTGLOBALCTORCALLPASS_H
+#pragma once
 
 #include <llvm/Pass.h>
 
@@ -25,5 +20,3 @@ class InsertGlobalCtorCallPass : public llvm::ModulePass {
 
   bool runOnModule(llvm::Module &M) override;
 };
-
-#endif

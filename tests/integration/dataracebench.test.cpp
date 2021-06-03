@@ -69,7 +69,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB031-truedepfirstdimension-orig-yes.c:66:14 DRB031-truedepfirstdimension-orig-yes.c:66:15"}),
       Oracle("DRB032-truedepfirstdimension-var-yes.ll",
              {"DRB032-truedepfirstdimension-var-yes.c:69:14 DRB032-truedepfirstdimension-var-yes.c:69:15"}),
-      // DRB 033 and 034 complex array index function
+      Oracle("DRB033-truedeplinear-orig-yes.ll",
+             {"DRB033-truedeplinear-orig-yes.c:64:13 DRB033-truedeplinear-orig-yes.c:64:14"}),
+      Oracle("DRB034-truedeplinear-var-yes.ll",
+             {"DRB034-truedeplinear-var-yes.c:66:13 DRB034-truedeplinear-var-yes.c:66:14"}),
       // DRB 35 and 36 FP on write to a[i] ??
       Oracle("DRB037-truedepseconddimension-orig-yes.ll",
              {"DRB037-truedepseconddimension-orig-yes.c:63:14 DRB037-truedepseconddimension-orig-yes.c:63:15"}),
@@ -81,7 +84,6 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB040-truedepsingleelement-var-yes.c:63:9 DRB040-truedepsingleelement-var-yes.c:63:15"}),
       // 41-44 are really complex array accesses
       Oracle("DRB045-doall1-orig-no.ll", {}),
-      // 46 multi-dimen array
       Oracle("DRB046-doall2-orig-no.ll", {}),
       Oracle("DRB047-doallchar-orig-no.ll", {}),
       Oracle("DRB048-firstprivate-orig-no.ll", {}),
@@ -96,7 +98,6 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
       Oracle("DRB061-matrixvector1-orig-no.ll", {}),
       // 62 reduction
-      // 63-64 multi-dimen array
       Oracle("DRB063-outeronly1-orig-no.ll", {}),
       Oracle("DRB064-outeronly2-orig-no.ll", {}),
       Oracle("DRB065-pireduction-orig-no.ll", {}),

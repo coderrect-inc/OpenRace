@@ -118,7 +118,7 @@ TEST_CASE("PointerAnalysis", "[unit][PointerAnalysis]") {
     llvm::legacy::PassManager passes;
 
     passes.add(new LegacyCanonicalizeGEPPass());
-    passes.add(new LoweringMemCpyPass());
+    passes.add(new LoweringMemCpyLegacyPass());
     passes.add(new RemoveExceptionHandlerPass());
 
     passes.add(new InsertGlobalCtorCallPass());

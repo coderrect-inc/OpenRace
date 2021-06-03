@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/1/19.
-//
-#ifndef PTA_POINTER_H
-#define PTA_POINTER_H
+#pragma once
 
 #include "PointerAnalysis/Util/Util.h"
 
@@ -81,5 +77,3 @@ struct hash<pta::Pointer<ctx>> {
 };
 
 }  // namespace std
-
-#endif

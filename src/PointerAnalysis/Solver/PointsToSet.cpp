@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/23/19.
-//
-
 #include "PointerAnalysis/Solver/PointsTo/BitVectorPTS.h"
 #include "PointerAnalysis/Solver/PointsTo/PointedByPts.h"
 

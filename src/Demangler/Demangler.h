@@ -9,8 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef PTA_DEMANGLER_H
-#define PTA_DEMANGLER_H
+#pragma once
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Demangle/Demangle.h>
@@ -56,5 +55,3 @@ struct Demangler : public llvm::ItaniumPartialDemangler {
 };
 
 }  // namespace pta
-
-#endif

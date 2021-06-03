@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-#ifndef PTA_DEFAULTLANGMODEL_H
-#define PTA_DEFAULTLANGMODEL_H
+#pragma once
 
 #include "DefaultExtFunctions.h"
 #include "Logging/Log.h"
@@ -160,5 +156,3 @@ class LangModelTrait<DefaultLangModel<ctx, MemModel, PtsTy>>
     : public LangModelTrait<LangModelBase<ctx, MemModel, PtsTy, DefaultLangModel<ctx, MemModel, PtsTy>>> {};
 
 }  // namespace pta
-
-#endif
