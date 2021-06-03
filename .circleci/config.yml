@@ -1,11 +1,10 @@
 version: 2
 jobs:
   build:
-    docker: 
-      - image: coderrect/openrace-env
-    build_docker:
+    docker:
       machine:
-        docker_layer_caching: true
+        - docker_layer_caching: true 
+        - image: coderrect/openrace-env
     steps:
       - checkout
       - run:
