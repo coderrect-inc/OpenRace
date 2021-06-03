@@ -3,7 +3,6 @@ jobs:
   build:
     docker: 
       - image: coderrect/openrace-env
-    parallelism: 2
     build_docker:
       machine:
         docker_layer_caching: true
