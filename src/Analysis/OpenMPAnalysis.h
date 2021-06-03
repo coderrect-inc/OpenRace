@@ -86,7 +86,7 @@ class OpenMPAnalysis {
   bool bothInMasterBlock(const Event* event1, const Event* event2) const;
 
   // return true if both events are in compatible sections
-  static bool inCompatibleSections(const Event* event1, const Event* event2);
+  static bool insideCompatibleSections(const Event* event1, const Event* event2);
 };
 
 }  // namespace race

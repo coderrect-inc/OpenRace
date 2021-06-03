@@ -695,7 +695,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
   return false;
 }
 
-bool OpenMPAnalysis::inCompatibleSections(const Event *event1, const Event *event2) {
+bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
   // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: threads of the same team are identical
   // assertion: we aren't given events from threads in different parallel sections blocks because those would be
@@ -723,6 +723,8 @@ bool OpenMPAnalysis::inCompatibleSections(const Event *event1, const Event *even
       }
       visited.insert(curr);
 
+      // the parallel for actually "iterates" and goes back to the body; if we follow descendants through the body, all
+      // sections contain all descendants of each section
       if (curr->hasName() && curr->getName().startswith("omp.inner.for.body")) {
         continue;
       }
