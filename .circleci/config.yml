@@ -12,7 +12,6 @@ jobs:
       - run:
           name: Setup cmake and build artifacts
           command: |
-            docker pull coderrect/openrace-env
             pwd
             mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
