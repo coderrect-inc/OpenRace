@@ -20,6 +20,10 @@ list(APPEND CMAKE_PREFIX_PATH ${LLVM_DIR})
 find_package(LLVM 10.0.1 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+if(NOT DEFINED ENABLE_WARNING)
+    set(ENABLE_WARNING False)
+endif()
+message(STATUS "ENABLE_WARNING is ${ENABLE_WARNING}")
 
 ## Don't do this. Do these for each target per modern cmake
 # include_directories(${LLVM_INCLUDE_DIRS})
@@ -48,6 +52,8 @@ llvm_map_components_to_libnames(llvm_libs
         demangle
         mc)
 
+include(cmake/CompilerWarnings.cmake)
+
 add_subdirectory(src)
 
 include(CTest)
@@ -55,3 +61,4 @@ include(Catch)
 enable_testing()
 
 add_subdirectory(tests)
+
