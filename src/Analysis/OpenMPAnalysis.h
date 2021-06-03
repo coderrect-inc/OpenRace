@@ -84,6 +84,9 @@ class OpenMPAnalysis {
   // return true if both events are inside any master region of the same team
   // similar with single; only one thread executes, but for master, a specific thread executes
   bool bothInMasterBlock(const Event* event1, const Event* event2) const;
+
+  // return true if both events are in compatible sections
+  static bool inCompatibleSections(const Event* event1, const Event* event2) ;
 };
 
 }  // namespace race

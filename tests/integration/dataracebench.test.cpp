@@ -54,7 +54,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB022-reductionmissing-var-yes.ll",
              {"DRB022-reductionmissing-var-yes.c:72:11 DRB022-reductionmissing-var-yes.c:72:11",
               "DRB022-reductionmissing-var-yes.c:72:11 DRB022-reductionmissing-var-yes.c:72:13"}),
-      // DRB 23 is sections
+      Oracle("DRB023-sections1-orig-yes.ll", {"DRB023-sections1-orig-yes.c:58:7 DRB023-sections1-orig-yes.c:60:7",
+                                              "DRB023-sections1-orig-yes.c:60:7 DRB023-sections1-orig-yes.c:58:7"}),
       // DRB 24 and 25 are simd
       // DRB 26 is target
       // DRB 27 is task
@@ -172,10 +173,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 122-123 task
       // 124 master // wont-fix, variable expunged by optimisation
       Oracle("DRB125-single-orig-no.ll", {}),
-      // 125-26 section
+      // 126 // doesn't check thread counts
       // 127-136 task
       // 137-138 simd
-      // 139 section + critical
+      // 139 // nested parallel
       // 140-141 master
       // 142-143 critical
       // 144-164 target
