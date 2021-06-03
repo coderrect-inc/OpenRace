@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-#ifndef PTA_CONSGRAPHBUILDER_H
-#define PTA_CONSGRAPHBUILDER_H
+#pragma once
 
 #include <llvm/ADT/SparseBitVector.h>
 #include <llvm/Demangle/Demangle.h>
@@ -681,5 +677,3 @@ struct hash<pair<T1 *, T2 *>> {
 
 #undef MODEL
 #undef ALLOCATE
-
-#endif

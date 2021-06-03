@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/18/19.
-//
-
-#ifndef PTA_MEMBLOCK_H
-#define PTA_MEMBLOCK_H
+#pragma once
 
 #include <llvm/ADT/IndexedMap.h>
 #include <llvm/IR/DataLayout.h>
@@ -396,5 +391,3 @@ class AggregateMemBlock : public MemBlock<ctx> {
 };
 
 }  // namespace pta
-
-#endif

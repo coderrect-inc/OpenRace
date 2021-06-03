@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 3/24/20.
-//
-
-#ifndef PTA_POINTERANALYSISPASS_H
-#define PTA_POINTERANALYSISPASS_H
+#pragma once
 
 #include <bits/unique_ptr.h>
 #include <llvm/ADT/Hashing.h>
@@ -60,5 +55,3 @@ class PointerAnalysisPass : public llvm::ImmutablePass {
 
 template <typename Solver>
 char PointerAnalysisPass<Solver>::ID = 0;
-
-#endif

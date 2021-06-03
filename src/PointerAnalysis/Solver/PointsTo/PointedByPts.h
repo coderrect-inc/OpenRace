@@ -9,13 +9,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/23/19.
-//
-
 // the pts data structure that also stores pointed by information
-#ifndef PTA_POINTEDBYPTS_H
-#define PTA_POINTEDBYPTS_H
+#pragma once
 
 #include "PTSTrait.h"
 
@@ -151,5 +146,3 @@ class PointedByPts {
 }  // namespace pta
 
 DEFINE_PTS_TRAIT(pta::PointedByPts)
-
-#endif

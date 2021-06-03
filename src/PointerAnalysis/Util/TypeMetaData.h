@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/26/20.
-//
-
-#ifndef PTA_TYPEMETADATA_H
-#define PTA_TYPEMETADATA_H
+#pragma once
 
 #include <llvm/ADT/SmallVector.h>
 
@@ -59,5 +54,3 @@ inline llvm::DIType *getBaseType(DebugInfoType *T) {
 
 std::size_t getDISize(llvm::DIDerivedType *T);
 }  // namespace pta
-
-#endif

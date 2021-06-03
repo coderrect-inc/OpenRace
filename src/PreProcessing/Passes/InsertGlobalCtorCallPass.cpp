@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 3/14/20.
-//
 #include "PreProcessing/Passes/InsertGlobalCtorCallPass.h"
 
 #include <llvm/IR/Constants.h>

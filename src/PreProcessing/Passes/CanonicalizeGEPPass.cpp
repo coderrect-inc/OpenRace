@@ -9,9 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 1/6/20.
-//
 #include "PreProcessing/Passes/CanonicalizeGEPPass.h"
 
 #include <llvm/IR/Function.h>

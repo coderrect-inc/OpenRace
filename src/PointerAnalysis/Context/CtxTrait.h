@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
-#ifndef PTA_CTXTRAIT_H
-#define PTA_CTXTRAIT_H
+#pragma once
 
 namespace pta {
 
@@ -23,5 +19,3 @@ class CtxTrait {
 };
 
 }  // namespace pta
-
-#endif

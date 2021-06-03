@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/7/19.
-//
-
 //#include <llvm/IR/CallSite.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/GlobalAlias.h>
