@@ -3,8 +3,6 @@ jobs:
   build:
     docker:
         - image: coderrect/openrace-env
-    machine:
-        - docker_layer_caching: true 
     steps:
       - checkout
       - run:
@@ -26,13 +24,13 @@ jobs:
     steps:
      - attach_workspace:
         at: .
-     - run: ctest --parallel $(nproc)
+     - run: ctest
     
-workflows:
-  version: 2
-  build-and-test:
-    jobs:
-      - build
-      - test:
-          requires:
-            - build
+# workflows:
+#   version: 2
+#   build-and-test:
+#     jobs:
+#       - build
+#       - test:
+#           requires:
+#             - build
