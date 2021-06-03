@@ -14,7 +14,7 @@ jobs:
             pwd
             mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
-            cmake --build . --parallel
+            cmake --build .
             ctest
     persist_to_workspace:
       root: .
