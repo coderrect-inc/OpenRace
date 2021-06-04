@@ -89,9 +89,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB040-truedepsingleelement-var-yes.ll",
              {"DRB040-truedepsingleelement-var-yes.c:63:9 DRB040-truedepsingleelement-var-yes.c:63:15"}),
       Oracle("DRB041-3mm-parallel-no.ll", {}),
-      Oracle("DRB042-3mm-tile-no.ll", {}),
+      Oracle("DRB042-3mm-tile-no.ll", {}),  // uses simd, may need to check later
       Oracle("DRB043-adi-parallel-no.ll", {}),
-      Oracle("DRB044-adi-tile-no.ll", {}),
+      Oracle("DRB044-adi-tile-no.ll", {}),  // uses simd, may need to check later
       Oracle("DRB045-doall1-orig-no.ll", {}),
       Oracle("DRB046-doall2-orig-no.ll", {}),
       Oracle("DRB047-doallchar-orig-no.ll", {}),
