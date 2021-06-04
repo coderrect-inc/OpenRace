@@ -6,13 +6,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup cmake and build artifacts
+          name: Build artifacts 
           command: |
             pwd
             mkdir build && cd build
+      - run: 
+          name: Run cmake
+          command: |
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build . --parallel
-            ctest
+      # - run:
+      #     name: Run tests
+      #     command: ctest
+          
     persist_to_workspace:
       root: .
       paths: 
@@ -26,11 +32,11 @@ jobs:
         at: .
      - run: ctest
     
-# workflows:
-#   version: 2
-#   build-and-test:
-#     jobs:
-#       - build
-#       - test:
-#           requires:
-#             - build
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
