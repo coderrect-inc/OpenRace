@@ -10,9 +10,6 @@ jobs:
           command: |
             pwd
             mkdir build && cd build
-      - run: 
-          name: Run cmake
-          command: |
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build .
       - run:
