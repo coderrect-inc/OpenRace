@@ -3,7 +3,6 @@ jobs:
   build:
     docker:
         - image: coderrect/openrace-env
-    parallelism: 4
     steps:
       - checkout
       - run:
@@ -12,10 +11,7 @@ jobs:
             mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build .
-
-      # - run:
-      #     name: Run tests
-      #     command: ctest
+            ctest
           
     persist_to_workspace:
       root: .
