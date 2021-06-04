@@ -98,7 +98,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 59 FP caused by last private??
       Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
       Oracle("DRB061-matrixvector1-orig-no.ll", {}),
-      // 62 reduction
+      Oracle("DRB062-matrixvector2-orig-no.ll", {}),
       Oracle("DRB063-outeronly1-orig-no.ll", {}),
       Oracle("DRB064-outeronly2-orig-no.ll", {}),
       Oracle("DRB065-pireduction-orig-no.ll", {}),
