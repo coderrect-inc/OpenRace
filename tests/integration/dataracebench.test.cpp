@@ -113,7 +113,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB066-pointernoaliasing-orig-no.ll", {}),
       Oracle("DRB067-restrictpointer1-orig-no.ll", {}),
       Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
-      // 69 section and locks
+      Oracle("DRB069-sectionslock1-orig-no.ll", {}),
       // 70 simd
       // 71 target
       // 72 task
