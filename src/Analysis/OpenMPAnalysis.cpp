@@ -696,49 +696,107 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 }
 
 bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
-  // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: threads of the same team are identical
   // assertion: we aren't given events from threads in different parallel sections blocks because those would be
   //            different teams
-  std::set<const llvm::BasicBlock *> sections;
+
+  // observation: we only enter a section if any event in the queue passes through a section case
+  // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
+  std::vector<const llvm::BasicBlock *> sections;
+  // heuristic: we only really care if the event occurs, so we abstract to the basic block level
+  std::vector<const llvm::BasicBlock *> blocktrace;
+  auto ev1block = event1->getInst()->getParent();
+  auto ev2block = event2->getInst()->getParent();
   for (const auto &event : event1->getThread().getEvents()) {
     auto block = event->getInst()->getParent();
-    if (block->hasName() && block->getName().startswith(".omp.sections.case")) {
-      sections.insert(block);
+    // this is our end case; if this block is hit, the last openmp block has terminated
+    if (!sections.empty() && block->hasName() &&
+        (block->getName().startswith(".omp.sections.exit") || block->getName().startswith("omp.inner.for"))) {
+      sections.push_back(block);  // our "sentinel"
+      break;
+    }
+    if ((sections.empty() || block != sections.back()) && block->hasName() &&
+        block->getName().startswith(".omp.sections.case")) {  // add for body check
+      sections.push_back(block);
+    }
+    // heuristic: we only care about blocks between sections
+    if (!sections.empty() && (blocktrace.empty() || block != blocktrace.back())) {
+      blocktrace.push_back(block);
     }
   }
-  // now that we have all the sections for this thread, find its descendants and look for either of these events
+
+  // heuristic: not enough sections to check compatibility with
+  if (sections.size() <= 1) {
+    return false;
+  }
+
   std::set<const llvm::BasicBlock *> ev1secs;
   std::set<const llvm::BasicBlock *> ev2secs;
-  for (auto section : sections) {
-    std::set<const llvm::BasicBlock *> visited;
-    std::deque<const llvm::BasicBlock *> queue;
-    queue.push_back(section);
-    while (!queue.empty()) {
-      auto curr = queue.front();
-      queue.pop_front();
 
-      if (visited.find(curr) != visited.end()) {
-        continue;
+  // first pass: pretraversed sections
+  // visit all the sections already seen by the IR by checking if the event occurs inside a section
+  // misses out-of-order traversed blocks
+  auto currSection = sections.front();
+  for (auto nextSection = ++sections.begin(), currBlock = std::find(blocktrace.begin(), blocktrace.end(), currSection);
+       currBlock != blocktrace.end(); currSection = *nextSection, ++nextSection) {
+    do {
+      if (ev1block == *currBlock) {
+        ev1secs.insert(currSection);
       }
-      visited.insert(curr);
+      if (ev2block == *currBlock) {
+        ev2secs.insert(currSection);
+      }
+      ++currBlock;
+    } while (currBlock != blocktrace.end() &&
+             std::find(sections.begin(), sections.end(), *currBlock) == sections.end());
+  }
 
-      // the parallel for actually "iterates" and goes back to the body; if we follow descendants through the body, all
-      // sections contain all descendants of each section
-      if (curr->hasName() && curr->getName().startswith("omp.inner.for.body")) {
-        continue;
-      }
+  // heuristic: don't bother with second pass if none of the sections have any other successors than the for exit/inc
+  if (std::any_of(sections.begin(), sections.end(), [&](const auto section) {
+        for (const auto succ : successors(section)) {
+          // if it doesn't have a name or its name is not the exit/inc name, we must consider it
+          if (!succ->hasName() ||
+              !(succ->getName().startswith(".omp.sections.exit") || succ->getName().startswith("omp.inner.for"))) {
+            return true;
+          }
+        }
+        // all of the successors (all one of them :P) are the for exit
+        return false;
+      })) {
+    // second pass: traverse jumped blocks to catch diamond cases
+    // not necessary if thread traces are updated to include traversal
+    // caveat: does not capture function calls
+    for (auto section : sections) {
+      std::set<const llvm::BasicBlock *> visited;
+      std::deque<const llvm::BasicBlock *> queue;
+      queue.push_back(section);
+      while (!queue.empty()) {
+        auto curr = queue.front();
+        queue.pop_front();
 
-      if (event1->getInst()->getParent() == curr) {
-        ev1secs.insert(section);
-      }
-      if (event2->getInst()->getParent() == curr) {
-        ev2secs.insert(section);
-      }
+        if (visited.find(curr) != visited.end()) {
+          continue;
+        }
+        visited.insert(curr);
 
-      std::copy(pred_begin(curr), pred_end(curr), std::back_inserter(queue));
+        // the parallel for actually "iterates" and goes back to the body; if we follow descendants through the body,
+        // all sections contain all descendants of each section
+        if (curr->hasName() && curr->getName().startswith("omp.inner.for.body")) {
+          continue;
+        }
+
+        if (event1->getInst()->getParent() == curr) {
+          ev1secs.insert(section);
+        }
+        if (event2->getInst()->getParent() == curr) {
+          ev2secs.insert(section);
+        }
+
+        std::copy(succ_begin(curr), succ_end(curr), std::back_inserter(queue));
+      }
     }
   }
+
   // if either are zero, then they are not contained by a section => not a compatible section
   if (ev1secs.empty() || ev2secs.empty()) {
     return false;
