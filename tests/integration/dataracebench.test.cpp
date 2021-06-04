@@ -74,7 +74,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB033-truedeplinear-orig-yes.c:64:13 DRB033-truedeplinear-orig-yes.c:64:14"}),
       Oracle("DRB034-truedeplinear-var-yes.ll",
              {"DRB034-truedeplinear-var-yes.c:66:13 DRB034-truedeplinear-var-yes.c:66:14"}),
-      // DRB 35 and 36 FP on write to a[i] ??
+      Oracle("DRB035-truedepscalar-orig-yes.ll",
+             {"DRB035-truedepscalar-orig-yes.c:67:9 DRB035-truedepscalar-orig-yes.c:66:12",
+              "DRB035-truedepscalar-orig-yes.c:67:9 DRB035-truedepscalar-orig-yes.c:67:9"}),
+      Oracle("DRB036-truedepscalar-var-yes.ll",
+             {"DRB036-truedepscalar-var-yes.c:67:9 DRB036-truedepscalar-var-yes.c:66:12",
+              "DRB036-truedepscalar-var-yes.c:67:9 DRB036-truedepscalar-var-yes.c:67:9"}),
       Oracle("DRB037-truedepseconddimension-orig-yes.ll",
              {"DRB037-truedepseconddimension-orig-yes.c:63:14 DRB037-truedepseconddimension-orig-yes.c:63:15"}),
       Oracle("DRB038-truedepseconddimension-var-yes.ll",
