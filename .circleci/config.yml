@@ -14,10 +14,10 @@ jobs:
           name: Run cmake
           command: |
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
-            cmake --build . --parallel
-      # - run:
-      #     name: Run tests
-      #     command: ctest
+            cmake --build .
+      - run:
+          name: Run tests
+          command: ctest
           
     persist_to_workspace:
       root: .
