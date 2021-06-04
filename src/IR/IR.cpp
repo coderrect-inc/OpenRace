@@ -53,7 +53,6 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR::Type &type)
       os << "CALL";
       break;
     default:
-      os << "OTHERS";
       break;
   }
   return os;
