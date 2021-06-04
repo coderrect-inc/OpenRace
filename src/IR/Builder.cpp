@@ -21,14 +21,20 @@ limitations under the License.
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
 
+#include <iostream>
+
 using namespace race;
 
 namespace {
-bool hasNoAliasMD(const llvm::Instruction *inst) {
-  llvm::AAMDNodes AAMD;
-  inst->getAAMetadata(AAMD);
-  return AAMD.NoAlias != nullptr;
-}
+
+bool SHOW_TODO_CASE = false;
+
+////bz: tmp comment off, since defined but not used
+// bool hasNoAliasMD(const llvm::Instruction *inst) {
+//   llvm::AAMDNodes AAMD;
+//   inst->getAAMetadata(AAMD);
+//   return AAMD.NoAlias != nullptr;
+// }
 
 bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   auto ptr = getPointerOperand(inst);
@@ -84,10 +90,19 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         instructions.push_back(std::make_shared<race::Store>(storeInst));
       } else if (auto retInst = llvm::dyn_cast<llvm::ReturnInst>(inst)) {
         // TODO: what should this do?
+        if (SHOW_TODO_CASE) {
+          std::cout << "TO HANDLE: " << retInst << std::endl;
+        }
       } else if (auto branchInst = llvm::dyn_cast<llvm::BranchInst>(inst)) {
         // TODO: what should this do?
+        if (SHOW_TODO_CASE) {
+          std::cout << "TO HANDLE: " << branchInst << std::endl;
+        }
       } else if (auto switchInst = llvm::dyn_cast<llvm::SwitchInst>(inst)) {
         // TODO: what should this do?
+        if (SHOW_TODO_CASE) {
+          std::cout << "TO HANDLE: " << switchInst << std::endl;
+        }
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls

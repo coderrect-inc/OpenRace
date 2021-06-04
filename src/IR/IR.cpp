@@ -52,6 +52,9 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR::Type &type)
     case IR::Type::Call:
       os << "CALL";
       break;
+    default:
+      os << "OTHERS";
+      break;
   }
   return os;
 }
