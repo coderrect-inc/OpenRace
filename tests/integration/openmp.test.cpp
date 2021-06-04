@@ -29,8 +29,8 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
       Oracle("sections-simple-no.ll", {}),
       Oracle("sections-simple-no.ll", {}),
       Oracle("sections-interproc-no.ll", {}),
-      Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:1:33 sections-interproc-yes.c:1:33",
-                                           "sections-interproc-yes.c:1:33 sections-interproc-yes.c:1:33"}),
+      Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
+                                           "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
   };
 
   checkOracles(oracles, "integration/openmp/");
