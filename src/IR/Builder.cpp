@@ -16,12 +16,12 @@ limitations under the License.
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
 
+#include <iostream>
+
 #include "IR/IRImpls.h"
 #include "LanguageModel/LLVMInstrinsics.h"
 #include "LanguageModel/OpenMP.h"
 #include "LanguageModel/pthread.h"
-
-#include <iostream>
 
 using namespace race;
 
