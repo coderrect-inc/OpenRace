@@ -37,20 +37,20 @@ entry:
   %1 = bitcast %struct.ident_t* @3 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %0, i8* align 8 %1, i64 24, i1 false)
   %2 = bitcast i32* %counter1 to i8*, !dbg !30
-  call void @llvm.lifetime.start.p0i8(i64 4, i8* %2) #5, !dbg !30
+  call void @llvm.lifetime.start.p0i8(i64 4, i8* %2) #4, !dbg !30
   call void @llvm.dbg.declare(metadata i32* %counter1, metadata !28, metadata !DIExpression()), !dbg !31
   store i32 0, i32* %counter1, align 4, !dbg !31, !tbaa !21
   %3 = bitcast i32* %counter2 to i8*, !dbg !32
-  call void @llvm.lifetime.start.p0i8(i64 4, i8* %3) #5, !dbg !32
+  call void @llvm.lifetime.start.p0i8(i64 4, i8* %3) #4, !dbg !32
   call void @llvm.dbg.declare(metadata i32* %counter2, metadata !29, metadata !DIExpression()), !dbg !33
   store i32 0, i32* %counter2, align 4, !dbg !33, !tbaa !21
   %4 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !34
   store i8* getelementptr inbounds ([55 x i8], [55 x i8]* @1, i32 0, i32 0), i8** %4, align 8, !dbg !34, !tbaa !35
   call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* %.kmpc_loc.addr, i32 2, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*), i32* %counter1, i32* %counter2), !dbg !34
   %5 = bitcast i32* %counter2 to i8*, !dbg !37
-  call void @llvm.lifetime.end.p0i8(i64 4, i8* %5) #5, !dbg !37
+  call void @llvm.lifetime.end.p0i8(i64 4, i8* %5) #4, !dbg !37
   %6 = bitcast i32* %counter1 to i8*, !dbg !37
-  call void @llvm.lifetime.end.p0i8(i64 4, i8* %6) #5, !dbg !37
+  call void @llvm.lifetime.end.p0i8(i64 4, i8* %6) #4, !dbg !37
   ret i32 0, !dbg !37
 }
 
@@ -114,11 +114,11 @@ omp.inner.for.body:                               ; preds = %omp.inner.for.cond
   ], !dbg !54
 
 .omp.sections.case:                               ; preds = %omp.inner.for.body
-  %call = call i32 (i32*, ...) bitcast (i32 (...)* @global_write to i32 (i32*, ...)*)(i32* %2), !dbg !56
+  call void @update_counter(i32* %2), !dbg !56
   br label %.omp.sections.exit, !dbg !59
 
 .omp.sections.case1:                              ; preds = %omp.inner.for.body
-  %call2 = call i32 (i32*, ...) bitcast (i32 (...)* @global_write to i32 (i32*, ...)*)(i32* %3), !dbg !60
+  call void @update_counter(i32* %3), !dbg !60
   br label %.omp.sections.exit, !dbg !63
 
 .omp.sections.exit:                               ; preds = %.omp.sections.case1, %.omp.sections.case, %omp.inner.for.body
@@ -141,8 +141,6 @@ omp.inner.for.end:                                ; preds = %omp.inner.for.cond
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* noalias nocapture writeonly, i8* noalias nocapture readonly, i64, i1 immarg) #2
 
 declare dso_local void @__kmpc_for_static_init_4(%struct.ident_t*, i32, i32, i32*, i32*, i32*, i32*, i32, i32)
-
-declare dso_local i32 @global_write(...) #4
 
 declare dso_local void @__kmpc_for_static_fini(%struct.ident_t*, i32)
 
@@ -167,7 +165,7 @@ entry:
   %3 = load i32*, i32** %.bound_tid..addr, align 8, !dbg !74, !tbaa !14
   %4 = load i32*, i32** %counter1.addr, align 8, !dbg !74, !tbaa !14
   %5 = load i32*, i32** %counter2.addr, align 8, !dbg !74, !tbaa !14
-  call void @.omp_outlined._debug__(i32* %2, i32* %3, i32* %4, i32* %5) #5, !dbg !74
+  call void @.omp_outlined._debug__(i32* %2, i32* %3, i32* %4, i32* %5) #4, !dbg !74
   ret void, !dbg !74
 }
 
@@ -180,15 +178,14 @@ attributes #0 = { nounwind uwtable "correctly-rounded-divide-sqrt-fp-math"="fals
 attributes #1 = { nounwind readnone speculatable willreturn }
 attributes #2 = { argmemonly nounwind willreturn }
 attributes #3 = { norecurse nounwind uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #4 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #5 = { nounwind }
+attributes #4 = { nounwind }
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4, !5}
 !llvm.ident = !{!6}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 10.0.1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, splitDebugInlining: false, nameTableKind: None)
-!1 = !DIFile(filename: "integration/openmp/sections-interproc-no.c", directory: "/home/addisoncrump/git/OpenRace/tests/data")
+!1 = !DIFile(filename: "integration/openmp/sections-interproc-no.c", directory: "/home/brad/Code/OpenRace/tests/data")
 !2 = !{}
 !3 = !{i32 7, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}

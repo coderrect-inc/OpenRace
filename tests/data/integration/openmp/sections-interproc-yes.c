@@ -8,9 +8,9 @@ int main() {
 #pragma omp parallel sections
   {
 #pragma omp section
-    { global_write(&counter); }
+    { update_counter(&counter); }
 
 #pragma omp section
-    { global_write(&counter); }
+    { update_counter(&counter); }
   }
 }
