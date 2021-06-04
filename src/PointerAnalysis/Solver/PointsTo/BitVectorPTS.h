@@ -75,7 +75,7 @@ class BitVectorPTS {
     assert(src < ptsVec.size() && dst < ptsVec.size());
     auto result = ptsVec[src] & ptsVec[dst];
 
-    for (int i = 0; i < NORMAL_OBJ_START_ID; i++) {
+    for (unsigned i = 0; i < NORMAL_OBJ_START_ID; i++) {
       // remove special node
       result.reset(i);
     }
@@ -141,7 +141,7 @@ class BitVectorPTS {
   }
 
   static inline const PtsTy& getPointedBy(NodeID id) {
-    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead ");
+    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead " + id);
   }
 
   // TODO: simply traverse the whole points-to information to gather the
