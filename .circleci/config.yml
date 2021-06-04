@@ -11,8 +11,8 @@ jobs:
           command: |
             pwd
             mkdir build && cd build
-            cmake -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
-            cmake --build . --config Debug
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
+            cmake --build .
 
       # - run:
       #     name: Run tests
