@@ -185,8 +185,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 127-136 task
       // 137-138 simd
       // 139 // nested parallel
-      // 140-141 master
-      // 142-143 critical
+      Oracle("DRB140-reduction-barrier-orig-yes.ll",
+             {"DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:31",
+              "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33",
+              "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"}),
+      Oracle("DRB141-reduction-barrier-orig-no.ll", {}),
+      // 142-143 atomic details
       // 144-164 target
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
