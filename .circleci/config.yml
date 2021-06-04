@@ -9,9 +9,8 @@ jobs:
       - run:
           name: Build artifacts 
           command: |
-            docker run -ti -v ${PWD}:/home/conan/project conanio/gcc72
             mkdir build && cd build
-            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
+            cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build .
 
       # - run:
