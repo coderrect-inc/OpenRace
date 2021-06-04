@@ -39,7 +39,7 @@ function(enable_warnings target_name)
         -Wunused # warn on anything being unused
         -Woverloaded-virtual # warn if you overload (not override) a virtual function
         -Wpedantic # warn if non-standard C++ is used
-        -Wconversion # warn on type conversions that may lose data
+        # -Wconversion # warn on type conversions that may lose data  -> TODO: a lot warnings exists in /src/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/MemLayout.h
         -Wsign-conversion # warn on sign conversions
         -Wnull-dereference # warn if a null dereference is detected
         -Wdouble-promotion # warn if float is implicit promoted to double
