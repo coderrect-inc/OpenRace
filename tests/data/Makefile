@@ -1,5 +1,5 @@
-CC=clang
-CXX=clang++
+CC=/home/brad/coderrect-inc/install/bin/clang
+CXX=/home/brad/coderrect-inc/install/bin/clang++
 FLAGS=-g -O1 -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm
 
 # Check that we are compiling with clang 10.0.1
