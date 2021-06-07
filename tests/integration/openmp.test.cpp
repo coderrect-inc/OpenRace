@@ -16,6 +16,7 @@ limitations under the License.
 TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
   std::vector<Oracle> oracles = {
       Oracle("reduction-no.ll", {}),
+      Oracle("master-iteration-counter-no.ll", {}),
       // Oracle("reduction-yes.ll", {/*TODO*/}), // Need to handle openmp master first
       Oracle("reduction-nowait-yes.ll",
              {
@@ -33,7 +34,6 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
               "single-message-printer.c:16:15 single-message-printer.c:16:15",
             }),
       Oracle("single-used-after-no.ll", {}),
-      Oracle("master-iteration-counter-no.ll", {}),
       Oracle("thread-sanitizer-falsepos.ll", {}),
   };
 
