@@ -80,7 +80,7 @@ class CtxModule {
                         .second;  // CtxFunction
       assert(result);
 
-      auto fun = const_cast<CtxFunction<ctx> *>(callNode->getTargetFun());
+      // auto fun = const_cast<CtxFunction<ctx> *>(callNode->getTargetFun());
       // the call node might be an external function
       bool needToExpand = onNewNode(callNode);
       // we should always expand the entry function

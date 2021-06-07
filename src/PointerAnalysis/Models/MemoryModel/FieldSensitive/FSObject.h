@@ -56,6 +56,8 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
   FSObject(MemBlock<ctx> *memBlock, size_t pOffset, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
       : Super(), memBlock(memBlock), pOffset(pOffset), kind(kind), allowIndex(allowIndex){};
 
+  virtual ~FSObject() {}
+
   template <typename PT>
   void initWithNode(ConstraintGraph<ctx> *CG) {
     auto ret = CG->template addCGNode<ObjNode, PT>(this);
@@ -87,7 +89,7 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
     return nullptr;
   }
 
-  virtual bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const { return false; }
+  virtual bool processSpecial(CGNodeBase<ctx> * /* src */, CGNodeBase<ctx> * /* dst */) const { return false; }
 
   [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const { return this->memBlock->getAllocSite(); }
 

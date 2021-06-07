@@ -49,7 +49,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
 
    public:
     CallBack(Self &solver, size_t nodeNum) : solver(solver), nodeNum(nodeNum) {}
-
+    virtual ~CallBack() {}
     void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
       switch (constraint) {
         // copy between globals / parameter passing
@@ -184,7 +184,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
   }
 
   int numOfPTAIterations = 0;
-  void runSolver(LangModel &langModel) {
+  void runSolver(LangModel & /* langModel */) {
     ConsGraphTy &consGraph = *(super::getConsGraph());
 
     do {
@@ -227,7 +227,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
 
       requiredEdge.reset();
 
-      const size_t prevNodeNum = consGraph.getNodeNum();
+      // const size_t prevNodeNum = consGraph.getNodeNum(); // bz: not used, tmp remove this
       int lastID = lsWorkList.find_first_unset();
       while (lastID >= 0) {
         CGNodeTy *curNode = consGraph.getNode(lastID);
@@ -326,7 +326,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
     this->runSolver(*super::getLangModel());
 #else
 
-    int pta_round = 0;
+    // int pta_round = 0;
     bool reanalyze;
     do {
       // after this, the current contraints graph will reach fixed point.
