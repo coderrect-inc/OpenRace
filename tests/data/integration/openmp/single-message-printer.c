@@ -1,3 +1,5 @@
+ // A race condition is expected to occur when the variable total is being changed in parallel by threads that are supposed to be acting singularly. 
+ 
  #include <stdio.h>
  void single_example()
  {  
