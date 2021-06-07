@@ -48,7 +48,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
     Self &solver;
 
    public:
-    CallBack(Self &solver, size_t nodeNum) : solver(solver), nodeNum(nodeNum) {}
+    CallBack(Self &solver, size_t nodeNum) : nodeNum(nodeNum), solver(solver) {}
 
     void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
       switch (constraint) {
@@ -159,7 +159,7 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
   // llvm::BitVector changedCopy;
 
  public:
-  PartialUpdateSolver() : requiredEdge(HASH_EDGE_LIMIT), copyWorkList(), lsWorkList(), targetList() {}
+  PartialUpdateSolver() : copyWorkList(), lsWorkList(), targetList(), requiredEdge(HASH_EDGE_LIMIT) {}
 
  protected:
   inline size_t hashEdge(CGNodeTy *src, CGNodeTy *dst) {
