@@ -61,10 +61,10 @@ class BitVectorPTS {
     }
 
     bool r = ptsVec[src] |= ptsVec[dst];
-    // bz: this has no problem, but compiler won't git up warnings ... so translate equivalently 
+    // bz: this has no problem, but compiler won't git up warnings ... so translate equivalently
     // assert(ptsVec[src].find_last() < 0 ? true : ptsVec[src].find_last() < ptsVec.size());
     if (ptsVec[src].find_last() >= 0) {
-      size_t _last = ptsVec[src].find_last();
+      int _last = ptsVec[src].find_last();
       long unsigned int last = static_cast<long unsigned int>(_last);
       assert(last < ptsVec.size());
     }
