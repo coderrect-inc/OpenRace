@@ -407,12 +407,12 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
     Object<ctx, ObjT>::resetObjectID();
 
-    // enable this if you want the special nodes to appear in the points to set
-#ifdef SPECIAL_NODE_IN_PTS
     // null and universal object nodes;
     CGNodeBase<ctx> *nullObj = ALLOCATE(NullObj, module->getLLVMModule());
     CGNodeBase<ctx> *uniObj = ALLOCATE(UniObj, module->getLLVMModule());
 
+    // enable this if you want the special nodes to appear in the points to set
+#ifdef SPECIAL_NODE_IN_PTS
     consGraph->addConstraints(nullObj, nullPtrNode, Constraints::addr_of);
     PT::insert(nullPtrNode->getNodeID(), nullObj->getNodeID());
 
