@@ -257,11 +257,14 @@ class FSMemModel {
 
     llvm::Type *type;
     if (auto constSize = llvm::dyn_cast<llvm::ConstantInt>(arraySize)) {
-      size_t elementNum = constSize->getSExtValue();
-      if (elementNum == 1) {
-        type = elementType;
-      } else {
-        type = llvm::ArrayType::get(elementType, elementNum);
+      int64_t elementNum = constSize->getSExtValue();
+      if (elementNum >= 0) {
+        unsigned int eleNum = static_cast<unsigned int>(elementNum);
+        if (eleNum == 1) {
+          type = elementType;
+        } else {
+          type = llvm::ArrayType::get(elementType, eleNum);
+        }
       }
     } else {
       type = llvm::ArrayType::get(elementType, std::numeric_limits<size_t>::max());
@@ -298,7 +301,7 @@ class FSMemModel {
     auto structTy = llvm::cast<llvm::StructType>(T);
     auto layout = DL.getStructLayout(structTy);
 
-    for (int i = 0; i < structTy->getNumElements(); i++) {
+    for (unsigned int i = 0; i < structTy->getNumElements(); i++) {
       auto elemTy = stripArray(structTy->getElementType(i));
 
       size_t offset = globOffset + layout->getElementOffset(i);
@@ -463,7 +466,10 @@ class FSMemModel {
         auto baseValue = GEP->stripAndAccumulateConstantOffsets(DL, off, true);
         // objNode can be none, when it is a external symbol, which does not
         // have initializers.
-        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)->getObjectAt(off.getSExtValue());
+        int64_t extVal = off.getSExtValue();
+        assert(extVal >= 0);  // bz: otherwise we cannot call getObjectAt()
+        unsigned int eVal = static_cast<unsigned int>(extVal);
+        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)->getObjectAt(eVal);
         // FIXME: Field-sensitive object can be nullptr, because we handle i8*
         // as scalar object however, it should be the most conservative type in
         // LLVM (void *) probably should handle it as a field-insensitive
