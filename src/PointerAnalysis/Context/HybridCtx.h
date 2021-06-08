@@ -12,6 +12,7 @@ limitations under the License.
 #pragma once
 
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/IR/Instruction.h>
 
 #include <tuple>
 #include <unordered_set>
