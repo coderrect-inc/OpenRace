@@ -59,13 +59,13 @@ class VectorAPI {
 
  public:
   explicit VectorAPI(const llvm::Instruction *call)
-      : APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
+      : kind(APIKind::UNKNOWN), APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)), vecElemType(nullptr) {
     if (APICall != nullptr) {
       init(APICall->getCalledFunction());
     }
   }
 
-  explicit VectorAPI(const llvm::Function *F) : APICall(nullptr), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
+  explicit VectorAPI(const llvm::Function *F) : kind(APIKind::UNKNOWN), APICall(nullptr), vecElemType(nullptr) {
     init(F);
   }
 

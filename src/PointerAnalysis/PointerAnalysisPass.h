@@ -23,7 +23,7 @@ class PointerAnalysisPass : public llvm::ImmutablePass {
 
  public:
   static char ID;
-  PointerAnalysisPass() : solver(nullptr), llvm::ImmutablePass(ID) {}
+  PointerAnalysisPass() : llvm::ImmutablePass(ID), solver(nullptr) {}
 
   void analyze(llvm::Module *M, llvm::StringRef entry = "cr_main") {
     if (solver.get() != nullptr) {

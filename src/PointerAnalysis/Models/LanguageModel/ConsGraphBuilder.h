@@ -394,14 +394,13 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
  public:
   ConsGraphBuilder(llvm::Module *M, llvm::StringRef entry)
-      : beforeNewNode{.self = *this},
+      : module(new CtxModule<ctx>(M, entry)),
+        consGraph(new ConsGraphTy()),           // the constraint graph
+        memModel(*consGraph.get(), *this, *M),  // the module represent the programs
+        beforeNewNode{.self = *this},
         onNewDirect{.self = *this},
         onNewInDirect{.self = *this},
-        onNewEdge{.self = *this},      // callbacks
-        consGraph(new ConsGraphTy()),  // the constraint graph
-        memModel(*consGraph.get(), *this, *M),
-        module(new CtxModule<ctx>(M, entry)) {  // the module represent the programs
-
+        onNewEdge{.self = *this} {  // callbacks
     // init the pointer node manager
     PtrNodeManager<ctx>::template init<PT>(consGraph.get(), M->getContext());
 

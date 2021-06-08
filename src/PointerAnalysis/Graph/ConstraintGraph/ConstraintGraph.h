@@ -168,7 +168,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
     return node;
   }
 
-  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), objVec(), callBack(nullptr){};
+  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), callBack(nullptr), objVec(){};
 };
 
 }  // namespace pta

@@ -51,10 +51,10 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
   using ObjNode = CGObjNode<ctx, FSObject<ctx>>;
 
   explicit FSObject(MemBlock<ctx> *memBlock, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
-      : Super(), memBlock(memBlock), pOffset(0), kind(kind), allowIndex(allowIndex){};
+      : Super(), memBlock(memBlock), pOffset(0), allowIndex(allowIndex), kind(kind){};
 
   FSObject(MemBlock<ctx> *memBlock, size_t pOffset, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
-      : Super(), memBlock(memBlock), pOffset(pOffset), kind(kind), allowIndex(allowIndex){};
+      : Super(), memBlock(memBlock), pOffset(pOffset), allowIndex(allowIndex), kind(kind){};
 
   template <typename PT>
   void initWithNode(ConstraintGraph<ctx> *CG) {

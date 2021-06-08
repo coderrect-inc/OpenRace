@@ -184,7 +184,7 @@ class FSMemModel {
   using Canonicalizer = FSCanonicalizer;
 
   FSMemModel(ConsGraphTy &consGraph, PtrManager &owner, llvm::Module &M, MemModelKind kind = MemModelKind::FS)
-      : consGraph(consGraph), ptrManager(owner), module(M), kind(kind) {}
+      : kind(kind), ptrManager(owner), consGraph(consGraph), module(M) {}
 
  protected:
   template <typename PT>
