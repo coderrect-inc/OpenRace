@@ -135,7 +135,7 @@ class CtxInstVisitor {
   // get called to indicate when transitioning into a new unit.
   //
   void visitFunction(Function &F) {}
-  void visitBasicBlock(BasicBlock &BB) {}
+  void visitBasicBlock(BasicBlock & /* BB */) {}
 
   // Define instruction specific visitor functions that can be overridden to
   // handle SPECIFIC instructions.  These functions automatically define
@@ -295,7 +295,7 @@ class CtxInstVisitor {
   // Note that you MUST override this function if your return type is not
   // void.
   //
-  void visitInstruction(Instruction &I, const ctx *context) {
+  void visitInstruction(Instruction & /* I */, const ctx * /* context */) {
     // llvm::errs() << "unhandled instruction:" << I.getOpcodeName() <<
     // "\n";
   }  // Ignore unhandled instructions
@@ -335,7 +335,7 @@ class CtxInstVisitor {
 
   // An overload that will never actually be called, it is used only from dead
   // code in the dispatching from opcodes to instruction subclasses.
-  RetTy delegateCallInst(Instruction &I, const ctx *context) {
+  RetTy delegateCallInst(Instruction & /* I */, const ctx * /* context */) {
     llvm_unreachable("delegateCallInst called for non-CallInst");
   }
 };

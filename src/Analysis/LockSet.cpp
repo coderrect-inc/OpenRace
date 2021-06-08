@@ -43,7 +43,7 @@ std::set<const llvm::Value *> heldLocks(const Event *targetEvent) {
 }
 }  // namespace
 
-LockSet::LockSet(const ProgramTrace &program) {}
+LockSet::LockSet(const ProgramTrace & /* program */) {}
 
 // TODO: real implementation later
 bool LockSet::sharesLock(const MemAccessEvent *lhs, const MemAccessEvent *rhs) const {

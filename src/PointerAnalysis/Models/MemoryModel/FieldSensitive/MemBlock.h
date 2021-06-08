@@ -61,7 +61,7 @@ class MemBlock {
 
  protected:
   MemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemBlockKind kind)
-      : allocSite(c, v, t), kind(kind){};
+      : kind(kind), allocSite(c, v, t){};
 
  public:
   // nullptr if the memory block can not be indexed (scalar memory object) and
@@ -92,6 +92,7 @@ class MemBlock {
         if (offset == 0) {
           return static_cast<ScalarMemBlock<ctx> *>(this)->object.get();
         }
+        return nullptr;
       }
       default:
         return nullptr;
@@ -224,7 +225,12 @@ class AggregateMemBlock : public MemBlock<ctx> {
 
   const llvm::Type *getOffsetType(size_t pOffset, const llvm::DataLayout &DL) {
     size_t lOffset = layout->indexPhysicalOffset(pOffset);
-    int fieldNum = layout->getLogicalOffset(lOffset);
+    int _fieldNum = layout->getLogicalOffset(lOffset);
+    if (_fieldNum < 0) {
+      return nullptr;
+    }
+
+    unsigned int fieldNum = static_cast<unsigned int>(_fieldNum);
     if (fieldType[fieldNum]) {
       // simply return cached type
       return fieldType[fieldNum];
@@ -272,12 +278,14 @@ class AggregateMemBlock : public MemBlock<ctx> {
         }
       }
 
-      int64_t off = obj->getPOffset() + offset.getSExtValue();
+      long int pOff = static_cast<long int>(obj->getPOffset());
+      int64_t off = pOff + offset.getSExtValue();
       if (off < 0) {
         return nullptr;
       }
 
-      auto result = this->indexMemoryBlock(off, ensurePtr);
+      unsigned int off_positive = static_cast<unsigned int>(off);
+      auto result = this->indexMemoryBlock(off_positive, ensurePtr);
       if (result == nullptr) {
         return nullptr;
       }
@@ -315,8 +323,11 @@ class AggregateMemBlock : public MemBlock<ctx> {
 
     // 1st, convert physical offset to layout offset.
     size_t lOffset = layout->indexPhysicalOffset(pOffset);
-    int fieldNum = layout->getLogicalOffset(lOffset);
-    assert(fieldNum > 0 && fieldObjs[fieldNum].get() == nullptr);
+    int _fieldNum = layout->getLogicalOffset(lOffset);
+    // assert(fieldNum > 0 && fieldObjs[fieldNum].get() == nullptr); // bz: original code
+    assert(_fieldNum > 0);
+    unsigned int fieldNum = static_cast<unsigned int>(_fieldNum);
+    assert(fieldObjs[fieldNum].get() == nullptr);
     fieldObjs[fieldNum].reset(obj);
   }
 
@@ -336,11 +347,12 @@ class AggregateMemBlock : public MemBlock<ctx> {
     // 1st, convert physical offset to layout offset.
     size_t lOffset = layout->indexPhysicalOffset(pOffset);
     if (lOffset != std::numeric_limits<size_t>::max()) {
-      int fieldNum = layout->getLogicalOffset(lOffset);
-      if (fieldNum >= 0 && (ensurePtr ? layout->offsetIsPtr(lOffset) : true)) {
+      int _fieldNum = layout->getLogicalOffset(lOffset);
+      if (_fieldNum >= 0 && (ensurePtr ? layout->offsetIsPtr(lOffset) : true)) {
         // TODO: this is the bottle neck
         // 2nd, index the memory block, return cached object or create a new
         // object.
+        unsigned int fieldNum = static_cast<unsigned int>(_fieldNum);
         if (fieldObjs[fieldNum].get() == nullptr) {
           fieldObjs[fieldNum] = std::unique_ptr<FSObject<ctx>>(new FSObject<ctx>(this, pOffset));
           if (isImmutable) {
@@ -364,7 +376,7 @@ class AggregateMemBlock : public MemBlock<ctx> {
 
  public:
   AggregateMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemLayout *layout)
-      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate), layout(layout), isImmutable(false) {
+      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate), isImmutable(false), layout(layout) {
     // insert the first objects, other object are lazily initialized
     // objectMap.try_emplace(0 /*key*/, this, 0, 0);
     if (layout->getNumIndexableElem() == 0) {
