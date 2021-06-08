@@ -18,8 +18,9 @@ limitations under the License.
 using namespace pta;
 
 RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
-  originCtx::setOriginRules(
-      [&](const originCtx *context, const llvm::Instruction *I) -> bool { return this->isInvokingAnOrigin(context, I); });
+  originCtx::setOriginRules([&](const originCtx *context, const llvm::Instruction *I) -> bool {
+    return this->isInvokingAnOrigin(context, I);
+  });
 }
 
 InterceptResult RaceModel::interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,

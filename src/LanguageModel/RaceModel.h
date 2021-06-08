@@ -11,9 +11,9 @@ limitations under the License.
 
 #pragma once
 
-#include "PointerAnalysis/Context/KOrigin.h"
-#include "PointerAnalysis/Context/KCallSite.h"
 #include "PointerAnalysis/Context/HybridCtx.h"
+#include "PointerAnalysis/Context/KCallSite.h"
+#include "PointerAnalysis/Context/KOrigin.h"
 #include "PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/CppMemModel.h"
 #include "PointerAnalysis/Solver/PartialUpdateSolver.h"
