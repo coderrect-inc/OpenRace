@@ -35,6 +35,11 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
             }),
       Oracle("single-used-after-no.ll", {}),
       Oracle("thread-sanitizer-falsepos.ll", {}),
+      Oracle("sections-simple-no.ll", {}),
+      // Oracle("sections-interproc-no.ll", {}),  // We report FP on the called function
+      Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
+                                           "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
+      Oracle("duplicate-omp-fork.ll", {}),
   };
 
   checkOracles(oracles, "integration/openmp/");

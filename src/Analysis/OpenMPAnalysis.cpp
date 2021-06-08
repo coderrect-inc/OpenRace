@@ -36,7 +36,7 @@ class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
   const llvm::Loop *ompLoop;
 
  public:
-  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : ompLoop(ompLoop), super(SE) {}
+  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : super(SE), ompLoop(ompLoop) {}
 
   const llvm::SCEV *visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr);
 };
@@ -399,7 +399,9 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
         // if both bound are resolvable
         // FIXME: why do we need to divide by loopstep?
-        if (std::max(lowerBound, upperBound) < (distance / loopStep)) {
+        assert(std::max(lowerBound, upperBound) >= 0);  // both bounds should be >=0, isn't it?
+        long unsigned int maxBound = static_cast<long unsigned int>(std::max(lowerBound, upperBound));
+        if (maxBound < (distance / loopStep)) {
           return false;
         }
       }

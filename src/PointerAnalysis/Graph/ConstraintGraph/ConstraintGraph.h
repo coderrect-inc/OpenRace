@@ -32,6 +32,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
  public:
   using CGNodeTy = CGNodeBase<ctx>;
   struct OnNewConstraintCallBack {
+    virtual ~OnNewConstraintCallBack() {}
     virtual void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) = 0;
   };
 
@@ -168,7 +169,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
     return node;
   }
 
-  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), objVec(), callBack(nullptr){};
+  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), callBack(nullptr), objVec(){};
 };
 
 }  // namespace pta
@@ -194,7 +195,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
   static std::string getGraphName(const GraphTy &) { return "constraint_graph"; }
 
   /// Return function name;
-  static std::string getNodeLabel(const NodeTy *node, const GraphTy &graph) {
+  static std::string getNodeLabel(const NodeTy *node, const GraphTy & /* graph */) {
     std::string str;
     raw_string_ostream os(str);
 
@@ -202,7 +203,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
     return os.str();
   }
 
-  static std::string getNodeAttributes(const NodeTy *node, const GraphTy &graph) {
+  static std::string getNodeAttributes(const NodeTy * /* node */, const GraphTy & /* graph */) {
     //        if (isa<CGPtrNode<ctx>>(node)) {
     //            return "";
     //        } else if (isa<CGSuperNode<ctx, PtsTy>>(node)) {
@@ -214,7 +215,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
   }
 
   template <typename EdgeIter>
-  static std::string getEdgeAttributes(const NodeTy *node, EdgeIter EI, const GraphTy &graph) {
+  static std::string getEdgeAttributes(const NodeTy * /* node */, EdgeIter EI, const GraphTy & /* graph */) {
     pta::Constraints edgeTy = (*EI).first;
     switch (edgeTy) {
       case pta::Constraints::load:
