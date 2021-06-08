@@ -18,8 +18,8 @@ limitations under the License.
 using namespace pta;
 
 RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
-  ctx::setOriginRules(
-      [&](const ctx *context, const llvm::Instruction *I) -> bool { return this->isInvokingAnOrigin(context, I); });
+  originCtx::setOriginRules(
+      [&](const originCtx *context, const llvm::Instruction *I) -> bool { return this->isInvokingAnOrigin(context, I); });
 }
 
 InterceptResult RaceModel::interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
@@ -115,7 +115,7 @@ namespace {
 const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
 }  // namespace
 
-bool RaceModel::isInvokingAnOrigin(const ctx *prevCtx, const llvm::Instruction *I) {
+bool RaceModel::isInvokingAnOrigin(const originCtx *prevCtx, const llvm::Instruction *I) {
   auto call = llvm::dyn_cast<CallBase>(I);
   if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 
