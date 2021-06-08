@@ -92,6 +92,7 @@ class MemBlock {
         if (offset == 0) {
           return static_cast<ScalarMemBlock<ctx> *>(this)->object.get();
         }
+        return nullptr;
       }
       default:
         return nullptr;
