@@ -156,7 +156,7 @@ struct DOTGraphTraits<const pta::CallGraph<ctx>> : public DefaultDOTGraphTraits 
   static std::string getGraphName(const pta::CallGraph<ctx> &) { return "CallGraph"; }
 
   /// Return function name;
-  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node, const pta::CallGraph<ctx> &graph) {
+  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node, const pta::CallGraph<ctx> & /* graph */) {
     std::string str;
     raw_string_ostream os(str);
     os << pta::CtxTrait<ctx>::toString(node->getContext()) << "\n";

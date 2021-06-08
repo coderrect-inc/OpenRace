@@ -140,8 +140,8 @@ class BitVectorPTS {
     return ptsVec[id].count();
   }
 
-  static inline const PtsTy& getPointedBy(NodeID id) {
-    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead " + id);
+  static inline const PtsTy& getPointedBy(NodeID /*id*/) {
+    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead");
   }
 
   // TODO: simply traverse the whole points-to information to gather the

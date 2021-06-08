@@ -27,6 +27,7 @@ class ConstraintGraph;
 
 struct PtrNodeTag {
   virtual std::string toString() = 0;
+  virtual ~PtrNodeTag(){};
 };
 
 // nodes represent pointers

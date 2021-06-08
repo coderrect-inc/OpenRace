@@ -140,7 +140,7 @@ class Vector : public FSObject<ctx> {
 
  public:
   // *src* can points to theVec
-  bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const override {
+  bool processSpecial(CGNodeBase<ctx> * /* src */, CGNodeBase<ctx> *dst) const override {
     bool changed = false;
 
     auto consGraph = static_cast<ConsGraph *>(dst->getGraph());

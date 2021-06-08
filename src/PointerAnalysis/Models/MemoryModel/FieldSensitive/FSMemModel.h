@@ -577,14 +577,15 @@ class FSMemModel {
     return result->getObjNode();
   }
 
-  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction *callSite) {
+  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction * /* callSite */) {
     return {F, InterceptResult::Option::EXPAND_BODY};
   }
 
   // return *true* when the callsite handled by the
   template <typename PT>
-  inline constexpr bool interceptCallSite(const CtxFunction<CtxTy> *caller, const CtxFunction<CtxTy> *callee,
-                                          const llvm::Instruction *callSite) const {
+  inline constexpr bool interceptCallSite(const CtxFunction<CtxTy> * /* caller */,
+                                          const CtxFunction<CtxTy> * /* callee */,
+                                          const llvm::Instruction * /* callSite */) const {
     return false;
   }
 
