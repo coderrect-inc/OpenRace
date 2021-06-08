@@ -36,7 +36,7 @@ class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
   const llvm::Loop *ompLoop;
 
  public:
-  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : ompLoop(ompLoop), super(SE) {}
+  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : super(SE), ompLoop(ompLoop) {}
 
   const llvm::SCEV *visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr);
 };

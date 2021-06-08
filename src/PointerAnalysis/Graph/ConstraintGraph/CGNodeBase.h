@@ -105,7 +105,7 @@ class CGNodeBase {
   IndirectNodeSet indirectNodes;
 
   inline CGNodeBase(NodeID id, CGNodeKind type)
-      : id(id), type(type), superNode(nullptr), childNodes{}, indirectNodes{}, isImmutable(false) {}
+      : type(type), id(id), superNode(nullptr), childNodes{}, isImmutable(false), indirectNodes{} {}
 
  private:
   inline bool insertConstraint(Self *node, Constraints edgeKind) {

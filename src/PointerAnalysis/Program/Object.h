@@ -33,7 +33,7 @@ class Object {
   ObjNode* objNode = nullptr;
   ObjID objID;
 
-  Object() : objID(CurID++), isImmutable(false) {}
+  Object() : isImmutable(false), objID(CurID++) {}
 
   // this can only be called internally
   inline void setObjNode(ObjNode* node) {
