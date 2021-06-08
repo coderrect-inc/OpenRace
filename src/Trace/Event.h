@@ -11,6 +11,8 @@ limitations under the License.
 
 #pragma once
 
+#include <optional>
+
 #include "IR/IR.h"
 #include "LanguageModel/RaceModel.h"
 

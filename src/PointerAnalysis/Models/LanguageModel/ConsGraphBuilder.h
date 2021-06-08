@@ -184,7 +184,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
       // TODO: track if the points-to of a funcPtr has changed?
       // TODO: maintain a map from funcPtr to its newly added function object?
-      uint8_t count = 0;
+      // uint8_t count = 0;
 
       for (auto it = pointsTo.begin(), eit = pointsTo.end(); it != eit; it++) {
         // count++;
@@ -394,18 +394,18 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
 
  public:
   ConsGraphBuilder(llvm::Module *M, llvm::StringRef entry)
-      : beforeNewNode{.self = *this},
-        onNewDirect{.self = *this},
-        onNewInDirect{.self = *this},
-        onNewEdge{.self = *this},      // callbacks
-        consGraph(new ConsGraphTy()),  // the constraint graph
-        memModel(*consGraph.get(), *this, *M),
-        module(new CtxModule<ctx>(M, entry)) {  // the module represent the programs
-
+      : module(new CtxModule<ctx>(M, entry)),
+        consGraph(new ConsGraphTy()),           // the constraint graph
+        memModel(*consGraph.get(), *this, *M),  // the module represent the programs
+        beforeNewNode{*this},
+        onNewDirect{*this},
+        onNewInDirect{*this},
+        onNewEdge{*this} {  // callbacks
     // init the pointer node manager
     PtrNodeManager<ctx>::template init<PT>(consGraph.get(), M->getContext());
 
     Object<ctx, ObjT>::resetObjectID();
+
     // null and universal object nodes;
     CGNodeBase<ctx> *nullObj = ALLOCATE(NullObj, module->getLLVMModule());
     CGNodeBase<ctx> *uniObj = ALLOCATE(UniObj, module->getLLVMModule());
@@ -516,7 +516,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
       // store a pointer into memory
       // store *src into **dst
 #ifndef NDEBUG
-      const llvm::Value *src = Canonicalizer::canonicalize(I.getValueOperand());
+      // const llvm::Value *src = Canonicalizer::canonicalize(I.getValueOperand());
       const llvm::Value *dst = Canonicalizer::canonicalize(I.getPointerOperand());
 
       if (dst == this->getUniPtr()->getPointer()->getValue() || dst == this->getNullPtr()->getPointer()->getValue()) {
@@ -597,32 +597,35 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
   inline void visitExtractValueInst(llvm::ExtractValueInst &I, const ctx *context) {
     if (I.getType()->isPointerTy()) {
       LOG_TRACE("Extract a pointer is not handled! inst={}", I);
-      auto dst = this->getOrCreatePtrNode(context, &I);
+      // auto dst = this->getOrCreatePtrNode(context, &I); // bz: comment off to avoid -Wunused-variable on dst, this
+      // needs to be kept for future use
     }
   }
 
-  inline void visitInsertValueInst(llvm::InsertValueInst &I, const ctx *context) {}
+  // bz: the following functions are not implemented/finished, comment off to avoid warnings; add back if requiring
+  // changes inline void visitInsertValueInst(llvm::InsertValueInst &I, const ctx *context) {}
 
-  // corner cases
-  inline void visitAtomicCmpXchgInst(llvm::AtomicCmpXchgInst &I, const ctx *context) {}
-  inline void visitAtomicRMWInst(llvm::AtomicRMWInst &I, const ctx *context) {}
-  inline void visitVAArgInst(llvm::VAArgInst &I, const ctx *context) {}
+  // // corner cases
+  // inline void visitAtomicCmpXchgInst(llvm::AtomicCmpXchgInst &I, const ctx *context) {}
+  // inline void visitAtomicRMWInst(llvm::AtomicRMWInst &I, const ctx *context) {}
+  // inline void visitVAArgInst(llvm::VAArgInst &I, const ctx *context) {}
 
-  // vector operations
-  inline void visitExtractElementInst(llvm::ExtractElementInst &I, const ctx *context) {}
-  inline void visitInsertElementInst(llvm::InsertElementInst &I, const ctx *context) {}
-  inline void visitShuffleVectorInst(llvm::ShuffleVectorInst &I, const ctx *context) {}
+  // // vector operations
+  // inline void visitExtractElementInst(llvm::ExtractElementInst &I, const ctx *context) {}
+  // inline void visitInsertElementInst(llvm::InsertElementInst &I, const ctx *context) {}
+  // inline void visitShuffleVectorInst(llvm::ShuffleVectorInst &I, const ctx *context) {}
 
-  // instrinsic instruction classes.
-  inline void visitMemSetInst(llvm::MemSetInst &I, const ctx *context) {}
-  inline void visitMemMoveInst(llvm::MemMoveInst &I, const ctx *context) {}
+  // // instrinsic instruction classes.
+  // inline void visitMemSetInst(llvm::MemSetInst &I, const ctx *context) {}
+  // inline void visitMemMoveInst(llvm::MemMoveInst &I, const ctx *context) {}
 
-  // need to be handled? but no one use it.
-  inline void visitVAStartInst(llvm::VAStartInst &I, const ctx *context) {}
-  inline void visitVAEndInst(llvm::VAEndInst &I, const ctx *context) {}
-  inline void visitVACopyInst(llvm::VACopyInst &I, const ctx *context) {}
+  // // need to be handled? but no one use it.
+  // inline void visitVAStartInst(llvm::VAStartInst &I, const ctx *context) {}
+  // inline void visitVAEndInst(llvm::VAEndInst &I, const ctx *context) {}
+  // inline void visitVACopyInst(llvm::VACopyInst &I, const ctx *context) {}
 
   inline void visitFreezeInst(llvm::FreezeInst &I, const ctx *context) {}
+
   // getters
   inline MemModel &getMemModel() { return memModel; }
 
