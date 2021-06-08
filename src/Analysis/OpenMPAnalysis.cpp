@@ -725,12 +725,11 @@ bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *
   std::transform(event1->getThread().getEvents().begin(), event1->getThread().getEvents().end(),
                  std::back_inserter(events), [&](const auto &event) { return event.get(); });
 
-  const Event * ev1sec = nullptr;
-  const Event * ev2sec = nullptr;
+  const Event *ev1sec = nullptr;
+  const Event *ev2sec = nullptr;
 
   auto currSecEv = sections.begin();
-  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv);
-       (*currEvent)->getID() <= lastID;
+  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv); (*currEvent)->getID() <= lastID;
        ++currSecEv) {
     do {
       if (event1->getID() == (*currEvent)->getID()) {
