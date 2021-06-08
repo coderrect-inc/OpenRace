@@ -254,7 +254,7 @@ class CtxModule {
 
  public:
   CtxModule(const llvm::Module *M, llvm::StringRef entry)
-      : callGraph(new CallGraph<ctx>()), llvmModule(M), entryName(entry) {}
+      : callGraph(new CallGraph<ctx>()), entryName(entry), llvmModule(M) {}
 
   // OnNewNode: call back
   template <typename BeforeNewNode, typename OnNewDirectNode, typename OnNewInDirectNode, typename OnNewEdge>

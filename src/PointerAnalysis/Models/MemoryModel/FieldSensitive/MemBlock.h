@@ -61,7 +61,7 @@ class MemBlock {
 
  protected:
   MemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemBlockKind kind)
-      : allocSite(c, v, t), kind(kind){};
+      : kind(kind), allocSite(c, v, t){};
 
  public:
   // nullptr if the memory block can not be indexed (scalar memory object) and
@@ -364,7 +364,7 @@ class AggregateMemBlock : public MemBlock<ctx> {
 
  public:
   AggregateMemBlock(const ctx *c, const llvm::Value *v, const AllocKind t, const MemLayout *layout)
-      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate), layout(layout), isImmutable(false) {
+      : MemBlock<ctx>(c, v, t, MemBlockKind::Aggregate), isImmutable(false), layout(layout) {
     // insert the first objects, other object are lazily initialized
     // objectMap.try_emplace(0 /*key*/, this, 0, 0);
     if (layout->getNumIndexableElem() == 0) {
