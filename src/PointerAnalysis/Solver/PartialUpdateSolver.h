@@ -48,7 +48,6 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
     Self &solver;
 
    public:
-
     CallBack(Self &solver, size_t nodeNum) : nodeNum(nodeNum), solver(solver) {}
     virtual ~CallBack() {}
 
