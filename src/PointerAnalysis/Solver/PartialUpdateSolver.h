@@ -228,11 +228,11 @@ class PartialUpdateSolver : public SolverBase<LangModel, PartialUpdateSolver<Lan
 
       requiredEdge.reset();
 
-      //const size_t prevNodeNum = consGraph.getNodeNum();
+      // const size_t prevNodeNum = consGraph.getNodeNum();
       int _lastID = lsWorkList.find_first_unset();
       while (_lastID >= 0) {
         unsigned int lastID = static_cast<unsigned int>(_lastID);
-        
+
         CGNodeTy *curNode = consGraph.getNode(lastID);
 
         for (auto it = curNode->pred_store_begin(), ie = curNode->pred_store_end(); it != ie; it++) {
