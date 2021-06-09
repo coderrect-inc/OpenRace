@@ -27,6 +27,19 @@ jobs:
           cd build
           ctest --parallel
   
+  build-clang:
+    runs-on: ubuntu-latest
+    container: coderrect/openrace-env
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
+          cmake --build . --parallel
+  
   formatting-check:
     name: Formatting Check
     runs-on: ubuntu-latest
