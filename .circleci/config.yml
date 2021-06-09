@@ -9,7 +9,6 @@ jobs:
       - run:
           name: Build and Test
           command: |
-            pwd
             mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Debug -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
             cmake --build . --parallel 2
