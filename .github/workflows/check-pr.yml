@@ -25,7 +25,7 @@ jobs:
       - name: Test
         run: |
           cd build
-          ctest --parallel
+          ctest --parallel $(nproc)
   
   build-clang:
     runs-on: ubuntu-latest
