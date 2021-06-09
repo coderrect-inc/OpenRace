@@ -11,6 +11,8 @@ limitations under the License.
 
 #include "Trace/Event.h"
 
+#include "EventImpl.h"
+
 using namespace race;
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event &event) {

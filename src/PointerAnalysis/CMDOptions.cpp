@@ -25,6 +25,7 @@ cl::opt<bool> CONFIG_VTABLE_MODE("Xenable-vtable", cl::desc("model vtable specia
 cl::opt<bool> CONFIG_USE_FI_MODE("Xuse-fi-model", cl::desc("use field insensitive analyse"), cl::init(false));
 
 // pta cmd options: set to default values
+cl::opt<bool> DEBUG_PTA("DEBUG_PTA", cl::desc("debug pointer analysis"), cl::init(false));
 cl::opt<pta::IndirectResolveOption> INDIRECT_OPTION(
     "INDIRECT_OPTION", cl::desc("How to resolve indirect function calls"),
     cl::values(

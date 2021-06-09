@@ -351,6 +351,10 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
   }
 
   inline void addGlobalVariable(const llvm::GlobalVariable &gVar) {
+    if (gVar.getType()->isPointerTy()) {
+      // if gVar is a pointer, we create a pointer for gVar and another obj,
+      // so that: pts(gVar) = {obj we created}
+    }
     auto obj = ALLOCATE(GlobalVariable, &gVar, module->getDataLayout());
     auto ptr = createPtrNode(CT::getGlobalCtx(), &gVar);
     // must be adding new node
@@ -530,6 +534,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
       }
 
 #endif
+
       CGPtrNode<ctx> *srcNode = this->getOrCreatePtrNode(context, operand);
       CGPtrNode<ctx> *dstNode = this->getOrCreatePtrNode(context, I.getPointerOperand());
       consGraph->addConstraints(srcNode, dstNode, Constraints::store);

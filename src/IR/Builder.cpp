@@ -65,19 +65,42 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   for (auto const &basicblock : func.getBasicBlockList()) {
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
+      //      inst->print(llvm::outs(), false);
+
+      //      switch (inst->getOpcode()) {
+      //        case llvm::Instruction::Load: {
+      //          auto loadInst = llvm::cast<llvm::LoadInst>(inst);
+      //          auto ptr = loadInst->getPointerOperand();
+      //          ptr -> print(llvm::outs(), false);
+      //          loadInst->print(llvm::outs(), false);
+      //          break;
+      //        }
+      //        case llvm::Instruction::Store: {
+      //          auto storeInst = llvm::cast<llvm::StoreInst>(inst);
+      //          storeInst->print(llvm::outs(), false);
+      //          break;
+      //        }
+      //        default: {
+      //          llvm::outs() << "Not handled opcode: " << inst->getOpcode() << "\n";
+      //          break;
+      //        }
+      //      }
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
+        //        loadInst->print(llvm::outs(), false);
         if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
+        //        storeInst->print(llvm::outs(), false);
         if (storeInst->isAtomic() || storeInst->isVolatile() || hasThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
+        //        callInst->print(llvm::outs(), false);
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls
           instructions.push_back(std::make_shared<race::CallIR>(callInst));
