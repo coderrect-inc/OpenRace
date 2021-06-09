@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y \
-    cmake git make python3 build-essential ninja-build \
+    cmake git make python3 build-essential ninja-build clang \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
