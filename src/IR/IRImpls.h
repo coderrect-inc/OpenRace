@@ -327,4 +327,6 @@ using OpenMPReduce = CallIRImpl<IR::Type::OpenMPReduce>;
 using OpenMPMasterStart = CallIRImpl<IR::Type::OpenMPMasterStart>;
 using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
 
+using OpenMPGetThreadNum = CallIRImpl<IR::Type::OpenMPGetThreadNum>;
+
 }  // namespace race
