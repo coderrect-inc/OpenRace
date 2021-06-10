@@ -698,62 +698,59 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 }
 
 bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
-  // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: threads of the same team are identical
   // assertion: we aren't given events from threads in different parallel sections blocks because those would be
   //            different teams
-  std::set<const llvm::BasicBlock *> sections;
-  for (const auto &event : event1->getThread().getEvents()) {
+
+  // observation: we only enter a section if any event in the queue passes through a section case
+  // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
+  std::vector<const Event *> sections;
+  auto lastID = std::max(event1->getID(), event2->getID());
+  for (auto &event : event1->getThread().getEvents()) {
     auto block = event->getInst()->getParent();
-    if (block->hasName() && block->getName().startswith(".omp.sections.case")) {
-      sections.insert(block);
+    if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&
+        block->getName().startswith(".omp.sections.case")) {  // add for body check
+      sections.push_back(event.get());
+    }
+    // this is our end event; anything beyond this is not worth capturing
+    if (event->getID() > lastID) {
+      break;
     }
   }
-  // now that we have all the sections for this thread, find its descendants and look for either of these events
-  std::set<const llvm::BasicBlock *> ev1secs;
-  std::set<const llvm::BasicBlock *> ev2secs;
-  for (auto section : sections) {
-    std::set<const llvm::BasicBlock *> visited;
-    std::deque<const llvm::BasicBlock *> queue;
-    queue.push_back(section);
-    while (!queue.empty()) {
-      auto curr = queue.front();
-      queue.pop_front();
 
-      if (visited.find(curr) != visited.end()) {
-        continue;
-      }
-      visited.insert(curr);
-
-      // the parallel for actually "iterates" and goes back to the body; if we follow descendants through the body, all
-      // sections contain all descendants of each section
-      if (curr->hasName() && curr->getName().startswith("omp.inner.for.body")) {
-        continue;
-      }
-
-      if (event1->getInst()->getParent() == curr) {
-        ev1secs.insert(section);
-      }
-      if (event2->getInst()->getParent() == curr) {
-        ev2secs.insert(section);
-      }
-
-      std::copy(pred_begin(curr), pred_end(curr), std::back_inserter(queue));
-    }
-  }
-  // if either are zero, then they are not contained by a section => not a compatible section
-  if (ev1secs.empty() || ev2secs.empty()) {
+  if (sections.empty()) {
     return false;
   }
-  // if either are >1, then they might not be in compatible sections (because conditional flow is now relevant)
-  if (ev1secs.size() > 1 || ev2secs.size() > 1) {
-    return false;
+
+  std::vector<const Event *> events;
+  events.reserve(event1->getThread().getEvents().size());
+  std::transform(event1->getThread().getEvents().begin(), event1->getThread().getEvents().end(),
+                 std::back_inserter(events), [&](const auto &event) { return event.get(); });
+
+  const Event *ev1sec = nullptr;
+  const Event *ev2sec = nullptr;
+
+  auto currSecEv = sections.begin();
+  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv); (*currEvent)->getID() <= lastID;
+       ++currSecEv) {
+    do {
+      if (event1->getID() == (*currEvent)->getID()) {
+        ev1sec = *currSecEv;
+      }
+      if (event2->getID() == (*currEvent)->getID()) {
+        ev2sec = *currSecEv;
+      }
+
+      if (ev1sec != nullptr && ev2sec != nullptr) {
+        if (ev1sec == ev2sec) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      ++currEvent;
+    } while (std::find(sections.begin(), sections.end(), *currEvent) == sections.end());
   }
-  // if they're both size one (constrained by earlier conditions) and the sections are not equal, then they are not
-  // in compatible sections
-  if (*ev1secs.begin() != *ev2secs.begin()) {
-    return false;
-  }
-  // otherwise, these are compatible
-  return true;
+
+  return false;
 }

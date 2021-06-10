@@ -27,8 +27,6 @@ class BitVectorPTS {
   using iterator = PtsTy::iterator;
 
   static std::vector<PtsTy> ptsVec;
-
-  static uint32_t PTS_SIZE_LIMIT;
   // ptsVec[20] ==> SparseBitVector ==> "010000..."
 
   static inline void onNewNodeCreation(NodeID id) {
@@ -42,8 +40,6 @@ class BitVectorPTS {
 
   static inline void clearAll() { ptsVec.clear(); }
 
-  static inline void setPTSSizeLimit(uint32_t limit) { PTS_SIZE_LIMIT = limit; }
-
   // get the pts of the corresponding node
   [[nodiscard]] static inline const PtsTy& getPointsTo(NodeID id) {
     assert(id < ptsVec.size());
@@ -53,12 +49,6 @@ class BitVectorPTS {
   // union the pts of the nodes
   static inline bool unionWith(NodeID src, NodeID dst) {
     assert(src < ptsVec.size() && dst < ptsVec.size());
-    // JEFF: limit to 999
-    if (PTS_SIZE_LIMIT != std::numeric_limits<uint32_t>::max()) {
-      if (ptsVec[src].count() > PTS_SIZE_LIMIT) {  // count() is expensive
-        return false;
-      }
-    }
 
     bool r = ptsVec[src] |= ptsVec[dst];
     // bz: this has no problem, but compiler won't git up warnings ... so translate equivalently
@@ -92,12 +82,6 @@ class BitVectorPTS {
   // insert a node into the pts
   static inline bool insert(NodeID src, TargetID idx) {
     assert(src < ptsVec.size() && idx < ptsVec.size());
-    // JEFF: limit to 999
-    if (PTS_SIZE_LIMIT != std::numeric_limits<uint32_t>::max()) {
-      if (ptsVec[src].count() > PTS_SIZE_LIMIT) {
-        return false;
-      }
-    }
 
     // JEFF TODO: check if they have the same type?
     return ptsVec[src].test_and_set(idx);
