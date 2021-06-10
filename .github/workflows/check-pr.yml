@@ -14,6 +14,7 @@ jobs:
     container: coderrect/openrace-env
 
     steps:  
+    # Adding code quality scanner action
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
         with:
