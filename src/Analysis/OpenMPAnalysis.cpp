@@ -695,6 +695,50 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
   return false;
 }
 
+#include "IR/IR.h"
+#include "Trace/ProgramTrace.h"
+#include "Trace/ThreadTrace.h"
+
+namespace {
+// if the cmp predicate is in the form x == c, where c is a constant, return c. else return None
+std::optional<uint64_t> getConstEquals(const llvm::CmpInst *cmp) {
+  if (cmp->getPredicate() != llvm::CmpInst::Predicate::ICMP_EQ) return std::nullopt;
+  if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(1))) {
+    return val->getZExtValue();
+  }
+  if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(0))) {
+    return val->getZExtValue();
+  }
+  return std::nullopt;
+}
+}  // namespace
+
+void GetThreadNumAnalysis::doit(const ProgramTrace &program) {
+  std::set<const llvm::Instruction *> getThreadNumCalls;
+  for (auto const &thread : program.getThreads()) {
+    for (auto const &event : thread->getEvents()) {
+      if (event->getIRInst()->type == IR::Type::OpenMPGetThreadNum) {
+        getThreadNumCalls.insert(event->getInst());
+      }
+    }
+  }
+
+  for (auto const call : getThreadNumCalls) {
+    llvm::outs() << *call << "\n";
+    llvm::outs() << "Users\n";
+    for (auto const user : call->users()) {
+      if (auto cmp = llvm::dyn_cast<llvm::CmpInst>(user)) {
+        auto val = getConstEquals(cmp);
+        if (!val.has_value()) continue;
+        for (auto const use2 : cmp->users()) {
+          auto br = llvm::cast<llvm::BranchInst>(use2);
+          llvm::outs() << "\t" << *br->getOperand(2) << "\n";
+        }
+      }
+    }
+  }
+}
+
 bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
   // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: threads of the same team are identical

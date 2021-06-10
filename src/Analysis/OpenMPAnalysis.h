@@ -44,11 +44,20 @@ class ReduceAnalysis {
   bool reduceContains(const llvm::Instruction* reduce, const llvm::Instruction* inst) const;
 };
 
+class GetThreadNumAnalysis {
+  // Map of blocks to the threadID guarding them
+  std::map<const llvm::BasicBlock*, unsigned int> guardedBlocks;
+
+ public:
+  void doit(const ProgramTrace& program);
+};
+
 class OpenMPAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
 
   ReduceAnalysis reduceAnalysis;
+  GetThreadNumAnalysis getThreadNumAnalysis;
 
   // Start/End of omp loop
   using LoopRegion = Region;
@@ -87,6 +96,10 @@ class OpenMPAnalysis {
 
   // return true if both events are in compatible sections
   static bool insideCompatibleSections(const Event* event1, const Event* event2);
+
+  // return true if both events are in a branch that ensures a specific thread will execute it using omp_get_thread_num
+  // bool areGuardedBySameTid(const Event* event1, const Event* event2);
+  void doit(const ProgramTrace& program) { getThreadNumAnalysis.doit(program); }
 };
 
 }  // namespace race

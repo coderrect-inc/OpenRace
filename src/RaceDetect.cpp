@@ -43,6 +43,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::LockSet lockset(program);
   race::SimpleAlias simpleAlias;
   race::OpenMPAnalysis ompAnalysis;
+  ompAnalysis.doit(program);
 
   race::Reporter reporter;
 
