@@ -17,6 +17,8 @@ limitations under the License.
 
 namespace pta {
 
+extern unsigned int Max_Indirect_Target;  // the limit of the size of indirect targets -> default value 999
+
 template <typename ctx>
 class CallGraphNode;
 
@@ -120,8 +122,8 @@ class InDirectCallSite {
 
   [[nodiscard]] inline const llvm::Instruction *getCallSite() const { return this->callSite.getInstruction(); }
 
-  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit, size_t maxIndirectTarget = 999) {
-    if (applyLimit && this->targets.size() >= maxIndirectTarget) {
+  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit) {
+    if (applyLimit && this->targets.size() >= Max_Indirect_Target) {
       return false;
     }
     return this->targets.insert(fun).second;

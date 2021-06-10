@@ -76,8 +76,7 @@ class LangModelBase : public ConsGraphBuilder<ctx, MemModel, PtsTy, SubClass> {
 
   inline IndirectResolveOption onNewIndirectTargetResolvation(const llvm::Function * /* F */,
                                                               const llvm::Instruction * /* callsite */) {
-    // by default
-    return IndirectResolveOption::WITH_LIMIT;
+    return INDIRECT_OPTION;
   }
 
   // **** optional end ****

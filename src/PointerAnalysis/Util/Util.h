@@ -139,4 +139,7 @@ const llvm::Type *getTypeAtOffset(const llvm::Type *type, size_t offset, const l
 
 bool isZeroOffsetTypeInRootType(const llvm::Type *rootType, const llvm::Type *elemType, const llvm::DataLayout &);
 
+// parse user input pta configs
+void ParseCommandLineOptions(int argc, char **argv);
+
 }  // namespace pta

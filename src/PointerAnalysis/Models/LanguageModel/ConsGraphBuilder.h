@@ -43,6 +43,8 @@ enum class IndirectResolveOption {
                // limit has been exceeded.
 };
 
+extern IndirectResolveOption INDIRECT_OPTION;  // default value = IndirectResolveOption::WITH_LIMIT
+
 // bool isCompatibleCall(const llvm::Instruction *indirectCall, const
 // llvm::Function *target);
 
@@ -224,7 +226,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
               }
 
               // if result == CRITICAL, do not apply limit
-              bool applyLimit = result == IndirectResolveOption::WITH_LIMIT;
+              bool applyLimit = (result == IndirectResolveOption::WITH_LIMIT ? true : false);
               bool newTarget = indirectNode->getTargetFunPtr()->resolvedTo(target, applyLimit);
 
               if (newTarget) {

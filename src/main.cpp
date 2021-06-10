@@ -28,8 +28,8 @@ static llvm::cl::opt<std::string> DumpJSON("json", cl::desc("Dump JSON race repo
                                            cl::value_desc("destination file"));
 
 int main(int argc, char** argv) {
-  llvm::InitLLVM X(argc, argv);
-  llvm::cl::ParseCommandLineOptions(argc, argv);
+  // user input configs + llvm input args
+  pta::ParseCommandLineOptions(argc, argv);
 
   llvm::LLVMContext context;
   context.setDiscardValueNames(false);
