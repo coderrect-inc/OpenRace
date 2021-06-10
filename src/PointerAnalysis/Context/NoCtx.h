@@ -32,7 +32,7 @@ struct CtxTrait<NoCtx> {
   constexpr static const NoCtx* getInitialCtx() { return nullptr; }
   constexpr static const NoCtx* getGlobalCtx() { return nullptr; }
 
-  inline static std::string toString(const NoCtx*, bool detailed = false) { return "<Empty>"; }
+  inline static std::string toString(const NoCtx*, bool /* detailed */ = false) { return "<Empty>"; }
   inline static void release(){};
 };
 

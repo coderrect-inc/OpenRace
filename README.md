@@ -13,7 +13,7 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 [CS]: https://coderrect.com/overview/
 
-[![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
+[![check-pr](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml)
 
 # Running
 

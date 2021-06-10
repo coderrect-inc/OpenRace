@@ -69,7 +69,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   SECTION("OpenMP threads match") {
     auto const &omp2events = threads.at(2)->getEvents();
     REQUIRE(omp2events.size() == events.size());
-    for (auto i = 0; i < events.size(); ++i) {
+    for (long unsigned int i = 0; i < events.size(); ++i) {
       auto const &e1 = events.at(i);
       auto const &e2 = omp2events.at(i);
       CHECK(e1->type == e2->type);

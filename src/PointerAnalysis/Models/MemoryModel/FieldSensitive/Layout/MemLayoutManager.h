@@ -135,7 +135,7 @@ class MemLayoutManager {
     // ArrayLayout(numElement, elementSize); layout->insertSubArray(0,
     // arrayLayout);
 
-    for (int i = 0; i < numElement; i++) {
+    for (size_t i = 0; i < numElement; i++) {
       setElementLayout(elementType, layout, DL, lOffset, pOffset, false, callback);
       assert(lOffset == pOffset && pOffset == (i + 1) * elementSize);
     }
@@ -166,7 +166,7 @@ class MemLayoutManager {
     auto layout = new (memLayoutAllocator.Allocate()) MemLayout(T);
     auto structLayout = DL.getStructLayout(T);
 
-    for (int i = 0; i < T->getNumElements(); i++) {
+    for (unsigned int i = 0; i < T->getNumElements(); i++) {
       // accumulate physical offset
       size_t elemOffset = structLayout->getElementOffset(i);
       assert(elemOffset >= pOffset);

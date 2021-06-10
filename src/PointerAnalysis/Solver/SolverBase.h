@@ -179,6 +179,7 @@ class SolverBase {
 
     struct OnNewConstraints : public ConsGraphTy::OnNewConstraintCallBack {
       CallBack &CB;
+      virtual ~OnNewConstraints() {}
       explicit OnNewConstraints(CallBack &CB) : CB(CB) {}
 
       void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
@@ -208,7 +209,7 @@ class SolverBase {
 
     bool changed = false;
     for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID()); it != ie; it++) {
-      auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
+      // auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
       auto node = consGraph->getObjectNode(*it);
       node = node->getSuperNode();
 

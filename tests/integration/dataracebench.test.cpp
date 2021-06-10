@@ -74,7 +74,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB033-truedeplinear-orig-yes.c:64:13 DRB033-truedeplinear-orig-yes.c:64:14"}),
       Oracle("DRB034-truedeplinear-var-yes.ll",
              {"DRB034-truedeplinear-var-yes.c:66:13 DRB034-truedeplinear-var-yes.c:66:14"}),
-      // DRB 35 and 36 FP on write to a[i] ??
+      Oracle("DRB035-truedepscalar-orig-yes.ll",
+             {"DRB035-truedepscalar-orig-yes.c:67:9 DRB035-truedepscalar-orig-yes.c:66:12",
+              "DRB035-truedepscalar-orig-yes.c:67:9 DRB035-truedepscalar-orig-yes.c:67:9"}),
+      Oracle("DRB036-truedepscalar-var-yes.ll",
+             {"DRB036-truedepscalar-var-yes.c:67:9 DRB036-truedepscalar-var-yes.c:66:12",
+              "DRB036-truedepscalar-var-yes.c:67:9 DRB036-truedepscalar-var-yes.c:67:9"}),
       Oracle("DRB037-truedepseconddimension-orig-yes.ll",
              {"DRB037-truedepseconddimension-orig-yes.c:63:14 DRB037-truedepseconddimension-orig-yes.c:63:15"}),
       Oracle("DRB038-truedepseconddimension-var-yes.ll",
@@ -83,7 +88,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB039-truedepsingleelement-orig-yes.c:62:9 DRB039-truedepsingleelement-orig-yes.c:62:15"}),
       Oracle("DRB040-truedepsingleelement-var-yes.ll",
              {"DRB040-truedepsingleelement-var-yes.c:63:9 DRB040-truedepsingleelement-var-yes.c:63:15"}),
-      // 41-44 are really complex array accesses
+      Oracle("DRB041-3mm-parallel-no.ll", {}),
+      Oracle("DRB042-3mm-tile-no.ll", {}),  // uses simd, may need to check later
+      Oracle("DRB043-adi-parallel-no.ll", {}),
+      Oracle("DRB044-adi-tile-no.ll", {}),  // uses simd, may need to check later
       Oracle("DRB045-doall1-orig-no.ll", {}),
       Oracle("DRB046-doall2-orig-no.ll", {}),
       Oracle("DRB047-doallchar-orig-no.ll", {}),
@@ -98,14 +106,14 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 59 FP caused by last private??
       Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
       Oracle("DRB061-matrixvector1-orig-no.ll", {}),
-      // 62 reduction
+      Oracle("DRB062-matrixvector2-orig-no.ll", {}),
       Oracle("DRB063-outeronly1-orig-no.ll", {}),
       Oracle("DRB064-outeronly2-orig-no.ll", {}),
       Oracle("DRB065-pireduction-orig-no.ll", {}),
       Oracle("DRB066-pointernoaliasing-orig-no.ll", {}),
       Oracle("DRB067-restrictpointer1-orig-no.ll", {}),
       Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
-      // 69 section and locks
+      Oracle("DRB069-sectionslock1-orig-no.ll", {}),
       // 70 simd
       // 71 target
       // 72 task
@@ -177,8 +185,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 127-136 task
       // 137-138 simd
       // 139 // nested parallel
-      // 140-141 master
-      // 142-143 critical
+      Oracle("DRB140-reduction-barrier-orig-yes.ll",
+             {"DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:31",
+              "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33",
+              "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"}),
+      Oracle("DRB141-reduction-barrier-orig-no.ll", {}),
+      // 142-143 atomic details
       // 144-164 target
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
