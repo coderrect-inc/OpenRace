@@ -2,7 +2,7 @@ name: SonarCloud Analysis
 on:
   push:
     branches:
-      - master
+      - exclude-circle-ci
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
