@@ -160,26 +160,6 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 3);
 
-  // bz: check_same_team and check_not_same_team are really not used anywhere
-  [[maybe_unused]] auto check_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1,
-                                                                const race::ThreadTrace &t2) {
-    for (auto const &e1 : t1.getEvents()) {
-      for (auto const &e2 : t2.getEvents()) {
-        CHECK(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
-      }
-    }
-  };
-
-  [[maybe_unused]] auto check_not_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1,
-                                                                    const race::ThreadTrace &t2) {
-    for (auto const &e1 : t1.getEvents()) {
-      for (auto const &e2 : t2.getEvents()) {
-        CHECK_FALSE(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
-      }
-    }
-  };
-  llvm::errs() << program << "\n";
-
   auto const &e11 = program.getEvent(1, 1);
   auto const &e14 = program.getEvent(1, 4);
 
