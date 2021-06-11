@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "PointerAnalysis/Program/CallSite.h"
 
-
 extern cl::opt<unsigned> Max_Indirect_Target;  // the limit of the size of indirect targets -> default value 999
 
 namespace pta {
