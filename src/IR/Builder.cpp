@@ -24,11 +24,6 @@ limitations under the License.
 using namespace race;
 
 namespace {
-bool hasNoAliasMD(const llvm::Instruction *inst) {
-  llvm::AAMDNodes AAMD;
-  inst->getAAMetadata(AAMD);
-  return AAMD.NoAlias != nullptr;
-}
 
 bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   auto ptr = getPointerOperand(inst);
@@ -97,12 +92,6 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
-      } else if (auto retInst = llvm::dyn_cast<llvm::ReturnInst>(inst)) {
-        // TODO: what should this do?
-      } else if (auto branchInst = llvm::dyn_cast<llvm::BranchInst>(inst)) {
-        // TODO: what should this do?
-      } else if (auto switchInst = llvm::dyn_cast<llvm::SwitchInst>(inst)) {
-        // TODO: what should this do?
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls

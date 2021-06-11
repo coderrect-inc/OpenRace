@@ -1,0 +1,5 @@
+if(EXISTS "/home/tanzir/OpenRace/src/tests/tester_tests-494e92c.cmake")
+  include("/home/tanzir/OpenRace/src/tests/tester_tests-494e92c.cmake")
+else()
+  add_test(tester_NOT_BUILT-494e92c tester_NOT_BUILT-494e92c)
+endif()

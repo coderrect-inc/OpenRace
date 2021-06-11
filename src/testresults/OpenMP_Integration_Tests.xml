@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="12" hostname="tbd" time="0.857033" timestamp="2021-06-11T05:00:38Z">
+    <properties>
+      <property name="filters" value="OpenMP Integration Tests"/>
+    </properties>
+    <testcase classname="tester.global" name="OpenMP Integration Tests/test reduction-no.ll" time="0.235762" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Integration Tests/test reduction-nowait-yes.ll" time="0.212164" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Integration Tests/test master-used-after-yes.ll" time="0.205681" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Integration Tests/test single-used-after-no.ll" time="0.202865" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

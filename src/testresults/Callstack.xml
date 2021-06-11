@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="9" hostname="tbd" time="0.000323" timestamp="2021-06-11T05:00:22Z">
+    <properties>
+      <property name="filters" value="Callstack"/>
+    </properties>
+    <testcase classname="tester.global" name="Callstack" time="0.000286" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

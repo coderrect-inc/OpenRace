@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="135" hostname="tbd" time="11.3942" timestamp="2021-06-11T05:00:22Z">
+    <properties>
+      <property name="filters" value="PointerAnalysis"/>
+    </properties>
+    <testcase classname="tester.global" name="PointerAnalysis/array-constIdx.ll" time="0.253091" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-call-struct.ll" time="0.196931" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/spec-vortex.ll" time="0.205401" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/array-varIdx2.ll" time="0.213073" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-call-twoparms.ll" time="0.388598" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-array.ll" time="0.225922" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/array-varIdx.ll" time="0.208775" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-const-struct.ll" time="0.378088" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-assignment-direct.ll" time="0.190798" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/branch-call.ll" time="0.187924" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-funptr.ll" time="0.357214" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-assignment-indirect.ll" time="0.205826" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/branch-intra.ll" time="0.190314" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-initializer.ll" time="0.194135" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-assignment-nested.ll" time="0.219148" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/CI-funptr.ll" time="0.357704" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-nested-calls.ll" time="0.195755" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-field-multi-dereference.ll" time="0.351647" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/CI-global.ll" time="0.203678" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-simple.ll" time="0.195313" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-instance-return.ll" time="0.187528" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/CI-local.ll" time="0.188878" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/heap-indirect.ll" time="0.199462" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-nested-1-layer.ll" time="0.201441" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/constraint-cycle-copy.ll" time="0.19635" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/heap-linkedlist.ll" time="0.213218" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-nested-2-layers.ll" time="0.202819" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/constraint-cycle-field.ll" time="0.21613" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/heap-wrapper.ll" time="0.18976" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-nested-array1.ll" time="0.201316" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/constraint-cycle-pwc.ll" time="0.186951" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-nested-array2.ll" time="0.219985" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/field-ptr-arith-constIdx.ll" time="0.201764" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/ptr-dereference2.ll" time="0.19416" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-nested-array3.ll" time="0.216577" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/funptr-nested-call.ll" time="0.540437" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/ptr-dereference3.ll" time="0.1944" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-onefld.ll" time="0.188197" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/funptr-simple.ll" time="0.359245" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/spec-equake.ll" time="0.226311" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-simple.ll" time="0.1898" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/funptr-struct.ll" time="0.374623" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/spec-gap.ll" time="0.191464" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/struct-twoflds.ll" time="0.194747" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-array.ll" time="0.208397" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/spec-mesa.ll" time="0.384315" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/global-call-noparam.ll" time="0.188725" status="run"/>
+    <testcase classname="tester.global" name="PointerAnalysis/spec-parser.ll" time="0.215317" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite errors="0" failures="1" tests="2" hostname="tbd" time="0.202004" timestamp="2021-06-11T05:00:11Z">
+    <properties>
+      <property name="filters" value="OpenMP inSameSingleRegion Analysis"/>
+    </properties>
+    <testcase classname="tester.global" name="OpenMP inSameSingleRegion Analysis" time="0.0" status="run">
+      <error message="{Unknown expression after the reported line}">
+FAILED:
+  {Unknown expression after the reported line}
+SIGABRT - Abort (abnormal termination) signal
+at ../tests/unit/Analysis/OpenMPAnalysis.test.cpp:160
+      </error>
+    </testcase>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

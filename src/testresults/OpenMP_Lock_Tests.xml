@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="9" hostname="tbd" time="0.633232" timestamp="2021-06-11T05:00:40Z">
+    <properties>
+      <property name="filters" value="OpenMP Lock Tests"/>
+    </properties>
+    <testcase classname="tester.global" name="OpenMP Lock Tests/test lock-set-unset-no.ll" time="0.224536" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Lock Tests/test lock-set-unset-yes.ll" time="0.20445" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Lock Tests/test lock-set-unset-yes-2.ll" time="0.203889" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

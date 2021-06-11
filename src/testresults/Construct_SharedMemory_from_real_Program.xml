@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="0" hostname="tbd" time="0.197946" timestamp="2021-06-11T05:00:10Z">
+    <properties>
+      <property name="filters" value="Construct SharedMemory from real Program"/>
+    </properties>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

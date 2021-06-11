@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="6" hostname="tbd" time="0.000608" timestamp="2021-06-11T05:00:11Z">
+    <properties>
+      <property name="filters" value="Builder pthread create/join"/>
+    </properties>
+    <testcase classname="tester.global" name="Builder pthread create/join" time="0.000576" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

@@ -36,7 +36,7 @@ class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
   const llvm::Loop *ompLoop;
 
  public:
-  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : ompLoop(ompLoop), super(SE) {}
+  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : super(SE), ompLoop(ompLoop) {}
 
   const llvm::SCEV *visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr);
 };
@@ -399,7 +399,9 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
         // if both bound are resolvable
         // FIXME: why do we need to divide by loopstep?
-        if (std::max(lowerBound, upperBound) < (distance / loopStep)) {
+        assert(std::max(lowerBound, upperBound) >= 0);  // both bounds should be >=0, isn't it?
+        long unsigned int maxBound = static_cast<long unsigned int>(std::max(lowerBound, upperBound));
+        if (maxBound < (distance / loopStep)) {
           return false;
         }
       }
@@ -693,6 +695,64 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
       if (contains1 && contains2) return true;
       if (contains1 || contains2) return false;
     }
+  }
+
+  return false;
+}
+
+bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
+  // assertion: threads of the same team are identical
+  // assertion: we aren't given events from threads in different parallel sections blocks because those would be
+  //            different teams
+
+  // observation: we only enter a section if any event in the queue passes through a section case
+  // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
+  std::vector<const Event *> sections;
+  auto lastID = std::max(event1->getID(), event2->getID());
+  for (auto &event : event1->getThread().getEvents()) {
+    auto block = event->getInst()->getParent();
+    if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&
+        block->getName().startswith(".omp.sections.case")) {  // add for body check
+      sections.push_back(event.get());
+    }
+    // this is our end event; anything beyond this is not worth capturing
+    if (event->getID() > lastID) {
+      break;
+    }
+  }
+
+  if (sections.empty()) {
+    return false;
+  }
+
+  std::vector<const Event *> events;
+  events.reserve(event1->getThread().getEvents().size());
+  std::transform(event1->getThread().getEvents().begin(), event1->getThread().getEvents().end(),
+                 std::back_inserter(events), [&](const auto &event) { return event.get(); });
+
+  const Event *ev1sec = nullptr;
+  const Event *ev2sec = nullptr;
+
+  auto currSecEv = sections.begin();
+  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv); (*currEvent)->getID() <= lastID;
+       ++currSecEv) {
+    do {
+      if (event1->getID() == (*currEvent)->getID()) {
+        ev1sec = *currSecEv;
+      }
+      if (event2->getID() == (*currEvent)->getID()) {
+        ev2sec = *currSecEv;
+      }
+
+      if (ev1sec != nullptr && ev2sec != nullptr) {
+        if (ev1sec == ev2sec) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      ++currEvent;
+    } while (std::find(sections.begin(), sections.end(), *currEvent) == sections.end());
   }
 
   return false;

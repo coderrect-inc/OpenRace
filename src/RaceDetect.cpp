@@ -75,7 +75,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
       // Certain omp blocks cannot race with themselves or those of the same type within the same scope/team
       if (ompAnalysis.inSameSingleBlock(write, other) || ompAnalysis.inSameReduce(write, other) ||
-          ompAnalysis.bothInMasterBlock(write, other)) {
+          ompAnalysis.bothInMasterBlock(write, other) || race::OpenMPAnalysis::insideCompatibleSections(write, other)) {
         return;
       }
     }

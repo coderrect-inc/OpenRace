@@ -1,0 +1,313 @@
+[
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/openrace.dir/main.cpp.o -c /home/tanzir/OpenRace/src/main.cpp",
+  "file": "/home/tanzir/OpenRace/src/main.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/LanguageModel/RaceModel.cpp.o -c /home/tanzir/OpenRace/src/LanguageModel/RaceModel.cpp",
+  "file": "/home/tanzir/OpenRace/src/LanguageModel/RaceModel.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Analysis/HappensBeforeGraph.cpp.o -c /home/tanzir/OpenRace/src/Analysis/HappensBeforeGraph.cpp",
+  "file": "/home/tanzir/OpenRace/src/Analysis/HappensBeforeGraph.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Analysis/LockSet.cpp.o -c /home/tanzir/OpenRace/src/Analysis/LockSet.cpp",
+  "file": "/home/tanzir/OpenRace/src/Analysis/LockSet.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Analysis/SharedMemory.cpp.o -c /home/tanzir/OpenRace/src/Analysis/SharedMemory.cpp",
+  "file": "/home/tanzir/OpenRace/src/Analysis/SharedMemory.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Analysis/OpenMPAnalysis.cpp.o -c /home/tanzir/OpenRace/src/Analysis/OpenMPAnalysis.cpp",
+  "file": "/home/tanzir/OpenRace/src/Analysis/OpenMPAnalysis.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Analysis/SimpleAlias.cpp.o -c /home/tanzir/OpenRace/src/Analysis/SimpleAlias.cpp",
+  "file": "/home/tanzir/OpenRace/src/Analysis/SimpleAlias.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/IR/Builder.cpp.o -c /home/tanzir/OpenRace/src/IR/Builder.cpp",
+  "file": "/home/tanzir/OpenRace/src/IR/Builder.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/IR/IR.cpp.o -c /home/tanzir/OpenRace/src/IR/IR.cpp",
+  "file": "/home/tanzir/OpenRace/src/IR/IR.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Trace/Event.cpp.o -c /home/tanzir/OpenRace/src/Trace/Event.cpp",
+  "file": "/home/tanzir/OpenRace/src/Trace/Event.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Trace/EventImpl.cpp.o -c /home/tanzir/OpenRace/src/Trace/EventImpl.cpp",
+  "file": "/home/tanzir/OpenRace/src/Trace/EventImpl.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Trace/ProgramTrace.cpp.o -c /home/tanzir/OpenRace/src/Trace/ProgramTrace.cpp",
+  "file": "/home/tanzir/OpenRace/src/Trace/ProgramTrace.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Trace/ThreadTrace.cpp.o -c /home/tanzir/OpenRace/src/Trace/ThreadTrace.cpp",
+  "file": "/home/tanzir/OpenRace/src/Trace/ThreadTrace.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/Reporter/Reporter.cpp.o -c /home/tanzir/OpenRace/src/Reporter/Reporter.cpp",
+  "file": "/home/tanzir/OpenRace/src/Reporter/Reporter.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/racedetect-lib.dir/RaceDetect.cpp.o -c /home/tanzir/OpenRace/src/RaceDetect.cpp",
+  "file": "/home/tanzir/OpenRace/src/RaceDetect.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/CMDOptions.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/CMDOptions.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/CMDOptions.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Util/Util.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Util/Util.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Util/Util.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Util/TypeMetaData.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Util/TypeMetaData.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Util/TypeMetaData.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Program/CallSite.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Program/CallSite.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Program/CallSite.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Solver/PointsToSet.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Solver/PointsToSet.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Solver/PointsToSet.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/PreProcessing.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/PreProcessing.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/PreProcessing.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/CanonicalizeGEPPass.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/CanonicalizeGEPPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/CanonicalizeGEPPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/InsertGlobalCtorCallPass.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/InsertGlobalCtorCallPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/InsertGlobalCtorCallPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/LoweringMemCpyPass.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/LoweringMemCpyPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/LoweringMemCpyPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/OMPConstantPropPass.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/OMPConstantPropPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/OMPConstantPropPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/RemoveExceptionHandlerPass.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/RemoveExceptionHandlerPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/RemoveExceptionHandlerPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PreProcessing/Passes/DuplicateOpenMPForks.cpp.o -c /home/tanzir/OpenRace/src/PreProcessing/Passes/DuplicateOpenMPForks.cpp",
+  "file": "/home/tanzir/OpenRace/src/PreProcessing/Passes/DuplicateOpenMPForks.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/Canonicalizer.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/Canonicalizer.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/Canonicalizer.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/DefaultHeapModel.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/DefaultHeapModel.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/DefaultHeapModel.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Util.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Layouts.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Layouts.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/Layouts.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/PreprocessingPasses/RewriteModeledAPIPass.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/Vector.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.    -g   -fno-rtti -std=gnu++17 -o src/CMakeFiles/pta.dir/PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.cpp.o -c /home/tanzir/OpenRace/src/PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.cpp",
+  "file": "/home/tanzir/OpenRace/src/PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/test.cpp.o -c /home/tanzir/OpenRace/tests/test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Analysis/HappensBefore.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Analysis/HappensBefore.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Analysis/HappensBefore.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Analysis/LockSet.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Analysis/LockSet.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Analysis/LockSet.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Analysis/SharedMemory.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Analysis/SharedMemory.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Analysis/SharedMemory.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Analysis/OpenMPAnalysis.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Analysis/OpenMPAnalysis.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Analysis/OpenMPAnalysis.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/IR/IR.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/IR/IR.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/IR/IR.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/IR/OpenMPIR.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/IR/OpenMPIR.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/IR/OpenMPIR.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/PointerAnalysis/PointerAnalysis.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/PointerAnalysis/PointerAnalysis.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/PointerAnalysis/PointerAnalysis.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/PreProcessing/DuplicateOpenMPForks.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/PreProcessing/DuplicateOpenMPForks.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/PreProcessing/DuplicateOpenMPForks.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Trace/CallStack.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Trace/CallStack.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Trace/CallStack.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Trace/Trace.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Trace/Trace.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Trace/Trace.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/unit/Trace/OpenMPTrace.test.cpp.o -c /home/tanzir/OpenRace/tests/unit/Trace/OpenMPTrace.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/unit/Trace/OpenMPTrace.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/integration/pthreadrace.test.cpp.o -c /home/tanzir/OpenRace/tests/integration/pthreadrace.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/integration/pthreadrace.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/integration/dataracebench.test.cpp.o -c /home/tanzir/OpenRace/tests/integration/dataracebench.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/integration/dataracebench.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/integration/openmp.test.cpp.o -c /home/tanzir/OpenRace/tests/integration/openmp.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/integration/openmp.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/regression/EmptyThread.test.cpp.o -c /home/tanzir/OpenRace/tests/regression/EmptyThread.test.cpp",
+  "file": "/home/tanzir/OpenRace/tests/regression/EmptyThread.test.cpp"
+},
+
+{
+  "directory": "/home/tanzir/OpenRace/src",
+  "command": "/usr/bin/c++  -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I../tests -I. -isystem /home/tanzir/.conan/data/nlohmann_json/3.9.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem /home/tanzir/.conan/data/catch2/2.13.4/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include    -g   -fno-rtti -std=gnu++17 -o tests/CMakeFiles/tester.dir/helpers/ReportChecking.cpp.o -c /home/tanzir/OpenRace/tests/helpers/ReportChecking.cpp",
+  "file": "/home/tanzir/OpenRace/tests/helpers/ReportChecking.cpp"
+}
+]

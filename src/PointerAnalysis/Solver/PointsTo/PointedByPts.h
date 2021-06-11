@@ -28,14 +28,10 @@ class PointedByPts {
   // pointed by set
   static std::vector<PtsTy> pointedBy;
 
-  static uint32_t PTS_SIZE_LIMIT;
-
   static void clearAll() {
     pointsTo.clear();
     pointedBy.clear();
   }
-
-  static inline void setPTSSizeLimit(uint32_t limit) { PTS_SIZE_LIMIT = limit; }
 
   static inline void onNewNodeCreation(NodeID id) {
     assert(id == pointsTo.size());

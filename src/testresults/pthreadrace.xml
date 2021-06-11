@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="12" hostname="tbd" time="0.813679" timestamp="2021-06-11T05:00:25Z">
+    <properties>
+      <property name="filters" value="pthreadrace"/>
+    </properties>
+    <testcase classname="tester.global" name="pthreadrace/test pthread-account-no.ll" time="0.20573" status="run"/>
+    <testcase classname="tester.global" name="pthreadrace/test pthread-spinlock-no.ll" time="0.202499" status="run"/>
+    <testcase classname="tester.global" name="pthreadrace/test pthread-spinlock-yes.ll" time="0.209255" status="run"/>
+    <testcase classname="tester.global" name="pthreadrace/test pthread-simple-yes.ll" time="0.195472" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

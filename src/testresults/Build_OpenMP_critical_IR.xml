@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="3" hostname="tbd" time="0.000355" timestamp="2021-06-11T05:00:11Z">
+    <properties>
+      <property name="filters" value="Build OpenMP critical IR"/>
+    </properties>
+    <testcase classname="tester.global" name="Build OpenMP critical IR" time="0.000317" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

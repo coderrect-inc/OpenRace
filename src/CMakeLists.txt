@@ -51,3 +51,8 @@ target_include_directories(racedetect-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(openrace main.cpp)
 target_link_libraries(openrace racedetect-lib ${llvm_libs})
+
+if(ENABLE_WARNING)
+    enable_warnings(pta)
+    enable_warnings(openrace)
+endif()

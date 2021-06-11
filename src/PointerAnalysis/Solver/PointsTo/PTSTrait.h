@@ -68,7 +68,6 @@ struct PTSTrait {
     using iterator = typename IMPL::iterator;                                                          \
                                                                                                        \
     static inline void clearAll() { return IMPL::clearAll(); }                                         \
-    static inline void setPTSSizeLimit(uint32_t limit) { IMPL::setPTSSizeLimit(limit); }               \
     static inline void onNewNodeCreation(NodeID id) { return IMPL::onNewNodeCreation(id); }            \
                                                                                                        \
     static inline const PtsTy& getPointsTo(NodeID id) { return IMPL::getPointsTo(id); }                \

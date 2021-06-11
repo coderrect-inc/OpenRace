@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="4" hostname="tbd" time="0.000307" timestamp="2021-06-11T05:00:22Z">
+    <properties>
+      <property name="filters" value="Duplicate OpenMP Forks"/>
+    </properties>
+    <testcase classname="tester.global" name="Duplicate OpenMP Forks" time="0.000279" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

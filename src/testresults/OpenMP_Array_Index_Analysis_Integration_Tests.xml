@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="12" hostname="tbd" time="0.855983" timestamp="2021-06-11T05:00:39Z">
+    <properties>
+      <property name="filters" value="OpenMP Array Index Analysis Integration Tests"/>
+    </properties>
+    <testcase classname="tester.global" name="OpenMP Array Index Analysis Integration Tests/test array-index-simple.ll" time="0.226018" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Array Index Analysis Integration Tests/test array-index-inner-yes.ll" time="0.206842" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Array Index Analysis Integration Tests/test array-index-outer-yes.ll" time="0.210255" status="run"/>
+    <testcase classname="tester.global" name="OpenMP Array Index Analysis Integration Tests/test array-stride-2.ll" time="0.212096" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

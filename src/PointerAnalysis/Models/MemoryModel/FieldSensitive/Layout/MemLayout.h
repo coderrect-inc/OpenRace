@@ -70,8 +70,12 @@ class MemLayout {
   inline void cacheIntoBitVector() {
     assert(!cached);
     int num = elementLayout.find_last();
-    indexableLayout.resize(num + 1);
-    logicalIndex.resize(num + 1, -1);
+    if (num < 0) {
+      return;
+    }
+    unsigned size = static_cast<unsigned int>(num) + 1;
+    indexableLayout.resize(size);
+    logicalIndex.resize(size, -1);
 
     // cache it into bitvector for faster indexing
     int i = 0;

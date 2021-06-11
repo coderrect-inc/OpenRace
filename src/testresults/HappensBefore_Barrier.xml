@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="6" hostname="tbd" time="0.197" timestamp="2021-06-11T05:00:10Z">
+    <properties>
+      <property name="filters" value="HappensBefore Barrier"/>
+    </properties>
+    <testcase classname="tester.global" name="HappensBefore Barrier" time="0.196956" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

@@ -18,12 +18,13 @@ limitations under the License.
 using namespace pta;
 
 RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
-  ctx::setOriginRules(
-      [&](const ctx *context, const llvm::Instruction *I) -> bool { return this->isInvokingAnOrigin(context, I); });
+  originCtx::setOriginRules([&](const originCtx *context, const llvm::Instruction *I) -> bool {
+    return this->isInvokingAnOrigin(context, I);
+  });
 }
 
-InterceptResult RaceModel::interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
-                                             const llvm::Instruction *callsite) {
+InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
+                                             const llvm::Function *F, const llvm::Instruction *callsite) {
   auto funcName = F->getName();
 
   // Skip intrinsic in PTA
@@ -121,10 +122,11 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
   return false;
 }
 
-bool RaceModel::isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) {
+bool RaceModel::isCompatible(const llvm::Instruction * /* callsite */, const llvm::Function * /* target */) {
   llvm_unreachable("unrecognizable function");
 }
 
+<<<<<<< HEAD
 void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
                                        const llvm::Instruction *callsite) {
   // GrB_Matrix_new and GB_new take a pointer pointer of a Matrix to initialize
@@ -195,8 +197,12 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
     }
   return;
 }
+=======
+void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> * /* caller */, const CtxFunction<ctx> * /* callee */,
+                                       const llvm::Instruction * /* callsite */) {}
+>>>>>>> 9fe0f0ca1dcbbd5c83eb589776c48228cac4bb4c
 
-bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction *callsite) {
+bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
   if (!F->hasName()) return false;
   auto const name = F->getName();
   return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm") || name.equals("__kmpc_omp_task_alloc");
@@ -207,7 +213,7 @@ namespace {
 const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_omp_task", "__kmpc_omp_task_alloc"};
 }  // namespace
 
-bool RaceModel::isInvokingAnOrigin(const ctx *prevCtx, const llvm::Instruction *I) {
+bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {
   auto call = llvm::dyn_cast<CallBase>(I);
   if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 

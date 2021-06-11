@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="13" hostname="tbd" time="0.591159" timestamp="2021-06-11T05:00:23Z">
+    <properties>
+      <property name="filters" value="Construct pthread ThreadTrace"/>
+    </properties>
+    <testcase classname="tester.global" name="Construct pthread ThreadTrace" time="0.203231" status="run"/>
+    <testcase classname="tester.global" name="Construct pthread ThreadTrace/Main ThreadTrace" time="0.000045" status="run"/>
+    <testcase classname="tester.global" name="Construct pthread ThreadTrace/Spawned ThreadTrace" time="0.000015" status="run"/>
+    <testcase classname="tester.global" name="Construct pthread ThreadTrace/ThreadTrace Increasing Event IDs" time="0.000008" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

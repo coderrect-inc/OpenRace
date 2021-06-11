@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="14" hostname="tbd" time="0.000398" timestamp="2021-06-11T05:00:11Z">
+    <properties>
+      <property name="filters" value="Manually Constructed IR"/>
+    </properties>
+    <testcase classname="tester.global" name="Manually Constructed IR/Construct LoadIR" time="0.000104" status="run"/>
+    <testcase classname="tester.global" name="Manually Constructed IR/Construct StoreIR" time="0.000049" status="run"/>
+    <testcase classname="tester.global" name="Manually Constructed IR/Construct CallIR" time="0.000017" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>

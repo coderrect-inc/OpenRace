@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="tester" errors="0" failures="0" tests="6" hostname="tbd" time="0.000548" timestamp="2021-06-11T05:00:11Z">
+    <properties>
+      <property name="filters" value="Builder pthread mutex"/>
+    </properties>
+    <testcase classname="tester.global" name="Builder pthread mutex" time="0.00009" status="run"/>
+    <testcase classname="tester.global" name="Builder pthread mutex/pthread_mutex_lock" time="0.000036" status="run"/>
+    <testcase classname="tester.global" name="Builder pthread mutex/pthread_mutex_unlock" time="0.000011" status="run"/>
+    <system-out/>
+    <system-err/>
+  </testsuite>
+</testsuites>
