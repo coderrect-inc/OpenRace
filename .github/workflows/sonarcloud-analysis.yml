@@ -1,20 +1,16 @@
-name: SonarCloud Analysis
+name: Codacy Analysis CLI
+
 on:
-  push:
-    branches:
-      - exclude-circle-ci
-  pull_request:
-    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 6 * * *' # run at 6 AM UTC (12 AM CST)
+
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  codacy-analysis-cli:
+    name: Codacy Analysis CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@main
 
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@master
