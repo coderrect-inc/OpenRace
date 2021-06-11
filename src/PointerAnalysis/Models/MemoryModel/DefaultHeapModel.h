@@ -13,6 +13,9 @@ limitations under the License.
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/PatternMatch.h>
+#include "PointerAnalysis/Program/CallSite.h"
+#include "LanguageModel/OpenMP.h"
 
 #include <set>
 
@@ -64,5 +67,105 @@ class DefaultHeapModel {
     return inferMallocType(fun, allocSite);
   }
 };
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GraphBLASHeapModel : public DefaultHeapModel {
+private:
+    // TODO: we can get rid of it! and use conflib for this!!
+    const std::set<llvm::StringRef> HEAP_ALLOCATIONS{"GB_malloc_memory", "GB_calloc_memory"};
+    const std::set<llvm::StringRef> HEAP_INITS{"GrB_Matrix_new", "GB_new"};
+    // the set of APIs specified by users
+    static std::set<llvm::StringRef> USER_HEAP_API;
 
+public:
+    // TODO: ensure that the user specified APIs return pointers!!
+    static inline void init(std::vector<std::string> &heapAPIs) {
+        for (auto &api : heapAPIs) {
+            USER_HEAP_API.insert(api);
+        }
+    }
+
+    inline bool isHeapAllocFun(const llvm::Function *fun) const {
+      if (fun->hasName()) {
+          return DefaultHeapModel::isHeapAllocFun(fun) || OpenMPModel::isTaskAlloc(fun->getName()) ||
+                isHeapInitFun(fun) || // any function in interceptHeapAllocation is heap alloc function
+                HEAP_ALLOCATIONS.find(fun->getName()) != HEAP_ALLOCATIONS.end();
+                //USER_HEAP_API.find(fun->getName().split(".").first) != USER_HEAP_API.end();
+      }
+      return false;
+    }
+
+    inline bool isHeapInitFun(const llvm::Function *fun) const {
+        if (fun->hasName()) {
+            return HEAP_INITS.find(fun->getName()) != HEAP_INITS.end();
+        }
+        return false;
+    }
+
+    // we used the next bitcast instruction as the heap object's element type
+    // if we can not find it, return null.
+    llvm::Type *inferHeapAllocType(const llvm::Function *fun, const llvm::Instruction *allocSite) const {
+        if (fun->getName().equals(".coderrect.lock.allocate")) {
+            // field insensitive object for lock object? or we can use scalar object.
+            return nullptr;
+        }
+        if (fun->getName().equals(".coderrect.recursive.allocation") ||
+            fun->getName().equals(".coderrect.allocation.api") /*|| USER_HEAP_API.find(fun->getName().split(".").first) != USER_HEAP_API.end()*/
+            ) {
+            // user specified APIs
+            // we do not know which args is used for size
+            // model them as *unlimited* unbounded array by passing -1 to sizeArgNo
+            return DefaultHeapModel::inferMallocType(fun, allocSite, -1);
+        }
+
+        if (DefaultHeapModel::isHeapAllocFun(fun)) {
+            // if already handled by default heap model
+            return DefaultHeapModel::inferHeapAllocType(fun, allocSite);
+        }
+
+        if (OpenMPModel::isTaskAlloc(fun->getName())) {
+          // 1st, get the callback function
+          pta::CallSite taskAllocCall (allocSite);
+          auto taskEntry = llvm::cast<llvm::Function>(taskAllocCall.getArgOperand(5)->stripPointerCasts());
+          int64_t sharedSize = llvm::cast<llvm::ConstantInt>(taskAllocCall.getArgOperand(4))->getSExtValue();
+          if (sharedSize == 0) {
+              return nullptr;
+          }
+
+          // the bitcast on the omp.task_t is the type of the allocated object
+          const llvm::Argument &task = *(taskEntry->arg_begin() + 1);
+          for (auto &BB : *taskEntry) {
+            for (auto &I : BB) {
+              // simple pattern matching
+              // find a bitcast instruction which follows the following pattern
+              // %3 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %1, i32 0, i32 0
+              // %4 = getelementptr inbounds %struct.kmp_task_t, %struct.kmp_task_t* %3, i32 0, i32 0
+              // %5 = load i8*, i8** %4
+              // %6 = bitcast i8* %5 to %struct.anon*
+              llvm::Value *srcOp = nullptr;
+              if (llvm::PatternMatch::match(&I, llvm::PatternMatch::m_BitCast(
+                              llvm::PatternMatch::m_Load(llvm::PatternMatch::m_Value(srcOp))))) {
+                  if (srcOp->stripPointerCasts() == &task) {
+                      // this is the bitcast we try to found
+                      return llvm::cast<llvm::BitCastInst>(I).getDestTy();
+                  }
+              }
+            }
+          }
+          return nullptr;
+        }
+
+        // TODO: move the following two to configuration!!
+        if (fun->getName().equals("GB_calloc_memory")) {
+            // calloc memory
+            return DefaultHeapModel::inferCallocType(fun, allocSite);
+        }
+
+        if (fun->getName().equals("GB_malloc_memory")) {
+            return DefaultHeapModel::inferMallocType(fun, allocSite);
+        }
+
+        //LOG_WARN("can not infer type for heap. type={}", *allocSite);
+        return nullptr;
+    }
+};  
 }  // namespace pta

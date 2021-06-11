@@ -58,7 +58,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // DRB 24 and 25 are simd
       // DRB 26 is target
       // DRB 27 is task
-
+      Oracle("DRB027-taskdependmissing-orig-yes.ll",
+             {"DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:61:7",
+              "DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:63:7",
+              "DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:61:7",
+              "DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:63:7",
+              "DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:66:20"}),
       // FIXME: the racy object is opted out by SROA
       //      Oracle("DRB028-privatemissing-orig-yes.ll",
       //             {"DRB028-privatemissing-orig-yes.c:65:9 DRB028-privatemissing-orig-yes.c:65:9",
@@ -148,6 +153,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 98 simd + collpase
       // 99 target
       // 100-101 task
+      //Oracle("DRB100-task-reference-orig-no.ll",
+       //      {"DRB100-task-reference-orig-no.cpp:64:9 DRB100-task-reference-orig-no.cpp:64:9"}),
+      //Oracle("DRB101-task-value-orig-no.ll", 
+       //{"DRB101-task-value-orig-no.cpp:60:9 DRB101-task-value-orig-no.cpp:60:9"}),
       // 102 threadprivate + copyprivate => Oracle("DRB102-copyprivate-orig-no.ll", {}),
       Oracle("DRB103-master-orig-no.ll", {}),
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),

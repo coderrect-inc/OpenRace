@@ -17,10 +17,10 @@ entry:
   %writelock = alloca %struct.omp_lock_t, align 8
   %counter = alloca i32, align 4
   %x = alloca i32, align 4
-  %.kmpc_loc.addr = alloca %struct.ident_t, align 8
+  %.kmpc_loc.addr = alloca %struct.ident_t, align 8  ; allocate a ident_t type object, 
   %0 = bitcast %struct.ident_t* %.kmpc_loc.addr to i8*
-  %1 = bitcast %struct.ident_t* @0 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %0, i8* align 8 %1, i64 24, i1 false)
+  %1 = bitcast %struct.ident_t* @0 to i8*			; pointer to the kmpc_loc.addr variable
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %0, i8* align 8 %1, i64 24, i1 false) ; object is initialized to mostly contain 0s and a func addr that is unknown
   store i32 0, i32* %retval, align 4
   %2 = bitcast %struct.omp_lock_t* %writelock to i8*, !dbg !27
   call void @llvm.lifetime.start.p0i8(i64 8, i8* %2) #5, !dbg !27
@@ -34,7 +34,7 @@ entry:
   call void @llvm.lifetime.start.p0i8(i64 4, i8* %4) #5, !dbg !36
   call void @llvm.dbg.declare(metadata i32* %x, metadata !26, metadata !DIExpression()), !dbg !37
   store i32 1000000, i32* %x, align 4, !dbg !37, !tbaa !32
-  %5 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !38
+  %5 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !38  ; get the function pointer
   store i8* getelementptr inbounds ([53 x i8], [53 x i8]* @1, i32 0, i32 0), i8** %5, align 8, !dbg !38, !tbaa !39
   call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* %.kmpc_loc.addr, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*), i32* %counter), !dbg !38
   call void @omp_destroy_lock(%struct.omp_lock_t* %writelock), !dbg !42

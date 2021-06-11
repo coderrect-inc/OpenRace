@@ -32,10 +32,12 @@ class IR {
     Fork,
     PthreadCreate,
     OpenMPFork,
+    OpenMPTask,
     END_Fork,
     Join,
     PthreadJoin,
     OpenMPJoin,
+    OpenMPTaskJoin,
     END_Join,
     Lock,
     PthreadMutexLock,
@@ -60,6 +62,7 @@ class IR {
     OpenMPReduce,
     OpenMPMasterStart,
     OpenMPMasterEnd,
+    OpenMPTaskAlloc,
     END_Call
   } type;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const = 0;

@@ -12,8 +12,10 @@ limitations under the License.
 #pragma once
 
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/CallSite.h>
 
 #include "IR/IR.h"
+#include <iostream>
 
 namespace race {
 
@@ -147,6 +149,37 @@ class OpenMPFork : public ForkIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
+class OpenMPTask : public ForkIR {
+  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_tasking.cpp#L1684
+  constexpr static unsigned int threadHandleOffset = 0;
+  constexpr static unsigned int threadEntryOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPTask(const llvm::CallBase *inst) : ForkIR(Type::OpenMPTask), inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
+    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
+  }
+
+  [[nodiscard]] const llvm::Value *getThreadEntry() const override {
+    auto op = inst->getArgOperand(2)->stripPointerCasts();
+    auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
+    if (!taskAlloc || !taskAlloc->getCalledFunction()->getName().equals("__kmpc_omp_task_alloc")) {
+        // LOG_DEBUG("Failed to find task function. inst={}", *taskCallSite.getInstruction());
+        return nullptr;
+    }
+    llvm::CallSite taskAllocCall (llvm::cast<llvm::Instruction>(op));
+    auto taskFunc = taskAllocCall.getArgOperand(5)->stripPointerCasts();
+    return llvm::cast<llvm::Function>(taskFunc);
+  }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPTask; }
+};
+
 // ==================================================================
 // ================== JoinIR Implementations ========================
 // ==================================================================
@@ -181,6 +214,21 @@ class OpenMPJoin : public JoinIR {
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
+};
+
+
+class OpenMPTaskJoin : public JoinIR {
+  std::shared_ptr<OpenMPTask> task;
+
+ public:
+  explicit OpenMPTaskJoin(const std::shared_ptr<OpenMPTask> _task) : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return task->getThreadHandle(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPTaskJoin; }
 };
 
 // ==================================================================
@@ -326,5 +374,7 @@ using OpenMPReduce = CallIRImpl<IR::Type::OpenMPReduce>;
 
 using OpenMPMasterStart = CallIRImpl<IR::Type::OpenMPMasterStart>;
 using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
+
+using OpenMPTaskAlloc = CallIRImpl<IR::Type::OpenMPTaskAlloc>;
 
 }  // namespace race

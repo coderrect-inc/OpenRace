@@ -63,6 +63,15 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
 
+inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
+inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc");}
+inline bool isTask(const llvm::CallBase* callInst) {
+  if (!callInst) return false;
+  auto const func = callInst->getCalledFunction();
+  if (!func->hasName()) return false;
+  return isTask(func->getName());
+}
+
 // Return true for omp calls that do not need to be modelled (e.g. push_num_threads)
 inline bool isNoEffect(const llvm::StringRef& funcName) {
   return matchesAny(funcName, {"__kmpc_push_num_threads", "__kmpc_global_thread_num"})

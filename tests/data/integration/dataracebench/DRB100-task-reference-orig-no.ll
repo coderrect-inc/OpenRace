@@ -1,7 +1,7 @@
-; ModuleID = 'integration/dataracebench/DRB100-task-reference-orig-no.cpp'
-source_filename = "integration/dataracebench/DRB100-task-reference-orig-no.cpp"
+; ModuleID = '../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp'
+source_filename = "../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
+target triple = "x86_64-pc-linux-gnu"
 
 %struct.ident_t = type { i32, i32, i32, i32, i8* }
 %struct.anon = type { i32* }
@@ -15,9 +15,9 @@ $__clang_call_terminate = comdat any
 @a = dso_local global [100 x i32] zeroinitializer, align 16, !dbg !0
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
-@1 = private unnamed_addr constant [77 x i8] c";integration/dataracebench/DRB100-task-reference-orig-no.cpp;gen_task;62;1;;\00", align 1
-@2 = private unnamed_addr constant [73 x i8] c";integration/dataracebench/DRB100-task-reference-orig-no.cpp;main;73;1;;\00", align 1
-@3 = private unnamed_addr constant [73 x i8] c";integration/dataracebench/DRB100-task-reference-orig-no.cpp;main;71;1;;\00", align 1
+@1 = private unnamed_addr constant [91 x i8] c";../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp;gen_task;62;1;;\00", align 1
+@2 = private unnamed_addr constant [87 x i8] c";../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp;main;73;1;;\00", align 1
+@3 = private unnamed_addr constant [87 x i8] c";../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp;main;71;1;;\00", align 1
 @.str.2 = private unnamed_addr constant [38 x i8] c"warning: a[%d] = %d, not expected %d\0A\00", align 1
 
 ; Function Attrs: uwtable
@@ -30,7 +30,7 @@ entry:
   %1 = bitcast %struct.ident_t* @0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %0, i8* align 8 %1, i64 24, i1 false)
   %2 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4
-  store i8* getelementptr inbounds ([77 x i8], [77 x i8]* @1, i32 0, i32 0), i8** %2, align 8, !tbaa !20
+  store i8* getelementptr inbounds ([91 x i8], [91 x i8]* @1, i32 0, i32 0), i8** %2, align 8, !tbaa !20
   %3 = call i32 @__kmpc_global_thread_num(%struct.ident_t* %.kmpc_loc.addr)
   store i32* %i, i32** %i.addr, align 8, !tbaa !26
   call void @llvm.dbg.declare(metadata i32** %i.addr, metadata !19, metadata !DIExpression()), !dbg !27
@@ -38,7 +38,7 @@ entry:
   %5 = load i32*, i32** %i.addr, align 8, !dbg !29, !tbaa !26
   store i32* %5, i32** %4, align 8, !dbg !28, !tbaa !26
   %6 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !28
-  store i8* getelementptr inbounds ([77 x i8], [77 x i8]* @1, i32 0, i32 0), i8** %6, align 8, !dbg !28, !tbaa !20
+  store i8* getelementptr inbounds ([91 x i8], [91 x i8]* @1, i32 0, i32 0), i8** %6, align 8, !dbg !28, !tbaa !20
   %7 = call i8* @__kmpc_omp_task_alloc(%struct.ident_t* %.kmpc_loc.addr, i32 %3, i32 1, i64 48, i64 8, i32 (i32, i8*)* bitcast (i32 (i32, %struct.kmp_task_t_with_privates*)* @.omp_task_entry. to i32 (i32, i8*)*)), !dbg !28
   %8 = bitcast i8* %7 to %struct.kmp_task_t_with_privates*, !dbg !28
   %9 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %8, i32 0, i32 0, !dbg !28
@@ -54,7 +54,7 @@ entry:
   %18 = load i32, i32* %17, align 8, !dbg !37, !tbaa !39
   store i32 %18, i32* %15, align 8, !dbg !28, !tbaa !40
   %19 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !28
-  store i8* getelementptr inbounds ([77 x i8], [77 x i8]* @1, i32 0, i32 0), i8** %19, align 8, !dbg !28, !tbaa !20
+  store i8* getelementptr inbounds ([91 x i8], [91 x i8]* @1, i32 0, i32 0), i8** %19, align 8, !dbg !28, !tbaa !20
   %20 = call i32 @__kmpc_omp_task(%struct.ident_t* %.kmpc_loc.addr, i32 %3, i8* %7), !dbg !28
   ret void, !dbg !41
 }
@@ -165,7 +165,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %i, metadata !107, metadata !DIExpression()), !dbg !109
   store i32 0, i32* %i, align 4, !dbg !109, !tbaa !39
   %3 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !110
-  store i8* getelementptr inbounds ([73 x i8], [73 x i8]* @3, i32 0, i32 0), i8** %3, align 8, !dbg !110, !tbaa !20
+  store i8* getelementptr inbounds ([87 x i8], [87 x i8]* @3, i32 0, i32 0), i8** %3, align 8, !dbg !110, !tbaa !20
   call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* %.kmpc_loc.addr, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined..1 to void (i32*, i32*, ...)*), i32* %i), !dbg !110
   store i32 0, i32* %i, align 4, !dbg !111, !tbaa !39
   br label %for.cond, !dbg !113
@@ -234,7 +234,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32** %i.addr, metadata !147, metadata !DIExpression()), !dbg !149
   %2 = load i32*, i32** %i.addr, align 8, !dbg !150, !tbaa !26
   %3 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !151
-  store i8* getelementptr inbounds ([73 x i8], [73 x i8]* @2, i32 0, i32 0), i8** %3, align 8, !dbg !151, !tbaa !20
+  store i8* getelementptr inbounds ([87 x i8], [87 x i8]* @2, i32 0, i32 0), i8** %3, align 8, !dbg !151, !tbaa !20
   %4 = load i32*, i32** %.global_tid..addr, align 8, !dbg !151
   %5 = load i32, i32* %4, align 4, !dbg !151, !tbaa !39
   %6 = call i32 @__kmpc_single(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !151
@@ -279,7 +279,7 @@ for.end:                                          ; preds = %for.cond
 
 omp_if.end:                                       ; preds = %for.end, %entry
   %13 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !171
-  store i8* getelementptr inbounds ([73 x i8], [73 x i8]* @2, i32 0, i32 0), i8** %13, align 8, !dbg !171, !tbaa !20
+  store i8* getelementptr inbounds ([87 x i8], [87 x i8]* @2, i32 0, i32 0), i8** %13, align 8, !dbg !171, !tbaa !20
   call void @__kmpc_barrier(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !171
   ret void, !dbg !172
 
@@ -289,9 +289,9 @@ terminate.handler:                                ; preds = %lpad
   unreachable, !dbg !170
 }
 
-declare dso_local void @__kmpc_end_single(%struct.ident_t*, i32)
-
 declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
+
+declare dso_local void @__kmpc_end_single(%struct.ident_t*, i32)
 
 declare dso_local i32 @__gxx_personality_v0(...)
 
@@ -353,8 +353,8 @@ attributes #10 = { noreturn nounwind }
 
 !0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = distinct !DIGlobalVariable(name: "a", scope: !2, file: !3, line: 58, type: !6, isLocal: false, isDefinition: true)
-!2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !3, producer: "clang version 10.0.1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5, splitDebugInlining: false, nameTableKind: None)
-!3 = !DIFile(filename: "integration/dataracebench/DRB100-task-reference-orig-no.cpp", directory: "/home/brad/Code/OpenRace/tests/data")
+!2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !3, producer: "clang version 10.0.0-4ubuntu1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5, splitDebugInlining: false, nameTableKind: None)
+!3 = !DIFile(filename: "../tests/data/integration/dataracebench/DRB100-task-reference-orig-no.cpp", directory: "/home/tanzir/OpenRace/build")
 !4 = !{}
 !5 = !{!0}
 !6 = !DICompositeType(tag: DW_TAG_array_type, baseType: !7, size: 3200, elements: !8)
@@ -364,7 +364,7 @@ attributes #10 = { noreturn nounwind }
 !10 = !{i32 7, !"Dwarf Version", i32 4}
 !11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{i32 1, !"wchar_size", i32 4}
-!13 = !{!"clang version 10.0.1 "}
+!13 = !{!"clang version 10.0.0-4ubuntu1 "}
 !14 = distinct !DISubprogram(name: "gen_task", linkageName: "_Z8gen_taskRi", scope: !3, file: !3, line: 60, type: !15, scopeLine: 61, flags: DIFlagPrototyped | DIFlagAllCallsDescribed, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !2, retainedNodes: !18)
 !15 = !DISubroutineType(types: !16)
 !16 = !{null, !17}
