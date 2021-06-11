@@ -14,12 +14,6 @@ jobs:
     container: coderrect/openrace-env
 
     steps:  
-    # Adding code quality scanner action
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
-        with:
-          languages: cpp
-    
       - uses: actions/checkout@v2
 
       - name: Build
@@ -27,9 +21,6 @@ jobs:
           mkdir build && cd build
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
           cmake --build . --parallel
-      
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
       
       - name: Test
         run: |
