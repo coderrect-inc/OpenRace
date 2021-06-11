@@ -15,9 +15,10 @@ limitations under the License.
 
 #include "PointerAnalysis/Program/CallSite.h"
 
-namespace pta {
 
-extern unsigned int Max_Indirect_Target;  // the limit of the size of indirect targets -> default value 999
+extern cl::opt<unsigned> Max_Indirect_Target;  // the limit of the size of indirect targets -> default value 999
+
+namespace pta {
 
 template <typename ctx>
 class CallGraphNode;

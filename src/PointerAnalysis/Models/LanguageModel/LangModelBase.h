@@ -14,6 +14,8 @@ limitations under the License.
 #include "ConsGraphBuilder.h"
 #include "PointerAnalysis/Util/Util.h"
 
+extern cl::opt<pta::IndirectResolveOption> INDIRECT_OPTION;  // default value = IndirectResolveOption::WITH_LIMIT
+
 namespace pta {
 
 // TODO: what about the function subroutine is an indirect call

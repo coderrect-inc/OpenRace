@@ -24,6 +24,12 @@ cl::opt<bool> USE_MEMLAYOUT_FILTERING(
 cl::opt<bool> CONFIG_VTABLE_MODE("Xenable-vtable", cl::desc("model vtable specially"), cl::init(false));
 cl::opt<bool> CONFIG_USE_FI_MODE("Xuse-fi-model", cl::desc("use field insensitive analyse"), cl::init(false));
 
-// pta cmd options: set to default value
-IndirectResolveOption pta::INDIRECT_OPTION = IndirectResolveOption::WITH_LIMIT;
-unsigned int pta::Max_Indirect_Target = 999;
+// pta cmd options: set to default values
+cl::opt<pta::IndirectResolveOption> INDIRECT_OPTION("INDIRECT_OPTION", cl::desc("How to resolve indirect function calls"),
+                                                    cl::values(
+                                                        clEnumValN(pta::IndirectResolveOption::SKIP, "SKIP", "do not add the resolved function to the callgraph"),
+                                                        clEnumValN(pta::IndirectResolveOption::WITH_LIMIT, "WITH_LIMIT", "only add the resolved function to the callgraph iff the indirect call limit is not exceeded"),
+                                                        clEnumValN(pta::IndirectResolveOption::CRITICAL, "CRITICAL", "make sure all the functions are inserted to callgraph")
+                                                        ),
+                                                    cl::init(IndirectResolveOption::WITH_LIMIT));
+cl::opt<unsigned> Max_Indirect_Target("Max_Indirect_Target", cl::desc("Only for WITH_LIMIT: the max size of indirect targets"), cl::init(999));

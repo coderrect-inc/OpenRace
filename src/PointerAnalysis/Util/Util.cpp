@@ -24,61 +24,6 @@ limitations under the License.
 using namespace llvm;
 using namespace pta;
 
-// parse user input pta configs
-void pta::ParseCommandLineOptions(int argc, char **argv) {
-  unsigned int ptac = 0;
-  for (int i = 0; i < argc; ++i) {
-    llvm::StringRef arg = llvm::StringRef(argv[i]);
-    if (!arg.startswith("-")) {
-      continue;  // not a user input config for pta
-    }
-
-    // TODO: other configs as mentioned in issue #169
-    if (arg.startswith("-INDIRECT_CALL")) {  // if WITH_LIMIT, set maxIndirectTarget
-      llvm::StringRef config = arg.substr(15);
-      if (config == "SKIP") {
-        INDIRECT_OPTION = pta::IndirectResolveOption::SKIP;
-      } else if (config == "CRITICAL") {
-        INDIRECT_OPTION = pta::IndirectResolveOption::CRITICAL;
-      } else {  // WITH_LIMIT : give me a number
-        INDIRECT_OPTION = pta::IndirectResolveOption::WITH_LIMIT;
-        int result;
-        bool err = config.getAsInteger(10, result);
-        if (err) {
-          llvm::errs() << "Input value is invalid or overflow: " << config << ". Use the default value.\n";
-          continue;
-        }
-        Max_Indirect_Target = result;
-      }
-    } else {
-      LOG_ERROR("No such pta config: " + arg)
-    }
-
-    // remove it from argv, otherwise llvm will output errors
-    argv[i] = nullptr;
-    ptac++;
-  }
-
-  // clear null ptr in argv
-  if (ptac > 0) {
-    char **after = new char *[argc - ptac];
-    unsigned int j = 0;
-    for (int i = 0; i < argc; ++i) {
-      if (argv[i] == nullptr) {
-        continue;
-      }
-      after[j] = argv[i];
-      j++;
-    }
-    argc = argc - ptac;
-    argv = after;
-  }
-
-  // do llvm parsing afterwards
-  llvm::InitLLVM X(argc, argv);
-  llvm::cl::ParseCommandLineOptions(argc, argv);
-}
-
 static bool isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2);
 
 static const Type *stripArrayType(const Type *type) {
