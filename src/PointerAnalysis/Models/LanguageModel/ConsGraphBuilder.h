@@ -170,7 +170,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
     LOG_DEBUG("PTA resolving indirect function pointers. size={}", funPtrs.count());
 
     bool changed = false;
-    size_t beforeResolve = this->getConsGraph()->getNodeNum();
+    [[maybe_unused]] size_t beforeResolve = this->getConsGraph()->getNodeNum();
 
     for (NodeID id : funPtrs) {
       // in case the node is collapsed
@@ -224,7 +224,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
               }
 
               // if result == CRITICAL, do not apply limit
-              bool applyLimit = result == IndirectResolveOption::WITH_LIMIT;
+              bool applyLimit = (result == IndirectResolveOption::WITH_LIMIT ? true : false);
               bool newTarget = indirectNode->getTargetFunPtr()->resolvedTo(target, applyLimit);
 
               if (newTarget) {
@@ -242,7 +242,7 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
       }
     }
     if (changed) {
-      size_t afterResolve = this->getConsGraph()->getNodeNum();
+      [[maybe_unused]] size_t afterResolve = this->getConsGraph()->getNodeNum();
       LOG_DEBUG("PTA Node Stat: Before={}, After={}, New={}", beforeResolve, afterResolve,
                 afterResolve - beforeResolve);
     }
@@ -407,8 +407,8 @@ class ConsGraphBuilder : public llvm::CtxInstVisitor<ctx, SubClass>, public PtrN
     Object<ctx, ObjT>::resetObjectID();
 
     // null and universal object nodes;
-    CGNodeBase<ctx> *nullObj = ALLOCATE(NullObj, module->getLLVMModule());
-    CGNodeBase<ctx> *uniObj = ALLOCATE(UniObj, module->getLLVMModule());
+    [[maybe_unused]] CGNodeBase<ctx> *nullObj = ALLOCATE(NullObj, module->getLLVMModule());
+    [[maybe_unused]] CGNodeBase<ctx> *uniObj = ALLOCATE(UniObj, module->getLLVMModule());
 
     // enable this if you want the special nodes to appear in the points to set
 #ifdef SPECIAL_NODE_IN_PTS
