@@ -4,16 +4,22 @@ on:
   pull_request:
     branches: 
       - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
   push:
     branches:
       - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     container: coderrect/openrace-env
 
-    steps:
+    steps:  
       - uses: actions/checkout@v2
 
       - name: Build
