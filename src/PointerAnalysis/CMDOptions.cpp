@@ -36,7 +36,10 @@ cl::opt<pta::IndirectResolveOption> INDIRECT_OPTION(
     cl::init(IndirectResolveOption::WITH_LIMIT));
 cl::opt<unsigned> Max_Indirect_Target("Max_Indirect_Target",
                                       cl::desc("Only for WITH_LIMIT: the max size of indirect targets"), cl::init(999));
-cl::opt<unsigned> ANON_REC_LIMIT("ANON_REC_LIMIT",
-                                 cl::desc("The upperbound of the total size of recursively-created anonymous objects in a program"), cl::init(999));
-cl::opt<unsigned> ANON_REC_DEPTH_LIMIT("ANON_REC_DEPTH_LIMIT",
-                                       cl::desc("the upperbound of the depth of types considered for a recursively-created anonymous object in a program"), cl::init(10));
+cl::opt<unsigned> ANON_REC_LIMIT(
+    "ANON_REC_LIMIT",
+    cl::desc("The upperbound of the total size of recursively-created anonymous objects in a program"), cl::init(999));
+cl::opt<unsigned> ANON_REC_DEPTH_LIMIT(
+    "ANON_REC_DEPTH_LIMIT",
+    cl::desc("the upperbound of the depth of types considered for a recursively-created anonymous object in a program"),
+    cl::init(10));
