@@ -111,6 +111,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OmpForInit>(callInst));
         } else if (OpenMPModel::isForStaticFini(funcName)) {
           instructions.push_back(std::make_shared<OmpForFini>(callInst));
+        } else if (OpenMPModel::isForDispatchInit(funcName)) {
+          instructions.push_back(std::make_shared<OmpDispatchInit>(callInst));
+        } else if (OpenMPModel::isForDispatchNext(funcName)) {
+          instructions.push_back(std::make_shared<OmpDispatchNext>(callInst));
+        } else if (OpenMPModel::isForDispatchFini(funcName)) {
+          instructions.push_back(std::make_shared<OmpDispatchFini>(callInst));
         } else if (OpenMPModel::isSingleStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {
@@ -133,6 +139,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
         } else if (OpenMPModel::isUnsetLock(funcName)) {
           instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
+        } else if (OpenMPModel::isOrderedStart(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
+        } else if (OpenMPModel::isOrderedEnd(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);

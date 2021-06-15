@@ -42,6 +42,8 @@ inline bool isForStaticInit(const llvm::StringRef& funcName) {
 inline bool isForStaticFini(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_for_static_fini"); }
 
 inline bool isForDispatchInit(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_init"); }
+inline bool isForDispatchNext(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_next"); }
+inline bool isForDispatchFini(const llvm::StringRef &funcName) { return funcName.startswith("__kmpc_dispatch_fini"); }
 
 inline bool isSingleStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_single"); }
 inline bool isSingleEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_single"); }
@@ -62,6 +64,9 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
+
+inline bool isOrderedStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_ordered"); }
+inline bool isOrderedEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_ordered"); }
 
 // Return true for omp calls that do not need to be modelled (e.g. push_num_threads)
 inline bool isNoEffect(const llvm::StringRef& funcName) {
