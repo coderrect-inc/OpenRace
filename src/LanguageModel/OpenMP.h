@@ -43,7 +43,7 @@ inline bool isForStaticFini(const llvm::StringRef& funcName) { return funcName.e
 
 inline bool isForDispatchInit(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_init"); }
 inline bool isForDispatchNext(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_next"); }
-inline bool isForDispatchFini(const llvm::StringRef &funcName) { return funcName.startswith("__kmpc_dispatch_fini"); }
+inline bool isForDispatchFini(const llvm::StringRef& funcName) { return funcName.startswith("__kmpc_dispatch_fini"); }
 
 inline bool isSingleStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_single"); }
 inline bool isSingleEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_single"); }
