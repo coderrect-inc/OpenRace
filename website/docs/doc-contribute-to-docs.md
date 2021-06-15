@@ -93,3 +93,17 @@ Docusaurus has built-in support for [MDX](https://mdxjs.com/), which allows you 
 
 Refer to this [Docusaurus page](https://v2.docusaurus.io/docs/markdown-features/react) for more information.
 
+
+## Testing locally (Optional)
+
+If you would like to test your updated docs locally,
+you need to install the following apps:
+- Node.js version >= 12.13.0
+- Yarn version >=1.5
+
+Then you should be able to preview your docs using:
+```bash
+cd website
+yarn install
+yarn start
+```
