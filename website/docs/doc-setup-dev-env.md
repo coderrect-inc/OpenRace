@@ -117,6 +117,7 @@ cmake \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DCMAKE_BUILD_TYPE=Debug \
     -DLLVM_DIR=$LLVM_DIR \
+    -DENABLE_WARNING=ON \
     -G Ninja \
     ..
 # Build OpenRace
@@ -132,7 +133,8 @@ The cmake options do the following:
  Builds the project in debug mode. This makes it is easier to debug if/when issues occur.
  - `LLVM_DIR=$LLVM_DIR`  
  Should point to a directory containing `LLVMConfig.cmake`. See the "Install LLVM 10.0.1" section above.
-
+ - `ENABLE_WARNING=ON`  
+ Enable compiler warnings while building the project. The enabled warnings can be found [here](https://github.com/coderrect-inc/OpenRace/blob/b340620db611d606275abf9aed1904ce0c50b87a/cmake/CompilerWarnings.cmake).
 
 ## Running Tests
 
