@@ -734,7 +734,7 @@ std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpInsts(const l
 // Start by assuming the true block is guarded
 // Iterate from the true block until we find a block that has an unguarded predecessor
 // Cannot handle loops
-std::optional<std::set<const llvm::BasicBlock *>> getGuardedBlocks(const llvm::BranchInst *branchInst) {
+std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *branchInst) {
   // This branch should use a cmp eq instruction
   // Otherwise the true/false blocks below may be wrong
   assert(llvm::isa<llvm::CmpInst>(branchInst->getOperand(0)));
@@ -799,12 +799,10 @@ void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
       if (branch == nullptr) continue;
 
       // Find all the blocks guarded by this branch
-      // If there are any other paths bail out and return none instead
       auto guarded = getGuardedBlocks(branch);
-      if (!guarded.has_value()) continue;
 
       // insert the blocks into the guardedBlocks map
-      for (auto const block : guarded.value()) {
+      for (auto const block : guarded) {
         guardedBlocks[block] = tid;
       }
     }
