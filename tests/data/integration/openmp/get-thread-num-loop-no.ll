@@ -1,5 +1,5 @@
-; ModuleID = 'integration/openmp/get-thread-num-loop-yes.c'
-source_filename = "integration/openmp/get-thread-num-loop-yes.c"
+; ModuleID = 'integration/openmp/get-thread-num-loop-no.c'
+source_filename = "integration/openmp/get-thread-num-loop-no.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -7,7 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
-@1 = private unnamed_addr constant [57 x i8] c";integration/openmp/get-thread-num-loop-yes.c;main;7;1;;\00", align 1
+@1 = private unnamed_addr constant [56 x i8] c";integration/openmp/get-thread-num-loop-no.c;main;7;1;;\00", align 1
 @.str.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: nounwind uwtable
@@ -23,7 +23,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %counter, metadata !15, metadata !DIExpression()), !dbg !17
   store i32 0, i32* %counter, align 4, !dbg !17, !tbaa !18
   %3 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !22
-  store i8* getelementptr inbounds ([57 x i8], [57 x i8]* @1, i32 0, i32 0), i8** %3, align 8, !dbg !22, !tbaa !23
+  store i8* getelementptr inbounds ([56 x i8], [56 x i8]* @1, i32 0, i32 0), i8** %3, align 8, !dbg !22, !tbaa !23
   call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* %.kmpc_loc.addr, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined. to void (i32*, i32*, ...)*), i32* %counter), !dbg !22
   %4 = load i32, i32* %counter, align 4, !dbg !26, !tbaa !18
   %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i32 %4), !dbg !27
@@ -59,7 +59,7 @@ entry:
   %call = call i32 @omp_get_thread_num(), !dbg !53
   store i32 %call, i32* %tid, align 4, !dbg !52, !tbaa !18
   %2 = load i32, i32* %tid, align 4, !dbg !54, !tbaa !18
-  %cmp = icmp sge i32 %2, 1, !dbg !55
+  %cmp = icmp eq i32 %2, 1, !dbg !55
   br i1 %cmp, label %if.then, label %if.end, !dbg !56
 
 if.then:                                          ; preds = %entry
@@ -145,7 +145,7 @@ attributes #5 = { nounwind }
 !llvm.ident = !{!12}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 10.0.1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !3, splitDebugInlining: false, nameTableKind: None)
-!1 = !DIFile(filename: "integration/openmp/get-thread-num-loop-yes.c", directory: "/home/brad/Code/OpenRace/tests/data")
+!1 = !DIFile(filename: "integration/openmp/get-thread-num-loop-no.c", directory: "/home/brad/Code/OpenRace/tests/data")
 !2 = !{}
 !3 = !{!4}
 !4 = !DISubprogram(name: "omp_get_thread_num", scope: !5, file: !5, line: 68, type: !6, flags: DIFlagPrototyped, spFlags: DISPFlagOptimized, retainedNodes: !2)

@@ -76,12 +76,9 @@ TEST_CASE("OpenMP get_thread_num", "[integration][omp]") {
       Oracle("get-thread-num-no.ll", {}),
       Oracle("get-thread-num-yes.ll", {"get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14",
                                        "get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14"}),
-      Oracle("get-thread-num-interproc-yes.ll",
-             {"get-thread-num-interproc-yes.c:4:44 get-thread-num-interproc-yes.c:4:44"}),
-      Oracle("get-thread-num-loop-yes.ll", {"get-thread-num-loop-yes.c:13:16 get-thread-num-loop-yes.c:13:16",
-                                            "get-thread-num-loop-yes.c:13:16 get-thread-num-loop-yes.c:13:16"}),
-      Oracle("get-thread-num-nested-branch-yes.ll",
-             {"get-thread-num-nested-branch-yes.c:15:17 get-thread-num-nested-branch-yes.c:15:17"}),
+      // Oracle("get-thread-num-interproc-no.ll", {}), // cannot handle interproc yet
+      Oracle("get-thread-num-loop-no.ll", {}),
+      Oracle("get-thread-num-nested-branch-no.ll", {}),
 
   };
   checkOracles(oracles, "integration/openmp/");

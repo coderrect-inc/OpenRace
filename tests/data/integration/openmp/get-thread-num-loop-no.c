@@ -8,7 +8,7 @@ int main() {
   {
     int tid = omp_get_thread_num();
 
-    if (tid >= 1) {
+    if (tid == 1) {
       for (int i = 0; i < tid; i++) {
         counter++;
       }
