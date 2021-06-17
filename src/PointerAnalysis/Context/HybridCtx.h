@@ -97,7 +97,7 @@ template <typename... Args>
 struct hash<pta::HybridCtx<Args...>> {
   template <size_t... N>
   size_t hash_tuple(const pta::HybridCtx<Args...> &wrapper, std::index_sequence<N...> sequence) const {
-    llvm::hash_code code = llvm::hash_combine(((const void *)std::get<N>(wrapper.ctx))...);
+    llvm::hash_code code = llvm::hash_combine(static_cast<const void *>(std::get<N>(wrapper.ctx))...);
     return hash_value(code);
   }
 
