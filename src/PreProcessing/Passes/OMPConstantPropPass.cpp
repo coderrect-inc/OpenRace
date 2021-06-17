@@ -87,7 +87,8 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
         if (auto GV = dyn_cast<GlobalVariable>(LI->getPointerOperand()->stripPointerCasts())) {
           if (GV->hasInitializer() && !GV->hasCommonLinkage()) {
             // from https://llvm.org/docs/LangRef.html:
-            // “common” linkage is most similar to “weak” linkage, but they are used for tentative definitions in C, such as “int X;” at global scope.
+            // “common” linkage is most similar to “weak” linkage, but they are used for tentative definitions in C,
+            // such as “int X;” at global scope.
             if (GV->isConstant() || !hasGlobalOverwritten(GV)) {
               C = GV->getInitializer();
             }
