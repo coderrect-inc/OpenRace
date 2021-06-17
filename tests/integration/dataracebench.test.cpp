@@ -163,7 +163,11 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
       Oracle("DRB108-atomic-orig-no.ll", {}),
-      // 109-110 ordered
+      Oracle("DRB109-orderedmissing-orig-yes.ll", {
+                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6",
+                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"
+                                                  }),
+      Oracle("DRB110-ordered-orig-no.ll", {}),
       Oracle("DRB111-linearmissing-orig-yes.ll",
              {
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:67:7",  // read-write
