@@ -730,10 +730,10 @@ std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpInsts(const l
   return result;
 }
 
-// Get list of blocks guarded by the tre case of this branch.
-// Return None if the branch instruction does not dominate the false branch destintation
-//  or if the false branch destination does not post-dominate the branch instruction
-// E.g. all paths from the branch must go thorugh the false label, and vice versa
+// Get list of blocks guarded by the true case of this branch.
+// Start by assuming the true block is guarded
+// Iterate from the true block until we find a block that has an unguarded predecessor
+// Cannot handle loops
 std::optional<std::set<const llvm::BasicBlock *>> getGuardedBlocks(const llvm::BranchInst *branchInst) {
   // This branch should use a cmp eq instruction
   // Otherwise the true/false blocks below may be wrong
@@ -745,23 +745,26 @@ std::optional<std::set<const llvm::BasicBlock *>> getGuardedBlocks(const llvm::B
 
   // This will be the returned result
   std::set<const llvm::BasicBlock *> guardedBlocks;
+  guardedBlocks.insert(trueBlock);
 
-  std::vector<const llvm::BasicBlock *> worklist;
   std::set<const llvm::BasicBlock *> visited;
+  std::vector<const llvm::BasicBlock *> worklist;
 
-  // Find all guarded blocks by traversing from start to end
-  worklist.push_back(trueBlock);
-  while (!worklist.empty()) {
+  visited.insert(trueBlock);
+  for (auto next : successors(trueBlock)) {
+    worklist.push_back(next);
+  }
+
+  do {
     auto const currentBlock = worklist.back();
     worklist.pop_back();
+
+    auto hasUnguardedPred = std::any_of(
+        pred_begin(currentBlock), pred_end(currentBlock),
+        [&guardedBlocks](const llvm::BasicBlock *pred) { return guardedBlocks.find(pred) == guardedBlocks.end(); });
+
+    if (hasUnguardedPred) continue;
     visited.insert(currentBlock);
-
-    // stop traversing at end block
-    if (currentBlock == falseBlock) continue;
-
-    // If we reach a terminating block without hitting end block first, return None
-    // This prevents us form handling regions that contain return or thrown exceptions
-    if (succ_size(currentBlock) == 0) return std::nullopt;
 
     guardedBlocks.insert(currentBlock);
 
@@ -770,40 +773,8 @@ std::optional<std::set<const llvm::BasicBlock *>> getGuardedBlocks(const llvm::B
         worklist.push_back(next);
       }
     }
-  }
 
-  // Check that start dominates end by traversing the other way
-  // TODO: would it be better to use LLVM dominator tree stuff here?
-  worklist.clear();
-  visited.clear();
-  worklist.push_back(falseBlock);
-
-  while (!worklist.empty()) {
-    auto const currentBlock = worklist.back();
-    worklist.pop_back();
-    visited.insert(currentBlock);
-
-    // stop traversing at start block or the original branching block
-    if (currentBlock == trueBlock || branchInst->getParent()) continue;
-
-    // If we reach a terminating block without hitting end block first, return None
-    // This prevents us form handling regions that contain return or thrown exceptions
-    if (pred_size(currentBlock) == 0) return std::nullopt;
-
-    // If we encounter a block not found by traversing from start to end, return None (excluding the end block)
-    // This means the original branch block does not dominate end
-    if (currentBlock != falseBlock && guardedBlocks.find(currentBlock) == guardedBlocks.end()) return std::nullopt;
-
-    for (auto prev : predecessors(currentBlock)) {
-      if (visited.find(prev) == visited.end()) {
-        worklist.push_back(prev);
-      }
-    }
-  }
-
-  // Check that we encountered the same blocks traversing from start->end as end->start
-  // Only need to check size because we checked equality during end->start traversal
-  if (visited.size() != guardedBlocks.size()) return std::nullopt;
+  } while (!worklist.empty());
 
   return guardedBlocks;
 }
@@ -835,8 +806,6 @@ void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
       // insert the blocks into the guardedBlocks map
       for (auto const block : guarded.value()) {
         guardedBlocks[block] = tid;
-
-        llvm::outs() << tid << " guards \n" << *block << "\n";
       }
     }
   }

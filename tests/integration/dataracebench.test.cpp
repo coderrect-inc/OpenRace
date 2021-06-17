@@ -119,7 +119,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 72 task
       // 73 Broken Debug Info
       // 74 critical and flush
-      // 75 path based on get_thread_num
+      Oracle("DRB075-getthreadnum-orig-yes.ll",
+             {"DRB075-getthreadnum-orig-yes.c:60:18 DRB075-getthreadnum-orig-yes.c:64:33"}),
       Oracle("DRB076-flush-orig-no.ll", {}),
       Oracle("DRB077-single-orig-no.ll", {}),
       // 78-79 task
