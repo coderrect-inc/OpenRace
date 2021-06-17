@@ -1,8 +1,9 @@
 name: build-docker-image
 
 on:
-  schedule:
-    - cron: '0 6 * * *' # run at 6 AM UTC (12 AM CST)
+  push:
+    branches:
+      - update-docker-action
 
 jobs:
   push_to_registry:
