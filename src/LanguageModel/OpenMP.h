@@ -83,9 +83,9 @@ inline bool isOutlined(const llvm::StringRef& funcName) { return funcName.starts
 
 // When OpenMP is compiled with debug info an outer "debug" outline function is generated
 inline bool isDebugOutlined(const llvm::StringRef& funcName) { return funcName.startswith(".omp_outlined._debug"); }
- 
+
 inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc"); }
- 
+
 inline bool isGetThreadNum(const llvm::StringRef& funcName) { return funcName.equals("omp_get_thread_num"); }
 
 }  // namespace OpenMPModel
