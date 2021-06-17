@@ -41,9 +41,6 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
       Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
                                            "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
       Oracle("duplicate-omp-fork.ll", {}),
-      Oracle("get-thread-num-yes.ll", {"get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14",
-                                       "get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14"}),
-      Oracle("get-thread-num-no.ll", {}),
   };
 
   checkOracles(oracles, "integration/openmp/");
@@ -71,5 +68,21 @@ TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
              }),
 
       Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})};
+  checkOracles(oracles, "integration/openmp/");
+}
+
+TEST_CASE("OpenMP get_thread_num", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("get-thread-num-no.ll", {}),
+      Oracle("get-thread-num-yes.ll", {"get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14",
+                                       "get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14"}),
+      Oracle("get-thread-num-interproc-yes.ll",
+             {"get-thread-num-interproc-yes.c:4:44 get-thread-num-interproc-yes.c:4:44"}),
+      Oracle("get-thread-num-loop-yes.ll", {"get-thread-num-loop-yes.c:13:16 get-thread-num-loop-yes.c:13:16",
+                                            "get-thread-num-loop-yes.c:13:16 get-thread-num-loop-yes.c:13:16"}),
+      Oracle("get-thread-num-nested-branch-yes.ll",
+             {"get-thread-num-nested-branch-yes.c:15:17 get-thread-num-nested-branch-yes.c:15:17"}),
+
+  };
   checkOracles(oracles, "integration/openmp/");
 }
