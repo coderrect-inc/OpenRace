@@ -34,6 +34,17 @@ DEBUG_COUNTER(CPCounter, "constprop-transform", "Controls which instructions are
 
 namespace {
 
+// only isa<StoreInst> is not enough to guarantee the GV has no overwritten,
+// e.g., @counter in DRB088-dynamic-storage-orig-yes.ll:
+//   source code: counter++
+//   IR: there is always a StoreInst after LoadInst:
+//       %0 = load i32*, i32** @counter, align 8, !dbg !21, !tbaa !22  --> load to %0
+//       %1 = load i32, i32* %0, align 4, !dbg !26, !tbaa !27
+//       %inc = add nsw i32 %1, 1, !dbg !26
+//       store i32 %inc, i32* %0, align 4, !dbg !26, !tbaa !27         --> store to %0: changed
+// to precisely determine whether GV (counter here) will be overwritten afterwards is complex and expensive,
+// which requires inter-procedural data-flow analysis/forward slicing.
+// TODO: find a solution?
 inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   for (auto user : GV->users()) {
     if (isa<StoreInst>(user)) {
@@ -69,10 +80,14 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
         continue;
       }  // Don't muck with dead instructions...
 
+      // The intuition is to identify the constant global var that passed to openmp as a bound
+      // of array index accesses, to give convenience for pointer analysis and shared memory access analysis
       Constant *C = nullptr;
       if (auto LI = dyn_cast<LoadInst>(I)) {
         if (auto GV = dyn_cast<GlobalVariable>(LI->getPointerOperand()->stripPointerCasts())) {
-          if (GV->hasInitializer()) {
+          if (GV->hasInitializer() && !GV->hasCommonLinkage()) {
+            // from https://llvm.org/docs/LangRef.html:
+            // “common” linkage is most similar to “weak” linkage, but they are used for tentative definitions in C, such as “int X;” at global scope.
             if (GV->isConstant() || !hasGlobalOverwritten(GV)) {
               C = GV->getInitializer();
             }

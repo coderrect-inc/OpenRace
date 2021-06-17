@@ -13,7 +13,7 @@ limitations under the License.
 
 #include <llvm/IR/PassManager.h>
 
-// TO canoicalize GEP instruction (required only by Field-Sensitive Pointer
+// TO canoicalize GEP (getelementptr) instruction (required only by Field-Sensitive Pointer
 // Analysis)
 
 // 1st, turn
