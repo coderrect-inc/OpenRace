@@ -10,8 +10,6 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
