@@ -44,12 +44,26 @@ class ReduceAnalysis {
   bool reduceContains(const llvm::Instruction* reduce, const llvm::Instruction* inst) const;
 };
 
-class GetThreadNumAnalysis {
-  // Map of blocks to the threadID guarding them
-  std::map<const llvm::BasicBlock*, unsigned int> guardedBlocks;
+class SimpleGetThreadNumAnalysis {
+  // map of blocks to the tid they are guarded by
+  // simple implementation can only handle one block being guarded
+  std::map<const llvm::BasicBlock*, u_int64_t> guardedBlocks;
+
+  // compute any guarded blocks for this omp_get_thread call and add them to the guardedBlocks map
+  void computeGuardedBlocks(const Event* event);
+
+  // set of functions who's guarded blocks have already been computed
+  std::set<const llvm::Function*> visited;
+
+  // Get the tid that guards this event or None if it is not guarded
+  std::optional<u_int64_t> getGuardedBy(const Event* event) const;
 
  public:
-  void doit(const ProgramTrace& program);
+  SimpleGetThreadNumAnalysis(const ProgramTrace& program);
+
+  // Check if both events are guaranteed to be executed by a particular thread
+  // via a branch on omp_get_thread_num checked against a constant value
+  bool guardedBySameTid(const Event* event1, const Event* event2) const;
 };
 
 class OpenMPAnalysis {
@@ -57,7 +71,7 @@ class OpenMPAnalysis {
   llvm::FunctionAnalysisManager FAM;
 
   ReduceAnalysis reduceAnalysis;
-  GetThreadNumAnalysis getThreadNumAnalysis;
+  SimpleGetThreadNumAnalysis getThreadNumAnalysis;
 
   // Start/End of omp loop
   using LoopRegion = Region;
@@ -71,7 +85,7 @@ class OpenMPAnalysis {
   bool inParallelFor(const race::MemAccessEvent* event);
 
  public:
-  OpenMPAnalysis();
+  OpenMPAnalysis(const ProgramTrace& program);
 
   // return true if events are array accesses who's access sets could overlap
   bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
@@ -97,9 +111,11 @@ class OpenMPAnalysis {
   // return true if both events are in compatible sections
   static bool insideCompatibleSections(const Event* event1, const Event* event2);
 
-  // return true if both events are in a branch that ensures a specific thread will execute it using omp_get_thread_num
-  // bool areGuardedBySameTid(const Event* event1, const Event* event2);
-  void doit(const ProgramTrace& program) { getThreadNumAnalysis.doit(program); }
+  // return true if both events are gauranteed to execute on the same thread
+  // by a check against omp_get_thread_num
+  bool guardedBySameTid(const Event* event1, const Event* event2) const {
+    return getThreadNumAnalysis.guardedBySameTid(event1, event2);
+  }
 };
 
 }  // namespace race

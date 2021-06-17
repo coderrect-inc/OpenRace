@@ -98,7 +98,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB048-firstprivate-orig-no.ll", {}),
       Oracle("DRB049-fprintf-orig-no.ll", {}),
       Oracle("DRB050-functionparameter-orig-no.ll", {}),
-      // 51 path based on get_thread_num
+      Oracle("DRB051-getthreadnum-orig-no.ll", {}),
       // 52 indirect array
       Oracle("DRB053-inneronly1-orig-no.ll", {}),  // multi-dimen array
       Oracle("DRB054-inneronly2-orig-no.ll", {}),  // multi-dimen array

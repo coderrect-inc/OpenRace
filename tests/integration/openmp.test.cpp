@@ -26,13 +26,13 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
                  "reduction-nowait-yes.c:16:27 reduction-nowait-yes.c:11:31",
              }),
       Oracle("master-used-after-yes.ll", {"master-used-after-yes.c:11:9 master-used-after-yes.c:14:22"}),
-      Oracle("single-message-printer.ll", 
-            {
-              "single-message-printer.c:11:14 single-message-printer.c:11:14",
-              "single-message-printer.c:11:14 single-message-printer.c:11:14",
-              "single-message-printer.c:18:15 single-message-printer.c:18:15",
-              "single-message-printer.c:18:15 single-message-printer.c:18:15",
-            }),
+      Oracle("single-message-printer.ll",
+             {
+                 "single-message-printer.c:11:14 single-message-printer.c:11:14",
+                 "single-message-printer.c:11:14 single-message-printer.c:11:14",
+                 "single-message-printer.c:18:15 single-message-printer.c:18:15",
+                 "single-message-printer.c:18:15 single-message-printer.c:18:15",
+             }),
       Oracle("single-used-after-no.ll", {}),
       Oracle("thread-sanitizer-falsepos.ll", {}),
       Oracle("sections-simple-no.ll", {}),
@@ -41,6 +41,9 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
       Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
                                            "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
       Oracle("duplicate-omp-fork.ll", {}),
+      Oracle("get-thread-num-yes.ll", {"get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14",
+                                       "get-thread-num-yes.c:12:14 get-thread-num-yes.c:12:14"}),
+      Oracle("get-thread-num-no.ll", {}),
   };
 
   checkOracles(oracles, "integration/openmp/");
