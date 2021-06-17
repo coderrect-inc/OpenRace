@@ -277,7 +277,9 @@ const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) 
   return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
-OpenMPAnalysis::OpenMPAnalysis() { PB.registerFunctionAnalyses(FAM); }
+OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program) : getThreadNumAnalysis(program) {
+  PB.registerFunctionAnalyses(FAM);
+}
 
 bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
   auto gep1 = getArrayAccess(event1);
@@ -696,6 +698,148 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 
   return false;
 }
+
+#include "IR/IR.h"
+#include "Trace/ProgramTrace.h"
+#include "Trace/ThreadTrace.h"
+
+namespace {
+
+// Get any cmp insts that use this value and compare against a constant integer
+// return list of pairs (cmp, c) where cmp is the cmpInst and c is the constant value compared against
+std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpInsts(const llvm::Value *value) {
+  std::vector<std::pair<const llvm::CmpInst *, uint64_t>> result;
+
+  for (auto const user : value->users()) {
+    auto cmp = llvm::dyn_cast<llvm::CmpInst>(user);
+    if (cmp == nullptr) continue;
+
+    if (cmp->getPredicate() != llvm::CmpInst::Predicate::ICMP_EQ) continue;
+
+    if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(1))) {
+      result.emplace_back(cmp, val->getZExtValue());
+      continue;
+    }
+
+    if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(0))) {
+      result.emplace_back(cmp, val->getZExtValue());
+      continue;
+    }
+  }
+
+  return result;
+}
+
+// Get list of blocks guarded by the true case of this branch.
+// Start by assuming the true block is guarded
+// Iterate from the true block until we find a block that has an unguarded predecessor
+// Cannot handle loops
+std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *branchInst) {
+  // This branch should use a cmp eq instruction
+  // Otherwise the true/false blocks below may be wrong
+  assert(llvm::isa<llvm::CmpInst>(branchInst->getOperand(0)));
+  assert(llvm::cast<llvm::CmpInst>(branchInst->getOperand(0))->getPredicate() == llvm::CmpInst::Predicate::ICMP_EQ);
+
+  auto trueBlock = llvm::cast<llvm::BasicBlock>(branchInst->getOperand(2));
+  auto falseBlock = llvm::cast<llvm::BasicBlock>(branchInst->getOperand(1));
+
+  // This will be the returned result
+  std::set<const llvm::BasicBlock *> guardedBlocks;
+  guardedBlocks.insert(trueBlock);
+
+  std::set<const llvm::BasicBlock *> visited;
+  std::vector<const llvm::BasicBlock *> worklist;
+
+  visited.insert(trueBlock);
+  for (auto next : successors(trueBlock)) {
+    worklist.push_back(next);
+  }
+
+  do {
+    auto const currentBlock = worklist.back();
+    worklist.pop_back();
+
+    auto hasUnguardedPred = std::any_of(
+        pred_begin(currentBlock), pred_end(currentBlock),
+        [&guardedBlocks](const llvm::BasicBlock *pred) { return guardedBlocks.find(pred) == guardedBlocks.end(); });
+
+    if (hasUnguardedPred) continue;
+    visited.insert(currentBlock);
+
+    guardedBlocks.insert(currentBlock);
+
+    for (auto next : successors(currentBlock)) {
+      if (visited.find(next) == visited.end()) {
+        worklist.push_back(next);
+      }
+    }
+
+  } while (!worklist.empty());
+
+  return guardedBlocks;
+}
+
+}  // namespace
+
+void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
+  assert(event->getIRInst()->type == IR::Type::OpenMPGetThreadNum);
+  auto const func = event->getFunction();
+  // Check if we have already computed guardedBlocks for this LLVM function
+  if (visited.find(func) != visited.end()) return;
+
+  // Find all cmpInsts that compare the omp_get_thread_num call to a const value
+  auto const cmpInsts = getConstCmpInsts(event->getInst());
+  for (auto const &pair : cmpInsts) {
+    auto const cmpInst = pair.first;
+    auto const tid = pair.second;
+
+    // Find all branches that use the result of the cmp inst
+    for (auto user : cmpInst->users()) {
+      auto branch = llvm::dyn_cast<llvm::BranchInst>(user);
+      if (branch == nullptr) continue;
+
+      // Find all the blocks guarded by this branch
+      auto guarded = getGuardedBlocks(branch);
+
+      // insert the blocks into the guardedBlocks map
+      for (auto const block : guarded) {
+        guardedBlocks[block] = tid;
+      }
+    }
+  }
+
+  // Mark this function as visited
+  visited.insert(func);
+}
+
+std::optional<u_int64_t> SimpleGetThreadNumAnalysis::getGuardedBy(const Event *event) const {
+  // check if this event's block is guarded
+  auto guarded = guardedBlocks.find(event->getInst()->getParent());
+  if (guarded == guardedBlocks.end()) return std::nullopt;
+  return guarded->second;
+}
+
+SimpleGetThreadNumAnalysis::SimpleGetThreadNumAnalysis(const ProgramTrace &program) {
+  for (auto const &thread : program.getThreads()) {
+    for (auto const &event : thread->getEvents()) {
+      // Only care about get_thread_num calls
+      if (event->getIRInst()->type != IR::Type::OpenMPGetThreadNum) continue;
+      computeGuardedBlocks(event.get());
+    }
+  }
+}
+
+bool SimpleGetThreadNumAnalysis::guardedBySameTid(const Event *event1, const Event *event2) const {
+  auto tid1 = getGuardedBy(event1);
+  if (!tid1.has_value()) return false;
+
+  auto tid2 = getGuardedBy(event2);
+  if (!tid2.has_value()) return false;
+
+  return tid1.value() == tid2.value();
+}
+
+// void GetThreadNumAnalysis::doit(const ProgramTrace &program) {}
 
 bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
   // assertion: threads of the same team are identical

@@ -77,7 +77,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   }
 
   race::ProgramTrace program(module.get());
-  race::OpenMPAnalysis arrayIndexAnalysis;
+  race::OpenMPAnalysis arrayIndexAnalysis(program);
 
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 5);
@@ -155,7 +155,7 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
   }
 
   race::ProgramTrace program(module.get());
-  race::OpenMPAnalysis arrayIndexAnalysis;
+  race::OpenMPAnalysis arrayIndexAnalysis(program);
 
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 3);

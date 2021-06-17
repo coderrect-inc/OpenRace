@@ -42,7 +42,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
   race::SimpleAlias simpleAlias;
-  race::OpenMPAnalysis ompAnalysis;
+  race::OpenMPAnalysis ompAnalysis(program);
 
   race::Reporter reporter;
 
@@ -78,6 +78,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
           ompAnalysis.bothInMasterBlock(write, other) || race::OpenMPAnalysis::insideCompatibleSections(write, other)) {
         return;
       }
+
+      // No race if guaranteed to be executed by same thread
+      if (ompAnalysis.guardedBySameTid(write, other)) return;
     }
 
     // Race detected
