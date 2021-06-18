@@ -13,8 +13,7 @@ limitations under the License.
 
 #include <llvm/Analysis/PostDominators.h>
 #include <llvm/Analysis/ScopedNoAliasAA.h>
-#include <llvm/IR/Dominators.h>
-#include <llvm/IR/Instructions.h>
+#include <llvm/Support/CommandLine.h>
 
 #include "IR/IRImpls.h"
 #include "LanguageModel/LLVMInstrinsics.h"
@@ -22,6 +21,8 @@ limitations under the License.
 #include "LanguageModel/pthread.h"
 
 using namespace race;
+
+extern llvm::cl::opt<bool> DEBUG_PTA;
 
 namespace {
 
@@ -68,19 +69,25 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-        //        loadInst->print(llvm::outs(), false);
+        if (DEBUG_PTA) {
+          loadInst->print(llvm::outs(), false);
+        }
         if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-        //        storeInst->print(llvm::outs(), false);
+        if (DEBUG_PTA) {
+          storeInst->print(llvm::outs(), false);
+        }
         if (storeInst->isAtomic() || storeInst->isVolatile() || hasThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
-        //        callInst->print(llvm::outs(), false);
+        if (DEBUG_PTA) {
+          callInst->print(llvm::outs(), false);
+        }
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls
           instructions.push_back(std::make_shared<race::CallIR>(callInst));
