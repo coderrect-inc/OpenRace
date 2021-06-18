@@ -65,26 +65,6 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   for (auto const &basicblock : func.getBasicBlockList()) {
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
-      //      inst->print(llvm::outs(), false);
-
-      //      switch (inst->getOpcode()) {
-      //        case llvm::Instruction::Load: {
-      //          auto loadInst = llvm::cast<llvm::LoadInst>(inst);
-      //          auto ptr = loadInst->getPointerOperand();
-      //          ptr -> print(llvm::outs(), false);
-      //          loadInst->print(llvm::outs(), false);
-      //          break;
-      //        }
-      //        case llvm::Instruction::Store: {
-      //          auto storeInst = llvm::cast<llvm::StoreInst>(inst);
-      //          storeInst->print(llvm::outs(), false);
-      //          break;
-      //        }
-      //        default: {
-      //          llvm::outs() << "Not handled opcode: " << inst->getOpcode() << "\n";
-      //          break;
-      //        }
-      //      }
 
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {

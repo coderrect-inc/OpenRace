@@ -115,7 +115,7 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
     Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
 
     if (type == nullptr) {
-      LOG_ERROR("cannot infer type for omp task alloc? callsite={}", *callsite);
+      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
       return;
     }
 
@@ -143,7 +143,7 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
     this->consGraph->addConstraints(taskObj, ptr, Constraints::addr_of);
 
   } else {
-    LOG_WARN("implement for alloc: allocsite={}", *callsite);
+    llvm::errs() << "implement for alloc: allocsite=" << callsite << "\n";
   }
 }
 
