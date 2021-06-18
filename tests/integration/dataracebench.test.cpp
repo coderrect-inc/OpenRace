@@ -57,7 +57,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB023-sections1-orig-yes.ll", {"DRB023-sections1-orig-yes.c:58:7 DRB023-sections1-orig-yes.c:60:7",
                                               "DRB023-sections1-orig-yes.c:60:7 DRB023-sections1-orig-yes.c:58:7"}),
       // DRB 24 and 25 are simd
-      // DRB 26 is target
+      Oracle("DRB026-targetparallelfor-orig-yes.ll",
+             {"DRB026-targetparallelfor-orig-yes.c:64:9 DRB026-targetparallelfor-orig-yes.c:64:10"}),
       // DRB 27 is task
 
       // FIXME: the racy object is opted out by SROA
@@ -115,7 +116,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB068-restrictpointer2-orig-no.ll", {}),
       Oracle("DRB069-sectionslock1-orig-no.ll", {}),
       // 70 simd
-      // 71 target
+      Oracle("DRB071-targetparallelfor-orig-no.ll", {}),
       // 72 task
       // 73 Broken Debug Info
       // 74 critical and flush
@@ -154,19 +155,18 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 94 ordered + depend sink
       // 95 taskloop
       // 96 collapse + taskloop + multi-dimen
-      // 97 target
+      // 97 target teams+distribute
       // 98 simd + collpase
-      // 99 target
+      Oracle("DRB099-targetparallelfor2-orig-no.ll", {}),
       // 100-101 task
       // 102 threadprivate + copyprivate => Oracle("DRB102-copyprivate-orig-no.ll", {}),
       Oracle("DRB103-master-orig-no.ll", {}),
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
       Oracle("DRB108-atomic-orig-no.ll", {}),
-      Oracle("DRB109-orderedmissing-orig-yes.ll", {
-                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6",
-                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"
-                                                  }),
+      Oracle("DRB109-orderedmissing-orig-yes.ll",
+             {"DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6",
+              "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"}),
       Oracle("DRB110-ordered-orig-no.ll", {}),
       Oracle("DRB111-linearmissing-orig-yes.ll",
              {
@@ -178,7 +178,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB113-default-orig-no.ll", {}),
       // 114 omp if
       // 115 simd
-      // 116 target
+      // 116 target teams
       // 117 task
       // 118-119 nest lock
       Oracle("DRB120-barrier-orig-no.ll", {}),
@@ -196,7 +196,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
               "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"}),
       Oracle("DRB141-reduction-barrier-orig-no.ll", {}),
       // 142-143 atomic details
-      // 144-164 target
+      // 144-154 target teams distribute
+      Oracle("DRB155-missingordered-orig-gpu-no.ll", {}),
+      // 156-157 target teams distribute
+      // 158 target task+depend
+      Oracle("DRB159-nobarrier-orig-gpu-no.ll", {}),
+      // 160-164 target teams distribute
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
