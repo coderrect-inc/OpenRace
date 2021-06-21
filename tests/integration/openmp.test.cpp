@@ -41,8 +41,8 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
       Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
                                            "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
       Oracle("duplicate-omp-fork.ll", {}),
-      // Oracle("ordered-no.ll", {}),
-      // Oracle("ordered-yes.ll", {"ordered-yes.c:15:30 ordered-yes.c:15:30"}),
+      // Oracle("ordered-no.ll", {}), // need support for __kmpc_dispatch_init
+      // Oracle("ordered-yes.ll", {"ordered-yes.c:15:30 ordered-yes.c:15:30"}), // need support for __kmpc_dispatch_init
   };
 
   checkOracles(oracles, "integration/openmp/");
