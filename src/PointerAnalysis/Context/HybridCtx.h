@@ -52,11 +52,10 @@ class HybridCtx {
       const pta::KCallSite<1> *const cs = std::get<1>(ctx);  // KCallSite
       os << cs->toString(detailed);
       os << ">";
-    } else {  // print out the callsite
+    } else {  // print out the origins
       os << "<";
-      auto c = std::get<0>(ctx);
-      if (c == nullptr) os << "null ctx";
-      os << ">";
+      auto origins = std::get<0>(ctx);
+      os << origins->toString(detailed) << ">";
     }
     return os.str();
   }
