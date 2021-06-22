@@ -512,7 +512,7 @@ bool in(const race::Event *event) {
 // see getRegions for more detail on regions
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
-  assert(_fromSameParallelRegion(event1, event2) && "events must be in same omp team");
+  assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
   auto const eid1 = event1->getID();
   auto const eid2 = event2->getID();
@@ -616,7 +616,7 @@ bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2)
 }
 
 bool OpenMPAnalysis::bothInMasterBlock(const Event *event1, const Event *event2) const {
-  assert(_fromSameParallelRegion(event1, event2) && "events must be in same omp team");
+  assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
   return _inMasterBlock(event1) && _inMasterBlock(event2);
 }
 
@@ -884,7 +884,7 @@ bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *
   // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
   std::vector<const Event *> sections;
-  auto lastID = std::max(event1->getID(), event2->getID());  // why not start from event?
+  auto lastID = std::max(event1->getID(), event2->getID());
   for (auto &event : event1->getThread().getEvents()) {
     auto block = event->getInst()->getParent();
     if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&
