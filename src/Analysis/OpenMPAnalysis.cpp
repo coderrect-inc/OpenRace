@@ -446,7 +446,7 @@ namespace {
 
 // return true if both events belong to the same OpenMP team
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
-bool _inSameTeam(const Event *event1, const Event *event2) {
+bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
   // Check both spawn events are OpenMP forks
   auto e1Spawn = event1->getThread().spawnSite;
   if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
@@ -512,7 +512,7 @@ bool in(const race::Event *event) {
 // see getRegions for more detail on regions
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
-  assert(_inSameTeam(event1, event2) && "events must be in same omp team");
+  assert(_fromSameParallelRegion(event1, event2) && "events must be in same omp team");
 
   auto const eid1 = event1->getID();
   auto const eid2 = event2->getID();
@@ -564,6 +564,39 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   return false;
 }
 
+// refer to https://llvm.org/docs/GetElementPtr.html
+// an array access (load/store) is probably like this (the simplest case):
+//   %arrayidx4 = getelementptr inbounds [10 x i32], [10 x i32]* %3, i64 0, i64 %idxprom3, !dbg !67
+//   store i32 %add2, i32* %arrayidx4, align 4, !dbg !68, !tbaa !21
+// the ptr %arrayidx4 should come from an getelementptr with array type load ptr
+// HOWEVER, many "arrays" in C/C++ are actually pointers so that we cannot always confirm the array type,
+// e.g., DRB014-outofbounds-orig-yes.ll
+bool OpenMPAnalysis::isArrayAccess(const MemAccessEvent *event) {
+  auto users = event->getIRInst()->getInst()->operands();
+  for (auto b = users.begin(); b != users.end(); b++) {
+    Value *v = b->get();
+    if (llvm::GetElementPtrInst *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(v)) {
+      // must be array type
+      bool isArray = gep->getPointerOperand()
+                         ->getType()
+                         ->getPointerElementType()
+                         ->isArrayTy();  // fixed array size, e.g., int A[100];
+      if (isArray || gep->getName().startswith(
+                         "arrayidx")) {  // array size is a var or user input, e.g., DRB014-outofbounds-orig-yes.ll
+        return true;
+      }
+      // must NOT be array type, e.g., DRB119-nestlock-orig-yes.ll
+      if (gep->getPointerOperand()->getType()->getPointerElementType()->isStructTy()) {  // a non array field of a
+                                                                                         // struct
+        return false;
+      }
+    }
+  }
+
+  // others we cannot determine, assume they might be array type to be conservative
+  return true;
+}
+
 bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
   auto gep1 = getArrayAccess(event1);
   if (!gep1) return false;
@@ -574,14 +607,16 @@ bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const
   return inParallelFor(event1) && inParallelFor(event2);
 }
 
-bool OpenMPAnalysis::inSameTeam(const Event *event1, const Event *event2) const { return _inSameTeam(event1, event2); }
+bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {
+  return _fromSameParallelRegion(event1, event2);
+}
 
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
 }
 
 bool OpenMPAnalysis::bothInMasterBlock(const Event *event1, const Event *event2) const {
-  assert(_inSameTeam(event1, event2) && "events must be in same omp team");
+  assert(_fromSameParallelRegion(event1, event2) && "events must be in same omp team");
   return _inMasterBlock(event1) && _inMasterBlock(event2);
 }
 
@@ -849,7 +884,7 @@ bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *
   // observation: we only enter a section if any event in the queue passes through a section case
   // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
   std::vector<const Event *> sections;
-  auto lastID = std::max(event1->getID(), event2->getID());
+  auto lastID = std::max(event1->getID(), event2->getID());  // why not start from event?
   for (auto &event : event1->getThread().getEvents()) {
     auto block = event->getInst()->getParent();
     if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&

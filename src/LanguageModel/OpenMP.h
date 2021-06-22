@@ -65,6 +65,9 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
 
+inline bool isSetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_nest_lock"); }
+inline bool isUnsetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_nest_lock"); }
+
 inline bool isOrderedStart(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_ordered"); }
 inline bool isOrderedEnd(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_end_ordered"); }
 

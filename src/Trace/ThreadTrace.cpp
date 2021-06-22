@@ -29,6 +29,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   }
   callstack.push(func);
 
+  if (DEBUG_PTA) {
+    llvm::outs() << "Generating Func Sum: TID: " << thread.id << " Func: " << func->getName() << "\n";
+  }
   auto irFunc = generateFunctionSummary(func);
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);

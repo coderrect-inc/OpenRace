@@ -143,7 +143,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB087-static-data-member2-orig-yes.ll",
              {"DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13",
               "DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13"}),
-      // 88-89 PTA Fails ??
+      Oracle("DRB088-dynamic-storage-orig-yes.ll",
+             {"DRB088-dynamic-storage-orig-yes.c:63:6 DRB088-dynamic-storage-orig-yes.c:63:6"}),
+      Oracle("DRB089-dynamic-storage2-orig-yes.ll",
+             {"DRB089-dynamic-storage2-orig-yes.c:73:7 DRB089-dynamic-storage2-orig-yes.c:73:7"}),
       // 90 missed read-write race
       Oracle("DRB091-threadprivate2-orig-no.ll", {}),
       Oracle(
@@ -163,10 +166,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
       Oracle("DRB108-atomic-orig-no.ll", {}),
-      Oracle("DRB109-orderedmissing-orig-yes.ll", {
-                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6",
-                                                      "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"
-                                                  }),
+      Oracle("DRB109-orderedmissing-orig-yes.ll",
+             {"DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6",
+              "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"}),
       Oracle("DRB110-ordered-orig-no.ll", {}),
       Oracle("DRB111-linearmissing-orig-yes.ll",
              {
@@ -181,6 +183,8 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 116 target
       // 117 task
       // 118-119 nest lock
+      Oracle("DRB118-nestlock-orig-no.ll", {}),
+      Oracle("DRB119-nestlock-orig-yes.ll", {"DRB119-nestlock-orig-yes.c:32:2 DRB119-nestlock-orig-yes.c:32:2"}),
       Oracle("DRB120-barrier-orig-no.ll", {}),
       Oracle("DRB121-reduction-orig-no.ll", {}),
       // 122-123 task

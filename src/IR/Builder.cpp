@@ -64,9 +64,15 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary instructions;
 
   for (auto const &basicblock : func.getBasicBlockList()) {
+    if (DEBUG_PTA) {
+      llvm::outs() << "bb: " << basicblock.getName() << "\n";
+    }
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
-
+      if (DEBUG_PTA) {
+        inst->print(llvm::outs(), false);
+        llvm::outs() << "\n";
+      }
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
         if (DEBUG_PTA) {
@@ -148,6 +154,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isSetLock(funcName)) {
           instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
         } else if (OpenMPModel::isUnsetLock(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
+        } else if (OpenMPModel::isSetNestLock(funcName)) {
+          instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
+        } else if (OpenMPModel::isUnsetNestLock(funcName)) {
           instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isGetThreadNum(funcName)) {
           instructions.push_back(std::make_shared<OpenMPGetThreadNum>(callInst));

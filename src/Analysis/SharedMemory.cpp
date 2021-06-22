@@ -23,6 +23,10 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
     return id;
   };
 
+  if (DEBUG_PTA) {
+    llvm::outs() << "** SharedMemory **"
+                 << "\n";
+  }
   for (auto const &thread : program.getThreads()) {
     auto const tid = thread->id;
     if (DEBUG_PTA) {
@@ -36,10 +40,15 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
           auto const ptsTo = readEvent->getAccessedMemory();
           if (DEBUG_PTA) {
             if (ptsTo.empty()) {
-              llvm::outs() << "Read: empty pts, " << readEvent->getIRInst() << "\n";
+              llvm::outs() << "Read: ID " << readEvent->getID();
+              readEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", empty pts, "
+                           << "\n";
               break;
             } else {
-              llvm::outs() << "Read: pts: ";
+              llvm::outs() << "Read: ID " << readEvent->getID();
+              readEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", pts: ";
             }
           }
           // TODO: filter?
@@ -60,10 +69,15 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
           auto const ptsTo = writeEvent->getAccessedMemory();
           if (DEBUG_PTA) {
             if (ptsTo.empty()) {
-              llvm::outs() << "Write: empty pts, " << writeEvent->getIRInst() << "\n";
+              llvm::outs() << "Write: ID " << writeEvent->getID();
+              writeEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", empty pts, "
+                           << "\n";
               break;
             } else {
-              llvm::outs() << "Write: pts: ";
+              llvm::outs() << "Write: ID " << writeEvent->getID();
+              writeEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", pts: ";
             }
           }
           // TODO: filter?

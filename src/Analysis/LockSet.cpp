@@ -14,9 +14,11 @@ limitations under the License.
 using namespace race;
 
 namespace {
-std::set<const llvm::Value *> heldLocks(const Event *targetEvent) {
-  std::set<const llvm::Value *> locks;
-
+std::unordered_multiset<const llvm::Value *> heldLocks(const Event *targetEvent) {
+  std::unordered_multiset<const llvm::Value *> locks;
+  if (DEBUG_PTA) {
+    llvm::outs() << "--------------------------\n";
+  }
   auto const &thread = targetEvent->getThread();
   for (auto const &event : thread.getEvents()) {
     if (event->getID() == targetEvent->getID()) {
@@ -26,11 +28,27 @@ std::set<const llvm::Value *> heldLocks(const Event *targetEvent) {
       case Event::Type::Lock: {
         auto lockEvent = llvm::cast<LockEvent>(event.get());
         locks.insert(lockEvent->getIRInst()->getLockValue());
+        if (DEBUG_PTA) {
+          llvm::outs() << "After lock: {";
+          auto it = locks.begin();
+          for (; it != locks.end(); it++) llvm::outs() << *it << " ";
+          llvm::outs() << "}\n";
+        }
         break;
       }
       case Event::Type::Unlock: {
         auto unlockEvent = llvm::cast<UnlockEvent>(event.get());
-        locks.erase(unlockEvent->getIRInst()->getLockValue());
+        const llvm::Value *ele = unlockEvent->getIRInst()->getLockValue();
+        const std::unordered_multiset<const Value *>::iterator &first = locks.find(ele);
+        if (first != locks.end()) {  // only remove the first element
+          locks.erase(first);
+        }
+        if (DEBUG_PTA) {
+          llvm::outs() << "After unlock: {";
+          auto it = locks.begin();
+          for (; it != locks.end(); it++) llvm::outs() << *it << " ";
+          llvm::outs() << "}\n";
+        }
         break;
       }
       default:
