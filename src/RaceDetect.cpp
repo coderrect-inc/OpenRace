@@ -72,10 +72,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       //  #pragma omp parallel for shared(A)
       //  for (int i = 0; i < N: i++) { A[i] = i; }
       // even though A is shared, each index is unique so there is no race
-      bool isArray1 = ompAnalysis.isArrayAccess(write);
-      bool isArray2 = ompAnalysis.isArrayAccess(other);
-      if (isArray1 && isArray2 && ompAnalysis.isLoopArrayAccess(write, other) &&
-          !ompAnalysis.canIndexOverlap(write, other)) {
+      if (ompAnalysis.isLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
         return;
       }
 

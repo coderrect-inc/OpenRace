@@ -10,7 +10,8 @@ using namespace llvm;
 
 namespace {
 
-const llvm::GetElementPtrInst *getArrayAccess(const MemAccessEvent *event) {
+// this is more like "get def"/"get getelementptr", not all getelementptr is array-related
+const llvm::GetElementPtrInst *getGEP(const MemAccessEvent *event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
@@ -282,11 +283,15 @@ OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program) : getThreadNumAnalys
 }
 
 bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
-  auto gep1 = getArrayAccess(event1);
+  auto gep1 = getGEP(event1);
   if (!gep1) return false;
 
-  auto gep2 = getArrayAccess(event2);
+  auto gep2 = getGEP(event2);
   if (!gep2) return false;
+
+  if (!isArrayAccess(gep1) || !isArrayAccess(gep2)) {
+    return false;
+  }
 
   // should be in same function
   if (gep1->getFunction() != gep2->getFunction()) {
@@ -571,26 +576,18 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
 // the ptr %arrayidx4 should come from an getelementptr with array type load ptr
 // HOWEVER, many "arrays" in C/C++ are actually pointers so that we cannot always confirm the array type,
 // e.g., DRB014-outofbounds-orig-yes.ll
-bool OpenMPAnalysis::isArrayAccess(const MemAccessEvent *event) {
-  auto users = event->getIRInst()->getInst()->operands();
-  for (auto b = users.begin(); b != users.end(); b++) {
-    Value *v = b->get();
-    if (llvm::GetElementPtrInst *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(v)) {
-      // must be array type
-      bool isArray = gep->getPointerOperand()
-                         ->getType()
-                         ->getPointerElementType()
-                         ->isArrayTy();  // fixed array size, e.g., int A[100];
-      if (isArray || gep->getName().startswith(
-                         "arrayidx")) {  // array size is a var or user input, e.g., DRB014-outofbounds-orig-yes.ll
-        return true;
-      }
-      // must NOT be array type, e.g., DRB119-nestlock-orig-yes.ll
-      if (gep->getPointerOperand()->getType()->getPointerElementType()->isStructTy()) {  // a non array field of a
-                                                                                         // struct
-        return false;
-      }
-    }
+bool OpenMPAnalysis::isArrayAccess(const llvm::GetElementPtrInst *gep) {
+  // must be array type
+  bool isArray =
+      gep->getPointerOperand()->getType()->getPointerElementType()->isArrayTy();  // fixed array size, e.g., int A[100];
+  if (isArray || gep->getName().startswith(
+                     "arrayidx")) {  // array size is a var or user input, e.g., DRB014-outofbounds-orig-yes.ll
+    return true;
+  }
+  // must NOT be array type, e.g., DRB119-nestlock-orig-yes.ll
+  if (gep->getPointerOperand()->getType()->getPointerElementType()->isStructTy()) {  // a non array field of a
+                                                                                     // struct
+    return false;
   }
 
   // others we cannot determine, assume they might be array type to be conservative
@@ -598,13 +595,13 @@ bool OpenMPAnalysis::isArrayAccess(const MemAccessEvent *event) {
 }
 
 bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
-  auto gep1 = getArrayAccess(event1);
+  auto gep1 = getGEP(event1);
   if (!gep1) return false;
 
-  auto gep2 = getArrayAccess(event2);
+  auto gep2 = getGEP(event2);
   if (!gep2) return false;
 
-  return inParallelFor(event1) && inParallelFor(event2);
+  return isArrayAccess(gep1) && isArrayAccess(gep2) && inParallelFor(event1) && inParallelFor(event2);
 }
 
 bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {

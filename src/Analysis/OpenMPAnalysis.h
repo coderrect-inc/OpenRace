@@ -94,7 +94,7 @@ class OpenMPAnalysis {
   bool isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
 
   // return true if event is an array access, not every getelementptr is an array access
-  bool isArrayAccess(const MemAccessEvent* event);
+  bool isArrayAccess(const llvm::GetElementPtrInst* gep);
 
   // return true if both events are part of the same omp team
   bool fromSameParallelRegion(const Event* event1, const Event* event2) const;
