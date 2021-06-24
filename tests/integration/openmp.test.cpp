@@ -15,8 +15,7 @@ limitations under the License.
 
 TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
   std::vector<Oracle> oracles = {
-      Oracle("reduction-no.ll", {}),
-      Oracle("master-iteration-counter-no.ll", {}),
+      Oracle("reduction-no.ll", {}), Oracle("master-iteration-counter-no.ll", {}),
       // Oracle("reduction-yes.ll", {/*TODO*/}), // Need to handle openmp master first
       Oracle("reduction-nowait-yes.ll",
              {
@@ -33,10 +32,8 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
                  "single-message-printer.c:18:15 single-message-printer.c:18:15",
                  "single-message-printer.c:18:15 single-message-printer.c:18:15",
              }),
-      Oracle("single-used-after-no.ll", {}),
-      Oracle("thread-sanitizer-falsepos.ll", {}),
-      Oracle("sections-simple-no.ll", {}),
-      Oracle("sections-interproc-no.ll", {}),  // handled by adding 1-callsite PTA
+      Oracle("single-used-after-no.ll", {}), Oracle("thread-sanitizer-falsepos.ll", {}),
+      Oracle("sections-simple-no.ll", {}), Oracle("sections-interproc-no.ll", {}),  // handled by adding 1-callsite PTA
       // Oracle("sections-interproc-no-deep.ll", {}),  // We report FP on the called function, PTA K-callsite limit
       Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
                                            "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
@@ -85,3 +82,15 @@ TEST_CASE("OpenMP get_thread_num", "[integration][omp]") {
   };
   checkOracles(oracles, "integration/openmp/");
 }
+
+// TEST_CASE("OpenMP task", "[integration][omp]") {
+//   std::vector<Oracle> oracles = {
+//       // Oracle("task-master-no.ll", {}),
+//       // Oracle("task-master-single-yes.ll", {/*TODO*/}),
+//       // Oracle("task-single-no.ll", {}),
+//       // Oracle("task-single-yes.ll", {/*TODO*/}),
+//       // Oracle("task-tid-no.ll", {}),
+//       // Oracle("task-yes.ll", {/*TODO*/}),
+//   };
+//   checkOracles(oracles, "integration/openmp/");
+// }
