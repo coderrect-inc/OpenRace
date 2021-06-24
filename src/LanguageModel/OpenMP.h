@@ -65,6 +65,15 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
 
+inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
+inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc"); }
+inline bool isTask(const llvm::CallBase* callInst) {
+  if (!callInst) return false;
+  auto const func = callInst->getCalledFunction();
+  if (!func->hasName()) return false;
+  return isTask(func->getName());
+}
+
 inline bool isSetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_nest_lock"); }
 inline bool isUnsetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_nest_lock"); }
 
@@ -86,8 +95,6 @@ inline bool isOutlined(const llvm::StringRef& funcName) { return funcName.starts
 
 // When OpenMP is compiled with debug info an outer "debug" outline function is generated
 inline bool isDebugOutlined(const llvm::StringRef& funcName) { return funcName.startswith(".omp_outlined._debug"); }
-
-inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc"); }
 
 inline bool isGetThreadNum(const llvm::StringRef& funcName) { return funcName.equals("omp_get_thread_num"); }
 

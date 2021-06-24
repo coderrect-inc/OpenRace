@@ -32,10 +32,12 @@ class IR {
     Fork,
     PthreadCreate,
     OpenMPFork,
+    OpenMPTask,
     END_Fork,
     Join,
     PthreadJoin,
     OpenMPJoin,
+    OpenMPTaskJoin,
     END_Join,
     Lock,
     PthreadMutexLock,
@@ -65,6 +67,7 @@ class IR {
     OpenMPReduce,
     OpenMPMasterStart,
     OpenMPMasterEnd,
+    OpenMPTaskAlloc,
     OpenMPGetThreadNum,
     END_Call
   } type;

@@ -8,12 +8,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "DefaultHeapModel.h"
 
-#include "PointerAnalysis/Models/MemoryModel/DefaultHeapModel.h"
-
-#include <PointerAnalysis/Program/CallSite.h>
-#include <llvm/IR/Instructions.h>
-
+#include "PointerAnalysis/Program/CallSite.h"
 #include "PointerAnalysis/Util/Util.h"
 
 #define MORE_COMPLETE_TYPE_INFO

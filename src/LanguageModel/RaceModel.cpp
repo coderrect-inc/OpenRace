@@ -43,6 +43,11 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
     return {fork.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
 
+  if (OpenMPModel::isTask(funcName) || OpenMPModel::isTaskAlloc(funcName)) {
+    race::OpenMPTask task(llvm::cast<CallBase>(callsite));
+    return {task.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
+  }
+
   // By default always try to expand the function body
   return {F, InterceptResult::Option::EXPAND_BODY};
 }
@@ -92,6 +97,15 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
       }
     }
 
+    return true;
+  }
+  if (OpenMPModel::isTask(funcName)) {
+    // Link 3rd arg of __kmpc_omp_task (kmp_tsking.cpp:1684) with task functions 2nd
+    auto calleeArg = callee->getFunction()->arg_begin();
+    std::advance(calleeArg, 1);
+    PtrNode *formal = this->getPtrNode(callee->getContext(), calleeArg);
+    PtrNode *actual = this->getPtrNode(caller->getContext(), call->getArgOperand(2));
+    this->consGraph->addConstraints(actual, formal, Constraints::copy);
     return true;
   }
 
@@ -148,14 +162,18 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
 }
 
 bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
-  if (!F->hasName()) return false;
+  if (!F->hasName()) {
+    return false;
+  }
   auto const name = F->getName();
-  return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm");
+  return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm") ||
+         name.equals("__kmpc_omp_task_alloc");
 }
 
 namespace {
 // TODO: better way of handling these
-const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
+const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_omp_task",
+                                        "__kmpc_omp_task_alloc"};
 }  // namespace
 
 bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {

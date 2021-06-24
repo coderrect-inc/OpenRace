@@ -1,7 +1,7 @@
-; ModuleID = 'integration/dataracebench/DRB027-taskdependmissing-orig-yes.c'
-source_filename = "integration/dataracebench/DRB027-taskdependmissing-orig-yes.c"
+; ModuleID = 'DRB027-taskdependmissing-orig-yes.c'
+source_filename = "DRB027-taskdependmissing-orig-yes.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
+target triple = "x86_64-pc-linux-gnu"
 
 %struct.ident_t = type { i32, i32, i32, i32, i8* }
 %struct.anon = type { i32* }
@@ -13,10 +13,10 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
-@1 = private unnamed_addr constant [75 x i8] c";integration/dataracebench/DRB027-taskdependmissing-orig-yes.c;main;58;1;;\00", align 1
-@2 = private unnamed_addr constant [75 x i8] c";integration/dataracebench/DRB027-taskdependmissing-orig-yes.c;main;60;1;;\00", align 1
-@3 = private unnamed_addr constant [75 x i8] c";integration/dataracebench/DRB027-taskdependmissing-orig-yes.c;main;62;1;;\00", align 1
-@4 = private unnamed_addr constant [75 x i8] c";integration/dataracebench/DRB027-taskdependmissing-orig-yes.c;main;57;1;;\00", align 1
+@1 = private unnamed_addr constant [49 x i8] c";DRB027-taskdependmissing-orig-yes.c;main;58;1;;\00", align 1
+@2 = private unnamed_addr constant [49 x i8] c";DRB027-taskdependmissing-orig-yes.c;main;60;1;;\00", align 1
+@3 = private unnamed_addr constant [49 x i8] c";DRB027-taskdependmissing-orig-yes.c;main;62;1;;\00", align 1
+@4 = private unnamed_addr constant [49 x i8] c";DRB027-taskdependmissing-orig-yes.c;main;57;1;;\00", align 1
 @.str.4 = private unnamed_addr constant [6 x i8] c"i=%d\0A\00", align 1
 
 ; Function Attrs: nounwind uwtable
@@ -34,7 +34,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %i, metadata !12, metadata !DIExpression()), !dbg !14
   store i32 0, i32* %i, align 4, !dbg !14, !tbaa !15
   %3 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !19
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @4, i32 0, i32 0), i8** %3, align 8, !dbg !19, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @4, i32 0, i32 0), i8** %3, align 8, !dbg !19, !tbaa !20
   call void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%struct.ident_t* %.kmpc_loc.addr, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i32*)* @.omp_outlined..3 to void (i32*, i32*, ...)*), i32* %i), !dbg !19
   %4 = load i32, i32* %i, align 4, !dbg !23, !tbaa !15
   %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.4, i64 0, i64 0), i32 %4), !dbg !24
@@ -69,7 +69,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32** %i.addr, metadata !38, metadata !DIExpression()), !dbg !41
   %2 = load i32*, i32** %i.addr, align 8, !dbg !42, !tbaa !39
   %3 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !42
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @1, i32 0, i32 0), i8** %3, align 8, !dbg !42, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @1, i32 0, i32 0), i8** %3, align 8, !dbg !42, !tbaa !20
   %4 = load i32*, i32** %.global_tid..addr, align 8, !dbg !42
   %5 = load i32, i32* %4, align 4, !dbg !42, !tbaa !15
   %6 = call i32 @__kmpc_single(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !42
@@ -80,7 +80,7 @@ omp_if.then:                                      ; preds = %entry
   %8 = getelementptr inbounds %struct.anon, %struct.anon* %agg.captured, i32 0, i32 0, !dbg !43
   store i32* %2, i32** %8, align 8, !dbg !43, !tbaa !39
   %9 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !43
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @2, i32 0, i32 0), i8** %9, align 8, !dbg !43, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @2, i32 0, i32 0), i8** %9, align 8, !dbg !43, !tbaa !20
   %10 = call i8* @__kmpc_omp_task_alloc(%struct.ident_t* %.kmpc_loc.addr, i32 %5, i32 1, i64 40, i64 8, i32 (i32, i8*)* bitcast (i32 (i32, %struct.kmp_task_t_with_privates*)* @.omp_task_entry. to i32 (i32, i8*)*)), !dbg !43
   %11 = bitcast i8* %10 to %struct.kmp_task_t_with_privates*, !dbg !43
   %12 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %11, i32 0, i32 0, !dbg !43
@@ -89,12 +89,12 @@ omp_if.then:                                      ; preds = %entry
   %15 = bitcast %struct.anon* %agg.captured to i8*, !dbg !43
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %14, i8* align 8 %15, i64 8, i1 false), !dbg !43, !tbaa.struct !49
   %16 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !43
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @2, i32 0, i32 0), i8** %16, align 8, !dbg !43, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @2, i32 0, i32 0), i8** %16, align 8, !dbg !43, !tbaa !20
   %17 = call i32 @__kmpc_omp_task(%struct.ident_t* %.kmpc_loc.addr, i32 %5, i8* %10), !dbg !43
   %18 = getelementptr inbounds %struct.anon.0, %struct.anon.0* %agg.captured1, i32 0, i32 0, !dbg !50
   store i32* %2, i32** %18, align 8, !dbg !50, !tbaa !39
   %19 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !50
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @3, i32 0, i32 0), i8** %19, align 8, !dbg !50, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @3, i32 0, i32 0), i8** %19, align 8, !dbg !50, !tbaa !20
   %20 = call i8* @__kmpc_omp_task_alloc(%struct.ident_t* %.kmpc_loc.addr, i32 %5, i32 1, i64 40, i64 8, i32 (i32, i8*)* bitcast (i32 (i32, %struct.kmp_task_t_with_privates.1*)* @.omp_task_entry..2 to i32 (i32, i8*)*)), !dbg !50
   %21 = bitcast i8* %20 to %struct.kmp_task_t_with_privates.1*, !dbg !50
   %22 = getelementptr inbounds %struct.kmp_task_t_with_privates.1, %struct.kmp_task_t_with_privates.1* %21, i32 0, i32 0, !dbg !50
@@ -103,14 +103,14 @@ omp_if.then:                                      ; preds = %entry
   %25 = bitcast %struct.anon.0* %agg.captured1 to i8*, !dbg !50
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %24, i8* align 8 %25, i64 8, i1 false), !dbg !50, !tbaa.struct !49
   %26 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !50
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @3, i32 0, i32 0), i8** %26, align 8, !dbg !50, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @3, i32 0, i32 0), i8** %26, align 8, !dbg !50, !tbaa !20
   %27 = call i32 @__kmpc_omp_task(%struct.ident_t* %.kmpc_loc.addr, i32 %5, i8* %20), !dbg !50
   call void @__kmpc_end_single(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !51
   br label %omp_if.end, !dbg !51
 
 omp_if.end:                                       ; preds = %omp_if.then, %entry
   %28 = getelementptr inbounds %struct.ident_t, %struct.ident_t* %.kmpc_loc.addr, i32 0, i32 4, !dbg !52
-  store i8* getelementptr inbounds ([75 x i8], [75 x i8]* @1, i32 0, i32 0), i8** %28, align 8, !dbg !52, !tbaa !20
+  store i8* getelementptr inbounds ([49 x i8], [49 x i8]* @1, i32 0, i32 0), i8** %28, align 8, !dbg !52, !tbaa !20
   call void @__kmpc_barrier(%struct.ident_t* %.kmpc_loc.addr, i32 %5), !dbg !52
   ret void, !dbg !53
 }
@@ -118,9 +118,9 @@ omp_if.end:                                       ; preds = %omp_if.then, %entry
 ; Function Attrs: argmemonly nounwind willreturn
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* noalias nocapture writeonly, i8* noalias nocapture readonly, i64, i1 immarg) #1
 
-declare dso_local void @__kmpc_end_single(%struct.ident_t*, i32)
-
 declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
+
+declare dso_local void @__kmpc_end_single(%struct.ident_t*, i32)
 
 ; Function Attrs: alwaysinline nounwind uwtable
 define internal void @.omp_outlined.(i32 %.global_tid., i32* noalias %.part_id., i8* noalias %.privates., void (i8*, ...)* noalias %.copy_fn., i8* %.task_t., %struct.anon* noalias %__context) #4 !dbg !54 {
@@ -265,13 +265,13 @@ attributes #6 = { nounwind }
 !llvm.module.flags = !{!3, !4, !5}
 !llvm.ident = !{!6}
 
-!0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 10.0.1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, splitDebugInlining: false, nameTableKind: None)
-!1 = !DIFile(filename: "integration/dataracebench/DRB027-taskdependmissing-orig-yes.c", directory: "/home/brad/Code/OpenRace/tests/data")
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 10.0.0-4ubuntu1 ", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, splitDebugInlining: false, nameTableKind: None)
+!1 = !DIFile(filename: "DRB027-taskdependmissing-orig-yes.c", directory: "/home/tanzir/OpenRace/tests/data/integration/dataracebench")
 !2 = !{}
 !3 = !{i32 7, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{i32 1, !"wchar_size", i32 4}
-!6 = !{!"clang version 10.0.1 "}
+!6 = !{!"clang version 10.0.0-4ubuntu1 "}
 !7 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 54, type: !8, scopeLine: 55, flags: DIFlagAllCallsDescribed, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !0, retainedNodes: !11)
 !8 = !DISubroutineType(types: !9)
 !9 = !{!10}
