@@ -33,6 +33,7 @@ limitations under the License.
 #include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 #include "PreProcessing/Passes/LoweringMemCpyPass.h"
 #include "PreProcessing/Passes/OMPConstantPropPass.h"
+#include "PreProcessing/Passes/RemoveExceptionHandlerPass.h"
 
 namespace {
 void markOMPDebugAlwaysInline(llvm::Module &module) {
@@ -92,12 +93,13 @@ void preprocess(llvm::Module &module) {
   mpm.addPass(llvm::AlwaysInlinerPass());
   mpm.addPass(OMPConstantPropPass());
 
-  // CanonicalizeGEPPass has to run after OMPConstantPropPass
+  // CanonicalizeGEPPass and RemoveExceptionHandlerPass has to run after OMPConstantPropPass
   // as it will expand constant expression
   // but is it the right way to do it like this?
   // or we can simply make it a module pass?
   // or simply call a function just like duplicateOpenMPForks below?
   llvm::FunctionPassManager fpmPost;
+  fpmPost.addPass(RemoveExceptionHandlerPass());
   fpmPost.addPass(CanonicalizeGEPPass());
   mpm.addPass(llvm::createModuleToFunctionPassAdaptor(std::move(fpmPost)));
 

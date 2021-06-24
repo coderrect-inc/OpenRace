@@ -20,7 +20,9 @@ limitations under the License.
 
 using namespace llvm;
 
-static BasicBlock *createUnReachableBB(Function &F) {
+namespace {
+
+BasicBlock *createUnReachableBB(Function &F) {
   auto BB = BasicBlock::Create(F.getContext(), "cr.unreachable", &F);
   IRBuilder<> builder(BB);
   builder.CreateUnreachable();
@@ -28,12 +30,8 @@ static BasicBlock *createUnReachableBB(Function &F) {
   return BB;
 }
 
-bool RemoveExceptionHandlerPass::doInitialization(Module &M) {
-  LOG_DEBUG("Processing Exception Handlers");
-  return false;
-}
-
-bool RemoveExceptionHandlerPass::runOnFunction(Function &F) {
+// return true if the function was changed
+bool removeExceptionHandlers(Function &F) {
   bool changed = false;
   BasicBlock *unReachableBB = nullptr;
 
@@ -57,6 +55,26 @@ bool RemoveExceptionHandlerPass::runOnFunction(Function &F) {
   return changed;
 }
 
-char RemoveExceptionHandlerPass::ID = 0;
-static RegisterPass<RemoveExceptionHandlerPass> REH("", "Remove Exception Handling Code in IR", false, /*CFG only*/
-                                                    false /*is analysis*/);
+}  // namespace
+
+llvm::PreservedAnalyses RemoveExceptionHandlerPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) {
+  auto changed = removeExceptionHandlers(F);
+
+  if (changed) {
+    return PreservedAnalyses::none();
+  }
+
+  return PreservedAnalyses::all();
+}
+
+bool RemoveExceptionHandlerLegacyPass::doInitialization(Module &M) {
+  LOG_DEBUG("Processing Exception Handlers");
+  return false;
+}
+
+bool RemoveExceptionHandlerLegacyPass::runOnFunction(Function &F) { return removeExceptionHandlers(F); }
+
+char RemoveExceptionHandlerLegacyPass::ID = 0;
+static RegisterPass<RemoveExceptionHandlerLegacyPass> REH("", "Remove Exception Handling Code in IR",
+                                                          false, /*CFG only*/
+                                                          false /*is analysis*/);

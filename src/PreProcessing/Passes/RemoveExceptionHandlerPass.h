@@ -11,12 +11,19 @@ limitations under the License.
 
 #pragma once
 
+#include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 
-class RemoveExceptionHandlerPass : public llvm::FunctionPass {
+class RemoveExceptionHandlerPass : public llvm::PassInfoMixin<RemoveExceptionHandlerPass> {
+ public:
+  llvm::PreservedAnalyses run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
+  static bool isRequired() { return true; }
+};
+
+class RemoveExceptionHandlerLegacyPass : public llvm::FunctionPass {
  public:
   static char ID;
-  RemoveExceptionHandlerPass() : llvm::FunctionPass(ID) {}
+  RemoveExceptionHandlerLegacyPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &F) override;
   bool doInitialization(llvm::Module &M) override;
