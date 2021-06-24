@@ -62,11 +62,11 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
 
 FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary instructions;
-
   for (auto const &basicblock : func.getBasicBlockList()) {
     if (DEBUG_PTA) {
       llvm::outs() << "bb: " << basicblock.getName() << "\n";
     }
+    std::set<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks in this basicblock
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
       if (DEBUG_PTA) {
@@ -136,6 +136,16 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isSingleStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {
+          // if using omp tasks, there will be an implicit barrier to wait for all tasks to join,
+          // __kmpc_end_single should be in the same basicblock with its __kmpc_omp_task.
+          // see https://www.rookiehpc.com/openmp/docs/taskwait.php
+          // TODO: need to match single and other syncs for tasks
+          if (!tasks.empty()) {
+            auto it = tasks.begin();
+            for (; it != tasks.end(); it++) {
+              instructions.push_back(std::make_shared<OpenMPTaskJoin>(*it));
+            }
+          }
           instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
         } else if (OpenMPModel::isMasterStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPMasterStart>(callInst));
@@ -158,7 +168,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isTask(funcName)) {
           auto taskStart = std::make_shared<OpenMPTask>(callInst);
           instructions.push_back(taskStart);
-          instructions.push_back(std::make_shared<OpenMPTaskJoin>(taskStart));
+          tasks.insert(taskStart);
         } else if (OpenMPModel::isTaskAlloc(funcName)) {
           instructions.push_back(std::make_shared<OpenMPTaskAlloc>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {
