@@ -163,7 +163,7 @@ class OpenMPTask : public ForkIR {
   }
 
   [[nodiscard]] const llvm::Value *getThreadEntry() const override {
-    auto op = inst->getArgOperand(2)->stripPointerCasts();
+    auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
     auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
     if (!taskAlloc || !OpenMPModel::isTaskAlloc(taskAlloc->getCalledFunction()->getName())) {
       llvm::errs() << "Failed to find task function. inst=" << toStringRef(taskAlloc) << "\n";
@@ -216,6 +216,8 @@ class OpenMPJoin : public JoinIR {
 
 class OpenMPTaskJoin : public JoinIR {
   std::shared_ptr<OpenMPTask> task;
+  constexpr static unsigned int threadEntryOffset = 2;
+  constexpr static unsigned int taskEntryOffset = 5;
 
  public:
   explicit OpenMPTaskJoin(const std::shared_ptr<OpenMPTask> _task) : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
@@ -223,6 +225,19 @@ class OpenMPTaskJoin : public JoinIR {
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
 
   [[nodiscard]] const llvm::Value *getThreadHandle() const override { return task->getThreadHandle(); }
+
+  [[nodiscard]] const llvm::Value *getThreadEntry() const {
+    auto inst = getInst();
+    auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
+    auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
+    if (!taskAlloc || !OpenMPModel::isTaskAlloc(taskAlloc->getCalledFunction()->getName())) {
+      llvm::errs() << "Failed to find task function. inst=" << toStringRef(taskAlloc) << "\n";
+      return nullptr;
+    }
+    llvm::CallSite taskAllocCall(llvm::cast<llvm::Instruction>(op));
+    auto taskFunc = taskAllocCall.getArgOperand(taskEntryOffset)->stripPointerCasts();
+    return llvm::cast<llvm::Function>(taskFunc);
+  }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPTaskJoin; }

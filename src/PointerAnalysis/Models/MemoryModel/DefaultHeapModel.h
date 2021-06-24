@@ -26,6 +26,9 @@ namespace pta {
 
 class DefaultHeapModel {
  private:
+  // omp task related offsets
+  constexpr static unsigned int taskSharedOffset = 4;
+  constexpr static unsigned int taskEntryOffset = 5;
   // TODO: there should be more -> memalign, etc. maybe also include user-specified heap api?
   const llvm::SmallDenseSet<llvm::StringRef, 4> heapAllocAPIs{"malloc", "calloc", "_Znam", "_Znwm", "??2@YAPEAX_K@Z"};
 
@@ -76,13 +79,9 @@ class DefaultHeapModel {
   //                  task_entry_t task_entry );
   // (https://github.com/llvm-mirror/openmp/blob/56d941a8cede7c0d6aa4dc19e8f0b95de6f97e1b/runtime/test/tasking/kmp_taskloop.c#L64)
   inline llvm::Type *inferHeapAllocTypeForOpenMP(const llvm::Function *fun, const llvm::Instruction *allocSite) const {
-    llvm::outs() << "TaskAlloc: ";
-    allocSite->print(llvm::outs(), true);
-    llvm::outs() << "\n";
-
     // 1st, get the callback function
     CallSite taskAllocCall(allocSite);
-    int64_t sharedSize = llvm::cast<llvm::ConstantInt>(taskAllocCall.getArgOperand(4))->getSExtValue();
+    int64_t sharedSize = llvm::cast<llvm::ConstantInt>(taskAllocCall.getArgOperand(taskSharedOffset))->getSExtValue();
     if (sharedSize == 0) {  // no shared var/ptr
       return nullptr;
     }
@@ -95,18 +94,14 @@ class DefaultHeapModel {
     //      define internal i32 @.omp_task_entry.(i32 %0, %struct.kmp_task_t_with_privates* noalias %1) #3 !dbg !28 {
     //      ...
     // where %struct.kmp_task_t_with_privates* noalias %1 is the shared ptr.
-    auto taskEntry = llvm::cast<llvm::Function>(taskAllocCall.getArgOperand(5)->stripPointerCasts());
+    auto taskEntry = llvm::cast<llvm::Function>(taskAllocCall.getArgOperand(taskEntryOffset)->stripPointerCasts());
     const llvm::Argument &shared = *(taskEntry->arg_begin() + 1);
-    shared.print(llvm::outs(), true);
-    llvm::outs() << "\n";
     // we want to find the type shown as below (in function .omp_task_entry.):
     //      %2 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %1, i64 0,
     //      i32 0, i32 2, !dbg !44 %3 = bitcast %struct.kmp_task_t_with_privates* %1 to %struct.anon**, !dbg !44 **** ->
     //      this one bitcast to anon %4 = load %struct.anon*, %struct.anon** %3, align 8, !dbg !44, !tbaa !45 %5 =
     //      bitcast %struct.kmp_task_t_with_privates* %1 to i8*, !dbg !44
     for (const llvm::User *user : shared.users()) {
-      user->print(llvm::outs(), true);
-      llvm::outs() << "\n";
       if (auto bitcast = llvm::dyn_cast<llvm::BitCastInst>(user)) {
         if (!bitcast->getOperand(0)->hasName()) {  // is anon struct
           return bitcast->getDestTy();
@@ -115,29 +110,6 @@ class DefaultHeapModel {
     }
 
     return nullptr;
-
-    // the bitcast on the omp.task_t is the type of the allocated object
-    //    for (auto &BB : *taskEntry) {
-    //      for (auto &I : BB) {
-    //        // simple pattern matching
-    //        // find a bitcast instruction which follows the following pattern
-    //        // %3 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %1, i32
-    //        0,
-    //        // i32 0 %4 = getelementptr inbounds %struct.kmp_task_t, %struct.kmp_task_t* %3, i32 0, i32 0 %5 = load
-    //        i8*,
-    //        // i8** %4 %6 = bitcast i8* %5 to %struct.anon* -> the type we trying to find
-    //        llvm::Value *srcOp = nullptr;
-    //        if (llvm::PatternMatch::match(
-    //                &I,
-    //                llvm::PatternMatch::m_BitCast(llvm::PatternMatch::m_Load(llvm::PatternMatch::m_Value(srcOp))))) {
-    //          if (srcOp->stripPointerCasts() == &task) {
-    //            // this is the bitcast we try to found
-    //            return llvm::cast<llvm::BitCastInst>(I).getDestTy();
-    //          }
-    //        }
-    //      }
-    //    }
-    //    return nullptr;
   }
 };
 
