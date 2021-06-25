@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_DIR=/usr/local/lib/cmake/llvm/ ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
       
       - name: Test
@@ -43,7 +43,7 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_DIR=/usr/local/lib/cmake/llvm/ -DENABLE_WARNING=ON ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
   
   formatting-check:
