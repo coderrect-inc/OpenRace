@@ -539,7 +539,6 @@ bool inSame(const Event *event1, const Event *event2) {
 }
 
 auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
-auto const _inMasterBlock = in<IR::Type::OpenMPMasterStart, IR::Type::OpenMPMasterEnd>;
 
 }  // namespace
 
@@ -609,14 +608,9 @@ bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *ev
 }
 
 // this does not filter out FP when single has multiple tasks inside, e.g., DRB027-taskdependmissing-orig-yes.ll
+// only use this when no tasks in single block
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
-}
-
-// this does not filter out FP when master has multiple tasks inside
-bool OpenMPAnalysis::bothInMasterBlock(const Event *event1, const Event *event2) const {
-  assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
-  return _inMasterBlock(event1) && _inMasterBlock(event2);
 }
 
 std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {
