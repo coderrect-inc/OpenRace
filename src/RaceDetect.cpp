@@ -56,11 +56,15 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
     if (DEBUG_PTA) {
-      llvm::outs() << "Checking Race: " << write->getID() << "(line"
-                   << write->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
-                   << " " << other->getID() << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine()
-                   << ")\n";
+      llvm::outs() << "Checking Race: "
+                   << write->getID()
+                   //                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+                   << " "
+                   << other->getID()
+                   //                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+                   << "\n";
     }
+
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;
     }
@@ -91,6 +95,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
     // Race detected
     reporter.collect(write, other);
+
     if (DEBUG_PTA) {
       llvm::outs() << " ... is race\n";
     }

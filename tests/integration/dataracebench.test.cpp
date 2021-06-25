@@ -61,10 +61,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
              {"DRB026-targetparallelfor-orig-yes.c:64:9 DRB026-targetparallelfor-orig-yes.c:64:10"}),
       // DRB 27 is task
       Oracle("DRB027-taskdependmissing-orig-yes.ll",
-             {"DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:61:7",
-              "DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:63:7",
-              "DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:61:7",
-              "DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:63:7"}),
+             {"DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:61:7"}),
 
       // FIXME: the racy object is opted out by SROA
       //      Oracle("DRB028-privatemissing-orig-yes.ll",
@@ -204,8 +201,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 139 // nested parallel
       Oracle("DRB140-reduction-barrier-orig-yes.ll",
              {"DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:31",
-              "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33",
-              "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"}),
+              "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33"}),
       Oracle("DRB141-reduction-barrier-orig-no.ll", {}),
       // 142-143 atomic details
       // 144-154 target teams distribute

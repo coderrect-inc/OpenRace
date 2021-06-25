@@ -247,6 +247,8 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
       }
     }
   }
+
+  // omp task without single will have no barrier/join to omp parallel -> add fake join
 }
 
 void HappensBeforeGraph::addSync(const Event *syncEvent) {

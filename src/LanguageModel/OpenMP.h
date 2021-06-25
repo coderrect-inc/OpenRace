@@ -13,10 +13,14 @@ limitations under the License.
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/IR/Function.h>
+#include <llvm/IR/Instructions.h>
 
 namespace OpenMPModel {
 
 namespace {
+
+constexpr static unsigned int forkContent = 2;
+
 // return true of funcName equals any name in names
 bool matchesAny(const llvm::StringRef& funcName, const std::vector<llvm::StringRef>& names) {
   for (auto const& name : names) {

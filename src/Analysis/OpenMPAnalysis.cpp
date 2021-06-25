@@ -608,10 +608,12 @@ bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *ev
   return _fromSameParallelRegion(event1, event2);
 }
 
+// this does not filter out FP when single has multiple tasks inside, e.g., DRB027-taskdependmissing-orig-yes.ll
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
 }
 
+// this does not filter out FP when master has multiple tasks inside
 bool OpenMPAnalysis::bothInMasterBlock(const Event *event1, const Event *event2) const {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
   return _inMasterBlock(event1) && _inMasterBlock(event2);
@@ -712,14 +714,19 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
   // Find reduce events
   for (auto const &event : event1->getThread().getEvents()) {
     // If an event e is inside of a reduce block it must occur *after* the reduce event
-    // so, if either event is encountered before finding a reduce that contains both event1 and event2
+    // so, if either event is encountered before finding a reduce that contains both event1
     // we know that they are not in the same reduce block
-    if (event->getID() == event1->getID() || event->getID() == event2->getID()) return false;
+    // since event2 might in a thread that removes single/master events (since we always traverse
+    // them in a small thread ID and here the TID of event1 <= TID of event2), so event2 can
+    // have smaller eventID than event1's
+    if (event->getID() == event1->getID()) return false;
 
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRInst()->type == IR::Type::OpenMPReduce) {
+    event->getIRInst()->getInst()->print(llvm::outs(), true);
+    llvm::outs() << "\n";
+    if (event->getIRInst()->type == race::IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());
