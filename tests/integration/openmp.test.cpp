@@ -15,8 +15,7 @@ limitations under the License.
 
 TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
   std::vector<Oracle> oracles = {
-      Oracle("reduction-no.ll", {}),
-      Oracle("master-iteration-counter-no.ll", {}),
+      Oracle("reduction-no.ll", {}), Oracle("master-iteration-counter-no.ll", {}),
       // Oracle("reduction-yes.ll", {/*TODO*/}), // Need to handle openmp master first
       Oracle("reduction-nowait-yes.ll",
              {
@@ -33,10 +32,8 @@ TEST_CASE("OpenMP Integration Tests", "[integration][omp]") {
                  "single-message-printer.c:18:15 single-message-printer.c:18:15",
                  "single-message-printer.c:18:15 single-message-printer.c:18:15",
              }),
-      Oracle("single-used-after-no.ll", {}),
-      Oracle("thread-sanitizer-falsepos.ll", {}),
-      Oracle("sections-simple-no.ll", {}),
-      Oracle("sections-interproc-no.ll", {}),  // handled by adding 1-callsite PTA
+      Oracle("single-used-after-no.ll", {}), Oracle("thread-sanitizer-falsepos.ll", {}),
+      Oracle("sections-simple-no.ll", {}), Oracle("sections-interproc-no.ll", {}),  // handled by adding 1-callsite PTA
       // Oracle("sections-interproc-no-deep.ll", {}),  // We report FP on the called function, PTA K-callsite limit
       Oracle("sections-interproc-yes.ll", {"sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47",
                                            "sections-interproc-yes.c:3:47 sections-interproc-yes.c:3:47"}),
@@ -65,11 +62,11 @@ TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
       Oracle("lock-set-unset-no.ll", {}),
       Oracle("lock-set-unset-yes.ll",
              {
-                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
-                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
+                 "lock-set-unset-yes.c:11:11 lock-set-unset-yes.c:11:11",
+                 "lock-set-unset-yes.c:11:11 lock-set-unset-yes.c:11:11",
              }),
 
-      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})};
+      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:19 lock-set-unset-yes-2.c:12:19"})};
   checkOracles(oracles, "integration/openmp/");
 }
 
