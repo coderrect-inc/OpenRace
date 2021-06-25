@@ -1,5 +1,6 @@
-CC=clang
-CXX=clang++
+# If you set LLVM_INSTALL with CMake, these are set to clang 10.0.1 automatically by cmake
+# CC=clang
+# CXX=clang++
 FLAGS=-g -O1 -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm
 
 # Check that we are compiling with clang 10.0.1

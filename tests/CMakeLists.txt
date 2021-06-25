@@ -27,6 +27,12 @@ target_include_directories(tester PRIVATE ${LLVM_INCLUDE_DIRS})
 target_include_directories(tester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(tester PRIVATE ${LLVM_DEFINITIONS})
 
+add_custom_command(TARGET tester
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E env CC=${LLVM_CC} CXX=${LLVM_CXX} make
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data
+    COMMENT "Generate IR files from test .c/.cpp files")
+
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/testresults)
 catch_discover_tests(tester
