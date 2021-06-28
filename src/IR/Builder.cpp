@@ -38,6 +38,22 @@ const llvm::CallBase *exlSingleEnd = nullptr;  // the matched single end with ex
 
 std::set<std::shared_ptr<OpenMPTask>> taskWOJoins;  // omp tasks without joins
 
+// valid for __kmpc_end_single
+bool hasBarrierInNextBasicBlock(const llvm::BasicBlock &basicblock) {
+  const llvm::BasicBlock *nextBB =
+      basicblock.getSingleSuccessor();  // the basicblock of __kmpc_end_single should only have one successor
+  for (auto it = nextBB->begin(), end = nextBB->end(); it != end; ++it) {
+    auto inst = llvm::cast<llvm::Instruction>(it);
+    if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
+      auto funcName = callInst->getCalledFunction()->getName();
+      if (OpenMPModel::isBarrier(funcName)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   auto ptr = getPointerOperand(inst);
   assert(ptr);
@@ -61,20 +77,6 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
   if (!OpenMPModel::isFork(twinCallInst)) return nullptr;
 
   return std::make_shared<OpenMPFork>(twinCallInst);
-}
-
-bool hasBarrierInNextBasicBlock(const llvm::BasicBlock &basicblock) {
-  const llvm::BasicBlock *nextBB = basicblock.getSingleSuccessor();
-  for (auto it = nextBB->begin(), end = nextBB->end(); it != end; ++it) {
-    auto inst = llvm::cast<llvm::Instruction>(it);
-    if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
-      auto funcName = callInst->getCalledFunction()->getName();
-      if (OpenMPModel::isBarrier(funcName)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
@@ -183,24 +185,25 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           // __kmpc_end_single should be in the same basicblock with its __kmpc_omp_task.
           // see https://www.rookiehpc.com/openmp/docs/taskwait.php
           // TODO: need to match single and other syncs for tasks
-          if (!tasks.empty()) {
+          if (!tasks.empty()) {  // single(+task)
             if (hasBarrierInNextBasicBlock(basicblock)) {
-              // the implicit barrier is represented as __kmpc_barrier in the successes basicblock,
+              // the implicit barrier is represented as __kmpc_barrier in the successor basicblock,
               // if omp nowait, __kmpc_barrier will be absent
               auto it = tasks.begin();
               for (; it != tasks.end(); it++) {
                 instructions.push_back(std::make_shared<OpenMPTaskJoin>(*it));
               }
-            } else {  // for tasks without joins
+            } else {  // for tasks in single block with nowait
               auto it = tasks.begin();
               for (; it != tasks.end(); it++) {
                 taskWOJoins.insert(*it);
               }
             }
-            // single(+task): we want them exclusive
+            // we want them exclusive
             exlStartEnd.insert(std::make_pair(exlSingleStart, callInst));
+          } else {  // single(+stmt)
+            instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
           }
-          instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
         } else if (OpenMPModel::isMasterStart(funcName)) {
           // check if handled by a previous thread
           std::map<const llvm::CallBase *, const llvm::CallBase *>::iterator itExl = exlStartEnd.find(callInst);

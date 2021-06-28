@@ -75,6 +75,20 @@ const ForkEvent *getForkWithEntry(const llvm::Value *handle, const ThreadTrace &
   return nullptr;
 }
 
+std::set<const ForkEvent *> usedTaskForks;  // avoid inserted fake task join to find the same task fork
+
+const ForkEvent *getForkWithEntry(const llvm::Value *handle, const ProgramTrace &program) {
+  for (auto const &thread : program.getThreads()) {
+    auto fork = getForkWithEntry(handle, *thread);
+    if (fork != nullptr && usedTaskForks.find(fork) == usedTaskForks.end()) {
+      usedTaskForks.insert(fork);
+      return fork;
+    }
+  }
+
+  return nullptr;
+}
+
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
   for (auto const &fork : thread.getForkEvents()) {
     if (fork->getIRInst()->getThreadHandle() == handle) {
@@ -103,7 +117,13 @@ const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace 
     const OpenMPTaskJoin *taskJoin = static_cast<const OpenMPTaskJoin *>(join->getIRInst());
     auto const joinEntry = taskJoin->getThreadEntry();
     if (auto fork = getForkWithEntry(joinEntry, join->getThread()); fork != nullptr) {
+      // tasks with joins
       return fork;
+    } else if (auto fork = getForkWithEntry(joinEntry, program); fork != nullptr) {
+      // tasks has no explicit joins
+      return fork;
+    } else {
+      llvm::errs() << "Cannot use getForkWithEntry to find the fork of omp tasks. \n";
     }
   }
 

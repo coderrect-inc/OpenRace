@@ -59,7 +59,6 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // DRB 24 and 25 are simd
       Oracle("DRB026-targetparallelfor-orig-yes.ll",
              {"DRB026-targetparallelfor-orig-yes.c:64:9 DRB026-targetparallelfor-orig-yes.c:64:10"}),
-      // DRB 27 is task
       Oracle("DRB027-taskdependmissing-orig-yes.ll",
              {"DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:61:7"}),
 
@@ -119,7 +118,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB069-sectionslock1-orig-no.ll", {}),
       // 70 simd
       Oracle("DRB071-targetparallelfor-orig-no.ll", {}),
-      // 72 task
+      // 72 task depend
       // 73 Broken Debug Info
       // 74 critical and flush
       Oracle("DRB075-getthreadnum-orig-yes.ll",

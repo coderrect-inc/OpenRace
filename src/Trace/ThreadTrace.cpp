@@ -131,8 +131,7 @@ void ThreadTrace::insertJoinsForTasks() {
   }
 
   // the insert location should be before the two omp_fork joins
-  long int insert_loc = 0;
-  size_t move = tasks.size();
+  size_t insert_loc = 0;
   for (auto const &event : getEvents()) {
     if (event->getIRInst()->type == race::IR::Type::OpenMPJoin && insert_loc == 0) {
       insert_loc = event->getID();
@@ -142,14 +141,15 @@ void ThreadTrace::insertJoinsForTasks() {
   }
   assert(insert_loc != 0 && "omp_fork's join is missing");
 
-  long int i = 0;
+  size_t i = 0;
   auto it = tasks.begin();
   for (; it != tasks.end(); it++) {
     auto ir = std::make_shared<OpenMPTaskJoin>(*it);
     auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
     std::shared_ptr<const JoinIR> join(ir, joinIR);
-    events.insert(events.begin() + insert_loc + i,
-                  std::make_unique<const JoinEventImpl>(join, mainInfo, insert_loc + i));
+    long int diff = static_cast<long int>(insert_loc + i);
+    events.insert(events.begin() + diff,
+                  std::make_unique<const JoinEventImpl>(join, mainInfo, events.size()));  // insert_loc + i
     i++;
   }
 }
