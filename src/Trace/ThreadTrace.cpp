@@ -11,6 +11,8 @@ limitations under the License.
 
 #include "Trace/ThreadTrace.h"
 
+#include <IR/IRImpls.h>
+
 #include "EventImpl.h"
 #include "IR/Builder.h"
 #include "Trace/CallStack.h"
@@ -19,6 +21,8 @@ limitations under the License.
 using namespace race;
 
 namespace {
+
+std::shared_ptr<EventInfo> mainInfo;
 
 void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
                       const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events) {
@@ -35,6 +39,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto irFunc = generateFunctionSummary(func);
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
+  if (func->getName() == "main") {
+    mainInfo = einfo;
+  }
 
   for (auto const &ir : irFunc) {
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
@@ -114,6 +121,37 @@ ThreadTrace::ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta:
   auto it = std::find(entries.begin(), entries.end(), entry);
   // entry mut be one of the entries from the spawning event
   assert(it != entries.end());
+}
+
+// for main only: not done...
+void ThreadTrace::insertJoinsForTasks() {
+  auto tasks = getTaskWOJoins();
+  if (tasks.empty()) {
+    return;
+  }
+
+  // the insert location should be before the two omp_fork joins
+  long int insert_loc = 0;
+  size_t move = tasks.size();
+  for (auto const &event : getEvents()) {
+    if (event->getIRInst()->type == race::IR::Type::OpenMPJoin && insert_loc == 0) {
+      insert_loc = event->getID();
+    } else if (insert_loc > 0) {
+      // move the event id: new id = old + size of tasks, TODO: how?? it's const
+    }
+  }
+  assert(insert_loc != 0 && "omp_fork's join is missing");
+
+  long int i = 0;
+  auto it = tasks.begin();
+  for (; it != tasks.end(); it++) {
+    auto ir = std::make_shared<OpenMPTaskJoin>(*it);
+    auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
+    std::shared_ptr<const JoinIR> join(ir, joinIR);
+    events.insert(events.begin() + insert_loc + i,
+                  std::make_unique<const JoinEventImpl>(join, mainInfo, insert_loc + i));
+    i++;
+  }
 }
 
 std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {

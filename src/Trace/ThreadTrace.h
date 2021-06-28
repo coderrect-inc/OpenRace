@@ -36,6 +36,8 @@ class ThreadTrace {
 
   [[nodiscard]] const Event *getEvent(EventID id) const { return events.at(id).get(); }
 
+  void insertJoinsForTasks();
+
   // Constructs the main thread. All others should be built from forkEvent
   // constructor
   ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry);

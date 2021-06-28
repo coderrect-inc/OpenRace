@@ -166,7 +166,7 @@ class OpenMPTask : public ForkIR {
     auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
     auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
     if (!taskAlloc || !OpenMPModel::isTaskAlloc(taskAlloc->getCalledFunction()->getName())) {
-      llvm::errs() << "Failed to find task function. inst=" << toStringRef(taskAlloc) << "\n";
+      llvm::errs() << "Failed to find task function. inst=" << taskAlloc << "\n";
       return nullptr;
     }
     llvm::CallSite taskAllocCall(llvm::cast<llvm::Instruction>(op));
@@ -231,7 +231,7 @@ class OpenMPTaskJoin : public JoinIR {
     auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
     auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
     if (!taskAlloc || !OpenMPModel::isTaskAlloc(taskAlloc->getCalledFunction()->getName())) {
-      llvm::errs() << "Failed to find task function. inst=" << toStringRef(taskAlloc) << "\n";
+      llvm::errs() << "Failed to find task function. inst=" << taskAlloc << "\n";
       return nullptr;
     }
     llvm::CallSite taskAllocCall(llvm::cast<llvm::Instruction>(op));

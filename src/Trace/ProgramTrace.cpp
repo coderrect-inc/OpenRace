@@ -50,6 +50,9 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
       worklist.push_back(newFork);
     }
   }
+
+  // add missing task joins
+  threads.front().get()->insertJoinsForTasks();
 }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &trace) {

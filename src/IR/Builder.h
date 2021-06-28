@@ -12,15 +12,19 @@ limitations under the License.
 #pragma once
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "IR/IR.h"
+#include "IRImpls.h"
 
 namespace race {
 using FunctionSummary = std::vector<std::shared_ptr<const IR>>;
 
 FunctionSummary generateFunctionSummary(const llvm::Function *func);
 FunctionSummary generateFunctionSummary(const llvm::Function &func);
+
+std::set<std::shared_ptr<race::OpenMPTask>> getTaskWOJoins();
 
 // class Builder {
 //     mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
