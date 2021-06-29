@@ -515,6 +515,7 @@ bool in(const race::Event *event) {
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
+// (event1 always has the thread trace with full irs)
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
@@ -522,19 +523,37 @@ bool inSame(const Event *event1, const Event *event2) {
   auto const eid1 = event1->getID();
   auto const eid2 = event2->getID();
 
-  // Trace events are ordered, so we can save time by finding the region containing the smaller
-  // ID first, and then checking if that region also contains the bigger ID.
-  auto const minID = (eid1 < eid2) ? eid1 : eid2;
-  auto const maxID = (eid1 > eid2) ? eid1 : eid2;
+  const ThreadTrace &thread1 = event1->getThread();
+  const ThreadTrace &thread2 = event2->getThread();
 
-  // Omp threads in same team will have identical traces so we only need one set of events
-  auto const regions = getRegions<Start, End>(event1->getThread());
-  auto it = lower_bound(regions.begin(), regions.end(), Region(minID, minID), regionEndLessThan);
-  if (it != regions.end()) {
-    if (it->contains(minID)) {
-      return it->contains(maxID);
+  auto const regions1 = getRegions<Start, End>(thread1);
+  auto const regions2 = getRegions<Start, End>(thread2);
+
+  // Omp threads in same team may or may not have identical traces so we see them separately
+  if (regions1.size() > 0 && regions2.size() > 0) {  // should have regions
+    for (auto r1 = regions1.begin(); r1 != regions1.end(); r1++) {
+      EventID start1 = r1->start;
+      EventID end1 = r1->end;
+
+      for (auto r2 = regions2.begin(); r2 != regions2.end(); r2++) {
+        EventID start2 = r2->start;
+        EventID end2 = r2->end;
+
+        if ((end1 - start1) == (end2 - start2)) {  // same size of ir stmts in the omp block
+          if (thread1.getEvent(start1)->getInst() == thread2.getEvent(start2)->getInst() &&
+              thread1.getEvent(end1)->getInst() == thread2.getEvent(end2)->getInst()) {  // same start/end ir
+            auto it1 = lower_bound(regions1.begin(), regions1.end(), Region(eid1, eid1), regionEndLessThan);
+            auto it2 = lower_bound(regions2.begin(), regions2.end(), Region(eid2, eid2), regionEndLessThan);
+            if (it1 != regions1.end() && it2 != regions2.end() && it1->contains(eid1) &&
+                it2->contains(eid2)) {  // omp block contains the event
+              return true;
+            }
+          }
+        }
+      }
     }
   }
+
   return false;
 }
 

@@ -123,7 +123,7 @@ ThreadTrace::ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta:
   assert(it != entries.end());
 }
 
-// for main only: not done...
+// for main only
 void ThreadTrace::insertJoinsForTasks() {
   auto tasks = getTaskWOJoins();
   if (tasks.empty()) {
@@ -135,9 +135,11 @@ void ThreadTrace::insertJoinsForTasks() {
   for (auto const &event : getEvents()) {
     if (event->getIRInst()->type == race::IR::Type::OpenMPJoin && insert_loc == 0) {
       insert_loc = event->getID();
-    } else if (insert_loc > 0) {
-      // move the event id: new id = old + size of tasks, TODO: how?? it's const
+      break;
     }
+    //    else if (insert_loc > 0) {
+    //      // change the event id: new id = old + size of tasks
+    //    }
   }
   assert(insert_loc != 0 && "omp_fork's join is missing");
 
@@ -147,9 +149,13 @@ void ThreadTrace::insertJoinsForTasks() {
     auto ir = std::make_shared<OpenMPTaskJoin>(*it);
     auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
     std::shared_ptr<const JoinIR> join(ir, joinIR);
-    long int diff = static_cast<long int>(insert_loc + i);
-    events.insert(events.begin() + diff,
-                  std::make_unique<const JoinEventImpl>(join, mainInfo, events.size()));  // insert_loc + i
+    long int position = static_cast<long int>(insert_loc + i);  // insert position: before the omp fork joins
+    // EventID = insert_loc: should change the event id of omp fork join to (old id + size(tasks)), however event id is
+    // a const (as mentioned above); if set the event id of the task join as events.size(), there will be wrong HB
+    // relation; NOW set the event id of the task join as insert_loc, which is a duplicate id with 1st omp fork join,
+    // but can show right HB relation and pass tests.
+    // TODO: how to solve this in a better way?
+    events.insert(events.begin() + position, std::make_unique<const JoinEventImpl>(join, mainInfo, insert_loc));
     i++;
   }
 }
