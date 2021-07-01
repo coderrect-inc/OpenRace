@@ -84,6 +84,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
       // No race if guaranteed to be executed by same thread
       if (ompAnalysis.guardedBySameTid(write, other)) return;
+
+      // Lastprivate code will only be executed by one thread
+      if (ompAnalysis.isInLastprivate(write) || ompAnalysis.isInLastprivate(other)) return;
     }
 
     // Race detected

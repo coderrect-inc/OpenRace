@@ -104,7 +104,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB053-inneronly1-orig-no.ll", {}),  // multi-dimen array
       Oracle("DRB054-inneronly2-orig-no.ll", {}),  // multi-dimen array
       // 55-58 complex array access
-      // 59 FP caused by last private??
+      Oracle("DRB059-lastprivate-orig-no.ll", {}),
       Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
       Oracle("DRB061-matrixvector1-orig-no.ll", {}),
       Oracle("DRB062-matrixvector2-orig-no.ll", {}),

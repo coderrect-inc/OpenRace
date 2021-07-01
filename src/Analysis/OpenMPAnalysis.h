@@ -66,12 +66,26 @@ class SimpleGetThreadNumAnalysis {
   bool guardedBySameTid(const Event* event1, const Event* event2) const;
 };
 
+class LastprivateAnalysis {
+  std::set<const llvm::BasicBlock*> lastprivateBlocks;
+
+  std::set<const llvm::BasicBlock*> computeLastprivateBlocks(const llvm::Function& func);
+
+ public:
+  LastprivateAnalysis(const llvm::Module& module);
+
+  [[nodiscard]] inline bool isGuarded(const llvm::BasicBlock* block) const {
+    return lastprivateBlocks.find(block) != lastprivateBlocks.end();
+  }
+};
+
 class OpenMPAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
 
   ReduceAnalysis reduceAnalysis;
   SimpleGetThreadNumAnalysis getThreadNumAnalysis;
+  LastprivateAnalysis lastprivate;
 
   // Start/End of omp loop
   using LoopRegion = Region;
@@ -119,6 +133,8 @@ class OpenMPAnalysis {
   bool guardedBySameTid(const Event* event1, const Event* event2) const {
     return getThreadNumAnalysis.guardedBySameTid(event1, event2);
   }
+
+  bool isInLastprivate(const Event* event) const { return lastprivate.isGuarded(event->getInst()->getParent()); }
 };
 
 }  // namespace race
