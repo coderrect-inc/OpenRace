@@ -16,9 +16,11 @@ limitations under the License.
 
 #include "Event.h"
 #include "LanguageModel/RaceModel.h"
+#include "ProgramTrace.h"
 
 namespace race {
 
+struct ProgramInfo;
 class ProgramTrace;
 
 using ThreadID = size_t;
@@ -30,6 +32,8 @@ class ThreadTrace {
   // The fork event that created this thread
   // Optional because main thread does not have a spawn site
   const std::optional<const ForkEvent *> spawnSite;
+  // extra program information from ProgramTrace
+  ProgramInfo *pInfo;
 
   [[nodiscard]] const std::vector<std::unique_ptr<const Event>> &getEvents() const { return events; }
   [[nodiscard]] std::vector<const ForkEvent *> getForkEvents() const;
@@ -38,17 +42,27 @@ class ThreadTrace {
 
   // Constructs the main thread. All others should be built from forkEvent
   // constructor
-  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry);
+  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
   // Construct thread from forkEvent. entry specifies the entry point of the
   // spawned thread and should be one of the entries from the spawningEvent
   // entry list
-  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry);
+  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
+
+  //  // Constructs the main thread. All others should be built from forkEvent
+  //  // constructor
+  //  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry);
+  //  // Construct thread from forkEvent. entry specifies the entry point of the
+  //  // spawned thread and should be one of the entries from the spawningEvent
+  //  // entry list
+  //  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry);
   ~ThreadTrace() = default;
   ThreadTrace(const ThreadTrace &) = delete;
   ThreadTrace(ThreadTrace &&other) = delete;  // need to update events because they contain reference to parent
                                               // thread
   ThreadTrace &operator=(const ThreadTrace &) = delete;
   ThreadTrace &operator=(ThreadTrace &&other) = delete;
+
+  static void constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
 
  private:
   std::vector<std::unique_ptr<const Event>> events;
