@@ -122,20 +122,6 @@ std::vector<std::unique_ptr<const Event>> buildEventTrace(const ThreadTrace &thr
 }
 }  // namespace
 
-// ThreadTrace::ThreadTrace(const race::ProgramTrace &program, const pta::CallGraphNodeTy *entry)
-//    : id(0), program(program), spawnSite(std::nullopt), events(buildEventTrace(*this, entry, program.pta)) {}
-//
-// ThreadTrace::ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry)
-//    : id(id),
-//      program(spawningEvent->getThread().program),
-//      spawnSite(spawningEvent),
-//      events(buildEventTrace(*this, entry, program.pta)) {
-//  auto const entries = spawningEvent->getThreadEntry();
-//  auto it = std::find(entries.begin(), entries.end(), entry);
-//  // entry mut be one of the entries from the spawning event
-//  assert(it != entries.end());
-//}
-
 ThreadTrace::ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramState &pState)
     : id(0),
       program(program),

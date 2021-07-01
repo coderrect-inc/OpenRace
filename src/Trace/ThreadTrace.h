@@ -46,14 +46,6 @@ class ThreadTrace {
   // spawned thread and should be one of the entries from the spawningEvent
   // entry list
   ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramState &pState);
-
-  //  // Constructs the main thread. All others should be built from forkEvent
-  //  // constructor
-  //  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry);
-  //  // Construct thread from forkEvent. entry specifies the entry point of the
-  //  // spawned thread and should be one of the entries from the spawningEvent
-  //  // entry list
-  //  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry);
   ~ThreadTrace() = default;
   ThreadTrace(const ThreadTrace &) = delete;
   ThreadTrace(ThreadTrace &&other) = delete;  // need to update events because they contain reference to parent
