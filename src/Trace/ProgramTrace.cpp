@@ -24,7 +24,7 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
   pta.analyze(module, entryName);
 
   auto mainEntry = pta::GT::getEntryNode(pta.getCallGraph());
-  ThreadTrace::constructThreadTraces(this, mainEntry, pInfo);
+  ThreadTrace::constructThreadTraces(this, mainEntry, threads);
 
   //  // construct main thread
   //  threads.push_back(std::make_unique<ThreadTrace>(*this, mainEntry, pInfo));
@@ -64,3 +64,4 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &t
   os << "========================\n";
   return os;
 }
+

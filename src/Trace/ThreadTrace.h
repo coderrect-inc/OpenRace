@@ -16,11 +16,9 @@ limitations under the License.
 
 #include "Event.h"
 #include "LanguageModel/RaceModel.h"
-#include "ProgramTrace.h"
 
 namespace race {
 
-struct ProgramInfo;
 class ProgramTrace;
 
 using ThreadID = size_t;
@@ -33,7 +31,7 @@ class ThreadTrace {
   // Optional because main thread does not have a spawn site
   const std::optional<const ForkEvent *> spawnSite;
   // extra program information from ProgramTrace
-  ProgramInfo *pInfo;
+  std::vector<std::unique_ptr<ThreadTrace>> &threads;
 
   [[nodiscard]] const std::vector<std::unique_ptr<const Event>> &getEvents() const { return events; }
   [[nodiscard]] std::vector<const ForkEvent *> getForkEvents() const;
@@ -42,11 +40,11 @@ class ThreadTrace {
 
   // Constructs the main thread. All others should be built from forkEvent
   // constructor
-  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
+  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, std::vector<std::unique_ptr<ThreadTrace>> &threads);
   // Construct thread from forkEvent. entry specifies the entry point of the
   // spawned thread and should be one of the entries from the spawningEvent
   // entry list
-  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
+  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, std::vector<std::unique_ptr<ThreadTrace>> &threads);
 
   //  // Constructs the main thread. All others should be built from forkEvent
   //  // constructor
@@ -62,7 +60,7 @@ class ThreadTrace {
   ThreadTrace &operator=(const ThreadTrace &) = delete;
   ThreadTrace &operator=(ThreadTrace &&other) = delete;
 
-  static void constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry, ProgramInfo *pInfo);
+  static void constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry, std::vector<std::unique_ptr<ThreadTrace>> &threads);
 
  private:
   std::vector<std::unique_ptr<const Event>> events;

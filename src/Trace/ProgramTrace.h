@@ -14,25 +14,27 @@ limitations under the License.
 #include <vector>
 
 #include "LanguageModel/RaceModel.h"
+#include "ThreadTrace.h"
 #include "Trace/Event.h"
-#include "Trace/ThreadTrace.h"
 
 namespace race {
 
-struct ProgramInfo {
-  std::vector<std::unique_ptr<ThreadTrace>> threads;
+struct ProgramState {
+
 };
 
 class ProgramTrace {
   llvm::Module *module;
-  ProgramInfo *pInfo;
+  std::vector<std::unique_ptr<ThreadTrace>> threads;
 
  public:
   pta::PTA pta;
 
-  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return pInfo->threads; }
+  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
 
-  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return pInfo->threads.at(tid)->getEvent(eid); }
+  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) {
+    return threads.at(tid)->getEvent(eid);
+  }
 
   // Get the module after preprocessing has been run
   [[nodiscard]] const Module &getModule() const { return *module; }
