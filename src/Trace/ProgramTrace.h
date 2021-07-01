@@ -32,9 +32,7 @@ class ProgramTrace {
 
   [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return pState.threads; }
 
-  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) {
-    return pState.threads.at(tid)->getEvent(eid);
-  }
+  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return pState.threads.at(tid)->getEvent(eid); }
 
   // Get the module after preprocessing has been run
   [[nodiscard]] const Module &getModule() const { return *module; }

@@ -56,6 +56,8 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &trace) {
   os << "===== Program Trace =====\n";
+
+  // the order is a little reversed for parallel omp forks after changing the traversal order
   auto const &threads = trace.getThreads();
   for (auto const &thread : threads) {
     os << *thread;
@@ -64,4 +66,3 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &t
   os << "========================\n";
   return os;
 }
-

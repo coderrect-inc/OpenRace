@@ -20,6 +20,10 @@ using namespace race;
 
 namespace {
 
+// the counter of thread id: since we are constructing ThreadTrace while building events,
+// pState.threads.size() will be updated after finishing the construction, we need such a counter
+static ThreadID currentTID = 0;
+
 void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
                       const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events, ProgramState &pState) {
   auto func = node->getTargetFun()->getFunction();
@@ -58,7 +62,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto entry = entries.front();
 
       // build thread trace for this fork
-      pState.threads.push_back(std::make_unique<ThreadTrace>(pState.threads.size(), forkEvent, node, pState));
+      currentTID++;
+      pState.threads.insert(pState.threads.begin(),
+                            std::make_unique<ThreadTrace>(currentTID, forkEvent, entry, pState));
 
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
@@ -160,8 +166,9 @@ std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
   return forks;
 }
 
-void ThreadTrace::constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry, ProgramState &pState) {
-  pState.threads.push_back(std::make_unique<ThreadTrace>(*program, entry, pState));
+void ThreadTrace::constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry,
+                                        ProgramState &pState) {
+  pState.threads.insert(pState.threads.begin(), std::make_unique<ThreadTrace>(*program, entry, pState));
 }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ThreadTrace &thread) {
