@@ -20,20 +20,20 @@ limitations under the License.
 namespace race {
 
 struct ProgramState {
-
+  std::vector<std::unique_ptr<ThreadTrace>> threads;
 };
 
 class ProgramTrace {
   llvm::Module *module;
-  std::vector<std::unique_ptr<ThreadTrace>> threads;
+  ProgramState pState;
 
  public:
   pta::PTA pta;
 
-  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
+  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return pState.threads; }
 
   [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) {
-    return threads.at(tid)->getEvent(eid);
+    return pState.threads.at(tid)->getEvent(eid);
   }
 
   // Get the module after preprocessing has been run
