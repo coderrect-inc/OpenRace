@@ -19,6 +19,7 @@ limitations under the License.
 
 namespace race {
 
+struct TmpState;
 struct ProgramState;
 class ProgramTrace;
 
@@ -32,6 +33,7 @@ class ThreadTrace {
   // Optional because main thread does not have a spawn site
   const std::optional<const ForkEvent *> spawnSite;
   // extra program information from ProgramTrace
+  TmpState &tmpState;
   ProgramState &pState;
 
   [[nodiscard]] const std::vector<std::unique_ptr<const Event>> &getEvents() const { return events; }
@@ -41,11 +43,12 @@ class ThreadTrace {
 
   // Constructs the main thread. All others should be built from forkEvent
   // constructor
-  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramState &pState);
+  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramState &pState, TmpState &tmpState);
   // Construct thread from forkEvent. entry specifies the entry point of the
   // spawned thread and should be one of the entries from the spawningEvent
   // entry list
-  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramState &pState);
+  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramState &pState,
+              TmpState &tmpState);
   ~ThreadTrace() = default;
   ThreadTrace(const ThreadTrace &) = delete;
   ThreadTrace(ThreadTrace &&other) = delete;  // need to update events because they contain reference to parent

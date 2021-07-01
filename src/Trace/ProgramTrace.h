@@ -19,17 +19,24 @@ limitations under the License.
 
 namespace race {
 
-struct ProgramState {
+// all included states are ONLY used when building ProgramTrace/ThreadTrace
+struct TmpState {
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
-  ThreadID currentTID = 0;
+  ThreadID currentTID;
+};
 
+// all included states are used for building ProgramTrace and ThreadTrace, and will be used in other constructions
+struct ProgramState {
   // all threads in the program
   std::vector<std::unique_ptr<ThreadTrace>> threads;
 };
 
 class ProgramTrace {
   llvm::Module *module;
+  TmpState tmpState{
+      .currentTID = 0,
+  };
   ProgramState pState;
 
  public:
