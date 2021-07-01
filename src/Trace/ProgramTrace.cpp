@@ -23,8 +23,9 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
   // Run pointer analysis
   pta.analyze(module, entryName);
 
+  // build all threads starting from this main func
   auto mainEntry = pta::GT::getEntryNode(pta.getCallGraph());
-  ThreadTrace::constructThreadTraces(this, mainEntry, pState);
+  pState.threads.insert(pState.threads.begin(), std::make_unique<ThreadTrace>(*this, mainEntry, pState));
 }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &trace) {

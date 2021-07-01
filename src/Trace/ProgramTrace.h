@@ -20,6 +20,11 @@ limitations under the License.
 namespace race {
 
 struct ProgramState {
+  // the counter of thread id: since we are constructing ThreadTrace while building events,
+  // pState.threads.size() will be updated after finishing the construction, we need such a counter
+  ThreadID currentTID = 0;
+
+  // all threads in the program
   std::vector<std::unique_ptr<ThreadTrace>> threads;
 };
 

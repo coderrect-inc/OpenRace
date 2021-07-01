@@ -53,8 +53,6 @@ class ThreadTrace {
   ThreadTrace &operator=(const ThreadTrace &) = delete;
   ThreadTrace &operator=(ThreadTrace &&other) = delete;
 
-  static void constructThreadTraces(ProgramTrace *program, const pta::CallGraphNodeTy *entry, ProgramState &pState);
-
  private:
   std::vector<std::unique_ptr<const Event>> events;
 };
