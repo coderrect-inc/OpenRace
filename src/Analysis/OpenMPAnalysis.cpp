@@ -739,9 +739,9 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 
 namespace {
 
-// Get any cmp insts that use this value and compare against a constant integer
+// Get any cmp eq insts that use this value and compare against a constant integer
 // return list of pairs (cmp, c) where cmp is the cmpInst and c is the constant value compared against
-std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpInsts(const llvm::Value *value) {
+std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const llvm::Value *value) {
   std::vector<std::pair<const llvm::CmpInst *, uint64_t>> result;
 
   std::vector<const llvm::User *> worklist;
@@ -841,7 +841,7 @@ void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
   if (visited.find(func) != visited.end()) return;
 
   // Find all cmpInsts that compare the omp_get_thread_num call to a const value
-  auto const cmpInsts = getConstCmpInsts(event->getInst());
+  auto const cmpInsts = getConstCmpEqInsts(event->getInst());
   for (auto const &pair : cmpInsts) {
     auto const cmpInst = pair.first;
     auto const tid = pair.second;
@@ -911,7 +911,7 @@ std::set<const llvm::BasicBlock *> LastprivateAnalysis::computeLastprivateBlocks
       // Get the "isLast" flag
       auto isLastFlag = call->getArgOperand(3);
       // Find cmp instructions that use the flag
-      auto const cmps = getConstCmpInsts(isLastFlag);
+      auto const cmps = getConstCmpEqInsts(isLastFlag);
       for (auto cmp : cmps) {
         // Only care about cmp instructions checking that the flag is "true" or non-zero
         if (cmp.second != 0) continue;
