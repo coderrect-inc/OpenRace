@@ -82,3 +82,16 @@ TEST_CASE("OpenMP get_thread_num", "[integration][omp]") {
   };
   checkOracles(oracles, "integration/openmp/");
 }
+
+TEST_CASE("OpenMP lastprivate", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("lastprivate-before-yes.ll", {"lastprivate-before-yes.c:13:14 lastprivate-before-yes.c:15:29",
+                                           "lastprivate-before-yes.c:15:29 lastprivate-before-yes.c:13:14"}),
+      // Cannot pass because there is no race in clang
+      // Oracle("last-private-yes.ll", {/*TODO*/}),
+      Oracle("lastprivate-no.ll", {}),
+      Oracle("lastprivate-loop-split-no.ll", {}),
+
+  };
+  checkOracles(oracles, "integration/openmp/");
+}

@@ -67,6 +67,11 @@ class SimpleGetThreadNumAnalysis {
 };
 
 class LastprivateAnalysis {
+  // We model last private by only checking if some access is in a last private block
+  // We may miss some real races if different last private blocks can race with each other
+  // However, it looks like clang always inserts a barrier after lastprivate (even if it is not needed)
+  // This means we can never detect a race between two different lastprivate sections
+  // so I kept this version of the analysis because it is simpler.
   std::set<const llvm::BasicBlock*> lastprivateBlocks;
 
   std::set<const llvm::BasicBlock*> computeLastprivateBlocks(const llvm::Function& func);
