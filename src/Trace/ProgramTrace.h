@@ -20,31 +20,24 @@ limitations under the License.
 namespace race {
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
-struct TmpState {
+struct TraceBuildState {
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
-  ThreadID currentTID;
-};
-
-// all included states are used for building ProgramTrace and ThreadTrace, and will be used in other constructions
-struct ProgramState {
-  // all threads in the program
-  std::vector<std::unique_ptr<ThreadTrace>> threads;
+  ThreadID currentTID = 0;
 };
 
 class ProgramTrace {
   llvm::Module *module;
-  TmpState tmpState{
-      .currentTID = 0,
-  };
-  ProgramState pState;
+  std::vector<std::unique_ptr<ThreadTrace>> threads;
+
+  friend class ThreadTrace;
 
  public:
   pta::PTA pta;
 
-  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return pState.threads; }
+  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
 
-  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return pState.threads.at(tid)->getEvent(eid); }
+  [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return threads.at(tid)->getEvent(eid); }
 
   // Get the module after preprocessing has been run
   [[nodiscard]] const Module &getModule() const { return *module; }
