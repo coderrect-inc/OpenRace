@@ -22,10 +22,17 @@ using namespace race;
 
 namespace {
 
-std::shared_ptr<EventInfo> mainInfo;
-
+// Called recursively to build list of events and thread traces
+// node      - the current callgraph node to traverse
+// thread    - the thread trace being built
+// callstack - callstack used to prevent recursion
+// pta       - pointer analysis used to find next nodes in call graph
+// events    - list of events to append newly created events to
+// threads   - list of threads to append and newly created threads to
+// state     - used to track data across the construction of the entire program trace
 void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
-                      const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events) {
+                      const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events,
+                      std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state) {
   auto func = node->getTargetFun()->getFunction();
   if (callstack.contains(func)) {
     // prevent recursion
@@ -53,6 +60,22 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
+
+      // traverse this fork
+      auto event = events.back().get();
+      auto forkEvent = static_cast<const ForkEvent *>(event);
+      auto entries = forkEvent->getThreadEntry();
+      assert(!entries.empty());
+
+      // Heuristic: just choose first entry if there are more than one
+      // TODO: log if entries contained more than one possible entry
+      auto entry = entries.front();
+
+      auto const threadPosition = threads.size();
+      // build thread trace for this fork and all sub threads
+      auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
+      threads.insert(threads.begin() + threadPosition, std::move(subThread));
+
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
       events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
@@ -89,7 +112,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
       events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
-      traverseCallNode(directNode, thread, callstack, pta, events);
+      traverseCallNode(directNode, thread, callstack, pta, events, threads, state);
       events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
 
     } else {
@@ -101,22 +124,28 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 }
 
 std::vector<std::unique_ptr<const Event>> buildEventTrace(const ThreadTrace &thread, const pta::CallGraphNodeTy *entry,
-                                                          const pta::PTA &pta) {
+                                                          const pta::PTA &pta,
+                                                          std::vector<std::unique_ptr<ThreadTrace>> &threads,
+                                                          TraceBuildState &state) {
   std::vector<std::unique_ptr<const Event>> events;
   CallStack callstack;
-  traverseCallNode(entry, thread, callstack, pta, events);
+  traverseCallNode(entry, thread, callstack, pta, events, threads, state);
   return events;
 }
 }  // namespace
 
-ThreadTrace::ThreadTrace(const race::ProgramTrace &program, const pta::CallGraphNodeTy *entry)
-    : id(0), program(program), spawnSite(std::nullopt), events(buildEventTrace(*this, entry, program.pta)) {}
+ThreadTrace::ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entry, TraceBuildState &state)
+    : id(0),
+      program(program),
+      spawnSite(std::nullopt),
+      events(buildEventTrace(*this, entry, program.pta, program.threads, state)) {}
 
-ThreadTrace::ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry)
-    : id(id),
+ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry,
+                         std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state)
+    : id(++state.currentTID),
       program(spawningEvent->getThread().program),
       spawnSite(spawningEvent),
-      events(buildEventTrace(*this, entry, program.pta)) {
+      events(buildEventTrace(*this, entry, program.pta, threads, state)) {
   auto const entries = spawningEvent->getThreadEntry();
   auto it = std::find(entries.begin(), entries.end(), entry);
   // entry mut be one of the entries from the spawning event

@@ -1,3 +1,5 @@
+add_subdirectory(data)
+
 add_executable(tester 
     test.cpp
     
@@ -26,6 +28,7 @@ target_link_libraries(tester pta racedetect-lib ${llvm_libs} CONAN_PKG::catch2)
 target_include_directories(tester PRIVATE ${LLVM_INCLUDE_DIRS})
 target_include_directories(tester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(tester PRIVATE ${LLVM_DEFINITIONS})
+add_dependencies(tester tests)
 
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/testresults)

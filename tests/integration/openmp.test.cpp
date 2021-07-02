@@ -62,11 +62,11 @@ TEST_CASE("OpenMP Lock Tests", "[integration][omp]") {
       Oracle("lock-set-unset-no.ll", {}),
       Oracle("lock-set-unset-yes.ll",
              {
-                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
-                 "lock-set-unset-yes.c:13:11 lock-set-unset-yes.c:13:11",
+                 "lock-set-unset-yes.c:11:11 lock-set-unset-yes.c:11:11",
+                 "lock-set-unset-yes.c:11:11 lock-set-unset-yes.c:11:11",
              }),
 
-      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:22 lock-set-unset-yes-2.c:12:22"})};
+      Oracle("lock-set-unset-yes-2.ll", {"lock-set-unset-yes-2.c:12:19 lock-set-unset-yes-2.c:12:19"})};
   checkOracles(oracles, "integration/openmp/");
 }
 
