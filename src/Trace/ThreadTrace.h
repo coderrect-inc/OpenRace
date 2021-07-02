@@ -19,8 +19,7 @@ limitations under the License.
 
 namespace race {
 
-struct TmpState;
-struct ProgramState;
+struct TraceBuildState;
 class ProgramTrace;
 
 using ThreadID = size_t;
@@ -32,27 +31,24 @@ class ThreadTrace {
   // The fork event that created this thread
   // Optional because main thread does not have a spawn site
   const std::optional<const ForkEvent *> spawnSite;
-  // extra program information from ProgramTrace
-  TmpState &tmpState;
-  ProgramState &pState;
 
   [[nodiscard]] const std::vector<std::unique_ptr<const Event>> &getEvents() const { return events; }
   [[nodiscard]] std::vector<const ForkEvent *> getForkEvents() const;
 
   [[nodiscard]] const Event *getEvent(EventID id) const { return events.at(id).get(); }
 
-  // Constructs the main thread. All others should be built from forkEvent
-  // constructor
-  ThreadTrace(const ProgramTrace &program, const pta::CallGraphNodeTy *entry, ProgramState &pState, TmpState &tmpState);
-  // Construct thread from forkEvent. entry specifies the entry point of the
-  // spawned thread and should be one of the entries from the spawningEvent
-  // entry list
-  ThreadTrace(ThreadID id, const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, ProgramState &pState,
-              TmpState &tmpState);
+  // Constructs the main thread.
+  // All others should be built from forkEvent constructor
+  ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entry, TraceBuildState &state);
+  // Construct thread from forkEvent.
+  // entry specifies the entry point of the spawned thread
+  //  and should be one of the entries from the spawningEvent entry list
+  // threads should be mutable reference to ProgramTrace's list of threads
+  ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry,
+              std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state);
   ~ThreadTrace() = default;
   ThreadTrace(const ThreadTrace &) = delete;
-  ThreadTrace(ThreadTrace &&other) = delete;  // need to update events because they contain reference to parent
-                                              // thread
+  ThreadTrace(ThreadTrace &&other) = delete;
   ThreadTrace &operator=(const ThreadTrace &) = delete;
   ThreadTrace &operator=(ThreadTrace &&other) = delete;
 
