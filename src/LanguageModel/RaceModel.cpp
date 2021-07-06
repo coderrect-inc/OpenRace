@@ -99,6 +99,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
 
     return true;
   }
+
   if (OpenMPModel::isTask(funcName)) {
     // Link 3rd arg of __kmpc_omp_task (kmp_tsking.cpp:1684) with task functions 2nd
     auto calleeArg = callee->getFunction()->arg_begin();

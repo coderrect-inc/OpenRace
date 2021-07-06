@@ -11,16 +11,31 @@ limitations under the License.
 
 #include "Trace/ThreadTrace.h"
 
-#include <IR/IRImpls.h>
-
 #include "EventImpl.h"
 #include "IR/Builder.h"
+#include "IR/IRImpls.h"
 #include "Trace/CallStack.h"
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
 
 namespace {
+
+// valid for __kmpc_end_single
+bool hasBarrierInNextBasicBlock(const llvm::BasicBlock *basicblock) {
+  // the basicblock of __kmpc_end_single should only have one successor
+  const llvm::BasicBlock *nextBB = basicblock->getSingleSuccessor();
+  for (auto it = nextBB->begin(), end = nextBB->end(); it != end; ++it) {
+    auto inst = llvm::cast<llvm::Instruction>(it);
+    if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
+      auto funcName = callInst->getCalledFunction()->getName();
+      if (OpenMPModel::isBarrier(funcName)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 // Called recursively to build list of events and thread traces
 // node      - the current callgraph node to traverse
@@ -46,11 +61,24 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto irFunc = generateFunctionSummary(func);
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
-  if (func->getName() == "main") {
-    mainInfo = einfo;
-  }
+
+  std::set<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp single only
 
   for (auto const &ir : irFunc) {
+    // avoid duplicate omp single/master blocks
+    if (state.exlMasterEnd) {
+      if (state.exlMasterEnd == ir->getInst()) {
+        state.exlMasterEnd = nullptr;  // matched and reset
+      }
+      continue;  // skip traversing to avoid FP
+    }
+    if (state.exlSingleEnd) {
+      if (state.exlSingleEnd == ir->getInst()) {
+        state.exlSingleEnd = nullptr;  // matched and reset
+      }
+      continue;  // skip traversing to avoid FP
+    }
+
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
       std::shared_ptr<const ReadIR> read(ir, readIR);
       events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
@@ -60,6 +88,18 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
+
+      // omp task
+      if (forkIR->type == IR::Type::OpenMPTask) {
+        const llvm::Instruction *inst = forkIR->getInst();
+        auto callInst = llvm::dyn_cast<llvm::CallBase>(inst);
+        auto task = std::make_shared<OpenMPTask>(callInst);
+        if (state.exlSingleStart) {  // for later single barrier if required
+          tasks.insert(task);
+        } else {  // for tasks without joins
+          state.taskWOJoins.insert(task);
+        }
+      }
 
       // traverse this fork
       auto event = events.back().get();
@@ -111,6 +151,52 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         continue;
       }
 
+      // handle omp single
+      const llvm::CallBase *inst = callIR->getInst();
+      if (callIR->type == IR::Type::OpenMPSingleStart) {
+        std::map<const llvm::CallBase *, const llvm::CallBase *>::iterator itExl = state.exlStartEnd.find(inst);
+        if (itExl != state.exlStartEnd.end()) {
+          state.exlSingleEnd = itExl->second;
+          continue;
+        }
+        state.exlSingleStart = inst;
+      } else if (callIR->type == IR::Type::OpenMPSingleEnd) {
+        if (!tasks.empty()) {  // single(+task)
+          if (hasBarrierInNextBasicBlock(inst->getParent())) {
+            // the implicit barrier is represented as __kmpc_barrier in the successor basicblock,
+            // if omp nowait, __kmpc_barrier will be absent
+            auto it = tasks.begin();
+            for (; it != tasks.end(); it++) {  // push a join here
+              auto _ir = std::make_shared<OpenMPTaskJoin>(*it);
+              auto joinIR = llvm::dyn_cast<JoinIR>(_ir.get());
+              std::shared_ptr<const JoinIR> join(_ir, joinIR);
+              events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
+            }
+          } else {  // for tasks in single block with nowait
+            auto it = tasks.begin();
+            for (; it != tasks.end(); it++) {
+              state.taskWOJoins.insert(*it);
+            }
+          }
+          // we want them exclusive
+          state.exlStartEnd.insert(std::make_pair(state.exlSingleStart, inst));
+        } else {  // single(+stmt)
+          // do nothing: we want the stmt to be in both omp forks
+        }
+      }
+      // handle omp master
+      else if (callIR->type == IR::Type::OpenMPMasterStart) {
+        // check if handled by a previous thread
+        std::map<const llvm::CallBase *, const llvm::CallBase *>::iterator itExl = state.exlStartEnd.find(inst);
+        if (itExl != state.exlStartEnd.end()) {
+          state.exlMasterEnd = itExl->second;
+          continue;
+        }
+        state.exlMasterStart = inst;
+      } else if (callIR->type == IR::Type::OpenMPMasterEnd) {
+        state.exlStartEnd.insert(std::make_pair(state.exlMasterStart, inst));
+      }
+
       events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
       traverseCallNode(directNode, thread, callstack, pta, events, threads, state);
       events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
@@ -152,42 +238,43 @@ ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNod
   assert(it != entries.end());
 }
 
-// for main only
-void ThreadTrace::insertJoinsForTasks() {
-  auto tasks = getTaskWOJoins();
-  if (tasks.empty()) {
-    return;
-  }
-
-  // the insert location should be before the two omp_fork joins
-  size_t insert_loc = 0;
-  for (auto const &event : getEvents()) {
-    if (event->getIRInst()->type == race::IR::Type::OpenMPJoin && insert_loc == 0) {
-      insert_loc = event->getID();
-      break;
-    }
-    //    else if (insert_loc > 0) {
-    //      // change the event id: new id = old + size of tasks
-    //    }
-  }
-  assert(insert_loc != 0 && "omp_fork's join is missing");
-
-  size_t i = 0;
-  auto it = tasks.begin();
-  for (; it != tasks.end(); it++) {
-    auto ir = std::make_shared<OpenMPTaskJoin>(*it);
-    auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
-    std::shared_ptr<const JoinIR> join(ir, joinIR);
-    long int position = static_cast<long int>(insert_loc + i);  // insert position: before the omp fork joins
-    // EventID = insert_loc: should change the event id of omp fork join to (old id + size(tasks)), however event id is
-    // a const (as mentioned above); if set the event id of the task join as events.size(), there will be wrong HB
-    // relation; NOW set the event id of the task join as insert_loc, which is a duplicate id with 1st omp fork join,
-    // but can show right HB relation and pass tests.
-    // TODO: how to solve this in a better way?
-    events.insert(events.begin() + position, std::make_unique<const JoinEventImpl>(join, mainInfo, insert_loc));
-    i++;
-  }
-}
+//// for main only
+// void ThreadTrace::insertJoinsForTasks() {
+//  auto tasks = getTaskWOJoins();
+//  if (tasks.empty()) {
+//    return;
+//  }
+//
+//  // the insert location should be before the two omp_fork joins
+//  size_t insert_loc = 0;
+//  for (auto const &event : getEvents()) {
+//    if (event->getIRInst()->type == race::IR::Type::OpenMPJoin && insert_loc == 0) {
+//      insert_loc = event->getID();
+//      break;
+//    }
+//    //    else if (insert_loc > 0) {
+//    //      // change the event id: new id = old + size of tasks
+//    //    }
+//  }
+//  assert(insert_loc != 0 && "omp_fork's join is missing");
+//
+//  size_t i = 0;
+//  auto it = tasks.begin();
+//  for (; it != tasks.end(); it++) {
+//    auto ir = std::make_shared<OpenMPTaskJoin>(*it);
+//    auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
+//    std::shared_ptr<const JoinIR> join(ir, joinIR);
+//    long int position = static_cast<long int>(insert_loc + i);  // insert position: before the omp fork joins
+//    // EventID = insert_loc: should change the event id of omp fork join to (old id + size(tasks)), however event id
+//    is
+//    // a const (as mentioned above); if set the event id of the task join as events.size(), there will be wrong HB
+//    // relation; NOW set the event id of the task join as insert_loc, which is a duplicate id with 1st omp fork join,
+//    // but can show right HB relation and pass tests.
+//    // TODO: how to solve this in a better way?
+//    events.insert(events.begin() + position, std::make_unique<const JoinEventImpl>(join, mainInfo, insert_loc));
+//    i++;
+//  }
+//}
 
 std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
   std::vector<const ForkEvent *> forks;

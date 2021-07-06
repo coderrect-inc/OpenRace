@@ -13,6 +13,7 @@ limitations under the License.
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/IR/Function.h>
+#include <llvm/IR/InstrTypes.h>
 
 namespace OpenMPModel {
 

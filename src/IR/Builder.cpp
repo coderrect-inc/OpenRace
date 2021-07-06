@@ -26,34 +26,6 @@ extern llvm::cl::opt<bool> DEBUG_PTA;
 
 namespace {
 
-// when using omp master/single(+task), there should be only one omp fork thread (we always have two) that execute this
-// part of the code solution:
-// 1. we will attach this part of ir to the omp fork seen first, so it only appear once
-// 2. make sync edges between single(+task) and the first event afterwards from other parallel irs, so guarantee the hb
-// relation when using single(+stmt), we attach this part of ir to both omp forks, so we can find the race between two
-// single blocks.
-std::map<const llvm::CallBase *, const llvm::CallBase *> exlStartEnd;  // record traversed single/master
-const llvm::CallBase *exlMasterEnd = nullptr;  // the matched master end with exlMasterStart in generateFunctionSummary
-const llvm::CallBase *exlSingleEnd = nullptr;  // the matched single end with exlSingleStart in generateFunctionSummary
-
-std::set<std::shared_ptr<OpenMPTask>> taskWOJoins;  // omp tasks without joins
-
-// valid for __kmpc_end_single
-bool hasBarrierInNextBasicBlock(const llvm::BasicBlock &basicblock) {
-  const llvm::BasicBlock *nextBB =
-      basicblock.getSingleSuccessor();  // the basicblock of __kmpc_end_single should only have one successor
-  for (auto it = nextBB->begin(), end = nextBB->end(); it != end; ++it) {
-    auto inst = llvm::cast<llvm::Instruction>(it);
-    if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
-      auto funcName = callInst->getCalledFunction()->getName();
-      if (OpenMPModel::isBarrier(funcName)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   auto ptr = getPointerOperand(inst);
   assert(ptr);
@@ -83,8 +55,6 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
 }  // namespace
 
-std::set<std::shared_ptr<OpenMPTask>> race::getTaskWOJoins() { return taskWOJoins; }
-
 FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
   assert(func != nullptr);
   return generateFunctionSummary(*func);
@@ -92,35 +62,19 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
 
 FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary instructions;
-  const llvm::CallBase *exlMasterStart = nullptr;  // the master start we see here
-  const llvm::CallBase *exlSingleStart = nullptr;  // the single start we see here
 
   for (auto const &basicblock : func.getBasicBlockList()) {
     if (DEBUG_PTA) {
       llvm::outs() << "bb: " << basicblock.getName() << "\n";
     }
-    std::set<std::shared_ptr<OpenMPTask>>
-        tasks;  // indicate whether there are omp tasks in this basicblock, for single only
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
-      if (exlMasterEnd) {
-        if (exlMasterEnd == inst) {
-          exlMasterEnd = nullptr;  // matched and reset
-        }
-        continue;  // skip traversing to avoid FP
-      }
-      if (exlSingleEnd) {
-        if (exlSingleEnd == inst) {
-          exlSingleEnd = nullptr;  // matched and reset
-        }
-        continue;  // skip traversing to avoid FP
-      }
 
-      // official traversal
       if (DEBUG_PTA) {
         inst->print(llvm::outs(), false);
         llvm::outs() << "\n";
       }
+
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
         if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
@@ -173,49 +127,13 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isForDispatchFini(funcName)) {
           instructions.push_back(std::make_shared<OmpDispatchFini>(callInst));
         } else if (OpenMPModel::isSingleStart(funcName)) {
-          std::map<const llvm::CallBase *, const llvm::CallBase *>::iterator itExl = exlStartEnd.find(callInst);
-          if (itExl != exlStartEnd.end()) {
-            exlSingleEnd = itExl->second;
-            continue;
-          }
           instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
-          exlSingleStart = callInst;
         } else if (OpenMPModel::isSingleEnd(funcName)) {
-          // if using omp tasks, there will be an implicit barrier to wait for all tasks to join,
-          // __kmpc_end_single should be in the same basicblock with its __kmpc_omp_task.
-          // see https://www.rookiehpc.com/openmp/docs/taskwait.php
-          // TODO: need to match single and other syncs for tasks
-          if (!tasks.empty()) {  // single(+task)
-            if (hasBarrierInNextBasicBlock(basicblock)) {
-              // the implicit barrier is represented as __kmpc_barrier in the successor basicblock,
-              // if omp nowait, __kmpc_barrier will be absent
-              auto it = tasks.begin();
-              for (; it != tasks.end(); it++) {
-                instructions.push_back(std::make_shared<OpenMPTaskJoin>(*it));
-              }
-            } else {  // for tasks in single block with nowait
-              auto it = tasks.begin();
-              for (; it != tasks.end(); it++) {
-                taskWOJoins.insert(*it);
-              }
-            }
-            // we want them exclusive
-            exlStartEnd.insert(std::make_pair(exlSingleStart, callInst));
-          } else {  // single(+stmt)
-            instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
-          }
+          instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
         } else if (OpenMPModel::isMasterStart(funcName)) {
-          // check if handled by a previous thread
-          std::map<const llvm::CallBase *, const llvm::CallBase *>::iterator itExl = exlStartEnd.find(callInst);
-          if (itExl != exlStartEnd.end()) {
-            exlMasterEnd = itExl->second;
-            continue;
-          }
           instructions.push_back(std::make_shared<OpenMPMasterStart>(callInst));
-          exlMasterStart = callInst;
         } else if (OpenMPModel::isMasterEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
-          exlStartEnd.insert(std::make_pair(exlMasterStart, callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
           instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName)) {
@@ -231,13 +149,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isUnsetLock(funcName)) {
           instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isTask(funcName)) {
-          auto taskStart = std::make_shared<OpenMPTask>(callInst);
-          instructions.push_back(taskStart);
-          if (exlSingleStart) {  // for later single barrier if required
-            tasks.insert(taskStart);
-          } else {  // for tasks without joins
-            taskWOJoins.insert(taskStart);
-          }
+          instructions.push_back(std::make_shared<OpenMPTask>(callInst));
         } else if (OpenMPModel::isTaskAlloc(funcName)) {
           instructions.push_back(std::make_shared<OpenMPTaskAlloc>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {

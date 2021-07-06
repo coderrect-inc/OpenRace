@@ -13,6 +13,7 @@ limitations under the License.
 
 #include <vector>
 
+#include "IR/IRImpls.h"
 #include "LanguageModel/RaceModel.h"
 #include "ThreadTrace.h"
 #include "Trace/Event.h"
@@ -24,6 +25,25 @@ struct TraceBuildState {
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
   ThreadID currentTID = 0;
+
+  // when using omp master/single(+task), there should be only one omp fork thread (we always have two) that execute
+  // this part of the code solution:
+  // 1. we will attach this part of ir to the omp fork seen first, so it only appear once
+  // 2. make sync edges between single(+task) and the first event afterwards from other parallel irs, so guarantee the
+  // hb relation when using single(+stmt), we attach this part of ir to both omp forks, so we can find the race between
+  // two single blocks. PS: exl = exclusive
+  std::map<const llvm::CallBase *, const llvm::CallBase *> exlStartEnd;  // record traversed single/master blocks
+
+  // the matched master start/end in buildEventTrace
+  const llvm::CallBase *exlMasterStart = nullptr;
+  const llvm::CallBase *exlMasterEnd = nullptr;
+
+  // the matched single start/end in buildEventTrace
+  const llvm::CallBase *exlSingleStart = nullptr;
+  const llvm::CallBase *exlSingleEnd = nullptr;
+
+  // omp tasks without joins, e.g., single nowait, master
+  std::set<std::shared_ptr<race::OpenMPTask>> taskWOJoins;
 };
 
 class ProgramTrace {
