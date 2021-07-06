@@ -19,12 +19,17 @@ limitations under the License.
 #include "IRImpls.h"
 
 namespace race {
-using FunctionSummary = std::vector<std::shared_ptr<const IR>>;
+
+struct FunctionSummary {
+  std::vector<std::shared_ptr<const IR>> instructions;
+  std::set<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
+
+  // used in xxx.test.cpp
+  std::vector<std::shared_ptr<const IR>> getInstructions() { return instructions; }
+};
 
 FunctionSummary generateFunctionSummary(const llvm::Function *func);
 FunctionSummary generateFunctionSummary(const llvm::Function &func);
-
-std::set<std::shared_ptr<race::OpenMPTask>> getTaskWOJoins();
 
 // class Builder {
 //     mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;

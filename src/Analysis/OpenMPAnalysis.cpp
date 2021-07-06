@@ -542,10 +542,7 @@ bool inSame(const Event *event1, const Event *event2) {
         if ((end1 - start1) == (end2 - start2)) {  // same size of ir stmts in the omp block
           if (thread1.getEvent(start1)->getInst() == thread2.getEvent(start2)->getInst() &&
               thread1.getEvent(end1)->getInst() == thread2.getEvent(end2)->getInst()) {  // same start/end ir
-            auto it1 = lower_bound(regions1.begin(), regions1.end(), Region(eid1, eid1), regionEndLessThan);
-            auto it2 = lower_bound(regions2.begin(), regions2.end(), Region(eid2, eid2), regionEndLessThan);
-            if (it1 != regions1.end() && it2 != regions2.end() && it1->contains(eid1) &&
-                it2->contains(eid2)) {  // omp block contains the event
+            if (start1 < eid1 && end1 > eid1 && start2 < eid2 && end2 > eid2) {  // check omp block contains the event
               return true;
             }
           }

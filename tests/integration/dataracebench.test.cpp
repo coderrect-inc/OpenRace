@@ -60,7 +60,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB026-targetparallelfor-orig-yes.ll",
              {"DRB026-targetparallelfor-orig-yes.c:64:9 DRB026-targetparallelfor-orig-yes.c:64:10"}),
       Oracle("DRB027-taskdependmissing-orig-yes.ll",
-             {"DRB027-taskdependmissing-orig-yes.c:63:7 DRB027-taskdependmissing-orig-yes.c:61:7"}),
+             {"DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:63:7"}),
 
       // FIXME: the racy object is opted out by SROA
       //      Oracle("DRB028-privatemissing-orig-yes.ll",

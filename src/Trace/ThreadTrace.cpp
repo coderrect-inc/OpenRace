@@ -58,11 +58,11 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   if (DEBUG_PTA) {
     llvm::outs() << "Generating Func Sum: TID: " << thread.id << " Func: " << func->getName() << "\n";
   }
-  auto irFunc = generateFunctionSummary(func);
+  auto summary = generateFunctionSummary(func);
+  auto irFunc = summary.instructions;
+  auto tasks = summary.tasks;
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
-
-  std::set<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp single only
 
   for (auto const &ir : irFunc) {
     // avoid duplicate omp single/master blocks
@@ -88,18 +88,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
-
-      // omp task
-      if (forkIR->type == IR::Type::OpenMPTask) {
-        const llvm::Instruction *inst = forkIR->getInst();
-        auto callInst = llvm::dyn_cast<llvm::CallBase>(inst);
-        auto task = std::make_shared<OpenMPTask>(callInst);
-        if (state.exlSingleStart) {  // for later single barrier if required
-          tasks.insert(task);
-        } else {  // for tasks without joins
-          state.taskWOJoins.insert(task);
-        }
-      }
 
       // traverse this fork
       auto event = events.back().get();
@@ -146,11 +134,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         continue;
       }
 
-      if (directNode->getTargetFun()->isExtFunction()) {
-        events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
-        continue;
-      }
-
       // handle omp single
       const llvm::CallBase *inst = callIR->getInst();
       if (callIR->type == IR::Type::OpenMPSingleStart) {
@@ -167,9 +150,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
             // if omp nowait, __kmpc_barrier will be absent
             auto it = tasks.begin();
             for (; it != tasks.end(); it++) {  // push a join here
-              auto _ir = std::make_shared<OpenMPTaskJoin>(*it);
-              auto joinIR = llvm::dyn_cast<JoinIR>(_ir.get());
-              std::shared_ptr<const JoinIR> join(_ir, joinIR);
+              auto ir = std::make_shared<OpenMPTaskJoin>(*it);
+              auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
+              std::shared_ptr<const JoinIR> join(ir, joinIR);
               events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
             }
           } else {  // for tasks in single block with nowait
@@ -181,7 +164,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
           // we want them exclusive
           state.exlStartEnd.insert(std::make_pair(state.exlSingleStart, inst));
         } else {  // single(+stmt)
-          // do nothing: we want the stmt to be in both omp forks
+          // do nothing: we want the stmt to be shown in both omp forks
         }
       }
       // handle omp master
@@ -195,6 +178,11 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         state.exlMasterStart = inst;
       } else if (callIR->type == IR::Type::OpenMPMasterEnd) {
         state.exlStartEnd.insert(std::make_pair(state.exlMasterStart, inst));
+      }
+
+      if (directNode->getTargetFun()->isExtFunction()) {
+        events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
+        continue;
       }
 
       events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
