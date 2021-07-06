@@ -8,5 +8,10 @@ build/
 /.idea/
 cmake-build-*/
 
+# Generated test IR files
+tests/data/**/*.ll
+tests/data/**/*.bc
+
 # misc
 races.json
+

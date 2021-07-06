@@ -15,7 +15,7 @@ To follow this guide on setting up a dev environment you will need:
  - A modern C++ compiler (gcc/clang)
  - [Ninja Build](https://ninja-build.org/)
  - [Conan](https://conan.io/downloads.html)
- - LLVM 10.0.X
+ - LLVM 10.0.1
 
 ### Install Compiler
 
@@ -78,9 +78,9 @@ cmake \
 # Build and Install
 cmake --build . --parallel
 cmake --build . --target install
-# Save directory containing LLVMConfig.cmake
-export LLVM_DIR=$(pwd)/install/lib/cmake/llvm
-# if using a custom install prefix, set LLVM_DIR to ${prefix}/lib/cmake/llvm
+# Save directory LLVM 10.0.1 was installed to
+export LLVM_INSTALL=$(pwd)/install/
+# if using a custom install prefix, set LLVM_INSTALL to ${prefix}/
 ```
 
 There are a lot of CMake options to customize the LLVM build. See [LLVM's page on CMake](https://www.llvm.org/docs/CMake.html) for more options.
@@ -97,14 +97,10 @@ Building using Ninja Build
 
 The rest are just some options set to save time/space when building.
 
-The LLVM build will also include a file named `LLVMConfig.cmake`. You will need to save the directory containing this file in order to build OpenRace.
-
-In this guide we save it into the `LLVM_DIR` environment variable.
-
+The location LLVM 10.0.1 was installed to will be needed to build OpenRace.
+In this guide we saved the install location to an environment variable named `LLVM_INSTALL`.
 
 ## Building OpenRace
-
-If your IDE natively supports CMake, you simply need to point it at CMakeLists.txt and it should Just Work™.
 
 As a backup, you may also build from the shell using the following:
 
@@ -116,7 +112,7 @@ mkdir OpenRace/build && cd OpenRace/build
 cmake \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DCMAKE_BUILD_TYPE=Debug \
-    -DLLVM_DIR=$LLVM_DIR \
+    -DLLVM_INSTALL=$LLVM_INSTALL \
     -DENABLE_WARNING=ON \
     -G Ninja \
     ..
@@ -131,8 +127,8 @@ The cmake options do the following:
  Produces a `compile_commands.json` file in the build directory. Most IDEs can be set up to use this file for neat IDE features.
  - `CMAKE_BUILD_TYPE=Debug`  
  Builds the project in debug mode. This makes it is easier to debug if/when issues occur.
- - `LLVM_DIR=$LLVM_DIR`  
- Should point to a directory containing `LLVMConfig.cmake`. See the "Install LLVM 10.0.1" section above.
+ - `LLVM_INSTALL=$LLVM_INSTALL`  
+ Should point to a directory that LLVM was installed to. See the "Install LLVM 10.0.1" section above.
  - `ENABLE_WARNING=ON`  
  Enable compiler warnings while building the project. The enabled warnings can be found [here](https://github.com/coderrect-inc/OpenRace/blob/b340620db611d606275abf9aed1904ce0c50b87a/cmake/CompilerWarnings.cmake).
 
