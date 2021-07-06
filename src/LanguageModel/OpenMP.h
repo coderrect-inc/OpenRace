@@ -34,6 +34,14 @@ inline bool isFork(const llvm::CallBase* callInst) {
   return isFork(func->getName());
 }
 
+inline bool isForkTeams(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_fork_teams"); }
+inline bool isForkTeams(const llvm::CallBase* callInst) {
+  if (!callInst) return false;
+  auto const func = callInst->getCalledFunction();
+  if (!func->hasName()) return false;
+  return isForkTeams(func->getName());
+}
+
 inline bool isForStaticInit(const llvm::StringRef& funcName) {
   // Each version functions the same, only argument types slightly differ
   return matchesAny(funcName, {"__kmpc_for_static_init_4", "__kmpc_for_static_init_4u", "__kmpc_for_static_init_8",
@@ -73,7 +81,7 @@ inline bool isOrderedEnd(const llvm::StringRef& funcName) { return funcName.equa
 
 // Return true for omp calls that do not need to be modelled (e.g. push_num_threads)
 inline bool isNoEffect(const llvm::StringRef& funcName) {
-  return matchesAny(funcName, {"__kmpc_push_num_threads", "__kmpc_global_thread_num", "__kmpc_copyprivate"})
+  return matchesAny(funcName, {"__kmpc_push_num_threads", "__kmpc_global_thread_num", "__kmpc_push_num_teams"})
          // we dont rely on reduce end to find end of reduce region
          || isReduceEnd(funcName) || isReduceNowaitEnd(funcName);
 }

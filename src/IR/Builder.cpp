@@ -46,7 +46,7 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 
   auto twinCallInst = llvm::dyn_cast<llvm::CallBase>(twinOmpForkInst);
   if (!twinCallInst) return nullptr;
-  if (!OpenMPModel::isFork(twinCallInst)) return nullptr;
+  if (!OpenMPModel::isFork(twinCallInst) && !OpenMPModel::isForkTeams(twinCallInst)) return nullptr;
 
   return std::make_shared<OpenMPFork>(twinCallInst);
 }
@@ -165,7 +165,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
         } else if (OpenMPModel::isOrderedEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
-        } else if (OpenMPModel::isFork(funcName)) {
+        } else if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
           auto twinOmpFork = getTwinOmpFork(callInst);
@@ -191,6 +191,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else {
           // Used to make sure we are not implicitly ignoring any OpenMP features
           // We should instead make sure we take the correct action for any OpenMP call
+          llvm::errs() << "Unhandled OpenMP call: " << funcName << "\n";
           assert((!OpenMPModel::isOpenMP(funcName) || OpenMPModel::isNoEffect(funcName)) && "Unhandled OpenMP Call!");
 
           instructions.push_back(std::make_shared<CallIR>(callInst));
