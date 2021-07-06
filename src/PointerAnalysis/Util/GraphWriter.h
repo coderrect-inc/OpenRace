@@ -66,16 +66,16 @@ class GraphWriter {
   GraphWriter(llvm::raw_ostream &o, const GraphType &g, bool SN) : O(o), G(g) { DTraits = DOTTraits(SN); }
 
   void writeGraph(const std::string &Title = "") {
-    // Output the header for the callgraph...
+    // Output the header for the G...
     writeHeader(Title);
 
-    // Emit all of the nodes in the callgraph...
+    // Emit all of the nodes in the G...
     writeNodes();
 
-    // Output any customizations on the callgraph
+    // Output any customizations on the G
     llvm::DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, *this);
 
-    // Output the end of the callgraph
+    // Output the end of the G
     writeFooter();
   }
 

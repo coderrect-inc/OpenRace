@@ -11,8 +11,10 @@ limitations under the License.
 
 #pragma once
 
+#include <PointerAnalysis/Program/CallSite.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/PatternMatch.h>
 
 #include <set>
 
@@ -20,7 +22,7 @@ namespace pta {
 
 class DefaultHeapModel {
  private:
-  // TODO: there should be more -> memalign, etc
+  // TODO: there should be more -> memalign, etc. maybe also include user-specified heap api?
   const llvm::SmallDenseSet<llvm::StringRef, 4> heapAllocAPIs{"malloc", "calloc", "_Znam", "_Znwm", "??2@YAPEAX_K@Z"};
 
  protected:
@@ -62,6 +64,39 @@ class DefaultHeapModel {
 
     // infer the type for malloc like function
     return inferMallocType(fun, allocSite);
+  }
+
+  // infer heap alloc type for openmp TODO: maybe move to OpenMPHeapModel ??
+  inline llvm::Type *inferHeapAllocTypeForOpenMP(const llvm::Function *fun, const llvm::Instruction *allocSite) const {
+    // 1st, get the callback function
+    CallSite taskAllocCall(allocSite);
+    auto taskEntry = llvm::cast<llvm::Function>(taskAllocCall.getArgOperand(5)->stripPointerCasts());
+    int64_t sharedSize = llvm::cast<llvm::ConstantInt>(taskAllocCall.getArgOperand(4))->getSExtValue();
+
+    if (sharedSize == 0) {
+      return nullptr;
+    }
+
+    // the bitcast on the omp.task_t is the type of the allocated object
+    const llvm::Argument &task = *(taskEntry->arg_begin() + 1);
+    for (auto &BB : *taskEntry) {
+      for (auto &I : BB) {
+        // simple pattern matching
+        // find a bitcast instruction which follows the following pattern
+        // %3 = getelementptr inbounds %struct.kmp_task_t_with_privates, %struct.kmp_task_t_with_privates* %1, i32 0,
+        // i32 0 %4 = getelementptr inbounds %struct.kmp_task_t, %struct.kmp_task_t* %3, i32 0, i32 0 %5 = load i8*,
+        // i8** %4 %6 = bitcast i8* %5 to %struct.anon* -> the type we trying to find
+        llvm::Value *srcOp = nullptr;
+        if (llvm::PatternMatch::match(
+                &I, llvm::PatternMatch::m_BitCast(llvm::PatternMatch::m_Load(llvm::PatternMatch::m_Value(srcOp))))) {
+          if (srcOp->stripPointerCasts() == &task) {
+            // this is the bitcast we try to found
+            return llvm::cast<llvm::BitCastInst>(I).getDestTy();
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 };
 

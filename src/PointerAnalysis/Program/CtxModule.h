@@ -204,6 +204,13 @@ class CtxModule {
       for (const auto &inst : BB) {
         if (llvm::isa<llvm::CallInst>(inst) || llvm::isa<llvm::InvokeInst>(inst)) {
           pta::CallSite cs(const_cast<llvm::Instruction *>(&inst));
+          if (DEBUG_PTA) {
+            Instruction *c = const_cast<llvm::Instruction *>(&inst);
+            llvm::outs() << "CALL: ";
+            c->print(llvm::outs(), false);
+            llvm::outs() << "\n";
+          }
+
           if (cs.isIndirectCall()) {
             // take another shot
             auto targetNode = visitInDirectCallSite(&inst, context, onNewInDirect);

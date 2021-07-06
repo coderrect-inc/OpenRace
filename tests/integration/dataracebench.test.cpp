@@ -103,7 +103,10 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 52 indirect array
       Oracle("DRB053-inneronly1-orig-no.ll", {}),  // multi-dimen array
       Oracle("DRB054-inneronly2-orig-no.ll", {}),  // multi-dimen array
-      // 55-58 complex array access
+      Oracle("DRB055-jacobi2d-parallel-no.ll", {}),
+      Oracle("DRB056-jacobi2d-tile-no.ll", {}),
+      Oracle("DRB057-jacobiinitialize-orig-no.ll", {}),
+      Oracle("DRB058-jacobikernel-orig-no.ll", {}),
       // 59 FP caused by last private??
       Oracle("DRB060-matrixmultiply-orig-no.ll", {}),
       Oracle("DRB061-matrixvector1-orig-no.ll", {}),
@@ -144,7 +147,12 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB087-static-data-member2-orig-yes.ll",
              {"DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13",
               "DRB087-static-data-member2-orig-yes.cpp:74:13 DRB087-static-data-member2-orig-yes.cpp:74:13"}),
-      // 88-89 PTA Fails ??
+      Oracle("DRB088-dynamic-storage-orig-yes.ll",
+             {"DRB088-dynamic-storage-orig-yes.c:63:14 DRB088-dynamic-storage-orig-yes.c:63:14",
+              "DRB088-dynamic-storage-orig-yes.c:63:14 DRB088-dynamic-storage-orig-yes.c:63:14"}),
+      Oracle("DRB089-dynamic-storage2-orig-yes.ll",
+             {"DRB089-dynamic-storage2-orig-yes.c:73:15 DRB089-dynamic-storage2-orig-yes.c:73:15",
+              "DRB089-dynamic-storage2-orig-yes.c:73:15 DRB089-dynamic-storage2-orig-yes.c:73:15"}),
       // 90 missed read-write race
       Oracle("DRB091-threadprivate2-orig-no.ll", {}),
       Oracle(
@@ -159,7 +167,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 98 simd + collpase
       Oracle("DRB099-targetparallelfor2-orig-no.ll", {}),
       // 100-101 task
-      // 102 threadprivate + copyprivate => Oracle("DRB102-copyprivate-orig-no.ll", {}),
+      Oracle("DRB102-copyprivate-orig-no.ll", {}),
       Oracle("DRB103-master-orig-no.ll", {}),
       Oracle("DRB104-nowait-barrier-orig-no.ll", {}),
       // 105-107 task
@@ -180,7 +188,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 115 simd
       // 116 target teams
       // 117 task
-      // 118-119 nest lock
+      Oracle("DRB118-nestlock-orig-no.ll", {}),
+      Oracle("DRB119-nestlock-orig-yes.ll", {"DRB119-nestlock-orig-yes.c:32:8 DRB119-nestlock-orig-yes.c:32:8",
+                                             "DRB119-nestlock-orig-yes.c:32:8 DRB119-nestlock-orig-yes.c:32:8"}),
       Oracle("DRB120-barrier-orig-no.ll", {}),
       Oracle("DRB121-reduction-orig-no.ll", {}),
       // 122-123 task

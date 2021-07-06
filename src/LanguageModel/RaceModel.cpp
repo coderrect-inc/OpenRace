@@ -102,8 +102,50 @@ bool RaceModel::isCompatible(const llvm::Instruction * /* callsite */, const llv
   llvm_unreachable("unrecognizable function");
 }
 
-void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> * /* caller */, const CtxFunction<ctx> * /* callee */,
-                                       const llvm::Instruction * /* callsite */) {}
+void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
+                                       const llvm::Instruction *callsite) {
+  if (heapModel.isHeapAllocFun(callee->getFunction())) {  // handled by default heap model
+    Type *type = heapModel.inferHeapAllocType(callee->getFunction(), callsite);
+    // add points-to constraints
+    PtrNode *ptr = this->getPtrNode(caller->getContext(), callsite);
+    ObjNode *obj = this->allocHeapObj(caller->getContext(), callsite, type);
+    this->consGraph->addConstraints(obj, ptr, Constraints::addr_of);
+  } else if (OpenMPModel::isTaskAlloc(callee->getName())) {  // handled by openmp-specific model
+    // the type will be something like %struct.kmp_task_t_with_privates
+    Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
+
+    if (type == nullptr) {
+      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
+      return;
+    }
+
+    // we are going to model the points-to constraints like this:
+    //  taskObj = &sharedObj -> { sharedObj } ∈ pts(taskobj)
+    //  ptr = &taskObj       -> { taskObj } ∈ pts(ptr)
+    // where sharedObj, taskObj and ptr are:
+    // e.g. /OpenRace/tests/data/integration/dataracebench/DRB027-taskdependmissing-orig-yes.c
+    //    int i=0; //sharedObj
+    //    #pragma omp parallel
+    //    #pragma omp single
+    //    {
+    //    #pragma omp task //taskObj (available in IR only: __kmpc_omp_task_alloc)
+    //      i = 1; //ptr
+    //    ...
+    //    }
+    ObjNode *sharedObj = MMT::template allocateAnonObj<PT>(
+        this->getMemModel(), caller->getContext(), this->getLLVMModule()->getDataLayout(),
+        type == nullptr ? nullptr : type->getPointerElementType(), nullptr,
+        false);  // do not initialized its element
+    ObjNode *taskObj = allocHeapObj(caller->getContext(), callsite, type);
+    PtrNode *ptr = this->getPtrNode(caller->getContext(), callsite);
+
+    this->consGraph->addConstraints(sharedObj, taskObj, Constraints::addr_of);
+    this->consGraph->addConstraints(taskObj, ptr, Constraints::addr_of);
+
+  } else {
+    llvm::errs() << "implement for alloc: allocsite=" << callsite << "\n";
+  }
+}
 
 bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
   if (!F->hasName()) return false;

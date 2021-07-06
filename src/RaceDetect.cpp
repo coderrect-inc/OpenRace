@@ -55,6 +55,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
+    if (DEBUG_PTA) {
+      llvm::outs() << "Checking Race: " << write->getID() << " " << other->getID() << "\n";
+    }
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;
     }
@@ -63,7 +66,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       return;
     }
 
-    if (ompAnalysis.inSameTeam(write, other)) {
+    if (ompAnalysis.fromSameParallelRegion(write, other)) {
       // Non overlapping array accesses inside of an OpenMP loop are not races
       // e.g.
       //  #pragma omp parallel for shared(A)

@@ -16,6 +16,7 @@ limitations under the License.
 #include "PointerAnalysis/Context/KOrigin.h"
 #include "PointerAnalysis/Models/LanguageModel/DefaultLangModel/DefaultLangModel.h"
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/CppMemModel.h"
+#include "PointerAnalysis/Models/MemoryModel/DefaultHeapModel.h"
 #include "PointerAnalysis/Solver/PartialUpdateSolver.h"
 
 namespace pta {
@@ -28,6 +29,9 @@ using GT = llvm::GraphTraits<const CallGraph<ctx>>;
 using PtsTy = BitVectorPTS;
 
 class RaceModel : public LangModelBase<ctx, MemModel, PtsTy, RaceModel> {
+ private:
+  DefaultHeapModel heapModel;
+
   using Super = LangModelBase<ctx, MemModel, PtsTy, RaceModel>;
 
   bool isInvokingAnOrigin(const originCtx *prevCtx, const llvm::Instruction *I);

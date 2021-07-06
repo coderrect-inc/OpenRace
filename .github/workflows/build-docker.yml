@@ -20,6 +20,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
+          context: docker
+          no-cache: true
           tags: coderrect/openrace:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

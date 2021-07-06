@@ -19,7 +19,7 @@ RUN git clone --depth 1 -b llvmorg-10.0.1 https://github.com/llvm/llvm-project.g
 RUN mkdir -p /llvm-project/build
 WORKDIR /llvm-project/build
 RUN cmake \
-    -DLLVM_ENABLE_PROJECTS="clang" \
+    -DLLVM_ENABLE_PROJECTS="clang;openmp" \
     -DLLVM_TARGETS_TO_BUILD="X86" \
     -DCMAKE_CXX_STANDARD="17" \
     -DLLVM_INCLUDE_EXAMPLES=OFF \
