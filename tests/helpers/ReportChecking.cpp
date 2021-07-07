@@ -101,6 +101,40 @@ Oracle::Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races) : f
   expectedRaces = TestRace::fromStrings(races);
 }
 
+void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_list<llvm::StringRef> expected) {
+  llvm::LLVMContext context;
+  llvm::SMDiagnostic err;
+
+  auto testfile = llPath.str() + file.str();
+  auto module = llvm::parseIRFile(testfile, err, context);
+  if (!module) {
+    err.print(file.str().c_str(), llvm::errs());
+  }
+  REQUIRE(module.get() != nullptr);
+
+  auto report = race::detectRaces(module.get());
+
+  REQUIRE(report.size() == expected.size());
+  CHECK(reportContains(report, TestRace::fromStrings(expected), llPath));
+}
+
+void checkOracle(const Oracle &oracle, llvm::StringRef llPath) {
+  llvm::LLVMContext context;
+  llvm::SMDiagnostic err;
+
+  auto testfile = llPath.str() + oracle.filename.str();
+  auto module = llvm::parseIRFile(testfile, err, context);
+  if (!module) {
+    err.print(oracle.filename.str().c_str(), llvm::errs());
+  }
+  REQUIRE(module.get() != nullptr);
+
+  auto report = race::detectRaces(module.get());
+
+  REQUIRE(report.size() == oracle.expectedRaces.size());
+  CHECK(reportContains(report, oracle.expectedRaces, llPath));
+}
+
 void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
