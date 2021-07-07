@@ -185,7 +185,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPJoin>(ompFork));
           instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
         } else if (OpenMPModel::isForkTeams(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPTeamsMark>(callInst));
+          instructions.push_back(std::make_shared<OpenMPForkTeams>(callInst));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
         } else {

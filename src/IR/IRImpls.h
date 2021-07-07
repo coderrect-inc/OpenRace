@@ -147,34 +147,6 @@ class OpenMPFork : public ForkIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
-class OpenMPForkTeams : public ForkIR {
-  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L262
-  // @param loc  source location information
-  // @param argc  total number of arguments in the ellipsis
-  // @param microtask  pointer to callback routine consisting of outlined parallel
-  // construct
-  // @param ...  pointers to shared variables that aren't global
-  constexpr static unsigned int threadHandleOffset = 0;
-  constexpr static unsigned int threadEntryOffset = 2;
-  const llvm::CallBase *inst;
-
- public:
-  explicit OpenMPForkTeams(const llvm::CallBase *inst) : ForkIR(Type::OpenMPForkTeams), inst(inst) {}
-
-  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
-
-  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
-    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
-  }
-
-  [[nodiscard]] const llvm::Value *getThreadEntry() const override {
-    return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
-  }
-
-  // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
-};
-
 // ==================================================================
 // ================== JoinIR Implementations ========================
 // ==================================================================
@@ -202,21 +174,6 @@ class OpenMPJoin : public JoinIR {
 
  public:
   explicit OpenMPJoin(const std::shared_ptr<OpenMPFork> fork) : JoinIR(Type::OpenMPJoin), fork(fork) {}
-
-  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
-
-  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
-
-  // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
-};
-
-// This actually corresponds to a OpenMPForkTeams instruction, as the fork call acts as both a fork and join in one call
-class OpenMPJoinTeams : public JoinIR {
-  std::shared_ptr<OpenMPForkTeams> fork;
-
- public:
-  explicit OpenMPJoinTeams(const std::shared_ptr<OpenMPForkTeams> fork) : JoinIR(Type::OpenMPJoinTeams), fork(fork) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
 
@@ -378,16 +335,22 @@ using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
 
 using OpenMPGetThreadNum = CallIRImpl<IR::Type::OpenMPGetThreadNum>;
 
-// using OpenMPTeamsMark = CallIRImpl<IR::Type::OpenMPTeamsMark>;
-
-class OpenMPTeamsMark : public CallIRImpl<IR::Type::OpenMPTeamsMark> {
-  constexpr static size_t threadEntryOffset = 2;
+// Although the name indicates this is a fork, we model it as a function call
+// The callback will itself create threads when distribute is used
+class OpenMPForkTeams : public CallIRImpl<IR::Type::OpenMPForkTeams> {
+  // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L262
+  // @param loc  source location information
+  // @param argc  total number of arguments in the ellipsis
+  // @param microtask  pointer to callback routine consisting of outlined parallel
+  // construct
+  // @param ...  pointers to shared variables that aren't global
+  constexpr static size_t callbackOffset = 2;
 
  public:
   using CallIRImpl::CallIRImpl;
 
   [[nodiscard]] virtual const llvm::Function *getCalledFunction() const override {
-    auto const entryVal = getInst()->getArgOperand(threadEntryOffset)->stripPointerCasts();
+    auto const entryVal = getInst()->getArgOperand(callbackOffset)->stripPointerCasts();
     return llvm::dyn_cast_or_null<llvm::Function>(entryVal);
   }
 };
