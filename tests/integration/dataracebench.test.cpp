@@ -163,7 +163,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 94 ordered + depend sink
       // 95 taskloop
       // 96 collapse + taskloop + multi-dimen
-      // 97 target teams+distribute
+      Oracle("DRB097-target-teams-distribute-orig-no.ll", {}),
       // 98 simd + collpase
       Oracle("DRB099-targetparallelfor2-orig-no.ll", {}),
       // 100-101 task
@@ -186,7 +186,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB113-default-orig-no.ll", {}),
       // 114 omp if
       // 115 simd
-      // 116 target teams
+      // 116 target teams (without distribute)
       // 117 task
       Oracle("DRB118-nestlock-orig-no.ll", {}),
       Oracle("DRB119-nestlock-orig-yes.ll", {"DRB119-nestlock-orig-yes.c:32:8 DRB119-nestlock-orig-yes.c:32:8",
@@ -206,12 +206,43 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
               "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"}),
       Oracle("DRB141-reduction-barrier-orig-no.ll", {}),
       // 142-143 atomic details
-      // 144-154 target teams distribute
+      Oracle(
+          "DRB144-critical-missingreduction-orig-gpu-yes.ll",
+          {"DRB144-critical-missingreduction-orig-gpu-yes.c:26:8 DRB144-critical-missingreduction-orig-gpu-yes.c:26:8",
+           "DRB144-critical-missingreduction-orig-gpu-yes.c:26:8 "
+           "DRB144-critical-missingreduction-orig-gpu-yes.c:26:8"}),
+      Oracle("DRB145-atomiccritical-orig-gpu-no.ll", {}),
+      Oracle("DRB146-atomicupdate-orig-gpu-no.ll", {}),
+      Oracle("DRB147-critical1-orig-gpu-no.ll", {}),
+      Oracle("DRB148-critical1-orig-gpu-yes.ll",
+             {"DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:31:8",
+              "DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:31:8",
+              "DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:34:9",
+              "DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:34:9",
+              "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:31:8",
+              "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:31:8",
+              "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:34:9",
+              "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:34:9"}),
+      Oracle("DRB149-missingdata1-orig-gpu-no.ll", {}),
+      Oracle("DRB150-missinglock1-orig-gpu-yes.ll",
+             {"DRB150-missinglock1-orig-gpu-yes.c:30:8 DRB150-missinglock1-orig-gpu-yes.c:30:8",
+              "DRB150-missinglock1-orig-gpu-yes.c:30:8 DRB150-missinglock1-orig-gpu-yes.c:30:8"}),
+      Oracle("DRB151-missinglock3-orig-gpu-yes.ll",
+             {"DRB151-missinglock3-orig-gpu-yes.c:26:8 DRB151-missinglock3-orig-gpu-yes.c:26:8",
+              "DRB151-missinglock3-orig-gpu-yes.c:26:8 DRB151-missinglock3-orig-gpu-yes.c:26:8"}),
+      // Oracle("DRB152-missinglock2-orig-gpu-no.ll", {}), // fail because there is a teams local lock object
+      Oracle("DRB153-missinglock2-orig-gpu-yes.ll",
+             {"DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8",
+              "DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8"}),
+      Oracle("DRB154-missinglock3-orig-gpu-no.ll", {}),
       Oracle("DRB155-missingordered-orig-gpu-no.ll", {}),
-      // 156-157 target teams distribute
+      Oracle("DRB156-missingordered-orig-gpu-yes.ll",
+             {"DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:12"}),
+      // 157 target teams distribute + SIMD
       // 158 target task+depend
       Oracle("DRB159-nobarrier-orig-gpu-no.ll", {}),
-      // 160-164 target teams distribute
+      // 160 fails because we don't model fork teams as parallel
+      // 161-164 target teams distribute + SIMD
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
