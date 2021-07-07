@@ -87,6 +87,8 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
       // Lastprivate code will only be executed by one thread
       // Model lastprivate by assuming lastprivate code cannot race with other last private code
+      // This may miss races according to OpenMP specification,
+      //  but will not miss races according to how Clang generates OpenMP code (as of clang 10.0.1)
       if (ompAnalysis.isInLastprivate(write) && ompAnalysis.isInLastprivate(other)) return;
     }
 

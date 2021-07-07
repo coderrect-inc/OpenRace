@@ -739,7 +739,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 
 namespace {
 
-// Get any cmp eq insts that use this value and compare against a constant integer
+// Get any icmp_eq insts that use this value and compare against a constant integer
 // return list of pairs (cmp, c) where cmp is the cmpInst and c is the constant value compared against
 std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const llvm::Value *value) {
   std::vector<std::pair<const llvm::CmpInst *, uint64_t>> result;
@@ -911,6 +911,7 @@ std::set<const llvm::BasicBlock *> LastprivateAnalysis::computeLastprivateBlocks
       // Get the "isLast" flag
       auto isLastFlag = call->getArgOperand(3);
       // Find cmp instructions that use the flag
+      // clang should always generate cmp_eq instructions for the lastprivate check after a loop
       auto const cmps = getConstCmpEqInsts(isLastFlag);
       for (auto cmp : cmps) {
         // Only care about cmp instructions checking that the flag is "true" or non-zero
