@@ -153,7 +153,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
-  bool isFork = events.empty();  // when there is a call, the behavior is different
+  bool isFork = events.empty();  // the behavior is different when this traversal is for a fork or a call, , e.g.,
+                                 // task-single-call.ll
 
   for (auto const &ir : irFunc) {
     if (isFork && doSkipIR(ir, state)) {
