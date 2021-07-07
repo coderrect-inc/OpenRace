@@ -454,10 +454,10 @@ namespace {
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
   // Check both spawn events are OpenMP forks
   auto e1Spawn = event1->getThread().spawnSite;
-  if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  if (!e1Spawn || (e1Spawn.value()->getIRType() != IR::Type::OpenMPFork)) return false;
 
   auto e2Spawn = event2->getThread().spawnSite;
-  if (!e2Spawn || (e2Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  if (!e2Spawn || (e2Spawn.value()->getIRType() != IR::Type::OpenMPFork)) return false;
 
   // Check they are spawned from same thread
   if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;
@@ -477,7 +477,7 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
   std::optional<EventID> start;
   for (auto const &event : thread.getEvents()) {
-    switch (event->getIRInst()->type) {
+    switch (event->getIRType()) {
       case Start: {
         assert(!start.has_value() && "encountered two start types in a row");
         start = event->getID();
@@ -719,7 +719,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRInst()->type == IR::Type::OpenMPReduce) {
+    if (event->getIRType() == IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());
@@ -814,7 +814,7 @@ std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *bran
 }  // namespace
 
 void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
-  assert(event->getIRInst()->type == IR::Type::OpenMPGetThreadNum);
+  assert(event->getIRType() == IR::Type::OpenMPGetThreadNum);
   auto const func = event->getFunction();
   // Check if we have already computed guardedBlocks for this LLVM function
   if (visited.find(func) != visited.end()) return;
@@ -855,7 +855,7 @@ SimpleGetThreadNumAnalysis::SimpleGetThreadNumAnalysis(const ProgramTrace &progr
   for (auto const &thread : program.getThreads()) {
     for (auto const &event : thread->getEvents()) {
       // Only care about get_thread_num calls
-      if (event->getIRInst()->type != IR::Type::OpenMPGetThreadNum) continue;
+      if (event->getIRType() != IR::Type::OpenMPGetThreadNum) continue;
       computeGuardedBlocks(event.get());
     }
   }
