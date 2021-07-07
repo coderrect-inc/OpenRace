@@ -68,6 +68,7 @@ class IR {
     OpenMPMasterStart,
     OpenMPMasterEnd,
     OpenMPGetThreadNum,
+    OpenMPTeamsMark,
     END_Call
   } type;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const = 0;
@@ -222,6 +223,8 @@ class CallIR : public IR {
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
   [[nodiscard]] inline bool isIndirect() const { return inst->isIndirectCall(); }
+
+  [[nodiscard]] virtual const llvm::Function *getCalledFunction() const { return getInst()->getCalledFunction(); }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static bool classof(const IR *e) { return e->type >= Type::Call && e->type < Type::END_Call; }

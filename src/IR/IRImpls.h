@@ -378,4 +378,18 @@ using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
 
 using OpenMPGetThreadNum = CallIRImpl<IR::Type::OpenMPGetThreadNum>;
 
+// using OpenMPTeamsMark = CallIRImpl<IR::Type::OpenMPTeamsMark>;
+
+class OpenMPTeamsMark : public CallIRImpl<IR::Type::OpenMPTeamsMark> {
+  constexpr static size_t threadEntryOffset = 2;
+
+ public:
+  using CallIRImpl::CallIRImpl;
+
+  [[nodiscard]] virtual const llvm::Function *getCalledFunction() const override {
+    auto const entryVal = getInst()->getArgOperand(threadEntryOffset)->stripPointerCasts();
+    return llvm::dyn_cast_or_null<llvm::Function>(entryVal);
+  }
+};
+
 }  // namespace race

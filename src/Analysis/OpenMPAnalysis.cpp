@@ -452,12 +452,11 @@ namespace {
 // return true if both events belong to the same OpenMP team
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
-  // Check both spawn events are OpenMP forks
   auto e1Spawn = event1->getThread().spawnSite;
-  if (!e1Spawn || (e1Spawn.value()->getIRType() != IR::Type::OpenMPFork)) return false;
+  if (!e1Spawn && e1Spawn.value()->getIRType() != race::IR::Type::OpenMPFork) return false;
 
   auto e2Spawn = event2->getThread().spawnSite;
-  if (!e2Spawn || (e2Spawn.value()->getIRType() != IR::Type::OpenMPFork)) return false;
+  if (!e2Spawn && e2Spawn.value()->getIRType() != race::IR::Type::OpenMPFork) return false;
 
   // Check they are spawned from same thread
   if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;

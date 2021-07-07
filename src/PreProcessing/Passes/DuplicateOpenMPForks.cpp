@@ -68,7 +68,7 @@ void duplicateOpenMPForks(llvm::Module &module) {
 
         auto const funcName = call->getCalledFunction()->getName();
 
-        if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
+        if (OpenMPModel::isFork(funcName)) {
           replaceForkLocArg(call);
           duplicateForkCall(call);
         }
