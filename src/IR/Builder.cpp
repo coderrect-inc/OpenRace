@@ -35,20 +35,34 @@ bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   return false;
 }
 
-// Assuming ompForkCall points to a OpenMP fork call, the next inst should be a duplicate omp fork call
-// this returns that omp fork or null if the next inst is not a omp fork call
-std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
-  auto next = ompForkCall->getNextNode();
+// this returns the duplicated omp fork teams or null if the next inst is not a omp fork teams call
+std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) {
+  const llvm::CallBase *call = fork->getInst();
+
+  auto const next = call->getNextNode();
   if (!next) return nullptr;
 
-  auto twinOmpForkInst = llvm::dyn_cast<llvm::Instruction>(next);
-  if (!twinOmpForkInst) return nullptr;
+  auto const twinForkInst = llvm::dyn_cast<llvm::CallBase>(next);
+  if (!twinForkInst) return nullptr;
+  // TODO: The "recognizers" could be added to IrImpl classes as static functions
+  //  and then the fork/forkTeams functions could be combined into a single template function
+  if (!OpenMPModel::isForkTeams(twinForkInst)) return nullptr;
 
-  auto twinCallInst = llvm::dyn_cast<llvm::CallBase>(twinOmpForkInst);
-  if (!twinCallInst) return nullptr;
-  if (!OpenMPModel::isFork(twinCallInst) && !OpenMPModel::isForkTeams(twinCallInst)) return nullptr;
+  return std::make_shared<OpenMPForkTeams>(twinForkInst);
+}
 
-  return std::make_shared<OpenMPFork>(twinCallInst);
+// this returns the duplicated omp fork or null if the next inst is not a omp fork call
+std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
+  const llvm::CallBase *call = fork->getInst();
+
+  auto const next = call->getNextNode();
+  if (!next) return nullptr;
+
+  auto const twinForkInst = llvm::dyn_cast<llvm::CallBase>(next);
+  if (!twinForkInst) return nullptr;
+  if (!OpenMPModel::isFork(twinForkInst)) return nullptr;
+
+  return std::make_shared<OpenMPFork>(twinForkInst);
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
@@ -165,10 +179,10 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
         } else if (OpenMPModel::isOrderedEnd(funcName)) {
           instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
-        } else if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
+        } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
-          auto twinOmpFork = getTwinOmpFork(callInst);
+          auto twinOmpFork = getTwinOmpFork(ompFork);
           if (!twinOmpFork) {
             // without duplicated fork we cannot detect any races in omp region so just skip it
             llvm::errs() << "Encountered non-duplicated omp fork instruction: " << *callInst << "\n";
@@ -186,6 +200,27 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           // omp fork has implicit join, so immediately join both threads
           instructions.push_back(std::make_shared<OpenMPJoin>(ompFork));
           instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
+        } else if (OpenMPModel::isForkTeams(funcName)) {
+          // duplicate omp preprocessing should duplicate all omp fork calls
+          auto ompForkTeams = std::make_shared<OpenMPForkTeams>(callInst);
+          auto twinOmpForkTeams = getTwinOmpForkTeams(ompForkTeams);
+          if (!twinOmpForkTeams) {
+            // without duplicated fork we cannot detect any races in omp region so just skip it
+            llvm::errs() << "Encountered non-duplicated omp fork instruction: " << *callInst << "\n";
+            llvm::errs() << "Next Inst was: " << *callInst->getNextNode() << "\n";
+            llvm::errs() << "Skipping entire OpenMP region\n";
+            continue;
+          }
+          // We matched the next inst as twin omp fork
+          ++it;
+
+          // push the two forks and joins such tha the two threads created for the parallel region are in parallel
+          instructions.push_back(ompForkTeams);
+          instructions.push_back(twinOmpForkTeams);
+
+          // omp fork has implicit join, so immediately join both threads
+          instructions.push_back(std::make_shared<OpenMPJoinTeams>(ompForkTeams));
+          instructions.push_back(std::make_shared<OpenMPJoinTeams>(twinOmpForkTeams));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
         } else {

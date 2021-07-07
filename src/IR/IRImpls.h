@@ -211,6 +211,21 @@ class OpenMPJoin : public JoinIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
 };
 
+// This actually corresponds to a OpenMPForkTeams instruction, as the fork call acts as both a fork and join in one call
+class OpenMPJoinTeams : public JoinIR {
+  std::shared_ptr<OpenMPForkTeams> fork;
+
+ public:
+  explicit OpenMPJoinTeams(const std::shared_ptr<OpenMPForkTeams> fork) : JoinIR(Type::OpenMPJoinTeams), fork(fork) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
+};
+
 // ==================================================================
 // ================== LockIR Implementations ========================
 // ==================================================================

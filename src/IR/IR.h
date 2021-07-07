@@ -37,6 +37,7 @@ class IR {
     Join,
     PthreadJoin,
     OpenMPJoin,
+    OpenMPJoinTeams,
     END_Join,
     Lock,
     PthreadMutexLock,

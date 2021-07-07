@@ -19,11 +19,20 @@ limitations under the License.
 
 namespace race {
 
+struct OpenMPState {
+  // Track if we are currently in parallel region created from kmpc_fork_teams
+  size_t teamsDepth = 0;
+
+  bool inTeamsRegion() const { return teamsDepth > 0; }
+};
+
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
 struct TraceBuildState {
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
   ThreadID currentTID = 0;
+
+  OpenMPState openmp;
 };
 
 class ProgramTrace {

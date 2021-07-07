@@ -13,6 +13,8 @@ limitations under the License.
 
 #include "EventImpl.h"
 #include "IR/Builder.h"
+#include "IR/IRImpls.h"
+#include "LanguageModel/OpenMP.h"
 #include "Trace/CallStack.h"
 #include "Trace/ProgramTrace.h"
 
@@ -56,9 +58,13 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
 
+      if (llvm::isa<race::OpenMPForkTeams>(ir.get())) {
+        state.openmp.teamsDepth++;
+      }
+
       // traverse this fork
       auto event = events.back().get();
-      auto forkEvent = static_cast<const ForkEvent *>(event);
+      auto forkEvent = llvm::cast<ForkEvent>(event);
       auto entries = forkEvent->getThreadEntry();
       assert(!entries.empty());
 
@@ -70,10 +76,12 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       // build thread trace for this fork and all sub threads
       auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
       threads.insert(threads.begin() + threadPosition, std::move(subThread));
-
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
       events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
+      if (llvm::isa<race::OpenMPJoinTeams>(ir.get())) {
+        state.openmp.teamsDepth--;
+      }
     } else if (auto lockIR = llvm::dyn_cast<LockIR>(ir.get())) {
       std::shared_ptr<const LockIR> lock(ir, lockIR);
       events.push_back(std::make_unique<const LockEventImpl>(lock, einfo, events.size()));
@@ -102,6 +110,13 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
       if (directNode->getTargetFun()->isExtFunction()) {
+        // Skip OpenMP synchronizations that have no affect across teams
+        // TODO: How should single/master be modeled?
+        if (state.openmp.inTeamsRegion() &&
+            OpenMPModel::isTeamSpecificSync(directNode->getTargetFun()->getFunction())) {
+          continue;
+        }
+
         events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
         continue;
       }
