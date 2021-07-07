@@ -61,8 +61,6 @@ void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath);
 
 void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_list<llvm::StringRef> expected);
 
-void testArgs(std::initializer_list<llvm::StringRef> t);
-
 // Helpers for testing
 bool reportContains(const race::Report &report, TestRace race);
 bool reportContains(const race::Report &report, std::vector<TestRace> races);
