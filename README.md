@@ -23,7 +23,7 @@ When making design or implementation decisions, we should try to prioritize the 
 2. **Coverage**: On average, the tool should scan the majority of a code base. 
 3. **Scalability**: The tool should run at "overnight" and "desktop" scale, even for large projects. 
 
-These are goals we should do our best to achieve, but are not necesarily hard requirements.
+These are goals we should do our best to achieve, but are not necessarily hard requirements.
 
 We should constantly track how OpenRace performs in these three categories, and keep them in mind when making development decisions and trade-offs.
 
@@ -43,7 +43,7 @@ Eventually we plan for the tool to be integrated into CI/CD. For most people, th
 
 "Overnight" scale means if the tool starts running at the end of the day, the results are ready the next morning.
 
-"Desktop" scale means the tool should not use more resources than are available on commodoty desktops.
+"Desktop" scale means the tool should not use more resources than are available on common desktops.
 
 These constraints apply to the largest programs. The majority of programs should be scannable well under these constraints.
 
