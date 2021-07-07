@@ -35,22 +35,6 @@ bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   return false;
 }
 
-// this returns the duplicated omp fork teams or null if the next inst is not a omp fork teams call
-std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) {
-  const llvm::CallBase *call = fork->getInst();
-
-  auto const next = call->getNextNode();
-  if (!next) return nullptr;
-
-  auto const twinForkInst = llvm::dyn_cast<llvm::CallBase>(next);
-  if (!twinForkInst) return nullptr;
-  // TODO: The "recognizers" could be added to IrImpl classes as static functions
-  //  and then the fork/forkTeams functions could be combined into a single template function
-  if (!OpenMPModel::isForkTeams(twinForkInst)) return nullptr;
-
-  return std::make_shared<OpenMPForkTeams>(twinForkInst);
-}
-
 // this returns the duplicated omp fork or null if the next inst is not a omp fork call
 std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
   const llvm::CallBase *call = fork->getInst();
