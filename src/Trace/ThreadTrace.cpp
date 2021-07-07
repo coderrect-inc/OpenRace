@@ -22,6 +22,12 @@ using namespace race;
 
 namespace {
 
+bool isOpenMPTeamSpecific(const IR *ir) {
+  auto const type = ir->type;
+  return type == IR::Type::OpenMPBarrier || type == IR::Type::OpenMPCriticalStart ||
+         type == IR::Type::OpenMPCriticalEnd || type == IR::Type::OpenMPSetLock || type == IR::Type::OpenMPUnsetLock;
+}
+
 // Called recursively to build list of events and thread traces
 // node      - the current callgraph node to traverse
 // thread    - the thread trace being built
@@ -48,6 +54,12 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
   for (auto const &ir : irFunc) {
+    // Skip OpenMP synchronizations that have no affect across teams
+    // TODO: How should single/master be modeled?
+    if (state.openmp.inTeamsRegion() && isOpenMPTeamSpecific(ir.get())) {
+      continue;
+    }
+
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
       std::shared_ptr<const ReadIR> read(ir, readIR);
       events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
@@ -103,13 +115,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
       if (directNode->getTargetFun()->isExtFunction()) {
-        // Skip OpenMP synchronizations that have no affect across teams
-        // TODO: How should single/master be modeled?
-        if (state.openmp.inTeamsRegion() &&
-            OpenMPModel::isTeamSpecificSync(directNode->getTargetFun()->getFunction())) {
-          continue;
-        }
-
         events.push_back(std::make_unique<ExternCallEventImpl>(call, einfo, events.size()));
         continue;
       }
