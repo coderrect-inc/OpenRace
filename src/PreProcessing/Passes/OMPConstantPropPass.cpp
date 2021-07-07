@@ -54,6 +54,23 @@ inline bool hasGlobalOverwritten(GlobalVariable *GV) {
   return false;
 }
 
+// Try to convert the constant C to type T, return nullptr if unable
+llvm::Constant *convertConstant(llvm::Constant *C, llvm::Type *T) {
+  auto const srcType = C->getType();
+
+  if (srcType->isFloatingPointTy() && T->isIntegerTy()) {
+    return llvm::ConstantExpr::getFPToSI(C, T);
+  }
+
+  if (srcType->isIntegerTy() && T->isFloatingPointTy()) {
+    return llvm::ConstantExpr::getSIToFP(C, T);
+  }
+
+  // TODO: are there other conversions we need to handle?
+
+  return nullptr;
+}
+
 bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
   // based on ConstantPropagation in lib/Transforms/Scalar/ConstantProp.cpp
 
@@ -105,9 +122,19 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
           // If user not in the set, then add it to the vector.
           if (WorkList.insert(cast<Instruction>(U)).second) NewWorkListVec.push_back(cast<Instruction>(U));
         }
-        // Replace all of the uses of a variable with uses of the
-        // constant.
-        I->replaceAllUsesWith(C);
+
+        // If the types do not match, try to convert the type
+        // this can happen when a global constant is one type e.g. double
+        // and the instruction looks like:
+        //   load i64, i64* bitcast (double* @relax to i64*)
+        if (C->getType() != I->getType()) {
+          C = convertConstant(C, I->getType());
+        }
+
+        // Replace all of the uses of a variable with uses of the constant.
+        if (C) {
+          I->replaceAllUsesWith(C);
+        }
 
         if (isInstructionTriviallyDead(I, &TLI)) {
           I->eraseFromParent();
