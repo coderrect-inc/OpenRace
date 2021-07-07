@@ -22,8 +22,10 @@ struct Region {
   EventID start;
   EventID end;
 
-  Region(EventID start, EventID end) : start(start), end(end) {}
+  Region(EventID start, EventID end) : start(start), end(end){};
+  Region() = default;
 
+  inline bool isEmpty() const { return start == 0 && end == 0; }
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 };
 

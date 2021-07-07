@@ -65,30 +65,6 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   return nullptr;
 }
 
-const ForkEvent *getForkWithEntry(const llvm::Value *handle, const ThreadTrace &thread) {
-  for (auto const &fork : thread.getForkEvents()) {
-    if (fork->getIRInst()->getThreadEntry() == handle) {
-      return fork;
-    }
-  }
-
-  return nullptr;
-}
-
-std::set<const ForkEvent *> usedTaskForks;  // avoid inserted fake task join to find the same task fork
-
-const ForkEvent *getForkWithEntry(const llvm::Value *handle, const ProgramTrace &program) {
-  for (auto const &thread : program.getThreads()) {
-    auto fork = getForkWithEntry(handle, *thread);
-    if (fork != nullptr && usedTaskForks.find(fork) == usedTaskForks.end()) {
-      usedTaskForks.insert(fork);
-      return fork;
-    }
-  }
-
-  return nullptr;
-}
-
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
   for (auto const &fork : thread.getForkEvents()) {
     if (fork->getIRInst()->getThreadHandle() == handle) {
@@ -99,10 +75,13 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace 
   return nullptr;
 }
 
+std::set<const ForkEvent *>
+    usedTaskForks;  // avoid inserted fake task join to find the same task fork, e.g., task-yes.c
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
   for (auto const &thread : program.getThreads()) {
     auto fork = getForkWithHandle(handle, *thread);
-    if (fork != nullptr) {
+    if (fork != nullptr && usedTaskForks.find(fork) == usedTaskForks.end()) {
+      usedTaskForks.insert(fork);
       return fork;
     }
   }
@@ -111,22 +90,6 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
 }
 
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
-  if (join->getIRInst()->type == IR::Type::OpenMPTaskJoin) {
-    // joins of openmp tasks have the same getThreadHandle() value: %.kmpc_loc.addr.i,
-    // so we use getThreadEntry() to distinguish them
-    const OpenMPTaskJoin *taskJoin = static_cast<const OpenMPTaskJoin *>(join->getIRInst());
-    auto const joinEntry = taskJoin->getThreadEntry();
-    if (auto fork = getForkWithEntry(joinEntry, join->getThread()); fork != nullptr) {
-      // tasks with joins
-      return fork;
-    } else if (auto fork = getForkWithEntry(joinEntry, program); fork != nullptr) {
-      // tasks has no explicit joins
-      return fork;
-    } else {
-      llvm::errs() << "Cannot use getForkWithEntry to find the fork of omp tasks. \n";
-    }
-  }
-
   auto const joinHandle = join->getIRInst()->getThreadHandle();
 
   // Check for fork on this thread with matching handle first
@@ -267,8 +230,6 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
       }
     }
   }
-
-  // omp task without single will have no barrier/join to omp parallel -> add fake join
 }
 
 void HappensBeforeGraph::addSync(const Event *syncEvent) {

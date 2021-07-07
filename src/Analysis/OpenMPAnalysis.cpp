@@ -513,6 +513,30 @@ bool in(const race::Event *event) {
   return false;
 }
 
+// Get ONE region which contains the event
+// template definition can be in cpp as long as we dont expose the template outside of this file
+template <IR::Type Start, IR::Type End>
+const Region getRegionsFor(const ThreadTrace &thread, const Event *target) {
+  auto const regions = getRegions<Start, End>(thread);
+  if (regions.empty()) {
+    return Region();  // no such region
+  }
+
+  for (auto it = regions.begin(); it != regions.end(); it++) {
+    if (it->contains(target->getID())) {
+      return *it;
+    }
+  }
+  return Region();  // no such region
+}
+
+// check whether two regions are from the same code block
+auto regionsMatch = [](const Region &r1, const Region &r2, const ThreadTrace &thread1, const ThreadTrace &thread2) {
+  return (r1.end - r1.start) == (r2.end - r2.start)  // same size of ir stmts in the omp block
+         && thread1.getEvent(r1.start)->getInst() == thread2.getEvent(r2.start)->getInst() &&  // same start/end ir
+         thread1.getEvent(r1.end)->getInst() == thread2.getEvent(r2.end)->getInst();
+};
+
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
 // (event1 always has the thread trace with full irs)
@@ -520,35 +544,20 @@ template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  auto const eid1 = event1->getID();
-  auto const eid2 = event2->getID();
-
   const ThreadTrace &thread1 = event1->getThread();
   const ThreadTrace &thread2 = event2->getThread();
 
-  auto const regions1 = getRegions<Start, End>(thread1);
-  auto const regions2 = getRegions<Start, End>(thread2);
+  // get omp block contains the event
+  auto const region1 = getRegionsFor<Start, End>(thread1, event1);
+  auto const region2 = getRegionsFor<Start, End>(thread2, event2);
+
+  if (region1.isEmpty() || region2.isEmpty()) {  // should have regions
+    return false;
+  }
 
   // Omp threads in same team may or may not have identical traces so we see them separately
-  if (regions1.size() > 0 && regions2.size() > 0) {  // should have regions
-    for (auto r1 = regions1.begin(); r1 != regions1.end(); r1++) {
-      EventID start1 = r1->start;
-      EventID end1 = r1->end;
-
-      for (auto r2 = regions2.begin(); r2 != regions2.end(); r2++) {
-        EventID start2 = r2->start;
-        EventID end2 = r2->end;
-
-        if ((end1 - start1) == (end2 - start2)) {  // same size of ir stmts in the omp block
-          if (thread1.getEvent(start1)->getInst() == thread2.getEvent(start2)->getInst() &&
-              thread1.getEvent(end1)->getInst() == thread2.getEvent(end2)->getInst()) {  // same start/end ir
-            if (start1 < eid1 && end1 > eid1 && start2 < eid2 && end2 > eid2) {  // check omp block contains the event
-              return true;
-            }
-          }
-        }
-      }
-    }
+  if (regionsMatch(region1, region2, thread1, thread2)) {
+    return true;
   }
 
   return false;
@@ -724,7 +733,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
   // Find reduce events
   for (auto const &event : event1->getThread().getEvents()) {
     // If an event e is inside of a reduce block it must occur *after* the reduce event
-    // so, if either event is encountered before finding a reduce that contains both event1
+    // so, if either event is encountered before finding a reduce that contains event1
     // we know that they are not in the same reduce block
     // since event2 might in a thread that removes single/master events (since we always traverse
     // them in a small thread ID and here the TID of event1 <= TID of event2), so event2 can
@@ -734,8 +743,6 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    event->getIRInst()->getInst()->print(llvm::outs(), true);
-    llvm::outs() << "\n";
     if (event->getIRInst()->type == race::IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());

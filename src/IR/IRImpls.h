@@ -149,8 +149,8 @@ class OpenMPFork : public ForkIR {
 
 class OpenMPTask : public ForkIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_tasking.cpp#L1684
-  constexpr static unsigned int threadHandleOffset = 0;
   constexpr static unsigned int threadEntryOffset = 2;
+  constexpr static unsigned int taskEntryOffset = 5;
   const llvm::CallBase *inst;
 
  public:
@@ -158,9 +158,7 @@ class OpenMPTask : public ForkIR {
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
-  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
-    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
-  }
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return getThreadEntry(); }
 
   [[nodiscard]] const llvm::Value *getThreadEntry() const override {
     auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
@@ -170,7 +168,7 @@ class OpenMPTask : public ForkIR {
       return nullptr;
     }
     llvm::CallSite taskAllocCall(llvm::cast<llvm::Instruction>(op));
-    auto taskFunc = taskAllocCall.getArgOperand(5)->stripPointerCasts();
+    auto taskFunc = taskAllocCall.getArgOperand(taskEntryOffset)->stripPointerCasts();
     return llvm::cast<llvm::Function>(taskFunc);
   }
 
@@ -224,9 +222,7 @@ class OpenMPTaskJoin : public JoinIR {
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
 
-  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return task->getThreadHandle(); }
-
-  [[nodiscard]] const llvm::Value *getThreadEntry() const {
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
     auto inst = getInst();
     auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
     auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);

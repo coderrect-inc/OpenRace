@@ -151,7 +151,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isTask(funcName)) {
           auto taskStart = std::make_shared<OpenMPTask>(callInst);
           summary.instructions.push_back(taskStart);
-          summary.tasks.insert(taskStart);
+          summary.tasks.push(taskStart);
         } else if (OpenMPModel::isTaskAlloc(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPTaskAlloc>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {
@@ -165,6 +165,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isOrderedEnd(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
+          // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst);
           auto twinOmpFork = getTwinOmpFork(callInst);
           if (!twinOmpFork) {

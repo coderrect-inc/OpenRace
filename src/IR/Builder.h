@@ -12,6 +12,7 @@ limitations under the License.
 #pragma once
 
 #include <memory>
+#include <queue>
 #include <set>
 #include <vector>
 
@@ -22,7 +23,7 @@ namespace race {
 
 struct FunctionSummary {
   std::vector<std::shared_ptr<const IR>> instructions;
-  std::set<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
+  std::queue<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
 
   // used in xxx.test.cpp
   std::vector<std::shared_ptr<const IR>> getInstructions() { return instructions; }
