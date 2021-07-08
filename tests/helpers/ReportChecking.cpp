@@ -39,6 +39,14 @@ race::SourceLoc locFromString(llvm::StringRef s) {
   return race::SourceLoc{file, line, col};
 }
 
+race::SourceLoc trimPath(const race::SourceLoc &original, llvm::StringRef path) {
+  if (path.empty() || !original.filename.startswith(path)) return original;
+
+  race::SourceLoc trimmedLoc(original);
+  trimmedLoc.filename = trimmedLoc.filename.substr(path.size());
+  return trimmedLoc;
+}
+
 }  // namespace
 
 TestRace TestRace::fromString(llvm::StringRef s) {
@@ -60,17 +68,23 @@ std::vector<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings
   return out;
 }
 
-namespace {
+std::vector<TestRace> TestRace::fromRaces(std::set<race::Race> races, llvm::StringRef path) {
+  std::vector<TestRace> out;
 
-race::SourceLoc trimPath(const race::SourceLoc &original, llvm::StringRef path) {
-  if (path.empty() || !original.filename.startswith(path)) return original;
+  for (auto const &race : races) {
+    if (race.missingLocation()) continue;
+    auto const firstLoc = trimPath(race.first.location.value(), path);
+    auto const secondLoc = trimPath(race.second.location.value(), path);
+    out.push_back(TestRace(firstLoc, secondLoc));
+  }
 
-  race::SourceLoc trimmedLoc(original);
-  trimmedLoc.filename = trimmedLoc.filename.substr(path.size());
-  return trimmedLoc;
+  return out;
 }
 
-}  // namespace
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const TestRace &race) {
+  os << race.first << " " << race.second;
+  return os;
+}
 
 bool TestRace::equals(const race::Race &race, llvm::StringRef path) const {
   if (race.missingLocation()) return false;
@@ -114,8 +128,39 @@ void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_li
 
   auto report = race::detectRaces(module.get());
 
-  REQUIRE(report.size() == expected.size());
-  CHECK(reportContains(report, TestRace::fromStrings(expected), llPath));
+  auto expectedRaces = TestRace::fromStrings(expected);
+  auto actualRaces = TestRace::fromRaces(report.races, llPath);
+  std::sort(expectedRaces.begin(), expectedRaces.end());
+  std::sort(actualRaces.begin(), actualRaces.end());
+
+  // races in expected but not in actual are missing
+  std::vector<TestRace> missing;
+  std::set_difference(expectedRaces.begin(), expectedRaces.end(), actualRaces.begin(), actualRaces.end(),
+                      std::back_inserter(missing));
+
+  // races in actual but not in expected are unexpected
+  std::vector<TestRace> unexpected;
+  std::set_difference(actualRaces.begin(), actualRaces.end(), expectedRaces.begin(), expectedRaces.end(),
+                      std::back_inserter(unexpected));
+
+  // Build the info message to be displayed if test fails
+  std::string errors;
+  llvm::raw_string_ostream stream(errors);
+  if (!missing.empty()) {
+    stream << missing.size() << " Missed Races\n";
+    for (auto const &missedRace : missing) {
+      stream << "\t" << missedRace << "\n";
+    }
+  }
+  if (!unexpected.empty()) {
+    stream << unexpected.size() << " Unexpected races\n";
+    for (auto const &unexpectedRace : unexpected) {
+      stream << "\t" << unexpectedRace << "\n";
+    }
+  }
+
+  INFO(stream.str());
+  REQUIRE((missing.empty() && unexpected.empty()));
 }
 
 void checkOracles(const std::vector<Oracle> &oracles, llvm::StringRef llPath) {

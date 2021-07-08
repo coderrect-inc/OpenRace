@@ -13,6 +13,7 @@ limitations under the License.
 
 #include <llvm/ADT/StringRef.h>
 
+#include <set>
 #include <vector>
 
 #include "Reporter/Reporter.h"
@@ -22,8 +23,9 @@ struct TestRace {
   // build race from string in format "file:line:col file:line:col"
   static TestRace fromString(llvm::StringRef s);
 
-  // build set of races from strings
+  // build vector of races from strings
   static std::vector<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
+  static std::vector<TestRace> fromRaces(std::set<race::Race> races, llvm::StringRef path = "");
 
   // Check if location of TestRace matches the actual race
   // if path is set, strip path from start of each race location
@@ -42,7 +44,11 @@ struct TestRace {
   TestRace(race::SourceLoc first, race::SourceLoc second) : first(first), second(second) {
     if (second < first) std::swap(first, second);
   }
+
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const TestRace &race);
 };
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const TestRace &race);
 
 struct Oracle {
   llvm::StringRef filename;
