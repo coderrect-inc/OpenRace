@@ -92,7 +92,7 @@ bool handleOMPEvents(const CallIR *callIR, std::vector<std::unique_ptr<const Eve
   else if (callIR->type == IR::Type::OpenMPMasterStart) {
     // check if handled by a previous thread
     auto end = state.find(inst);
-    if (isFork && end) {
+    if (end) {
       state.exlMasterEnd = end;
       return true;
     }
@@ -109,14 +109,14 @@ bool handleOMPEvents(const CallIR *callIR, std::vector<std::unique_ptr<const Eve
 }
 
 // avoid duplicate omp single/master blocks
-bool doSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) {
+bool doSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state, bool isFork) {
   if (state.exlMasterEnd) {
     if (state.exlMasterEnd == ir->getInst()) {
       state.exlMasterEnd = nullptr;  // matched and reset
     }
     return true;  // skip traversing to avoid FP
   }
-  if (state.exlSingleEnd) {
+  if (isFork && state.exlSingleEnd) {
     if (state.exlSingleEnd == ir->getInst()) {
       state.exlSingleEnd = nullptr;  // matched and reset
     }
@@ -157,7 +157,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
                                  // task-single-call.ll
 
   for (auto const &ir : irFunc) {
-    if (isFork && doSkipIR(ir, state)) {
+    if (doSkipIR(ir, state, isFork)) {
       continue;
     }
 

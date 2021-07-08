@@ -1,11 +1,13 @@
 
 // should have 4 omp tasks in total, assigned to two omp fork threads evenly,
-// and a race on x
+// and no data race, because implicit barrier for each single block
+// but have race conditions on x++ ?
 
-#include <assert.h>
 #include <stdio.h>
 
-void single(int x) {
+int x = 1;
+
+void single() {
 #pragma omp single
   {
 #pragma omp task
@@ -14,11 +16,10 @@ void single(int x) {
 }
 
 int main() {
-  int x = 1;
 #pragma omp parallel
   {
-    single(x);
-    single(x);
+    single();
+    single();
   }
 
   printf("%d\n", x);

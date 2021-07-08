@@ -78,11 +78,12 @@ class DefaultHeapModel {
   //                  size_t sizeof_kmp_task_t, size_t sizeof_shareds,
   //                  task_entry_t task_entry );
   // (https://github.com/llvm-mirror/openmp/blob/56d941a8cede7c0d6aa4dc19e8f0b95de6f97e1b/runtime/test/tasking/kmp_taskloop.c#L64)
-  inline llvm::Type *inferHeapAllocTypeForOpenMP(const llvm::Function *fun, const llvm::Instruction *allocSite) const {
+  inline llvm::Type *inferHeapAllocTypeForOpenMP(const llvm::Function * /* fun */,
+                                                 const llvm::Instruction *allocSite) const {
     // 1st, get the callback function
     CallSite taskAllocCall(allocSite);
     int64_t sharedSize = llvm::cast<llvm::ConstantInt>(taskAllocCall.getArgOperand(taskSharedOffset))->getSExtValue();
-    if (sharedSize == 0) {  // no shared var/ptr
+    if (sharedSize == 0) {  // no shared var/ptr if var/ptr is defined local, or the shared var/ptr is a global var/ptr
       return nullptr;
     }
 
@@ -109,6 +110,7 @@ class DefaultHeapModel {
       }
     }
 
+    llvm::errs() << "cannot infer type for omp task alloc? callsite=" << allocSite << "\n";
     return nullptr;
   }
 };

@@ -128,9 +128,7 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
   } else if (OpenMPModel::isTaskAlloc(callee->getName())) {  // handled by openmp-specific model
     // the type will be something like %struct.kmp_task_t_with_privates
     Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
-
     if (type == nullptr) {
-      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
       return;
     }
 
