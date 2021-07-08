@@ -125,7 +125,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
     }
   }
 
-  llvm::outs() << program << "\n";
+  if (config.printTrace) {
+    llvm::outs() << program << "\n";
+  }
 
   return reporter.getReport();
 }

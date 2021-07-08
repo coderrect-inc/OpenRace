@@ -119,6 +119,7 @@ void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_li
   llvm::LLVMContext context;
   llvm::SMDiagnostic err;
 
+  // Read the input file
   auto testfile = llPath.str() + file.str();
   auto module = llvm::parseIRFile(testfile, err, context);
   if (!module) {
@@ -126,10 +127,15 @@ void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_li
   }
   REQUIRE(module.get() != nullptr);
 
-  auto report = race::detectRaces(module.get());
+  // Generate the report
+  auto report = race::detectRaces(module.get(), race::DetectRaceConfig{
+                                                    .printTrace = false,
+                                                });
 
+  // Get actual/expected test races
   auto expectedRaces = TestRace::fromStrings(expected);
   auto actualRaces = TestRace::fromRaces(report.races, llPath);
+  // Sort for set_difference
   std::sort(expectedRaces.begin(), expectedRaces.end());
   std::sort(actualRaces.begin(), actualRaces.end());
 
