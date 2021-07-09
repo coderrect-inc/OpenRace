@@ -147,6 +147,34 @@ class OpenMPFork : public ForkIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
+class OpenMPForkTeams : public ForkIR {
+  // TODO: put link here
+  // @param loc  source location information
+  // @param argc  total number of arguments in the ellipsis
+  // @param microtask  pointer to callback routine consisting of outlined parallel
+  // construct
+  // @param ...  pointers to shared variables that aren't global
+  constexpr static unsigned int threadHandleOffset = 0;
+  constexpr static unsigned int threadEntryOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPForkTeams(const llvm::CallBase *inst) : ForkIR(Type::OpenMPForkTeams), inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
+    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
+  }
+
+  [[nodiscard]] const llvm::Value *getThreadEntry() const override {
+    return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
+  }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPForkTeams; }
+};
+
 // ==================================================================
 // ================== JoinIR Implementations ========================
 // ==================================================================
@@ -181,6 +209,22 @@ class OpenMPJoin : public JoinIR {
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
+};
+
+// This actually corresponds to a OpenMP forkTeams instruction
+// the fork call acts as both a fork and join in one call
+class OpenMPJoinTeams : public JoinIR {
+  std::shared_ptr<OpenMPForkTeams> fork;
+
+ public:
+  explicit OpenMPJoinTeams(const std::shared_ptr<OpenMPForkTeams> fork) : JoinIR(Type::OpenMPJoinTeams), fork(fork) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoinTeams; }
 };
 
 // ==================================================================
