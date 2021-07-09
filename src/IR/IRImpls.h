@@ -214,26 +214,13 @@ class OpenMPJoin : public JoinIR {
 
 class OpenMPTaskJoin : public JoinIR {
   std::shared_ptr<OpenMPTask> task;
-  constexpr static unsigned int threadEntryOffset = 2;
-  constexpr static unsigned int taskEntryOffset = 5;
 
  public:
   explicit OpenMPTaskJoin(const std::shared_ptr<OpenMPTask> _task) : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
 
-  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
-    auto inst = getInst();
-    auto op = inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
-    auto taskAlloc = llvm::dyn_cast<llvm::CallBase>(op);
-    if (!taskAlloc || !OpenMPModel::isTaskAlloc(taskAlloc->getCalledFunction()->getName())) {
-      llvm::errs() << "Failed to find task function. inst=" << taskAlloc << "\n";
-      return nullptr;
-    }
-    llvm::CallSite taskAllocCall(llvm::cast<llvm::Instruction>(op));
-    auto taskFunc = taskAllocCall.getArgOperand(taskEntryOffset)->stripPointerCasts();
-    return llvm::cast<llvm::Function>(taskFunc);
-  }
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return task->getThreadEntry(); }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPTaskJoin; }

@@ -92,7 +92,7 @@ define void @foo(i32* %x) {
   // }
   auto func = M->getFunction("foo");
 
-  auto racefunc = race::generateFunctionSummary(func).getInstructions();
+  auto racefunc = race::generateFunctionSummary(func).instructions;
   REQUIRE(racefunc.size() == 4);
 
   auto read = llvm::dyn_cast<race::ReadIR>(racefunc.at(0).get());
@@ -137,7 +137,7 @@ declare i32 @pthread_join(i64, i8**)
   auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
   auto func = module->getFunction("foo");
 
-  auto racefunc = race::generateFunctionSummary(func).getInstructions();
+  auto racefunc = race::generateFunctionSummary(func).instructions;
   REQUIRE(racefunc.size() == 3);
 
   auto pthreadcreate = llvm::dyn_cast<race::ForkIR>(racefunc.at(0).get());
@@ -172,7 +172,7 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
   auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
   auto func = module->getFunction("main");
 
-  auto const racefunc = race::generateFunctionSummary(func).getInstructions();
+  auto const racefunc = race::generateFunctionSummary(func).instructions;
   REQUIRE(racefunc.size() == 2);
 
   SECTION("pthread_mutex_lock") {

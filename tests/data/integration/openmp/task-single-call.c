@@ -2,7 +2,6 @@
 // should have 4 omp tasks in total, assigned to two omp fork threads evenly,
 // and no data race, because implicit barrier for each single block
 
-#include <omp.h>
 #include <stdio.h>
 
 int x = 1;

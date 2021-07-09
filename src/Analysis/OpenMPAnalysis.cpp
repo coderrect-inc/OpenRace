@@ -452,10 +452,10 @@ namespace {
 // this works when the event is from omp task fork
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
-  if (!eSpawn) return nullptr;
+  if (!eSpawn) return std::nullopt;
   while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
     auto parentSpawn = eSpawn.value()->getThread().spawnSite;
-    if (!parentSpawn) return nullptr;
+    if (!parentSpawn) return std::nullopt;
     eSpawn = parentSpawn;
   }
   return eSpawn;
@@ -527,9 +527,9 @@ const Block *getBlockFor(const Event *target) {
     }
   }
 
-  for (auto it = regions.begin(); it != regions.end(); it++) {
-    if (it->contains(target->getID())) {
-      return new Block(it->start, it->end, thread);
+  for (auto const &region : regions) {
+    if (region.contains(target->getID())) {
+      return new Block(region.start, region.end, thread);
     }
   }
   return nullptr;  // no such block

@@ -24,15 +24,12 @@ namespace race {
 struct FunctionSummary {
   std::vector<std::shared_ptr<const IR>> instructions;
   std::queue<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
-
-  // used in xxx.test.cpp
-  std::vector<std::shared_ptr<const IR>> getInstructions() { return instructions; }
 };
 
 FunctionSummary generateFunctionSummary(const llvm::Function *func);
 FunctionSummary generateFunctionSummary(const llvm::Function &func);
 
 // class Builder {
-//     mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
-// };
+//  mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
+//};
 }  // namespace race

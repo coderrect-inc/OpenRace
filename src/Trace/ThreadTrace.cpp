@@ -11,8 +11,6 @@ limitations under the License.
 
 #include "Trace/ThreadTrace.h"
 
-#include <c++/9/bits/shared_ptr.h>
-
 #include "EventImpl.h"
 #include "IR/Builder.h"
 #include "IR/IRImpls.h"
