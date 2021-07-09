@@ -55,12 +55,17 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
 }  // namespace
 
-FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
+std::shared_ptr<FunctionSummary> Builder::generateFunctionSummary(const llvm::Function *func) {
   assert(func != nullptr);
-  return generateFunctionSummary(*func);
+  auto summary = getSummary(func);
+  if (!summary.get()) {
+    FunctionSummary newSummary = generateFunctionSummary(*func);
+    summary = insert(func, newSummary);
+  }
+  return summary;
 }
 
-FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
+FunctionSummary Builder::generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary summary;
 
   for (auto const &basicblock : func.getBasicBlockList()) {

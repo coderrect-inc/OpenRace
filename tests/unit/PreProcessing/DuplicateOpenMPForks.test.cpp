@@ -66,7 +66,8 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   REQUIRE(ompForkCount(targetBlock) == numOmpForksBefore * 2);
 
   // Duplicated fork calls need different thread handles to be distinguished
-  auto const summary = race::generateFunctionSummary(module->getFunction("main")).instructions;
+  race::Builder builder;
+  auto const summary = builder.generateFunctionSummary(module->getFunction("main"))->instructions;
   auto const fork1 = llvm::dyn_cast<race::OpenMPFork>(summary.at(0).get());
   REQUIRE(fork1 != nullptr);
   auto const fork2 = llvm::dyn_cast<race::OpenMPFork>(summary.at(1).get());

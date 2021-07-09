@@ -11,6 +11,8 @@ limitations under the License.
 
 #pragma once
 
+#include <IR/Builder.h>
+
 #include <vector>
 
 #include "IR/IRImpls.h"
@@ -24,6 +26,8 @@ using OMPStartEnd = std::map<const llvm::CallBase *, const llvm::CallBase *>;
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
 struct TraceBuildState {
+  Builder builder;
+
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
   ThreadID currentTID = 0;

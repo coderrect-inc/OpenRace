@@ -26,10 +26,25 @@ struct FunctionSummary {
   std::queue<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
 };
 
-FunctionSummary generateFunctionSummary(const llvm::Function *func);
-FunctionSummary generateFunctionSummary(const llvm::Function &func);
+// cache FunctionSummary here
+class Builder {
+  std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
 
-// class Builder {
-//  mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
-//};
+  FunctionSummary generateFunctionSummary(const llvm::Function &func);
+
+  std::shared_ptr<FunctionSummary> insert(const llvm::Function *func, FunctionSummary summary) {
+    auto sum = std::make_shared<FunctionSummary>(summary);
+    cache.insert(std::make_pair(func, sum));
+    return sum;
+  }
+
+  std::shared_ptr<FunctionSummary> getSummary(const llvm::Function *func) {
+    auto it = cache.find(func);
+    if (it != cache.end()) return it->second;
+    return nullptr;
+  }
+
+ public:
+  std::shared_ptr<FunctionSummary> generateFunctionSummary(const llvm::Function *func);
+};
 }  // namespace race

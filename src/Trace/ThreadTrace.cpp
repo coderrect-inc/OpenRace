@@ -128,9 +128,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     llvm::outs() << "Generating Func Sum: TID: " << thread.id << " Func: " << func->getName() << "\n";
   }
 
-  auto summary = generateFunctionSummary(func);
-  auto irFunc = summary.instructions;
-  auto tasks = summary.tasks;
+  auto summary = state.builder.generateFunctionSummary(func);
+  auto irFunc = summary->instructions;
+  auto tasks =
+      std::queue<std::shared_ptr<OpenMPTask>>(summary->tasks);  // will push/pop tasks, do not mess up the summary
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
