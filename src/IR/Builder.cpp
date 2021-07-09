@@ -49,7 +49,7 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
   return std::make_shared<OpenMPFork>(twinForkInst);
 }
 
-std::shared_ptr<OpenMPForkTeamsReal> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeamsReal> &fork) {
+std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) {
   const llvm::CallBase *call = fork->getInst();
 
   auto const next = call->getNextNode();
@@ -62,7 +62,7 @@ std::shared_ptr<OpenMPForkTeamsReal> getTwinOmpForkTeams(std::shared_ptr<OpenMPF
   // these two functions can be combined into a single template function like getTwin<OpenMPForkTeams>(...)
   if (!OpenMPModel::isForkTeams(twinForkInst)) return nullptr;
 
-  return std::make_shared<OpenMPForkTeamsReal>(twinForkInst);
+  return std::make_shared<OpenMPForkTeams>(twinForkInst);
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
@@ -201,10 +201,8 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPJoin>(ompFork));
           instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
         } else if (OpenMPModel::isForkTeams(funcName)) {
-          // instructions.push_back(std::make_shared<OpenMPForkTeams>(callInst));
-
           // duplicate omp preprocessing should duplicate all omp fork calls
-          auto ompForkTeams = std::make_shared<OpenMPForkTeamsReal>(callInst);
+          auto ompForkTeams = std::make_shared<OpenMPForkTeams>(callInst);
           auto twinOmpForkTeams = getTwinOmpForkTeams(ompForkTeams);
           if (!twinOmpForkTeams) {
             // without duplicated fork we cannot detect any races in omp region so just skip it

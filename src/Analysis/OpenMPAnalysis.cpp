@@ -454,7 +454,7 @@ namespace {
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
   auto e1Spawn = event1->getThread().spawnSite;
   auto const e1Type = e1Spawn.value()->getIRType();
-  if (!e1Spawn || (e1Type != IR::Type::OpenMPFork && e1Type != IR::Type::OpenMPForkTeamsReal)) return false;
+  if (!e1Spawn || (e1Type != IR::Type::OpenMPFork && e1Type != IR::Type::OpenMPForkTeams)) return false;
 
   auto e2Spawn = event2->getThread().spawnSite;
   if (!e2Spawn || e2Spawn.value()->getIRType() != e1Type) return false;

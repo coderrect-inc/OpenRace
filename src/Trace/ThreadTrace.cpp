@@ -70,7 +70,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
 
-      if (forkIR->type == IR::Type::OpenMPForkTeamsReal) {
+      if (forkIR->type == IR::Type::OpenMPForkTeams) {
         state.openmp.teamsDepth++;
       }
 
@@ -89,7 +89,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
       threads.insert(threads.begin() + threadPosition, std::move(subThread));
 
-      if (forkIR->type == IR::Type::OpenMPForkTeamsReal) {
+      if (forkIR->type == IR::Type::OpenMPForkTeams) {
         state.openmp.teamsDepth++;
       }
 
@@ -128,18 +128,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         continue;
       }
 
-      if (call->type == IR::Type::OpenMPForkTeams) {
-        state.openmp.teamsDepth++;
-      }
-
       events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
       traverseCallNode(directNode, thread, callstack, pta, events, threads, state);
       events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
-
-      if (call->type == IR::Type::OpenMPForkTeams) {
-        state.openmp.teamsDepth--;
-      }
-
     } else {
       llvm_unreachable("Should cover all IR types");
     }
