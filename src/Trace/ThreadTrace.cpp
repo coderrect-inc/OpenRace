@@ -53,12 +53,6 @@ void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, std::que
     std::shared_ptr<const JoinIR> join(ir, joinIR);
     events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
   }
-  //  for (auto it = tasks.begin(); it != tasks.end(); it++) {  // push a join here
-  //    auto ir = std::make_shared<OpenMPTaskJoin>(*it);
-  //    auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
-  //    std::shared_ptr<const JoinIR> join(ir, joinIR);
-  //    events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
-  //  }
 }
 
 // handle omp single/master events
