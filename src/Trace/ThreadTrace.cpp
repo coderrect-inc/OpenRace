@@ -90,7 +90,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       threads.insert(threads.begin() + threadPosition, std::move(subThread));
 
       if (forkIR->type == IR::Type::OpenMPForkTeams) {
-        state.openmp.teamsDepth++;
+        state.openmp.teamsDepth--;
       }
 
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {

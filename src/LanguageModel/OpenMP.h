@@ -100,13 +100,4 @@ inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equal
 
 inline bool isGetThreadNum(const llvm::StringRef& funcName) { return funcName.equals("omp_get_thread_num"); }
 
-// return true if the calls is a synchronization that does not work across offloaded teams
-inline bool isTeamSpecificSync(const llvm::StringRef& funcName) {
-  return isBarrier(funcName) || isCriticalStart(funcName) || isCriticalEnd(funcName) || isSetLock(funcName) ||
-         isUnsetLock(funcName);
-}
-inline bool isTeamSpecificSync(const llvm::Function* func) {
-  return func->hasName() && isTeamSpecificSync(func->getName());
-}
-
 }  // namespace OpenMPModel

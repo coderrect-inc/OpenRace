@@ -22,8 +22,6 @@ namespace {
 // sometimes struct is re-used by updating the source loc between kmpc_fork calls
 // this function makes sure each call to kmpc_fork gets a unique kmpc_loc object
 void replaceForkLocArg(llvm::CallBase *ompFork) {
-  // assert(OpenMPModel::isFork(ompFork->getCalledFunction()->getName()));
-
   // Start inserting before the fork call
   llvm::IRBuilder<> build(ompFork->getPrevNode());
 
