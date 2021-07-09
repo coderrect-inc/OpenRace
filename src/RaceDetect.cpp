@@ -61,6 +61,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
                    << " " << other->getID() << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
                    << "\n";
     }
+    if (write->getID() == 2 && other->getID() == 5) {
+      llvm::outs() << "HIT\n";
+    }
 
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;

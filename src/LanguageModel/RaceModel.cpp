@@ -132,7 +132,7 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
       return;
     }
 
-    // we are going to model the points-to constraints like this:
+    // we are going to model the points-to constraints like this (not consider global var/ptr):
     //  taskObj = &sharedObj -> { sharedObj } ∈ pts(taskobj)
     //  ptr = &taskObj       -> { taskObj } ∈ pts(ptr)
     // where sharedObj, taskObj and ptr are:

@@ -1,6 +1,5 @@
 #include "Analysis/OpenMPAnalysis.h"
 
-#include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
 #include "Trace/Event.h"
 #include "Trace/ThreadTrace.h"
@@ -449,15 +448,28 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
 namespace {
 
-// return true if both events belong to the same OpenMP team
+// recursively find the root spawnsite (from #pragma omp parallel) for this event
+// this works when the event is from omp task fork
+std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
+  auto eSpawn = event->getThread().spawnSite;
+  if (!eSpawn) return nullptr;
+  while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
+    auto parentSpawn = eSpawn.value()->getThread().spawnSite;
+    if (!parentSpawn) return nullptr;
+    eSpawn = parentSpawn;
+  }
+  return eSpawn;
+}
+
+// return true if both events belong to the same OpenMP team (e.g., under the same #pragma omp parallel)
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
   // Check both spawn events are OpenMP forks
-  auto e1Spawn = event1->getThread().spawnSite;
-  if (!e1Spawn || (e1Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  auto e1Spawn = getRootSpawnSite(event1);
+  if (!e1Spawn || !e1Spawn.value()) return false;
 
-  auto e2Spawn = event2->getThread().spawnSite;
-  if (!e2Spawn || (e2Spawn.value()->getIRInst()->type != IR::Type::OpenMPFork)) return false;
+  auto e2Spawn = getRootSpawnSite(event2);
+  if (!e2Spawn || !e2Spawn.value()) return false;
 
   // Check they are spawned from same thread
   if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;
@@ -500,41 +512,36 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
 auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::OpenMPForFini>;
 
-// return true if event is inside of a region marked by Start and End
-// see getRegions for more detail on regions
-template <IR::Type Start, IR::Type End>
-bool in(const race::Event *event) {
-  auto const regions = getRegions<Start, End>(event->getThread());
-  auto const eid = event->getID();
-  auto it = lower_bound(regions.begin(), regions.end(), Region(eid, eid), regionEndLessThan);
-  if (it != regions.end()) {
-    if (it->contains(eid)) return true;
-  }
-  return false;
-}
-
-// Get ONE region which contains the event
+// Get ONE block which contains the event, should be one and only one block if exist
 // template definition can be in cpp as long as we dont expose the template outside of this file
 template <IR::Type Start, IR::Type End>
-const Region getRegionsFor(const ThreadTrace &thread, const Event *target) {
+const Block *getBlockFor(const Event *target) {
+  const ThreadTrace &thread = target->getThread();
   auto const regions = getRegions<Start, End>(thread);
   if (regions.empty()) {
-    return Region();  // no such region
+    auto parent = thread.spawnSite.value();                   // parent fork
+    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {  // check parent spawn site
+      return getBlockFor<Start, End>(parent);
+    } else {
+      return nullptr;  // no such block
+    }
   }
 
   for (auto it = regions.begin(); it != regions.end(); it++) {
     if (it->contains(target->getID())) {
-      return *it;
+      return new Block(it->start, it->end, thread);
     }
   }
-  return Region();  // no such region
+  return nullptr;  // no such block
 }
 
 // check whether two regions are from the same code block
-auto regionsMatch = [](const Region &r1, const Region &r2, const ThreadTrace &thread1, const ThreadTrace &thread2) {
-  return (r1.end - r1.start) == (r2.end - r2.start)  // same size of ir stmts in the omp block
-         && thread1.getEvent(r1.start)->getInst() == thread2.getEvent(r2.start)->getInst() &&  // same start/end ir
-         thread1.getEvent(r1.end)->getInst() == thread2.getEvent(r2.end)->getInst();
+auto blocksMatch = [](const Block *b1, const Block *b2) {
+  const ThreadTrace &thread1 = b1->thread;
+  const ThreadTrace &thread2 = b2->thread;
+  return (b1->end - b1->start) == (b2->end - b2->start)  // same size of ir stmts in the omp block
+         && thread1.getEvent(b1->start)->getInst() == thread2.getEvent(b2->start)->getInst() &&  // same start/end ir
+         thread1.getEvent(b1->end)->getInst() == thread2.getEvent(b2->end)->getInst();
 };
 
 // return true if both events are inside of the region marked by Start and End
@@ -544,19 +551,16 @@ template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  const ThreadTrace &thread1 = event1->getThread();
-  const ThreadTrace &thread2 = event2->getThread();
-
   // get omp block contains the event
-  auto const region1 = getRegionsFor<Start, End>(thread1, event1);
-  auto const region2 = getRegionsFor<Start, End>(thread2, event2);
+  auto const block1 = getBlockFor<Start, End>(event1);
+  auto const block2 = getBlockFor<Start, End>(event2);
 
-  if (region1.isEmpty() || region2.isEmpty()) {  // should have regions
+  if (!block1 || !block2) {  // should have block
     return false;
   }
 
   // Omp threads in same team may or may not have identical traces so we see them separately
-  if (regionsMatch(region1, region2, thread1, thread2)) {
+  if (blocksMatch(block1, block2)) {
     return true;
   }
 

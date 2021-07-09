@@ -65,6 +65,9 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   return nullptr;
 }
 
+std::set<const ForkEvent *>
+    usedTaskForks;  // avoid inserted fake task join to find the same task fork, e.g., task-yes.c
+
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
   for (auto const &fork : thread.getForkEvents()) {
     if (fork->getIRInst()->getThreadHandle() == handle) {
@@ -75,8 +78,6 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace 
   return nullptr;
 }
 
-std::set<const ForkEvent *>
-    usedTaskForks;  // avoid inserted fake task join to find the same task fork, e.g., task-yes.c
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
   for (auto const &thread : program.getThreads()) {
     auto fork = getForkWithHandle(handle, *thread);
@@ -85,10 +86,10 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
       return fork;
     }
   }
-
   return nullptr;
 }
 
+// TODO: both tasks have the same ir in task joins, e.g., task-single-call.c, cannot distinguish
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
   auto const joinHandle = join->getIRInst()->getThreadHandle();
 

@@ -23,9 +23,17 @@ struct Region {
   EventID end;
 
   Region(EventID start, EventID end) : start(start), end(end){};
-  Region() = default;
 
-  inline bool isEmpty() const { return start == 0 && end == 0; }
+  inline bool contains(EventID e) const { return end >= e && e >= start; }
+};
+
+struct Block {
+  EventID start;
+  EventID end;
+  const ThreadTrace& thread;  // the thread that contains the region
+
+  Block(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
+
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 };
 
