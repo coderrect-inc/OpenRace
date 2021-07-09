@@ -118,6 +118,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     // prevent recursion
     return;
   }
+
+  // the behavior is different when this traversal is for a fork or a call, e.g., task-single-call.ll
+  bool isFork = callstack.isEmpty();
+
   callstack.push(func);
 
   if (DEBUG_PTA) {
@@ -129,9 +133,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto tasks = summary.tasks;
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
-
-  bool isFork = events.empty();  // the behavior is different when this traversal is for a fork or a call, , e.g.,
-                                 // task-single-call.ll
 
   for (auto const &ir : irFunc) {
     if (doSkipIR(ir, state, isFork)) {
