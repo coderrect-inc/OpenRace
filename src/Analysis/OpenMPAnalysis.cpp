@@ -837,7 +837,7 @@ std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *bran
 void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
   assert(event->getIRType() == IR::Type::OpenMPGetThreadNum);
   auto const call = event->getInst();
-  // Check if we have already computed guardedBlocks for this LLVM function
+  // Check if we have already computed guardedBlocks for this omp_get_thread_num call
   if (visited.find(call) != visited.end()) return;
 
   // Find all cmpInsts that compare the omp_get_thread_num call to a const value
