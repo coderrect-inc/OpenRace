@@ -65,33 +65,31 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   return nullptr;
 }
 
-std::set<const ForkEvent *>
-    usedTaskForks;  // avoid inserted fake task join to find the same task fork, e.g., task-yes.c
-
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
   for (auto const &fork : thread.getForkEvents()) {
     if (fork->getIRInst()->getThreadHandle() == handle) {
       return fork;
     }
   }
-
   return nullptr;
 }
 
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
   for (auto const &thread : program.getThreads()) {
     auto fork = getForkWithHandle(handle, *thread);
-    if (fork != nullptr && usedTaskForks.find(fork) == usedTaskForks.end()) {
-      usedTaskForks.insert(fork);
+    if (fork != nullptr) {
       return fork;
     }
   }
   return nullptr;
 }
 
+// avoid inserted fake task join to find the same task fork, e.g., task-yes.c
 // TODO: both tasks have the same ir in task joins, e.g., task-single-call.c, cannot distinguish
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
   auto const joinHandle = join->getIRInst()->getThreadHandle();
+  auto const fork = join->getForkEvent();  // is OpenMPTaskJoin
+  if (fork) return fork;
 
   // Check for fork on this thread with matching handle first
   if (auto fork = getForkWithHandle(joinHandle, join->getThread()); fork != nullptr) {

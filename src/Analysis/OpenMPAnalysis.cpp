@@ -536,7 +536,7 @@ const Block *getBlockFor(const Event *target) {
 }
 
 // check whether two regions are from the same code block
-auto blocksMatch = [](const Block *b1, const Block *b2) {
+bool blocksMatch(const Block *b1, const Block *b2) {
   const ThreadTrace &thread1 = b1->thread;
   const ThreadTrace &thread2 = b2->thread;
   return (b1->end - b1->start) == (b2->end - b2->start)  // same size of ir stmts in the omp block
