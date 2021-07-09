@@ -55,7 +55,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
-    if (DEBUG_PTA) {
+    if (true) {
       llvm::outs() << "Checking Race: " << write->getID() << " " << other->getID() << "\n";
     }
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {

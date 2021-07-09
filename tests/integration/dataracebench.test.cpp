@@ -186,7 +186,9 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB113-default-orig-no.ll", {}),
       // 114 omp if
       // 115 simd
-      // 116 target teams (without distribute)
+      Oracle("DRB116-target-teams-orig-yes.ll",
+             {"DRB116-target-teams-orig-yes.c:66:10 DRB116-target-teams-orig-yes.c:66:10",
+              "DRB116-target-teams-orig-yes.c:66:10 DRB116-target-teams-orig-yes.c:66:10"}),
       // 117 task
       Oracle("DRB118-nestlock-orig-no.ll", {}),
       Oracle("DRB119-nestlock-orig-yes.ll", {"DRB119-nestlock-orig-yes.c:32:8 DRB119-nestlock-orig-yes.c:32:8",
@@ -230,19 +232,23 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       Oracle("DRB151-missinglock3-orig-gpu-yes.ll",
              {"DRB151-missinglock3-orig-gpu-yes.c:26:8 DRB151-missinglock3-orig-gpu-yes.c:26:8",
               "DRB151-missinglock3-orig-gpu-yes.c:26:8 DRB151-missinglock3-orig-gpu-yes.c:26:8"}),
-      // Oracle("DRB152-missinglock2-orig-gpu-no.ll", {}), // fail because there is a teams local lock object
+      // Oracle("DRB152-missinglock2-orig-gpu-no.ll", {}), // fail due to teams local lock object (lockset problem)
       Oracle("DRB153-missinglock2-orig-gpu-yes.ll",
              {"DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8",
               "DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8"}),
       Oracle("DRB154-missinglock3-orig-gpu-no.ll", {}),
       Oracle("DRB155-missingordered-orig-gpu-no.ll", {}),
       Oracle("DRB156-missingordered-orig-gpu-yes.ll",
-             {"DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:12"}),
+             {"DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:12",
+              "DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:11"}),
       // 157 target teams distribute + SIMD
       // 158 target task+depend
       Oracle("DRB159-nobarrier-orig-gpu-no.ll", {}),
-      // 160 fails because we don't model fork teams as parallel
+      // 160 // crash in array index analysis
       // 161-164 target teams distribute + SIMD
+      // Oracle("DRB161-nolocksimd-orig-gpu-yes.ll",
+      //        {"DRB161-nolocksimd-orig-gpu-yes.c:33:13 DRB161-nolocksimd-orig-gpu-yes.c:33:13",
+      //         "DRB161-nolocksimd-orig-gpu-yes.c:33:13 DRB161-nolocksimd-orig-gpu-yes.c:33:13"}),
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),

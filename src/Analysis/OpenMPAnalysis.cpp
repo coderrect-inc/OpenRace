@@ -453,10 +453,11 @@ namespace {
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
   auto e1Spawn = event1->getThread().spawnSite;
-  if (!e1Spawn || e1Spawn.value()->getIRType() != IR::Type::OpenMPFork) return false;
+  auto const e1Type = e1Spawn.value()->getIRType();
+  if (!e1Spawn || (e1Type != IR::Type::OpenMPFork && e1Type != IR::Type::OpenMPForkTeamsReal)) return false;
 
   auto e2Spawn = event2->getThread().spawnSite;
-  if (!e2Spawn || e2Spawn.value()->getIRType() != IR::Type::OpenMPFork) return false;
+  if (!e2Spawn || e2Spawn.value()->getIRType() != e1Type) return false;
 
   // Check they are spawned from same thread
   if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;

@@ -70,6 +70,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
 
+      if (forkIR->type == IR::Type::OpenMPForkTeamsReal) {
+        state.openmp.teamsDepth++;
+      }
+
       // traverse this fork
       auto event = events.back().get();
       auto forkEvent = llvm::cast<ForkEvent>(event);
@@ -84,6 +88,11 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       // build thread trace for this fork and all sub threads
       auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
       threads.insert(threads.begin() + threadPosition, std::move(subThread));
+
+      if (forkIR->type == IR::Type::OpenMPForkTeamsReal) {
+        state.openmp.teamsDepth++;
+      }
+
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
       events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));

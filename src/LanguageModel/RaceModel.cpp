@@ -155,7 +155,7 @@ bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction 
 
 namespace {
 // TODO: better way of handling these
-const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
+const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_fork_teams"};
 }  // namespace
 
 bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {
