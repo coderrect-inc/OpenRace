@@ -215,7 +215,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(ompForkTeams);
           instructions.push_back(twinOmpForkTeams);
 
-          // omp fork has implicit join, so immediately join both threads
+          // omp fork teams has implicit join, so immediately join both threads
           instructions.push_back(std::make_shared<OpenMPJoinTeams>(ompForkTeams));
           instructions.push_back(std::make_shared<OpenMPJoinTeams>(twinOmpForkTeams));
         } else if (isPrintf(funcName)) {
