@@ -129,7 +129,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   }
 
   auto summary = state.builder.generateFunctionSummary(func);
-  auto irFunc = summary->instructions;
+  auto const &irFunc = summary->instructions;
   auto tasks =
       std::queue<std::shared_ptr<OpenMPTask>>(summary->tasks);  // will push/pop tasks, do not mess up the summary
   auto const context = node->getContext();
