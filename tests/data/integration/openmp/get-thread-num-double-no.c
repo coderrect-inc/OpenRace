@@ -6,13 +6,11 @@ int main() {
 
 #pragma omp parallel
   {
-    int tid = omp_get_thread_num();
-
-    if (tid == 1) {
+    if (omp_get_thread_num() == 1) {
       counter++;
     }
 
-    if (tid == 1) {
+    if (omp_get_thread_num() == 1) {
       counter++;
     }
   }
