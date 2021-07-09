@@ -215,7 +215,7 @@ TEST_CASE("dataracebench", "[integration][dataracebench][omp]") {
       // 165-168 cannot be built
       // 169 multi-dimen array // Missed TP
       Oracle("DRB170-nestedloops-orig-no.ll", {}),
-      // 171 threadprivate // crash
+      // 171 threadprivate FP
       Oracle("DRB172-critical2-orig-no.ll", {}),
   };
 
