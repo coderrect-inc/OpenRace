@@ -93,8 +93,8 @@ We only build for the X86 platform to save time
 OpenRace is also using C++17
 - `CMAKE_BUILD_TYPE=Release`  
 Builds LLVM in Release mode; use Debug instead to make debugging easier
-- `DLLVM_ENABLE_PROJECTS='clang;openmp'`
-Builds clang-10 and OpenMP together with LLVM; they are needed for building test cases
+- `DLLVM_ENABLE_PROJECTS='clang;openmp'`  
+Builds clang-10.0.1 and OpenMP together with LLVM; they are required for building test cases
 - `-G Ninja`  
 Building using Ninja Build
 
