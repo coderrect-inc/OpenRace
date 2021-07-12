@@ -28,10 +28,10 @@ namespace {
 
 // return true if the operand of inst must be a thread local object
 bool flowsFromThreadLocalOperand(const llvm::Instruction *inst) {
-  std::vector<const llvm::Value*> worklist;
+  std::vector<const llvm::Value *> worklist;
   worklist.push_back(llvm::getPointerOperand(inst));
 
-  while(!worklist.empty()) {
+  while (!worklist.empty()) {
     auto val = worklist.back();
     worklist.pop_back();
 
@@ -51,7 +51,7 @@ bool flowsFromThreadLocalOperand(const llvm::Instruction *inst) {
 
     // TODO: Are there other instructions that should eb considered?
   }
-  
+
   return false;
 }
 

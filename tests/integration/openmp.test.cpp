@@ -95,3 +95,10 @@ TEST_CASE("OpenMP lastprivate", "[integration][omp]") {
   };
   checkOracles(oracles, "integration/openmp/");
 }
+
+TEST_CASE("OpenMP threadlocal", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("threadlocal-no.ll", {}),
+  };
+  checkOracles(oracles, "integration/openmp/");
+}
