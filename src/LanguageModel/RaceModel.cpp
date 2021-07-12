@@ -38,7 +38,7 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
     return {callback, InterceptResult::Option::EXPAND_BODY};
   }
 
-  if (OpenMPModel::isFork(funcName)) {
+  if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
     race::OpenMPFork fork(llvm::cast<CallBase>(callsite));
     return {fork.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
@@ -68,7 +68,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
     return true;
   }
 
-  if (OpenMPModel::isFork(funcName)) {
+  if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
     // omp fork spawns thread that executes outline:
     //     omp_fork_call(a, b, outlined, n, n+1, n+2, ...)
     //     outlined(x, y, m, m+1, m+2, ...)
@@ -155,7 +155,7 @@ bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction 
 
 namespace {
 // TODO: better way of handling these
-const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
+const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_fork_teams"};
 }  // namespace
 
 bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {

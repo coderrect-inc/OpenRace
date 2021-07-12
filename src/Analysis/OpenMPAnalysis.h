@@ -52,8 +52,8 @@ class SimpleGetThreadNumAnalysis {
   // compute any guarded blocks for this omp_get_thread call and add them to the guardedBlocks map
   void computeGuardedBlocks(const Event* event);
 
-  // set of functions who's guarded blocks have already been computed
-  std::set<const llvm::Function*> visited;
+  // set of get_thread_num calls who's guarded blocks have already been computed
+  std::set<const llvm::Instruction*> visited;
 
   // Get the tid that guards this event or None if it is not guarded
   std::optional<u_int64_t> getGuardedBy(const Event* event) const;

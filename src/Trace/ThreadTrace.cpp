@@ -13,12 +13,20 @@ limitations under the License.
 
 #include "EventImpl.h"
 #include "IR/Builder.h"
+#include "IR/IRImpls.h"
+#include "LanguageModel/OpenMP.h"
 #include "Trace/CallStack.h"
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
 
 namespace {
+
+bool isOpenMPTeamSpecific(const IR *ir) {
+  auto const type = ir->type;
+  return type == IR::Type::OpenMPBarrier || type == IR::Type::OpenMPCriticalStart ||
+         type == IR::Type::OpenMPCriticalEnd || type == IR::Type::OpenMPSetLock || type == IR::Type::OpenMPUnsetLock;
+}
 
 // Called recursively to build list of events and thread traces
 // node      - the current callgraph node to traverse
@@ -46,6 +54,12 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
   for (auto const &ir : irFunc) {
+    // Skip OpenMP synchronizations that have no affect across teams
+    // TODO: How should single/master be modeled?
+    if (state.openmp.inTeamsRegion() && isOpenMPTeamSpecific(ir.get())) {
+      continue;
+    }
+
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
       std::shared_ptr<const ReadIR> read(ir, readIR);
       events.push_back(std::make_unique<const ReadEventImpl>(read, einfo, events.size()));
@@ -56,9 +70,13 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
 
+      if (forkIR->type == IR::Type::OpenMPForkTeams) {
+        state.openmp.teamsDepth++;
+      }
+
       // traverse this fork
       auto event = events.back().get();
-      auto forkEvent = static_cast<const ForkEvent *>(event);
+      auto forkEvent = llvm::cast<ForkEvent>(event);
       auto entries = forkEvent->getThreadEntry();
       assert(!entries.empty());
 
@@ -70,6 +88,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       // build thread trace for this fork and all sub threads
       auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
       threads.insert(threads.begin() + threadPosition, std::move(subThread));
+
+      if (forkIR->type == IR::Type::OpenMPForkTeams) {
+        state.openmp.teamsDepth--;
+      }
 
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
@@ -93,11 +115,11 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
       auto directContext = pta::CT::contextEvolve(context, ir->getInst());
-      auto const directNode = pta.getDirectNodeOrNull(directContext, call->getInst()->getCalledFunction());
+      auto const directNode = pta.getDirectNodeOrNull(directContext, call->getCalledFunction());
 
       if (directNode == nullptr) {
         // TODO: LOG unable to get child node
-        llvm::errs() << "Unable to get child node: " << call->getInst()->getCalledFunction()->getName() << "\n";
+        llvm::errs() << "Unable to get child node: " << call->getCalledFunction()->getName() << "\n";
         continue;
       }
 
@@ -109,7 +131,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       events.push_back(std::make_unique<const EnterCallEventImpl>(call, einfo, events.size()));
       traverseCallNode(directNode, thread, callstack, pta, events, threads, state);
       events.push_back(std::make_unique<const LeaveCallEventImpl>(call, einfo, events.size()));
-
     } else {
       llvm_unreachable("Should cover all IR types");
     }
