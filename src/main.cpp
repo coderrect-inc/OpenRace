@@ -27,6 +27,8 @@ static llvm::cl::opt<std::string> DumpPreproccessedIR("dump-ir", cl::desc("Dump 
 static llvm::cl::opt<std::string> DumpJSON("json", cl::desc("Dump JSON race report"),
                                            cl::value_desc("destination file"));
 
+static llvm::cl::opt<bool> PrintTrace("print-trace", cl::desc("print the program trace to stdout"), cl::init(true));
+
 int main(int argc, char** argv) {
   llvm::InitLLVM X(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv);
@@ -51,6 +53,8 @@ int main(int argc, char** argv) {
   if (!DumpPreproccessedIR.empty()) {
     config.dumpPreprocessedIR = DumpPreproccessedIR;
   }
+  config.printTrace = PrintTrace;
+
   auto report = race::detectRaces(module.get(), config);
   if (report.empty()) {
     llvm::outs() << "No races detected.\n";
