@@ -26,12 +26,32 @@ extern llvm::cl::opt<bool> DEBUG_PTA;
 
 namespace {
 
-bool hasThreadLocalOperand(const llvm::Instruction *inst) {
-  auto ptr = getPointerOperand(inst);
-  assert(ptr);
-  if (auto global = llvm::dyn_cast<llvm::GlobalVariable>(ptr)) {
-    return global->isThreadLocal();
+// return true if the operand of inst must be a thread local object
+bool flowsFromThreadLocalOperand(const llvm::Instruction *inst) {
+  std::vector<const llvm::Value*> worklist;
+  worklist.push_back(llvm::getPointerOperand(inst));
+
+  while(!worklist.empty()) {
+    auto val = worklist.back();
+    worklist.pop_back();
+
+    if (!val) continue;
+
+    if (auto global = llvm::dyn_cast<llvm::GlobalVariable>(val)) {
+      return global->isThreadLocal();
+    }
+
+    if (auto load = llvm::dyn_cast<llvm::LoadInst>(val)) {
+      worklist.push_back(load->getPointerOperand());
+    }
+
+    if (auto gep = llvm::dyn_cast<llvm::GetElementPtrInst>(val)) {
+      worklist.push_back(gep->getPointerOperand());
+    }
+
+    // TODO: Are there other instructions that should eb considered?
   }
+  
   return false;
 }
 
@@ -89,7 +109,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         if (DEBUG_PTA) {
           loadInst->print(llvm::outs(), false);
         }
-        if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
+        if (loadInst->isAtomic() || loadInst->isVolatile() || flowsFromThreadLocalOperand(loadInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Load>(loadInst));
@@ -97,7 +117,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         if (DEBUG_PTA) {
           storeInst->print(llvm::outs(), false);
         }
-        if (storeInst->isAtomic() || storeInst->isVolatile() || hasThreadLocalOperand(storeInst)) {
+        if (storeInst->isAtomic() || storeInst->isVolatile() || flowsFromThreadLocalOperand(storeInst)) {
           continue;
         }
         instructions.push_back(std::make_shared<race::Store>(storeInst));
