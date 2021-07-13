@@ -18,6 +18,7 @@ limitations under the License.
 #include "Analysis/OpenMPAnalysis.h"
 #include "Analysis/SharedMemory.h"
 #include "Analysis/SimpleAlias.h"
+#include "Analysis/ThreadLocalAnalysis.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
@@ -43,6 +44,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::LockSet lockset(program);
   race::SimpleAlias simpleAlias;
   race::OpenMPAnalysis ompAnalysis(program);
+  race::ThreadLocalAnalysis threadlocal;
 
   race::Reporter reporter;
 
@@ -58,6 +60,11 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
     if (DEBUG_PTA) {
       llvm::outs() << "Checking Race: " << write->getID() << " " << other->getID() << "\n";
     }
+
+    if (threadlocal.isThreadLocalAccess(write, other)) {
+      return;
+    }
+
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;
     }
