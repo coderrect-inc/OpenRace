@@ -497,7 +497,7 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
       }
       case End: {
         assert(start.has_value() && "encountered end type without a matching start type");
-        regions.emplace_back(start.value(), event->getID());
+        regions.emplace_back(start.value(), event->getID(), thread);
         start.reset();
         break;
       }
@@ -512,37 +512,32 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
 auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::OpenMPForFini>;
 
-// Get ONE block which contains the event, should be one and only one block if exist
-// template definition can be in cpp as long as we dont expose the template outside of this file
+// Get the innermost region that contains event
 template <IR::Type Start, IR::Type End>
-const Block *getBlockFor(const Event *target) {
-  const ThreadTrace &thread = target->getThread();
+std::optional<Region> getContainingRegion(const Event *event) {
+  if (!event) return std::nullopt;
+
+  auto const &thread = event->getThread();
   auto const regions = getRegions<Start, End>(thread);
+
+  // If we are on thread spawned wihtin parallel region,
+  // we can also check to see if this thread was spawned within a region on the parent thread
   if (regions.empty()) {
-    auto parent = thread.spawnSite.value();                   // parent fork
-    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {  // check parent spawn site
-      return getBlockFor<Start, End>(parent);
-    } else {
-      return nullptr;  // no such block
+    auto parent = thread.spawnSite.value();
+    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {
+      return getContainingRegion<Start, End>(parent);
     }
+    return std::nullopt;
   }
 
   for (auto const &region : regions) {
-    if (region.contains(target->getID())) {
-      return new Block(region.start, region.end, thread);
+    if (region.contains(event->getID())) {
+      return region;
     }
   }
-  return nullptr;  // no such block
-}
 
-// check whether two regions are from the same code block
-bool blocksMatch(const Block *b1, const Block *b2) {
-  const ThreadTrace &thread1 = b1->thread;
-  const ThreadTrace &thread2 = b2->thread;
-  return (b1->end - b1->start) == (b2->end - b2->start)  // same size of ir stmts in the omp block
-         && thread1.getEvent(b1->start)->getInst() == thread2.getEvent(b2->start)->getInst() &&  // same start/end ir
-         thread1.getEvent(b1->end)->getInst() == thread2.getEvent(b2->end)->getInst();
-};
+  return std::nullopt;
+}
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
@@ -552,15 +547,15 @@ bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
   // get omp block contains the event
-  auto const block1 = getBlockFor<Start, End>(event1);
-  auto const block2 = getBlockFor<Start, End>(event2);
+  auto const region1 = getContainingRegion<Start, End>(event1);
+  auto const region2 = getContainingRegion<Start, End>(event2);
 
-  if (!block1 || !block2) {  // should have block
+  if (!region1 || !region2) {  // should have block
     return false;
   }
 
   // Omp threads in same team may or may not have identical traces so we see them separately
-  if (blocksMatch(block1, block2)) {
+  if (region1.value().sameAs(region2.value())) {
     return true;
   }
 
@@ -579,8 +574,8 @@ const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(co
   }
 
   // Else find the loop regions
-  auto const loopRegions = _getLoopRegions(thread);
-  ompForLoops[thread.id] = loopRegions;
+  // auto const loopRegions = ;
+  ompForLoops[thread.id] = _getLoopRegions(thread);
 
   return ompForLoops.at(thread.id);
 }
@@ -589,7 +584,8 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
 
-  auto it = lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
+  auto it =
+      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
   if (it != loopRegions.end()) {
     if (it->contains(eid)) return true;
   }

@@ -21,21 +21,23 @@ namespace race {
 struct Region {
   EventID start;
   EventID end;
+  const ThreadTrace& thread;
 
-  Region(EventID start, EventID end) : start(start), end(end){};
-
-  inline bool contains(EventID e) const { return end >= e && e >= start; }
-};
-
-struct Block {
-  EventID start;
-  EventID end;
-  const ThreadTrace& thread;  // the thread that contains the region
-
-  Block(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
+  Region(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
-};
+
+  // Return true of the other region is the same region in the IR
+  bool sameAs(const Region& other) const {
+    // Quickly check if the size of both regions match
+    if ((end - start) != (other.end - other.start)) return false;
+
+    auto const getInst = [](EventID eid, const ThreadTrace& thread) { return thread.getEvent(eid)->getInst(); };
+
+    return getInst(start, thread) == getInst(other.start, other.thread) &&
+           getInst(end, thread) == getInst(other.end, other.thread);
+  }
+};  // namespace race
 
 class ReduceAnalysis {
   using ReduceInst = const llvm::Instruction*;
