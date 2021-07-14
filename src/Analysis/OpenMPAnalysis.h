@@ -21,30 +21,23 @@ namespace race {
 struct Region {
   EventID start;
   EventID end;
+  const ThreadTrace& thread;
 
-  Region(EventID start, EventID end) : start(start), end(end){};
-
-  inline bool contains(EventID e) const { return end >= e && e >= start; }
-};
-
-struct Block {
-  EventID start;
-  EventID end;
-  const ThreadTrace& thread;  // the thread that contains the region
-
-  Block(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
+  Region(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
+  Region(const Region&) = default;
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 
-  bool operator==(const Block& block) const {
-    auto const blockStartInst = block.thread.getEvent(block.start)->getInst();
-    auto const blockEndInst = block.thread.getEvent(block.end)->getInst();
-    auto const thisStartInst = thread.getEvent(start)->getInst();
-    auto const thisEndInst = thread.getEvent(end)->getInst();
-    return (start == block.start) && (end == block.end) && thisStartInst == blockStartInst &&
-           thisEndInst == blockEndInst;
+  friend bool operator==(const Region& lhs, const Region& rhs) {
+    auto const rhsStartInst = rhs.thread.getEvent(rhs.start)->getInst();
+    auto const rhsEndInst = rhs.thread.getEvent(rhs.end)->getInst();
+    auto const lhsStartInst = lhs.thread.getEvent(lhs.start)->getInst();
+    auto const lhsEndInst = lhs.thread.getEvent(lhs.end)->getInst();
+    return (lhs.start == rhs.start) && (lhs.end == rhs.end) && lhsStartInst == rhsStartInst && lhsEndInst == rhsEndInst;
   }
 };
+
+bool operator==(const Region& lhs, const Region& rhs);
 
 class ReduceAnalysis {
   using ReduceInst = const llvm::Instruction*;

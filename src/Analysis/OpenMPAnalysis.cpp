@@ -497,7 +497,7 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
       }
       case End: {
         assert(start.has_value() && "encountered end type without a matching start type");
-        regions.emplace_back(start.value(), event->getID());
+        regions.emplace_back(start.value(), event->getID(), thread);
         start.reset();
         break;
       }
@@ -512,27 +512,27 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
 auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::OpenMPForFini>;
 
-// Get ONE block which contains the event, should be one and only one block if exist
-// template definition can be in cpp as long as we dont expose the template outside of this file
+// Get the innermost region that contains event
 template <IR::Type Start, IR::Type End>
-std::optional<Block> getBlockFor(const Event *target) {
-  const ThreadTrace &thread = target->getThread();
+std::optional<Region> getContainingRegion(const Event *event) {
+  if (!event) return std::nullopt;
+
+  auto const &thread = event->getThread();
   auto const regions = getRegions<Start, End>(thread);
+
+  // If we are on thread spawned wihtin parallel region,
+  // we can also check to see if this thread was spawned within a region on the parent thread
   if (regions.empty()) {
-    auto parent = thread.spawnSite.value();                   // parent fork
-    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {  // check parent spawn site
-      return getBlockFor<Start, End>(parent);
-    } else {
-      return std::nullopt;  // no such block
-    }
+    return getContainingRegion<Start, End>(thread.spawnSite.value());
   }
 
   for (auto const &region : regions) {
-    if (region.contains(target->getID())) {
-      return Block(region.start, region.end, thread);
+    if (region.contains(event->getID())) {
+      return region;
     }
   }
-  return std::nullopt;  // no such block
+
+  return std::nullopt;
 }
 
 // return true if both events are inside of the region marked by Start and End
@@ -543,8 +543,8 @@ bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
   // get omp block contains the event
-  auto const block1 = getBlockFor<Start, End>(event1);
-  auto const block2 = getBlockFor<Start, End>(event2);
+  auto const block1 = getContainingRegion<Start, End>(event1);
+  auto const block2 = getContainingRegion<Start, End>(event2);
 
   if (!block1 || !block2) {  // should have block
     return false;
@@ -570,8 +570,8 @@ const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(co
   }
 
   // Else find the loop regions
-  auto const loopRegions = _getLoopRegions(thread);
-  ompForLoops[thread.id] = loopRegions;
+  // auto const loopRegions = ;
+  ompForLoops[thread.id] = _getLoopRegions(thread);
 
   return ompForLoops.at(thread.id);
 }
@@ -580,7 +580,8 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
 
-  auto it = lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
+  auto it =
+      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
   if (it != loopRegions.end()) {
     if (it->contains(eid)) return true;
   }
