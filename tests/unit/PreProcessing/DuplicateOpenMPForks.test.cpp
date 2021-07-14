@@ -9,8 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
-
 #include <llvm/AsmParser/Parser.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -21,6 +19,7 @@ limitations under the License.
 #include "IR/Builder.h"
 #include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
+#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
 TEST_CASE("Duplicate OpenMP Forks", "[unit][preprocessing][omp]") {
   const char *ModuleString = R"(
@@ -66,8 +65,8 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   REQUIRE(ompForkCount(targetBlock) == numOmpForksBefore * 2);
 
   // Duplicated fork calls need different thread handles to be distinguished
-  race::Builder builder;
-  auto const summary = builder.generateFunctionSummary(module->getFunction("main"))->instructions;
+  race::FunctionSummaryBuilder builder;
+  auto const summary = builder.getFunctionSummary(module->getFunction("main"))->instructions;
   auto const fork1 = llvm::dyn_cast<race::OpenMPFork>(summary.at(0).get());
   REQUIRE(fork1 != nullptr);
   auto const fork2 = llvm::dyn_cast<race::OpenMPFork>(summary.at(1).get());
