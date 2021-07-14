@@ -9,16 +9,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 1/6/20.
-//
-
-#ifndef PTA_CANONICALIZEGEPPASS_H
-#define PTA_CANONICALIZEGEPPASS_H
+#pragma once
 
 #include <llvm/IR/PassManager.h>
 
-// TO canoicalize GEP instruction (required only by Field-Sensitive Pointer
+// TO canoicalize GEP (getelementptr) instruction (required only by Field-Sensitive Pointer
 // Analysis)
 
 // 1st, turn
@@ -53,5 +48,3 @@ class LegacyCanonicalizeGEPPass : public llvm::FunctionPass {
 
   bool runOnFunction(llvm::Function &F) override;
 };
-
-#endif

@@ -18,12 +18,13 @@ limitations under the License.
 using namespace pta;
 
 RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
-  ctx::setOriginRules(
-      [&](const ctx *context, const llvm::Instruction *I) -> bool { return this->isInvokingAnOrigin(context, I); });
+  originCtx::setOriginRules([&](const originCtx *context, const llvm::Instruction *I) -> bool {
+    return this->isInvokingAnOrigin(context, I);
+  });
 }
 
-InterceptResult RaceModel::interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
-                                             const llvm::Instruction *callsite) {
+InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
+                                             const llvm::Function *F, const llvm::Instruction *callsite) {
   auto funcName = F->getName();
 
   // Skip intrinsic in PTA
@@ -37,7 +38,7 @@ InterceptResult RaceModel::interceptFunction(const ctx *callerCtx, const ctx *ca
     return {callback, InterceptResult::Option::EXPAND_BODY};
   }
 
-  if (OpenMPModel::isFork(funcName)) {
+  if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
     race::OpenMPFork fork(llvm::cast<CallBase>(callsite));
     return {fork.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
@@ -67,7 +68,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
     return true;
   }
 
-  if (OpenMPModel::isFork(funcName)) {
+  if (OpenMPModel::isFork(funcName) || OpenMPModel::isForkTeams(funcName)) {
     // omp fork spawns thread that executes outline:
     //     omp_fork_call(a, b, outlined, n, n+1, n+2, ...)
     //     outlined(x, y, m, m+1, m+2, ...)
@@ -97,14 +98,56 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
   return false;
 }
 
-bool RaceModel::isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) {
+bool RaceModel::isCompatible(const llvm::Instruction * /* callsite */, const llvm::Function * /* target */) {
   llvm_unreachable("unrecognizable function");
 }
 
 void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
-                                       const llvm::Instruction *callsite) {}
+                                       const llvm::Instruction *callsite) {
+  if (heapModel.isHeapAllocFun(callee->getFunction())) {  // handled by default heap model
+    Type *type = heapModel.inferHeapAllocType(callee->getFunction(), callsite);
+    // add points-to constraints
+    PtrNode *ptr = this->getPtrNode(caller->getContext(), callsite);
+    ObjNode *obj = this->allocHeapObj(caller->getContext(), callsite, type);
+    this->consGraph->addConstraints(obj, ptr, Constraints::addr_of);
+  } else if (OpenMPModel::isTaskAlloc(callee->getName())) {  // handled by openmp-specific model
+    // the type will be something like %struct.kmp_task_t_with_privates
+    Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
 
-bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction *callsite) {
+    if (type == nullptr) {
+      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
+      return;
+    }
+
+    // we are going to model the points-to constraints like this:
+    //  taskObj = &sharedObj -> { sharedObj } ∈ pts(taskobj)
+    //  ptr = &taskObj       -> { taskObj } ∈ pts(ptr)
+    // where sharedObj, taskObj and ptr are:
+    // e.g. /OpenRace/tests/data/integration/dataracebench/DRB027-taskdependmissing-orig-yes.c
+    //    int i=0; //sharedObj
+    //    #pragma omp parallel
+    //    #pragma omp single
+    //    {
+    //    #pragma omp task //taskObj (available in IR only: __kmpc_omp_task_alloc)
+    //      i = 1; //ptr
+    //    ...
+    //    }
+    ObjNode *sharedObj = MMT::template allocateAnonObj<PT>(
+        this->getMemModel(), caller->getContext(), this->getLLVMModule()->getDataLayout(),
+        type == nullptr ? nullptr : type->getPointerElementType(), nullptr,
+        false);  // do not initialized its element
+    ObjNode *taskObj = allocHeapObj(caller->getContext(), callsite, type);
+    PtrNode *ptr = this->getPtrNode(caller->getContext(), callsite);
+
+    this->consGraph->addConstraints(sharedObj, taskObj, Constraints::addr_of);
+    this->consGraph->addConstraints(taskObj, ptr, Constraints::addr_of);
+
+  } else {
+    llvm::errs() << "implement for alloc: allocsite=" << callsite << "\n";
+  }
+}
+
+bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
   if (!F->hasName()) return false;
   auto const name = F->getName();
   return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm");
@@ -112,10 +155,10 @@ bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction 
 
 namespace {
 // TODO: better way of handling these
-const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call"};
+const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_fork_teams"};
 }  // namespace
 
-bool RaceModel::isInvokingAnOrigin(const ctx *prevCtx, const llvm::Instruction *I) {
+bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {
   auto call = llvm::dyn_cast<CallBase>(I);
   if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 

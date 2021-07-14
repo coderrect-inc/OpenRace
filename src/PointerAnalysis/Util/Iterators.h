@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/8/19.
-//
-#ifndef PTA_ITERATORS_H
-#define PTA_ITERATORS_H
+#pragma once
 
 #include <llvm/ADT/iterator.h>
 
@@ -109,7 +105,7 @@ struct ConcatIterator : public ConcatIterator<Wrapped, N - 1, ValueT> {
   inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
 
   inline bool operator==(const self &rhs) const {
-    return cur == rhs.cur && ((const super *)this)->operator==((const super &)rhs);
+    return cur == rhs.cur && (static_cast<const super *>(this))->operator==(static_cast<const super &>(rhs));
   }
 
   //    auto operator-> () -> decltype(cur.operator->()) {
@@ -196,7 +192,7 @@ struct ConcatIteratorWithTag : public ConcatIteratorWithTag<Wrapped, N - 1, E, V
   inline bool operator!=(const self &rhs) const { return !this->operator==(rhs); }
 
   inline bool operator==(const self &rhs) const {
-    return cur == rhs.cur && static_cast<const super *>(this)->operator==((const super &)rhs);
+    return cur == rhs.cur && (static_cast<const super *>(this))->operator==(static_cast<const super &>(rhs));
   }
 };
 
@@ -249,8 +245,8 @@ class NodeIDWrapperIterator
  public:
   explicit NodeIDWrapperIterator(GraphT *G) : G(G) {}
 
-  explicit NodeIDWrapperIterator(GraphT *G, const NodeIDIteratorT &i) : G(G), BaseT(i) {}
-  explicit NodeIDWrapperIterator(GraphT *G, NodeIDIteratorT &&i) : G(G), BaseT(std::move(i)) {}
+  explicit NodeIDWrapperIterator(GraphT *G, const NodeIDIteratorT &i) : BaseT(i), G(G) {}
+  explicit NodeIDWrapperIterator(GraphT *G, NodeIDIteratorT &&i) : BaseT(std::move(i)), G(G) {}
 
   ValueT operator*() const {
     NodeID id = *(this->I);
@@ -279,8 +275,8 @@ class NodeIDWrapperEdgeIterator
  public:
   explicit NodeIDWrapperEdgeIterator() = default;
 
-  explicit NodeIDWrapperEdgeIterator(GraphT *G, const NodeIDEdgeIteratorT &i) : G(G), BaseT(i) {}
-  explicit NodeIDWrapperEdgeIterator(GraphT *G, NodeIDEdgeIteratorT &&i) : G(G), BaseT(std::move(i)) {}
+  explicit NodeIDWrapperEdgeIterator(GraphT *G, const NodeIDEdgeIteratorT &i) : BaseT(i), G(G) {}
+  explicit NodeIDWrapperEdgeIterator(GraphT *G, NodeIDEdgeIteratorT &&i) : BaseT(std::move(i)), G(G) {}
 
   ValueT operator*() const {
     NodeID id = (*(this->I)).second;
@@ -289,5 +285,3 @@ class NodeIDWrapperEdgeIterator
 };
 
 }  // namespace pta
-
-#endif

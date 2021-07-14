@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/23/20.
-//
-
-#ifndef PTA_REWRITEMODELEDAPIPASS_H
-#define PTA_REWRITEMODELEDAPIPASS_H
+#pragma once
 
 #include <llvm/Pass.h>
 namespace pta::cpp {
@@ -27,6 +22,4 @@ class RewriteModeledAPIPass : public llvm::FunctionPass {
   bool runOnFunction(llvm::Function &F) override;
 };
 
-}  // namespace pta
-
-#endif
+}  // namespace pta::cpp

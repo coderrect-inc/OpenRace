@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/19/19.
-//
-
-#ifndef PTA_KORIGIN_H
-#define PTA_KORIGIN_H
+#pragma once
 
 #include <llvm/ADT/StringSet.h>
 
@@ -31,7 +26,7 @@ struct OriginsSetter;
 // e.g., when use with <k-callsite + origin>, L=k+1 can make origin more precise
 
 // TODO: support L > 1 to make it more accurate
-// L is the length of the callchain that can be used to indentify an origin
+// L is the length of the callchain that can be used to identify an origin
 template <uint32_t K, uint32_t L = 1>
 class KOrigin : public KCallSite<K * L> {
  private:
@@ -118,5 +113,3 @@ struct hash<pta::KOrigin<K, L>> {
 };
 
 }  // namespace std
-
-#endif

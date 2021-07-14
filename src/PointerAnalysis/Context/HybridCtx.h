@@ -9,18 +9,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 4/2/20.
-//
-#ifndef PTA_HYBRIDCTX_H
-#define PTA_HYBRIDCTX_H
+#pragma once
 
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/IR/Instruction.h>
 
 #include <tuple>
 #include <unordered_set>
 
 #include "CtxTrait.h"
+#include "KOrigin.h"
 
 namespace pta {
 // although we only have two context (origin, callsite)
@@ -43,6 +41,24 @@ class HybridCtx {
       : ctx(evolveInnerContext(prevCtx, I, std::index_sequence_for<Args...>{})) {}
 
   const std::tuple<const Args *...> &getContext() const { return ctx; }
+
+  [[nodiscard]] std::string toString(bool detailed) const {
+    std::string str;
+    llvm::raw_string_ostream os(str);
+    if (detailed) {
+      os << "<origin: ";  // KOrigin
+      const pta::KOrigin<3> *const origins = std::get<0>(ctx);
+      os << origins->toString(detailed) << " || callsite: ";
+      const pta::KCallSite<1> *const cs = std::get<1>(ctx);  // KCallSite
+      os << cs->toString(detailed);
+      os << ">";
+    } else {  // print out the origins
+      os << "<";
+      auto origins = std::get<0>(ctx);
+      os << origins->toString(detailed) << ">";
+    }
+    return os.str();
+  }
 
   friend CtxTrait<HybridCtx<Args...>>;
   friend std::hash<pta::HybridCtx<Args...>>;
@@ -76,7 +92,7 @@ struct CtxTrait<HybridCtx<Args...>> {
     if (context == &globCtx) return "<global>";
     if (context == &initCtx) return "<empty>";
 
-    return "no support yet";  // context->toString(detailed);
+    return context->toString(detailed);
   }
 
   static void release() { ctxSet.clear(); }
@@ -100,7 +116,7 @@ template <typename... Args>
 struct hash<pta::HybridCtx<Args...>> {
   template <size_t... N>
   size_t hash_tuple(const pta::HybridCtx<Args...> &wrapper, std::index_sequence<N...> sequence) const {
-    llvm::hash_code code = llvm::hash_combine(((const void *)std::get<N>(wrapper.ctx))...);
+    llvm::hash_code code = llvm::hash_combine(static_cast<const void *>(std::get<N>(wrapper.ctx))...);
     return hash_value(code);
   }
 
@@ -110,4 +126,3 @@ struct hash<pta::HybridCtx<Args...>> {
 };
 
 }  // namespace std
-#endif

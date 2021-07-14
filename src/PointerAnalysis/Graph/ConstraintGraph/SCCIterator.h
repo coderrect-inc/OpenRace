@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/16/19.
-//
-#ifndef PTA_SCCITERATOR_H
-#define PTA_SCCITERATOR_H
+#pragma once
 
 #include <llvm/ADT/BitVector.h>
 
@@ -75,7 +71,7 @@ class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, rev
   llvm::BitVector trueVisitedNode;
 
   /// last Root we visited
-  int lastRoot{};
+  unsigned int lastRoot{};
 
   /// DFS stack, Used to maintain the ordering.  The top contains the current
   /// node, the next child to visit, and the minimum uplink value of all child
@@ -101,10 +97,11 @@ class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, rev
 
   explicit SCCIterator(const GraphT &G, llvm::BitVector workList)
       : visitNum(0), visitedNode(std::move(workList)), trueVisitedNode(G.getNodeNum()), lastRoot(0), consG(&G) {
-    int first = visitedNode.find_first_unset();
-    if (first < 0) {
+    int _first = visitedNode.find_first_unset();
+    if (_first < 0) {
       return;
     }
+    unsigned int first = static_cast<unsigned int>(_first);
     NodeRef entryN = G.getCGNode(first);
     DFSVisitOne(entryN);
     GetNextSCC();
@@ -169,9 +166,10 @@ class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, rev
     assert(CurrentSCC.empty());
 
     // we need to check the next
-    lastRoot = visitedNode.find_next_unset(lastRoot);
+    int _lastRoot = visitedNode.find_next_unset(lastRoot);
 
-    while (lastRoot > 0) {
+    while (_lastRoot > 0) {
+      lastRoot = static_cast<unsigned int>(_lastRoot);
       // there are extra node we need to traverse
       NodeRef root = consG->getNode(lastRoot);
 
@@ -181,7 +179,7 @@ class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, rev
         return true;
       } else {
         // skip node that has super nodes.
-        lastRoot = visitedNode.find_next_unset(lastRoot);
+        _lastRoot = visitedNode.find_next_unset(lastRoot);
       }
     }
     // here we finished traverse the graph
@@ -320,5 +318,3 @@ SCCIterator<ctx, cons, reverse> scc_end(const ConstraintGraph<ctx> &G, const llv
 }
 
 }  // namespace pta
-
-#endif

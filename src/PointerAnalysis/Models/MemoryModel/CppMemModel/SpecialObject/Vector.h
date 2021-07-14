@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/21/20.
-//
-
-#ifndef PTA_VECTOR_H
-#define PTA_VECTOR_H
+#pragma once
 
 #include <llvm/IR/Type.h>
 
@@ -64,13 +59,13 @@ class VectorAPI {
 
  public:
   explicit VectorAPI(const llvm::Instruction *call)
-      : APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
+      : kind(APIKind::UNKNOWN), APICall(llvm::dyn_cast_or_null<llvm::CallBase>(call)), vecElemType(nullptr) {
     if (APICall != nullptr) {
       init(APICall->getCalledFunction());
     }
   }
 
-  explicit VectorAPI(const llvm::Function *F) : APICall(nullptr), vecElemType(nullptr), kind(APIKind::UNKNOWN) {
+  explicit VectorAPI(const llvm::Function *F) : kind(APIKind::UNKNOWN), APICall(nullptr), vecElemType(nullptr) {
     init(F);
   }
 
@@ -145,7 +140,7 @@ class Vector : public FSObject<ctx> {
 
  public:
   // *src* can points to theVec
-  bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const override {
+  bool processSpecial(CGNodeBase<ctx> * /* src */, CGNodeBase<ctx> *dst) const override {
     bool changed = false;
 
     auto consGraph = static_cast<ConsGraph *>(dst->getGraph());
@@ -192,6 +187,4 @@ class Vector : public FSObject<ctx> {
   friend CppMemModel<ctx>;
 };
 
-}  // namespace pta
-
-#endif
+}  // namespace pta::cpp

@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/23/20.
-//
-
 #include "RewriteModeledAPIPass.h"
 
 #include <llvm/IR/IRBuilder.h>
@@ -94,4 +90,4 @@ bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
 
 char RewriteModeledAPIPass::ID = 0;
 static RegisterPass<RewriteModeledAPIPass> RMP("", "", false, /*CFG only*/ false /*is analysis*/);
-}  // namespace pta
+}  // namespace pta::cpp

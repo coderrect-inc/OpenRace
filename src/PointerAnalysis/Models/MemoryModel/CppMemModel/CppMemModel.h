@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 7/13/20.
-//
-
-#ifndef PTA_CPPMEMMODEL_H
-#define PTA_CPPMEMMODEL_H
+#pragma once
 
 // TODO: there are a lot of things to do to model C++'s memory model accurately
 // besides vtable e.g., runtime type information + class hirachy, so we put it
@@ -194,7 +189,7 @@ class CppMemModel : public FSMemModel<ctx> {
         elem = AT->getArrayElementType();  // strip array
       }
 
-      llvm::Type *vecElemType = nullptr;
+      // llvm::Type *vecElemType = nullptr;
       while (auto ST = llvm::dyn_cast<llvm::StructType>(elem)) {
         auto result = VectorAPI::resolveVecElemType(ST);
         if (result != nullptr) {
@@ -245,7 +240,7 @@ class CppMemModel : public FSMemModel<ctx> {
     super initializeGlobal<PT>(gVar, DL);
   }
 
-  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction *callSite) {
+  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction * /* callSite */) {
     // does not matter as they function body should be deleted by
     // RewriteModeledAPIPass
     return {F, InterceptResult::Option::EXPAND_BODY};
@@ -305,5 +300,3 @@ struct MemModelTrait<cpp::CppMemModel<ctx>> : MemModelHelper<cpp::CppMemModel<ct
 #undef super
 
 }  // namespace pta
-
-#endif

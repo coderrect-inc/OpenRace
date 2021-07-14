@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/18/19.
-//
-#ifndef PTA_FSMEMMODEL_H
-#define PTA_FSMEMMODEL_H
+#pragma once
 
 #include <llvm/Support/Allocator.h>
 
@@ -28,6 +24,8 @@ limitations under the License.
 #include "PointerAnalysis/Util/Util.h"
 
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
+extern cl::opt<unsigned> ANON_REC_LIMIT;        // anonymous recursively created object
+extern cl::opt<unsigned> ANON_REC_DEPTH_LIMIT;  // anonymous recursively created type
 
 namespace pta {
 
@@ -188,7 +186,7 @@ class FSMemModel {
   using Canonicalizer = FSCanonicalizer;
 
   FSMemModel(ConsGraphTy &consGraph, PtrManager &owner, llvm::Module &M, MemModelKind kind = MemModelKind::FS)
-      : consGraph(consGraph), ptrManager(owner), module(M), kind(kind) {}
+      : kind(kind), ptrManager(owner), consGraph(consGraph), module(M) {}
 
  protected:
   template <typename PT>
@@ -261,11 +259,14 @@ class FSMemModel {
 
     llvm::Type *type;
     if (auto constSize = llvm::dyn_cast<llvm::ConstantInt>(arraySize)) {
-      size_t elementNum = constSize->getSExtValue();
-      if (elementNum == 1) {
-        type = elementType;
-      } else {
-        type = llvm::ArrayType::get(elementType, elementNum);
+      int64_t elementNum = constSize->getSExtValue();
+      if (elementNum >= 0) {
+        unsigned int eleNum = static_cast<unsigned int>(elementNum);
+        if (eleNum == 1) {
+          type = elementType;
+        } else {
+          type = llvm::ArrayType::get(elementType, eleNum);
+        }
       }
     } else {
       type = llvm::ArrayType::get(elementType, std::numeric_limits<size_t>::max());
@@ -302,7 +303,7 @@ class FSMemModel {
     auto structTy = llvm::cast<llvm::StructType>(T);
     auto layout = DL.getStructLayout(structTy);
 
-    for (int i = 0; i < structTy->getNumElements(); i++) {
+    for (unsigned int i = 0; i < structTy->getNumElements(); i++) {
       auto elemTy = stripArray(structTy->getElementType(i));
 
       size_t offset = globOffset + layout->getElementOffset(i);
@@ -340,9 +341,7 @@ class FSMemModel {
     globOffset += DL.getTypeAllocSize(structTy);
   }
 
-  int allocatedCount;
-  const int ANON_REC_LIMIT = 999;
-  const int ANON_REC_DEPTH_LIMIT = 10;
+  unsigned int allocatedCount;
   template <typename PT>
   ObjNode *allocAnonObjRec(const ctx *C, const llvm::DataLayout &DL, llvm::Type *T, const llvm::Value *tag,
                            std::vector<const llvm::Type *> &typeTree) {
@@ -467,7 +466,10 @@ class FSMemModel {
         auto baseValue = GEP->stripAndAccumulateConstantOffsets(DL, off, true);
         // objNode can be none, when it is a external symbol, which does not
         // have initializers.
-        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)->getObjectAt(off.getSExtValue());
+        int64_t extVal = off.getSExtValue();
+        assert(extVal >= 0);  // bz: otherwise we cannot call getObjectAt()
+        unsigned int eVal = static_cast<unsigned int>(extVal);
+        auto FSobj = getMemBlock(CT::getGlobalCtx(), baseValue)->getObjectAt(eVal);
         // FIXME: Field-sensitive object can be nullptr, because we handle i8*
         // as scalar object however, it should be the most conservative type in
         // LLVM (void *) probably should handle it as a field-insensitive
@@ -581,14 +583,15 @@ class FSMemModel {
     return result->getObjNode();
   }
 
-  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction *callSite) {
+  inline InterceptResult interceptFunction(const llvm::Function *F, const llvm::Instruction * /* callSite */) {
     return {F, InterceptResult::Option::EXPAND_BODY};
   }
 
   // return *true* when the callsite handled by the
   template <typename PT>
-  inline constexpr bool interceptCallSite(const CtxFunction<CtxTy> *caller, const CtxFunction<CtxTy> *callee,
-                                          const llvm::Instruction *callSite) const {
+  inline constexpr bool interceptCallSite(const CtxFunction<CtxTy> * /* caller */,
+                                          const CtxFunction<CtxTy> * /* callee */,
+                                          const llvm::Instruction * /* callSite */) const {
     return false;
   }
 
@@ -612,4 +615,3 @@ struct MemModelTrait<FSMemModel<ctx>> : MemModelHelper<FSMemModel<ctx>> {
 };
 
 }  // namespace pta
-#endif

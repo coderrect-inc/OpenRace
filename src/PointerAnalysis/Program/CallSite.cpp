@@ -9,8 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/5/19.
+#include "PointerAnalysis/Program/CallSite.h"
 
 #include <llvm/IR/GlobalAlias.h>
 #include <llvm/IR/Operator.h>
@@ -18,7 +17,6 @@ limitations under the License.
 #include <set>
 
 #include "Logging/Log.h"
-#include "PointerAnalysis/Program/CallSite.h"
 
 using namespace pta;
 using namespace llvm;

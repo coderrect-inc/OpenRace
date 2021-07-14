@@ -46,7 +46,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
 }
 
 RaceAccess::RaceAccess(const MemAccessEvent *event)
-    : inst(event->getInst()), location(getSourceLoc(event)), type(event->type) {}
+    : location(getSourceLoc(event)), type(event->type), inst(event->getInst()) {}
 
 void race::to_json(json &j, const RaceAccess &access) {
   if (access.location.has_value()) {
@@ -55,7 +55,7 @@ void race::to_json(json &j, const RaceAccess &access) {
   } else {
     llvm_unreachable("The report we serialize to JSON should only include races with valid locations");
   }
-};
+}
 
 bool RaceAccess::operator==(const RaceAccess &other) const { return location == other.location && inst == other.inst; }
 bool RaceAccess::operator!=(const RaceAccess &other) const { return !(*this == other); }
@@ -83,7 +83,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc
   return os;
 }
 
-void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; };
+void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; }
 
 Report::Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> racepairs) {
   for (auto const &racepair : racepairs) {

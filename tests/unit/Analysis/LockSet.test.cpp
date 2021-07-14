@@ -22,39 +22,31 @@ TEST_CASE("Simple lockset test", "[unit][lockset]") {
 %struct.__pthread_mutex_s = type { i32, i32, i32, i32, i32, i16, i16, %struct.__pthread_internal_list }
 %struct.__pthread_internal_list = type { %struct.__pthread_internal_list*, %struct.__pthread_internal_list* }
 
-define dso_local void @foo(i32 * %x) {
-  %x.addr = alloca i32*, align 8
-  store i32* %x, i32** %x.addr, align 8
-  %1 = load i32*, i32** %x.addr, align 8
-  %2 = load i32, i32* %1, align 4
-  %add = add nsw i32 %2, 1
-  %3 = load i32*, i32** %x.addr, align 8
-  store i32 %add, i32* %3, align 4
+define dso_local void @foo(i32 * %z) {
+  %1 = load i32, i32* %z    ; 4 / 11
+  %add = add nsw i32 %1, 1  
+  store i32 %add, i32* %z   ; 5 / 12
   ret void
 }
 
 define dso_local i32 @main() #0 {
-  %mutex = alloca %union.pthread_mutex_t
+  %mutex = alloca %union.pthread_mutex_t, align 8
   %x = alloca i32
   %y = alloca i32
+  
+  store i32 0, i32* %x ; 0
+  store i32 0, i32* %y ; 1
 
-  store i32 0, i32* %x
-  store i32 0, i32* %y
+  %call = call i32 @pthread_mutex_lock(%union.pthread_mutex_t* nonnull %mutex) ; 2
 
-  %call = call i32 @pthread_mutex_lock(%union.pthread_mutex_t* %mutex)
-
-  call void @foo(i32* %y)
-  %1 = load i32, i32* %x, align 4
+  call void @foo(i32* nonnull %y) ; 3-6
+  %1 = load i32, i32* %x          ; 7
   %dec = add nsw i32 %1, -1
-  store i32 %dec, i32* %x, align 4
-
-  %call1 = call i32 @pthread_mutex_unlock(%union.pthread_mutex_t* %mutex)
-
-  %2 = load i32, i32* %y, align 4
-  %3 = load i32, i32* %x, align 4
-  %add = add nsw i32 %3, %2
-  store i32 %add, i32* %x, align 4
-
+  store i32 %dec, i32* %x         ; 8
+  
+  %call1 = call i32 @pthread_mutex_unlock(%union.pthread_mutex_t* nonnull %mutex) ; 9
+  
+  call void @foo(i32* nonnull %x) ; 10-13
   ret i32 0
 }
 
@@ -76,12 +68,12 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
 
   auto const &thread = threads.at(0);
   auto const &events = thread->getEvents();
-  REQUIRE(events.size() == 13);
+  REQUIRE(events.size() == 14);
 
   race::LockSet lockset(program);
 
   std::array<size_t, 4> sharedIdxs = {4, 5, 7, 8};
-  std::array<size_t, 5> emptyIdxs = {0, 1, 10, 11, 12};
+  std::array<size_t, 5> emptyIdxs = {0, 1, 11, 12};
 
   for (auto sharedIt = sharedIdxs.begin(), sharedEnd = sharedIdxs.end(); sharedIt != sharedEnd; ++sharedIt) {
     // Check it shares lock with self

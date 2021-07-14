@@ -19,19 +19,19 @@ TEST_CASE("Happens Before Graph", "[unit][happensbefore]") {
   const char *ModuleString = R"(
 %union.pthread_attr_t = type { i64, [48 x i8] }
 
-define i8* @entry(i8*) {
-    %c = alloca i64
-    %val = load i64, i64* %c
-    %add = add nsw i64 %val, 42
-    store i64 %add, i64* %c
-    ret i8* null
+define i8* @entry(i8* %c) {
+    %val = load i8, i8* %c
+    %add = add nsw i8 %val, 42
+    store i8 %add, i8* %c
+    ret i8* %c
 }
 
 define void @foo() {
   %p_thread = alloca i64
+  %result = alloca i8*
   %1 = call i32 @pthread_create(i64* %p_thread, %union.pthread_attr_t* null, i8* (i8*)* @entry, i8* null)
   %thread = load i64, i64* %p_thread
-  %2 = call i32 @pthread_join(i64 %thread, i8** null)
+  %2 = call i32 @pthread_join(i64 %thread, i8** %result)
   ret void
 }
 
@@ -51,8 +51,11 @@ declare i32 @pthread_join(i64, i8**)
   race::HappensBeforeGraph happensbefore(program);
 
   auto const &threads = program.getThreads();
+  REQUIRE(threads.size() == 2);
   auto const &thread1 = threads.at(0)->getEvents();
+  REQUIRE(thread1.size() >= 2);
   auto const &thread2 = threads.at(1)->getEvents();
+  REQUIRE(thread2.size() >= 2);
 
   CHECK(happensbefore.canReach(thread1.front().get(), thread1.back().get()));
   CHECK(happensbefore.canReach(thread2.front().get(), thread2.back().get()));

@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/2/19.
-//
-#ifndef PTA_CGPTRNODE_H
-#define PTA_CGPTRNODE_H
+#pragma once
 
 #include <llvm/IR/GlobalValue.h>
 
@@ -31,6 +27,7 @@ class ConstraintGraph;
 
 struct PtrNodeTag {
   virtual std::string toString() = 0;
+  virtual ~PtrNodeTag(){};
 };
 
 // nodes represent pointers
@@ -109,5 +106,3 @@ class CGPtrNode : public CGNodeBase<ctx> {
 };
 
 }  // namespace pta
-
-#endif

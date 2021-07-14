@@ -11,10 +11,13 @@ limitations under the License.
 
 #include "RaceDetect.h"
 
+#include <llvm/Analysis/ScopedNoAliasAA.h>
+
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
 #include "Analysis/OpenMPAnalysis.h"
 #include "Analysis/SharedMemory.h"
+#include "Analysis/SimpleAlias.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
@@ -38,17 +41,32 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
-  race::OpenMPAnalysis ompAnalysis;
+  race::SimpleAlias simpleAlias;
+  race::OpenMPAnalysis ompAnalysis(program);
 
   race::Reporter reporter;
 
+  llvm::PassBuilder PB;
+  llvm::FunctionAnalysisManager FAM;
+  PB.registerFunctionAnalyses(FAM);
+  // contains default AA pipeline (type + scoped + global)
+  // but i do not know how to register it properly now
+  // FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
+
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
+    if (DEBUG_PTA) {
+      llvm::outs() << "Checking Race: " << write->getID() << " " << other->getID() << "\n";
+    }
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;
     }
 
-    if (ompAnalysis.inSameTeam(write, other)) {
+    if (simpleAlias.mustNotAlias(write, other)) {
+      return;
+    }
+
+    if (ompAnalysis.fromSameParallelRegion(write, other)) {
       // Non overlapping array accesses inside of an OpenMP loop are not races
       // e.g.
       //  #pragma omp parallel for shared(A)
@@ -60,9 +78,18 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
       // Certain omp blocks cannot race with themselves or those of the same type within the same scope/team
       if (ompAnalysis.inSameSingleBlock(write, other) || ompAnalysis.inSameReduce(write, other) ||
-          ompAnalysis.bothInMasterBlock(write, other)) {
+          ompAnalysis.bothInMasterBlock(write, other) || race::OpenMPAnalysis::insideCompatibleSections(write, other)) {
         return;
       }
+
+      // No race if guaranteed to be executed by same thread
+      if (ompAnalysis.guardedBySameTid(write, other)) return;
+
+      // Lastprivate code will only be executed by one thread
+      // Model lastprivate by assuming lastprivate code cannot race with other last private code
+      // This may miss races according to OpenMP specification,
+      //  but will not miss races according to how Clang generates OpenMP code (as of clang 10.0.1)
+      if (ompAnalysis.isInLastprivate(write) && ompAnalysis.isInLastprivate(other)) return;
     }
 
     // Race detected
@@ -98,7 +125,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
     }
   }
 
-  llvm::outs() << program << "\n";
+  if (config.printTrace) {
+    llvm::outs() << program << "\n";
+  }
 
   return reporter.getReport();
 }

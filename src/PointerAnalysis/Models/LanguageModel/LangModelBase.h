@@ -9,15 +9,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 1/16/20.
-//
-
-#ifndef PTA_LANGMODELBASE_H
-#define PTA_LANGMODELBASE_H
+#pragma once
 
 #include "ConsGraphBuilder.h"
 #include "PointerAnalysis/Util/Util.h"
+
+extern cl::opt<pta::IndirectResolveOption> INDIRECT_OPTION;  // default value = IndirectResolveOption::WITH_LIMIT
 
 namespace pta {
 
@@ -79,10 +76,9 @@ class LangModelBase : public ConsGraphBuilder<ctx, MemModel, PtsTy, SubClass> {
     }
   }
 
-  inline IndirectResolveOption onNewIndirectTargetResolvation(const llvm::Function *F,
-                                                              const llvm::Instruction *callsite) {
-    // by default
-    return IndirectResolveOption::WITH_LIMIT;
+  inline IndirectResolveOption onNewIndirectTargetResolvation(const llvm::Function * /* F */,
+                                                              const llvm::Instruction * /* callsite */) {
+    return INDIRECT_OPTION;
   }
 
   // **** optional end ****
@@ -271,4 +267,3 @@ struct LangModelTrait<LangModelBase<ctx, MemModel, PtsTy, SubClass>> {
 };
 
 }  // namespace pta
-#endif

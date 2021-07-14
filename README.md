@@ -13,7 +13,42 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 [CS]: https://coderrect.com/overview/
 
-[![build-and-test](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/test.yaml)
+[![check-pr](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml)
+
+## Guiding Principles
+
+When making design or implementation decisions, we should try to prioritize the following three goals.
+
+1. **Precision**: 2 out of 3 reported races should be true positives. 
+2. **Coverage**: On average, the tool should scan the majority of a code base. 
+3. **Scalability**: The tool should run at "overnight" and "desktop" scale, even for large projects. 
+
+These are goals we should do our best to achieve, but are not necessarily hard requirements.
+
+We should constantly track how OpenRace performs in these three categories, and keep them in mind when making development decisions and trade-offs.
+
+
+### Precision
+The number one goal is to produce useful results.
+
+Verifying races is difficult and time consuming. We should prefer reporting no races over reporting a large number of false positives by default.
+
+### Coverage
+The main benefit of static analysis over dynamic analysis is higher code coverage.
+
+We should ensure that our tool is scanning as much of a given code base as is possible.
+
+### Scalability
+Eventually we plan for the tool to be integrated into CI/CD. For most people, this means that the tool must run on fairly limited resources.
+
+"Overnight" scale means if the tool starts running at the end of the day, the results are ready the next morning.
+
+"Desktop" scale means the tool should not use more resources than are available on common desktops.
+
+These constraints apply to the largest programs. The majority of programs should be scannable well under these constraints.
+
+
+
 
 # Running
 

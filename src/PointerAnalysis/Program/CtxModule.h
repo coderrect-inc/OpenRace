@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/30/19.
-//
-#ifndef PTA_CTXMODULE_H
-#define PTA_CTXMODULE_H
+#pragma once
 
 #include <llvm/IR/Value.h>
 
@@ -84,7 +80,7 @@ class CtxModule {
                         .second;  // CtxFunction
       assert(result);
 
-      auto fun = const_cast<CtxFunction<ctx> *>(callNode->getTargetFun());
+      // auto fun = const_cast<CtxFunction<ctx> *>(callNode->getTargetFun());
       // the call node might be an external function
       bool needToExpand = onNewNode(callNode);
       // we should always expand the entry function
@@ -208,6 +204,13 @@ class CtxModule {
       for (const auto &inst : BB) {
         if (llvm::isa<llvm::CallInst>(inst) || llvm::isa<llvm::InvokeInst>(inst)) {
           pta::CallSite cs(const_cast<llvm::Instruction *>(&inst));
+          if (DEBUG_PTA) {
+            Instruction *c = const_cast<llvm::Instruction *>(&inst);
+            llvm::outs() << "CALL: ";
+            c->print(llvm::outs(), false);
+            llvm::outs() << "\n";
+          }
+
           if (cs.isIndirectCall()) {
             // take another shot
             auto targetNode = visitInDirectCallSite(&inst, context, onNewInDirect);
@@ -258,7 +261,7 @@ class CtxModule {
 
  public:
   CtxModule(const llvm::Module *M, llvm::StringRef entry)
-      : callGraph(new CallGraph<ctx>()), llvmModule(M), entryName(entry) {}
+      : callGraph(new CallGraph<ctx>()), entryName(entry), llvmModule(M) {}
 
   // OnNewNode: call back
   template <typename BeforeNewNode, typename OnNewDirectNode, typename OnNewInDirectNode, typename OnNewEdge>
@@ -366,5 +369,3 @@ class CtxModule {
 };
 
 }  // namespace pta
-
-#endif

@@ -61,19 +61,19 @@ TEST_CASE("Construct pthread ThreadTrace", "[unit][event]") {
   const char *ModuleString = R"(
 %union.pthread_attr_t = type { i64, [48 x i8] }
 
-define i8* @entry(i8*) {
-    %c = alloca i64
-    %val = load i64, i64* %c
-    %add = add nsw i64 %val, 42
-    store i64 %add, i64* %c
-    ret i8* null
+define i8* @entry(i8* %c) {
+    %val = load i8, i8* %c
+    %add = add nsw i8 %val, 42
+    store i8 %add, i8* %c
+    ret i8* %c
 }
 
 define void @foo() {
   %p_thread = alloca i64
+  %result = alloca i8*
   %1 = call i32 @pthread_create(i64* %p_thread, %union.pthread_attr_t* null, i8* (i8*)* @entry, i8* null)
   %thread = load i64, i64* %p_thread
-  %2 = call i32 @pthread_join(i64 %thread, i8** null)
+  %2 = call i32 @pthread_join(i64 %thread, i8** %result)
   ret void
 }
 
@@ -133,16 +133,16 @@ define i8* @entryOuter(i8*) {
   %p_sub_thread = alloca i64
   %2 = call i32 @pthread_create(i64* %p_sub_thread, %union.pthread_attr_t* null, i8* (i8*)* @entryInner, i8* null)
   %sub_thread = load i64, i64* %p_sub_thread
-  %3 = call i32 @pthread_join(i64 %sub_thread, i8** null)
+  %result = alloca i8*
+  %3 = call i32 @pthread_join(i64 %sub_thread, i8** %result)
   ret i8* null
 }
 
-define i8* @entryInner(i8*) {
-    %c = alloca i64
-    %val = load i64, i64* %c
-    %add = add nsw i64 %val, 42
-    store i64 %add, i64* %c
-    ret i8* null
+define i8* @entryInner(i8* %c) {
+    %val = load i8, i8* %c
+    %add = add nsw i8 %val, 42
+    store i8 %add, i8* %c
+    ret i8* %c
 }
 
 define void @foo() {

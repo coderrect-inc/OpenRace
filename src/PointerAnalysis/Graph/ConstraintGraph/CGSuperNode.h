@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/2/19.
-//
-#ifndef PTA_CGSUPERNODE_H
-#define PTA_CGSUPERNODE_H
+#pragma once
 
 // TODO: maybe merge SCC later?
 
@@ -83,5 +79,3 @@ class CGSuperNode : public CGNodeBase<ctx> {
 };
 
 }  // namespace pta
-
-#endif

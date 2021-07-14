@@ -9,11 +9,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/26/19.
-//
-#ifndef PTA_CONSTRAINTGRAPH_H
-#define PTA_CONSTRAINTGRAPH_H
+#pragma once
+
+#include <llvm/Support/CommandLine.h>
 
 #include "CGObjNode.h"
 #include "CGPtrNode.h"
@@ -21,6 +19,8 @@ limitations under the License.
 #include "llvm/Support/DOTGraphTraits.h"
 
 #define DEBUG_TYPE "pta-cons-graph"
+
+extern llvm::cl::opt<bool> DEBUG_PTA;
 
 namespace pta {
 
@@ -36,6 +36,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
  public:
   using CGNodeTy = CGNodeBase<ctx>;
   struct OnNewConstraintCallBack {
+    virtual ~OnNewConstraintCallBack() {}
     virtual void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) = 0;
   };
 
@@ -60,13 +61,30 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
   inline CGNodeTy *getCGNode(NodeID id) const { return this->getNode(id); }
 
   inline bool addConstraints(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) {
+    if (DEBUG_PTA) {
+      std::string type = "";  // copy
+      if (constraint == Constraints::copy) {
+        type = "copy";
+      } else if (constraint == Constraints::load) {
+        type = "load";
+      } else if (constraint == Constraints::store) {
+        type = "store";
+      } else if (constraint == Constraints::addr_of) {
+        type = "addr_of";
+      } else if (constraint == Constraints::offset) {
+        type = "offset";
+      }
+
+      llvm::outs() << "addConstraints (type-" << type << "): "
+                   << "src: " << src->getNodeID() << " -> dst: " << dst->getNodeID() << "\n";
+    }
+
     // should not add edges to nodes that has super node
     assert(src && dst /*&& !src->hasSuperNode() && !dst->hasSuperNode()*/);
     // self-circle copy edges has no effect
     if (src == dst && constraint == Constraints::copy) {
       return false;
     }
-
     if (constraint == Constraints::addr_of) {
       // addr_of can only be applied between obj --addr_of-> ptr
       assert(src->getType() == CGNodeKind::ObjNode && "taken addr of non-object node is not allowed");
@@ -78,6 +96,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
       // Convention! obj_id + 1 = anonymous node
       // Or we can use a map to store obj->anon, but it is absolutely much
       // faster.
+
       auto anonNode = this->getCGNode(src->getNodeID() + 1);
       // anonnode should not have incoming edge at all
       assert(!anonNode->hasSuperNode());
@@ -99,7 +118,6 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
         // the edge is actually adding to the super node
         callBack->onNewConstraint(src->getSuperNode(), dst->getSuperNode(), constraint);
       }
-
       return newEdge;
     }
   }
@@ -172,7 +190,7 @@ class ConstraintGraph : public GraphBase<CGNodeBase<ctx>, Constraints> {
     return node;
   }
 
-  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), objVec(), callBack(nullptr){};
+  ConstraintGraph() : GraphBase<CGNodeBase<ctx>, Constraints>(), callBack(nullptr), objVec(){};
 };
 
 }  // namespace pta
@@ -198,7 +216,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
   static std::string getGraphName(const GraphTy &) { return "constraint_graph"; }
 
   /// Return function name;
-  static std::string getNodeLabel(const NodeTy *node, const GraphTy &graph) {
+  static std::string getNodeLabel(const NodeTy *node, const GraphTy & /* graph */) {
     std::string str;
     raw_string_ostream os(str);
 
@@ -206,7 +224,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
     return os.str();
   }
 
-  static std::string getNodeAttributes(const NodeTy *node, const GraphTy &graph) {
+  static std::string getNodeAttributes(const NodeTy * /* node */, const GraphTy & /* graph */) {
     //        if (isa<CGPtrNode<ctx>>(node)) {
     //            return "";
     //        } else if (isa<CGSuperNode<ctx, PtsTy>>(node)) {
@@ -218,7 +236,7 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
   }
 
   template <typename EdgeIter>
-  static std::string getEdgeAttributes(const NodeTy *node, EdgeIter EI, const GraphTy &graph) {
+  static std::string getEdgeAttributes(const NodeTy * /* node */, EdgeIter EI, const GraphTy & /* graph */) {
     pta::Constraints edgeTy = (*EI).first;
     switch (edgeTy) {
       case pta::Constraints::load:
@@ -241,5 +259,3 @@ struct DOTGraphTraits<const pta::ConstraintGraph<ctx>> : public DefaultDOTGraphT
 }  // namespace llvm
 
 #undef DEBUG_TYPE
-
-#endif

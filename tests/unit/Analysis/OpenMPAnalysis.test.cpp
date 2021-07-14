@@ -9,6 +9,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "Analysis/OpenMPAnalysis.h"
+
 #include <llvm/AsmParser/Parser.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IRReader/IRReader.h>
@@ -18,61 +20,9 @@ limitations under the License.
 #include <catch2/catch.hpp>
 #include <sstream>
 
-#include "Analysis/OpenMPAnalysis.h"
 #include "Trace/ProgramTrace.h"
 
-TEST_CASE("Omp Array Index Alias Analysis", "[unit][omp]") {
-  llvm::LLVMContext context;
-  llvm::SMDiagnostic err;
-  const std::string llPath = "unit/Analysis/";
-  auto const file = "simpleloop.ll";
-  auto module = llvm::parseIRFile(llPath + file, err, context);
-  if (!module) {
-    err.print(file, llvm::errs());
-  }
-  REQUIRE(module.get() != nullptr);
-
-  race::ProgramTrace program(module.get());
-  race::OpenMPAnalysis arrayIndexAnalysis;
-
-  // TODO: Make Program unique event ID a type in Trace
-  using PUID = std::pair<race::ThreadID, race::EventID>;
-
-  auto puidStr = [](const PUID &puid) {
-    std::stringstream ss;
-    ss << "T" << puid.first << ":" << puid.second;
-    return ss.str();
-  };
-
-  std::vector<std::pair<PUID, PUID>> noAlias{
-      {{1, 16}, {2, 16}},  // Writes to A[i]
-      {{1, 16}, {2, 15}},  // Write to A[i] read to A[i]
-      {{1, 19}, {2, 19}},  // Writes to B[i]
-  };
-  std::vector<std::pair<PUID, PUID>> alias{
-      {{1, 19}, {2, 18}},  // Write to B[i] read from B[i+1]
-  };
-
-  llvm::errs() << program << "\n";
-
-  for (auto const &pair : noAlias) {
-    auto e1 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.first.first, pair.first.second));
-    auto e2 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.second.first, pair.second.second));
-
-    UNSCOPED_INFO("Checking no-alias between " << puidStr(pair.first) << " and " << puidStr(pair.second));
-    CHECK_FALSE(arrayIndexAnalysis.canIndexOverlap(e1, e2));
-  }
-
-  for (auto const &pair : alias) {
-    auto e1 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.first.first, pair.first.second));
-    auto e2 = llvm::cast<race::MemAccessEvent>(program.getEvent(pair.second.first, pair.second.second));
-
-    UNSCOPED_INFO("Checking for alias between " << puidStr(pair.first) << " and " << puidStr(pair.second));
-    CHECK(arrayIndexAnalysis.canIndexOverlap(e1, e2));
-  }
-}
-
-TEST_CASE("OpenMP inSameTeam Analysis") {
+TEST_CASE("OpenMP fromSameParallelRegion Analysis") {
   const char *ModuleString = R"(
 %struct.ident_t = type { i32, i32, i32, i32, i8* }
 
@@ -127,7 +77,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   }
 
   race::ProgramTrace program(module.get());
-  race::OpenMPAnalysis arrayIndexAnalysis;
+  race::OpenMPAnalysis arrayIndexAnalysis(program);
 
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 5);
@@ -135,7 +85,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   auto check_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1, const race::ThreadTrace &t2) {
     for (auto const &e1 : t1.getEvents()) {
       for (auto const &e2 : t2.getEvents()) {
-        CHECK(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
+        CHECK(arrayIndexAnalysis.fromSameParallelRegion(e1.get(), e2.get()));
       }
     }
   };
@@ -143,7 +93,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   auto check_not_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1, const race::ThreadTrace &t2) {
     for (auto const &e1 : t1.getEvents()) {
       for (auto const &e2 : t2.getEvents()) {
-        CHECK_FALSE(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
+        CHECK_FALSE(arrayIndexAnalysis.fromSameParallelRegion(e1.get(), e2.get()));
       }
     }
   };
@@ -205,27 +155,10 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
   }
 
   race::ProgramTrace program(module.get());
-  race::OpenMPAnalysis arrayIndexAnalysis;
+  race::OpenMPAnalysis arrayIndexAnalysis(program);
 
   auto const &threads = program.getThreads();
   REQUIRE(threads.size() == 3);
-
-  auto check_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1, const race::ThreadTrace &t2) {
-    for (auto const &e1 : t1.getEvents()) {
-      for (auto const &e2 : t2.getEvents()) {
-        CHECK(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
-      }
-    }
-  };
-
-  auto check_not_same_team = [&arrayIndexAnalysis](const race::ThreadTrace &t1, const race::ThreadTrace &t2) {
-    for (auto const &e1 : t1.getEvents()) {
-      for (auto const &e2 : t2.getEvents()) {
-        CHECK_FALSE(arrayIndexAnalysis.inSameTeam(e1.get(), e2.get()));
-      }
-    }
-  };
-  llvm::errs() << program << "\n";
 
   auto const &e11 = program.getEvent(1, 1);
   auto const &e14 = program.getEvent(1, 4);

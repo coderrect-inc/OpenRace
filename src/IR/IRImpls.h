@@ -147,6 +147,34 @@ class OpenMPFork : public ForkIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
+class OpenMPForkTeams : public ForkIR {
+  // TODO: put link here
+  // @param loc  source location information
+  // @param argc  total number of arguments in the ellipsis
+  // @param microtask  pointer to callback routine consisting of outlined parallel
+  // construct
+  // @param ...  pointers to shared variables that aren't global
+  constexpr static unsigned int threadHandleOffset = 0;
+  constexpr static unsigned int threadEntryOffset = 2;
+  const llvm::CallBase *inst;
+
+ public:
+  explicit OpenMPForkTeams(const llvm::CallBase *inst) : ForkIR(Type::OpenMPForkTeams), inst(inst) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override {
+    return inst->getArgOperand(threadHandleOffset)->stripPointerCasts();
+  }
+
+  [[nodiscard]] const llvm::Value *getThreadEntry() const override {
+    return inst->getArgOperand(threadEntryOffset)->stripPointerCasts();
+  }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPForkTeams; }
+};
+
 // ==================================================================
 // ================== JoinIR Implementations ========================
 // ==================================================================
@@ -183,6 +211,22 @@ class OpenMPJoin : public JoinIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoin; }
 };
 
+// This actually corresponds to a OpenMP forkTeams instruction
+// the fork call acts as both a fork and join in one call
+class OpenMPJoinTeams : public JoinIR {
+  std::shared_ptr<OpenMPForkTeams> fork;
+
+ public:
+  explicit OpenMPJoinTeams(const std::shared_ptr<OpenMPForkTeams> fork) : JoinIR(Type::OpenMPJoinTeams), fork(fork) {}
+
+  [[nodiscard]] inline const llvm::CallBase *getInst() const override { return fork->getInst(); }
+
+  [[nodiscard]] const llvm::Value *getThreadHandle() const override { return fork->getThreadHandle(); }
+
+  // Used for llvm style RTTI (isa, dyn_cast, etc.)
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPJoinTeams; }
+};
+
 // ==================================================================
 // ================== LockIR Implementations ========================
 // ==================================================================
@@ -207,7 +251,7 @@ class LockIRImpl : public LockIR {
   static inline bool classof(const IR *e) { return e->type == T; }
 };
 
-class OpenMPCriticalStart: public LockIR {
+class OpenMPCriticalStart : public LockIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L1157
   // @param loc  source location information
   // @param global_tid  global thread number
@@ -233,6 +277,9 @@ class OpenMPCriticalStart: public LockIR {
 using PthreadMutexLock = LockIRImpl<IR::Type::PthreadMutexLock>;
 using PthreadSpinLock = LockIRImpl<IR::Type::PthreadSpinLock>;
 
+// https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L2549
+using OpenMPSetLock = LockIRImpl<IR::Type::OpenMPSetLock>;
+using OpenMPOrderedStart = LockIRImpl<IR::Type::OpenMPOrderedStart>;
 // ==================================================================
 // ================= UnlockIR Implementations =======================
 // ==================================================================
@@ -283,6 +330,9 @@ class OpenMPCriticalEnd : public UnlockIR {
 using PthreadMutexUnlock = UnlockIRImpl<IR::Type::PthreadMutexUnlock>;
 using PthreadSpinUnlock = UnlockIRImpl<IR::Type::PthreadSpinUnlock>;
 
+// https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_csupport.cpp#L2752
+using OpenMPUnsetLock = UnlockIRImpl<IR::Type::OpenMPUnsetLock>;
+using OpenMPOrderedEnd = UnlockIRImpl<IR::Type::OpenMPOrderedEnd>;
 // =================================================================
 // ================= Barrier Implementations =======================
 // =================================================================
@@ -315,6 +365,10 @@ class CallIRImpl : public CallIR {
 using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
 using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
 
+using OmpDispatchInit = CallIRImpl<IR::Type::OpenMPDispatchInit>;
+using OmpDispatchNext = CallIRImpl<IR::Type::OpenMPDispatchNext>;
+using OmpDispatchFini = CallIRImpl<IR::Type::OpenMPDispatchFini>;
+
 using OpenMPSingleStart = CallIRImpl<IR::Type::OpenMPSingleStart>;
 using OpenMPSingleEnd = CallIRImpl<IR::Type::OpenMPSingleEnd>;
 
@@ -322,5 +376,7 @@ using OpenMPReduce = CallIRImpl<IR::Type::OpenMPReduce>;
 
 using OpenMPMasterStart = CallIRImpl<IR::Type::OpenMPMasterStart>;
 using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
+
+using OpenMPGetThreadNum = CallIRImpl<IR::Type::OpenMPGetThreadNum>;
 
 }  // namespace race

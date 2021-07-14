@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/18/19.
-//
-
-#ifndef PTA_MEMLAYOUT_H
-#define PTA_MEMLAYOUT_H
+#pragma once
 
 #include <llvm/ADT/BitVector.h>
 #include <llvm/ADT/SparseBitVector.h>
@@ -75,8 +70,12 @@ class MemLayout {
   inline void cacheIntoBitVector() {
     assert(!cached);
     int num = elementLayout.find_last();
-    indexableLayout.resize(num + 1);
-    logicalIndex.resize(num + 1, -1);
+    if (num < 0) {
+      return;
+    }
+    unsigned size = static_cast<unsigned int>(num) + 1;
+    indexableLayout.resize(size);
+    logicalIndex.resize(size, -1);
 
     // cache it into bitvector for faster indexing
     int i = 0;
@@ -173,5 +172,3 @@ class MemLayout {
 };
 
 }  // namespace pta
-
-#endif

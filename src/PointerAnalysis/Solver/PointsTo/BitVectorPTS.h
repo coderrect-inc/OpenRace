@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/9/19.
-//
-#ifndef PTA_BITVECTORPTS_H
-#define PTA_BITVECTORPTS_H
+#pragma once
 
 #include <llvm/ADT/SparseBitVector.h>
 
@@ -31,8 +27,6 @@ class BitVectorPTS {
   using iterator = PtsTy::iterator;
 
   static std::vector<PtsTy> ptsVec;
-
-  static uint32_t PTS_SIZE_LIMIT;
   // ptsVec[20] ==> SparseBitVector ==> "010000..."
 
   static inline void onNewNodeCreation(NodeID id) {
@@ -46,8 +40,6 @@ class BitVectorPTS {
 
   static inline void clearAll() { ptsVec.clear(); }
 
-  static inline void setPTSSizeLimit(uint32_t limit) { PTS_SIZE_LIMIT = limit; }
-
   // get the pts of the corresponding node
   [[nodiscard]] static inline const PtsTy& getPointsTo(NodeID id) {
     assert(id < ptsVec.size());
@@ -57,15 +49,15 @@ class BitVectorPTS {
   // union the pts of the nodes
   static inline bool unionWith(NodeID src, NodeID dst) {
     assert(src < ptsVec.size() && dst < ptsVec.size());
-    // JEFF: limit to 999
-    if (PTS_SIZE_LIMIT != std::numeric_limits<uint32_t>::max()) {
-      if (ptsVec[src].count() > PTS_SIZE_LIMIT) {  // count() is expensive
-        return false;
-      }
-    }
 
     bool r = ptsVec[src] |= ptsVec[dst];
-    assert(ptsVec[src].find_last() < 0 ? true : ptsVec[src].find_last() < ptsVec.size());
+    // bz: this has no problem, but compiler won't git up warnings ... so translate equivalently
+    // assert(ptsVec[src].find_last() < 0 ? true : ptsVec[src].find_last() < ptsVec.size());
+    int _last = ptsVec[src].find_last();
+    if (_last >= 0) {
+      long unsigned int last = static_cast<long unsigned int>(_last);
+      assert(last < ptsVec.size());
+    }
     return r;
   }
 
@@ -79,7 +71,7 @@ class BitVectorPTS {
     assert(src < ptsVec.size() && dst < ptsVec.size());
     auto result = ptsVec[src] & ptsVec[dst];
 
-    for (int i = 0; i < NORMAL_OBJ_START_ID; i++) {
+    for (unsigned i = 0; i < NORMAL_OBJ_START_ID; i++) {
       // remove special node
       result.reset(i);
     }
@@ -90,12 +82,6 @@ class BitVectorPTS {
   // insert a node into the pts
   static inline bool insert(NodeID src, TargetID idx) {
     assert(src < ptsVec.size() && idx < ptsVec.size());
-    // JEFF: limit to 999
-    if (PTS_SIZE_LIMIT != std::numeric_limits<uint32_t>::max()) {
-      if (ptsVec[src].count() > PTS_SIZE_LIMIT) {
-        return false;
-      }
-    }
 
     // JEFF TODO: check if they have the same type?
     return ptsVec[src].test_and_set(idx);
@@ -144,8 +130,8 @@ class BitVectorPTS {
     return ptsVec[id].count();
   }
 
-  static inline const PtsTy& getPointedBy(NodeID id) {
-    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead ");
+  static inline const PtsTy& getPointedBy(NodeID /*id*/) {
+    llvm_unreachable("not supported by BitVectorPTS, use PointedByPts instead");
   }
 
   // TODO: simply traverse the whole points-to information to gather the
@@ -158,5 +144,3 @@ class BitVectorPTS {
 }  // namespace pta
 
 DEFINE_PTS_TRAIT(pta::BitVectorPTS)
-
-#endif

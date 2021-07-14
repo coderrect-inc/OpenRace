@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 12/19/19.
-//
-
-#ifndef PTA_FSOBJECT_H
-#define PTA_FSOBJECT_H
+#pragma once
 
 #include <llvm/IR/GlobalValue.h>
 #include <llvm/Support/Casting.h>
@@ -56,10 +51,12 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
   using ObjNode = CGObjNode<ctx, FSObject<ctx>>;
 
   explicit FSObject(MemBlock<ctx> *memBlock, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
-      : Super(), memBlock(memBlock), pOffset(0), kind(kind), allowIndex(allowIndex){};
+      : Super(), memBlock(memBlock), pOffset(0), allowIndex(allowIndex), kind(kind){};
 
   FSObject(MemBlock<ctx> *memBlock, size_t pOffset, ObjectKind kind = ObjectKind::Normal, bool allowIndex = true)
-      : Super(), memBlock(memBlock), pOffset(pOffset), kind(kind), allowIndex(allowIndex){};
+      : Super(), memBlock(memBlock), pOffset(pOffset), allowIndex(allowIndex), kind(kind){};
+
+  virtual ~FSObject() {}
 
   template <typename PT>
   void initWithNode(ConstraintGraph<ctx> *CG) {
@@ -92,7 +89,7 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
     return nullptr;
   }
 
-  virtual bool processSpecial(CGNodeBase<ctx> *src, CGNodeBase<ctx> *dst) const { return false; }
+  virtual bool processSpecial(CGNodeBase<ctx> * /* src */, CGNodeBase<ctx> * /* dst */) const { return false; }
 
   [[nodiscard]] inline const AllocSite<ctx> &getAllocSite() const { return this->memBlock->getAllocSite(); }
 
@@ -167,5 +164,3 @@ class FSObject : public Object<ctx, FSObject<ctx>> {
 };
 
 }  // namespace pta
-
-#endif

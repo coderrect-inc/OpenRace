@@ -23,28 +23,73 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
     return id;
   };
 
+  if (DEBUG_PTA) {
+    llvm::outs() << "** SharedMemory **"
+                 << "\n";
+  }
   for (auto const &thread : program.getThreads()) {
     auto const tid = thread->id;
+    if (DEBUG_PTA) {
+      llvm::outs() << "------- tid: " << tid << "\n";
+    }
 
     for (auto const &event : thread->getEvents()) {
       switch (event->type) {
         case Event::Type::Read: {
           auto readEvent = llvm::cast<ReadEvent>(event.get());
           auto const ptsTo = readEvent->getAccessedMemory();
+          if (DEBUG_PTA) {
+            if (ptsTo.empty()) {
+              llvm::outs() << "Read: ID " << readEvent->getID();
+              readEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", empty pts, "
+                           << "\n";
+              break;
+            } else {
+              llvm::outs() << "Read: ID " << readEvent->getID();
+              readEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", pts: ";
+            }
+          }
           // TODO: filter?
           for (auto obj : ptsTo) {
             auto &reads = objReads[getObjId(obj)][tid];
             reads.push_back(readEvent);
+            if (DEBUG_PTA) {
+              llvm::outs() << obj->getValue() << " " << obj->getObjectID() << " " << getObjId(obj) << ", ";
+            }
+          }
+          if (DEBUG_PTA) {
+            llvm::outs() << "\n";
           }
           break;
         }
         case Event::Type::Write: {
           auto writeEvent = llvm::cast<WriteEvent>(event.get());
           auto const ptsTo = writeEvent->getAccessedMemory();
+          if (DEBUG_PTA) {
+            if (ptsTo.empty()) {
+              llvm::outs() << "Write: ID " << writeEvent->getID();
+              writeEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", empty pts, "
+                           << "\n";
+              break;
+            } else {
+              llvm::outs() << "Write: ID " << writeEvent->getID();
+              writeEvent->getIRInst()->getInst()->print(llvm::outs());
+              llvm::outs() << ", pts: ";
+            }
+          }
           // TODO: filter?
           for (auto obj : ptsTo) {
             auto &writes = objWrites[getObjId(obj)][tid];
             writes.push_back(writeEvent);
+            if (DEBUG_PTA) {
+              llvm::outs() << obj->getValue() << " " << obj->getObjectID() << " " << getObjId(obj) << ", ";
+            }
+          }
+          if (DEBUG_PTA) {
+            llvm::outs() << "\n";
           }
           break;
         }
@@ -65,7 +110,7 @@ std::vector<const pta::ObjTy *> SharedMemory::getSharedObjects() const {
     if (nWriters > 1 || (nWriters == 1 && nReaders > 1)) {
       sharedObjects.push_back(obj);
     }
-    // When 1 writer adn 1 reader, obj is shared if they are not the same thread
+    // When 1 writer and 1 reader, obj is shared if they are not the same thread
     else if (nWriters == 1 && nReaders == 1 &&
              objWrites.at(objID).begin()->first != objReads.at(objID).begin()->first) {
       sharedObjects.push_back(obj);

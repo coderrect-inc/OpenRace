@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/19/19.
-//
-#ifndef PTA_KCALLSITE_H
-#define PTA_KCALLSITE_H
+#pragma once
 
 #include <llvm/ADT/Hashing.h>
 #include <llvm/Support/raw_ostream.h>
@@ -83,11 +79,12 @@ class KCallSite {
   bool empty() const { return getLast() == nullptr; };
 
   bool operator==(const self &rhs) const {
+    // bz: seems like it is comparing this and rhs, but where is the use of rhs?? fix this by assigning xx2 to rhs's
     auto it1 = this->begin();
-    auto it2 = this->begin();
+    auto it2 = rhs.begin();
 
     auto ie1 = this->end();
-    auto ie2 = this->end();
+    auto ie2 = rhs.end();
 
     for (; it1 != ie1; it1++, it2++) {
       if (*it1 != *it2) {
@@ -148,5 +145,3 @@ struct hash<pta::KCallSite<K>> {
 };
 
 }  // namespace std
-
-#endif

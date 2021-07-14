@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-#ifndef PTA_DEFAULTLANGMODEL_H
-#define PTA_DEFAULTLANGMODEL_H
+#pragma once
 
 #include "DefaultExtFunctions.h"
 #include "Logging/Log.h"
@@ -53,7 +49,7 @@ class DefaultLangModel : public LangModelBase<ctx, MemModel, PtsTy, DefaultLangM
     return heapModel.isHeapAllocFun(F);
   }
 
-  bool isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction *callSite = nullptr) {
+  bool isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callSite = nullptr */) {
     return heapModel.isHeapAllocFun(F);
   }
 
@@ -93,8 +89,8 @@ class DefaultLangModel : public LangModelBase<ctx, MemModel, PtsTy, DefaultLangM
   }
 
   // determine whether the function need to be modelled
-  inline InterceptResult interceptFunction(const ctx *callerCtx, const ctx *calleeCtx, const llvm::Function *F,
-                                           const llvm::Instruction *callsite) {
+  inline InterceptResult interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
+                                           const llvm::Function *F, const llvm::Instruction *callsite) {
     const llvm::Function *fun = F;
     if (F->isIntrinsic()) {
       return {nullptr, InterceptResult::Option::IGNORE_FUN};
@@ -121,7 +117,7 @@ class DefaultLangModel : public LangModelBase<ctx, MemModel, PtsTy, DefaultLangM
 
   // modelling a callsite
   inline bool interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
-                                const llvm::Function *originalTarget, const llvm::Instruction *callsite) {
+                                const llvm::Function * /* originalTarget */, const llvm::Instruction *callsite) {
     // the rule of context evolution should be obeyed.
     pta::CallSite CS(callsite);
     assert(CS.isCallOrInvoke());
@@ -160,5 +156,3 @@ class LangModelTrait<DefaultLangModel<ctx, MemModel, PtsTy>>
     : public LangModelTrait<LangModelBase<ctx, MemModel, PtsTy, DefaultLangModel<ctx, MemModel, PtsTy>>> {};
 
 }  // namespace pta
-
-#endif

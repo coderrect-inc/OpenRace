@@ -1,0 +1,69 @@
+name: check-pr
+
+on:
+  pull_request:
+    branches: 
+      - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/check-pr.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/check-pr.yml'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    container: coderrect/openrace-env
+
+    steps:  
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
+          cmake --build . --parallel
+      
+      - name: Test
+        run: |
+          cd build
+          ctest --parallel $(nproc)
+  
+  build-clang:
+    runs-on: ubuntu-latest
+    container: coderrect/openrace-env
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
+          cmake --build . --parallel
+  
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run clang-format style check for C/C++ programs.
+      uses: jidicula/clang-format-action@v3.4.0
+      with:
+        clang-format-version: '11'
+        check-path: 'src'
+  
+  check-license-header:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Check License header
+      uses: kt3k/license_checker@v1.0.6

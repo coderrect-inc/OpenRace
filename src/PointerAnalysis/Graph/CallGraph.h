@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
-#ifndef PTA_CALLGRAPH_H
-#define PTA_CALLGRAPH_H
+#pragma once
 
 #include <llvm/ADT/GraphTraits.h>
 #include <llvm/Support/DOTGraphTraits.h>
@@ -69,10 +65,10 @@ class CallGraphNode : public NodeBase<CallEdge, CallGraphNode<ctx>> {
 
   // use with care!!!!
   CallGraphNode(const ctx *C, const llvm::Function *F, const llvm::Instruction *I, NodeID id)
-      : super(id), target(C, F, I, this), kind(CallKind::Direct) {}
+      : super(id), kind(CallKind::Direct), target(C, F, I, this) {}
 
   CallGraphNode(const ctx *C, const llvm::Instruction *I, const llvm::Value *V, NodeID id)
-      : super(id), target(C, I, V, this), kind(CallKind::Indirect) {
+      : super(id), kind(CallKind::Indirect), target(C, I, V, this) {
     // V is not neccessarily be the called value of I, as it can be intercepted!
   }
 
@@ -160,7 +156,7 @@ struct DOTGraphTraits<const pta::CallGraph<ctx>> : public DefaultDOTGraphTraits 
   static std::string getGraphName(const pta::CallGraph<ctx> &) { return "CallGraph"; }
 
   /// Return function name;
-  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node, const pta::CallGraph<ctx> &graph) {
+  static std::string getNodeLabel(const pta::CallGraphNode<ctx> *node, const pta::CallGraph<ctx> & /* graph */) {
     std::string str;
     raw_string_ostream os(str);
     os << pta::CtxTrait<ctx>::toString(node->getContext()) << "\n";
@@ -181,5 +177,3 @@ struct DOTGraphTraits<const pta::CallGraph<ctx>> : public DefaultDOTGraphTraits 
 };
 
 }  // namespace llvm
-
-#endif

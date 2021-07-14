@@ -9,13 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 5/19/21.
-//
-
 #include "Util.h"
-
-#include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/ArrayLayout.h"
 
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/GetElementPtrTypeIterator.h>
@@ -23,6 +17,8 @@ limitations under the License.
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/Support/CommandLine.h>
+
+#include "PointerAnalysis/Models/MemoryModel/FieldSensitive/Layout/ArrayLayout.h"
 
 using namespace llvm;
 

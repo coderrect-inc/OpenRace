@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-#ifndef PTA_ALLOCSITE_H
-#define PTA_ALLOCSITE_H
+#pragma once
 
 #include <llvm/IR/GlobalValue.h>
 #include <llvm/IR/Operator.h>
@@ -88,5 +84,3 @@ class AllocSite {
 };
 
 }  // namespace pta
-
-#endif

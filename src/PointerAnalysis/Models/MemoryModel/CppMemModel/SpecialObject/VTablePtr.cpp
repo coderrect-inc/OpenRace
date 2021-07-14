@@ -9,10 +9,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/27/20.
-//
-
 #include "PointerAnalysis/Models/MemoryModel/CppMemModel/SpecialObject/VTablePtr.h"
 
 #include "llvm/IR/Type.h"

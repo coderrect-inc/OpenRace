@@ -9,12 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/19/19.
-//
-
-#ifndef PTA_PTRRINGBUFFER_H
-#define PTA_PTRRINGBUFFER_H
+#pragma once
 
 namespace pta {
 
@@ -101,5 +96,3 @@ class PtrRingBuffer {
 };
 
 }  // namespace pta
-
-#endif

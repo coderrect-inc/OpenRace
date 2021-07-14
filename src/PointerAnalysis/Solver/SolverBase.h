@@ -11,8 +11,7 @@ limitations under the License.
 
 // the basic framework for andersen-based algorithm, including common routines
 // override neccessary ones, and the call will be STATICALLY redirected to it
-#ifndef PTA_SOLVERBASE_H
-#define PTA_SOLVERBASE_H
+#pragma once
 
 #define DEBUG_TYPE "pta"
 
@@ -180,6 +179,7 @@ class SolverBase {
 
     struct OnNewConstraints : public ConsGraphTy::OnNewConstraintCallBack {
       CallBack &CB;
+      virtual ~OnNewConstraints() {}
       explicit OnNewConstraints(CallBack &CB) : CB(CB) {}
 
       void onNewConstraint(CGNodeTy *src, CGNodeTy *dst, Constraints constraint) override {
@@ -209,7 +209,7 @@ class SolverBase {
 
     bool changed = false;
     for (auto it = PT::begin(dst->getNodeID()), ie = PT::end(dst->getNodeID()); it != ie; it++) {
-      auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
+      // auto tmp = llvm::dyn_cast<ObjNodeTy>(consGraph->getCGNode(*it));
       auto node = consGraph->getObjectNode(*it);
       node = node->getSuperNode();
 
@@ -489,5 +489,3 @@ bool SolverBase<LangModel, SubClass>::processCopy(CGNodeTy *src, CGNodeTy *dst) 
 }  // namespace pta
 
 #undef DEBUG_TYPE
-
-#endif

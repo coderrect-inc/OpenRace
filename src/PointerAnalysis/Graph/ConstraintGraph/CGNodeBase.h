@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 11/1/19.
-//
-#ifndef PTA_CGNODEBASE_H
-#define PTA_CGNODEBASE_H
+#pragma once
 #include <llvm/ADT/SparseBitVector.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/DebugInfoMetadata.h>
@@ -109,7 +105,7 @@ class CGNodeBase {
   IndirectNodeSet indirectNodes;
 
   inline CGNodeBase(NodeID id, CGNodeKind type)
-      : id(id), type(type), superNode(nullptr), childNodes{}, indirectNodes{}, isImmutable(false) {}
+      : type(type), id(id), superNode(nullptr), childNodes{}, isImmutable(false), indirectNodes{} {}
 
  private:
   inline bool insertConstraint(Self *node, Constraints edgeKind) {
@@ -386,5 +382,3 @@ class CGNodeBase {
 };
 
 }  // namespace pta
-
-#endif

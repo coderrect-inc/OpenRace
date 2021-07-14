@@ -9,14 +9,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 9/3/19.
-//
 // Modified from llvm::InstVisitor
 // instead of just visiting an instruction, it visit the instruction with
 // context
-#ifndef PTA_CTXINSTVISITOR_H
-#define PTA_CTXINSTVISITOR_H
+#pragma once
 
 #include "PointerAnalysis/Program/CtxFunction.h"
 //#include "llvm/IR/CallSite.h"
@@ -139,7 +135,7 @@ class CtxInstVisitor {
   // get called to indicate when transitioning into a new unit.
   //
   void visitFunction(Function &F) {}
-  void visitBasicBlock(BasicBlock &BB) {}
+  void visitBasicBlock(BasicBlock & /* BB */) {}
 
   // Define instruction specific visitor functions that can be overridden to
   // handle SPECIFIC instructions.  These functions automatically define
@@ -299,7 +295,7 @@ class CtxInstVisitor {
   // Note that you MUST override this function if your return type is not
   // void.
   //
-  void visitInstruction(Instruction &I, const ctx *context) {
+  void visitInstruction(Instruction & /* I */, const ctx * /* context */) {
     // llvm::errs() << "unhandled instruction:" << I.getOpcodeName() <<
     // "\n";
   }  // Ignore unhandled instructions
@@ -339,7 +335,7 @@ class CtxInstVisitor {
 
   // An overload that will never actually be called, it is used only from dead
   // code in the dispatching from opcodes to instruction subclasses.
-  RetTy delegateCallInst(Instruction &I, const ctx *context) {
+  RetTy delegateCallInst(Instruction & /* I */, const ctx * /* context */) {
     llvm_unreachable("delegateCallInst called for non-CallInst");
   }
 };
@@ -347,5 +343,3 @@ class CtxInstVisitor {
 #undef DELEGATE
 
 }  // namespace llvm
-
-#endif

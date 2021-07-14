@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
-#ifndef PTA_UTIL_H
-#define PTA_UTIL_H
+#pragma once
 
 #include <llvm/ADT/iterator.h>
 //#include <llvm/IR/CallSite.h>
@@ -144,5 +140,3 @@ const llvm::Type *getTypeAtOffset(const llvm::Type *type, size_t offset, const l
 bool isZeroOffsetTypeInRootType(const llvm::Type *rootType, const llvm::Type *elemType, const llvm::DataLayout &);
 
 }  // namespace pta
-
-#endif

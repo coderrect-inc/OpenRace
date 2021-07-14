@@ -9,15 +9,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/30/19.
-//
-#ifndef PTA_CTXFUNCTION_H
-#define PTA_CTXFUNCTION_H
+#pragma once
 
 #include <llvm/Support/CommandLine.h>
 
 #include "PointerAnalysis/Program/CallSite.h"
+
+extern cl::opt<unsigned> Max_Indirect_Target;  // the limit of the size of indirect targets -> default value 999
 
 namespace pta {
 
@@ -42,7 +40,7 @@ class CtxFunction {
 
  public:
   CtxFunction(const ctx *C, const llvm::Function *F, const llvm::Instruction *I, CallGraphNode<ctx> *N)
-      : context(C), function(F), callSite(I), callNode(N) {}
+      : context(C), function(F), callNode(N), callSite(I) {}
   CtxFunction(const CtxFunction<ctx> &&cf) noexcept
       : context(cf.context), function(cf.function), callNode(cf.callNode) {}
 
@@ -124,8 +122,8 @@ class InDirectCallSite {
 
   [[nodiscard]] inline const llvm::Instruction *getCallSite() const { return this->callSite.getInstruction(); }
 
-  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit, size_t maxIndirectTarget = 999) {
-    if (applyLimit && this->targets.size() >= maxIndirectTarget) {
+  [[nodiscard]] inline bool resolvedTo(const llvm::Function *fun, bool applyLimit) {
+    if (applyLimit && this->targets.size() >= Max_Indirect_Target) {
       return false;
     }
     return this->targets.insert(fun).second;
@@ -146,5 +144,3 @@ class InDirectCallSite {
 };
 
 }  // namespace pta
-
-#endif

@@ -9,16 +9,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
 #include "PointerAnalysis/Util/Util.h"
 
+#include <Logging/Log.h>
+#include <PointerAnalysis/Models/LanguageModel/ConsGraphBuilder.h>
 #include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/InitLLVM.h>
 #include <llvm/Transforms/Utils/Local.h>
 
 using namespace llvm;

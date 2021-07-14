@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 8/14/19.
-//
-#ifndef PTA_GRAPHBASE_H
-#define PTA_GRAPHBASE_H
+#pragma once
 
 #include <llvm/ADT/GraphTraits.h>
 
@@ -103,7 +99,7 @@ class NodeBase {
   using edge_iterator = typename EdgeSet::iterator;
   using const_edge_iterator = typename EdgeSet::const_iterator;
 
-  inline explicit NodeBase(NodeID id) : id(id), graph(nullptr) {}
+  inline explicit NodeBase(NodeID id) : graph(nullptr), id(id) {}
 
   friend class GraphBase<NodeTy, EdgeKind>;
   friend bool operator<(Edge &e1, Edge &e2) {
@@ -347,5 +343,3 @@ struct GraphTraits<Inverse<pta::GraphBase<NodeType, EdgeType>>> {
 };
 
 }  // namespace llvm
-
-#endif

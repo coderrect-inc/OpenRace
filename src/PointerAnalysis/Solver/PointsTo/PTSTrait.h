@@ -9,11 +9,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//
-// Created by peiming on 10/22/19.
-//
-#ifndef PTA_PTSTRAIT_H
-#define PTA_PTSTRAIT_H
+#pragma once
 
 #include "PointerAnalysis/Graph/NodeID.def"
 
@@ -72,7 +68,6 @@ struct PTSTrait {
     using iterator = typename IMPL::iterator;                                                          \
                                                                                                        \
     static inline void clearAll() { return IMPL::clearAll(); }                                         \
-    static inline void setPTSSizeLimit(uint32_t limit) { IMPL::setPTSSizeLimit(limit); }               \
     static inline void onNewNodeCreation(NodeID id) { return IMPL::onNewNodeCreation(id); }            \
                                                                                                        \
     static inline const PtsTy& getPointsTo(NodeID id) { return IMPL::getPointsTo(id); }                \
@@ -114,5 +109,3 @@ struct PTSTrait {
             "instead ");                                                                               \
     }                                                                                                  \
   };
-
-#endif
