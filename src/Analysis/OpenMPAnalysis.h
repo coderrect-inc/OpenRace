@@ -35,6 +35,15 @@ struct Block {
   Block(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
+
+  bool operator==(const Block& block) const {
+    auto const blockStartInst = block.thread.getEvent(block.start)->getInst();
+    auto const blockEndInst = block.thread.getEvent(block.end)->getInst();
+    auto const thisStartInst = thread.getEvent(start)->getInst();
+    auto const thisEndInst = thread.getEvent(end)->getInst();
+    return (start == block.start) && (end == block.end) && thisStartInst == blockStartInst &&
+           thisEndInst == blockEndInst;
+  }
 };
 
 class ReduceAnalysis {

@@ -515,7 +515,7 @@ auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::O
 // Get ONE block which contains the event, should be one and only one block if exist
 // template definition can be in cpp as long as we dont expose the template outside of this file
 template <IR::Type Start, IR::Type End>
-const Block *getBlockFor(const Event *target) {
+std::optional<Block> getBlockFor(const Event *target) {
   const ThreadTrace &thread = target->getThread();
   auto const regions = getRegions<Start, End>(thread);
   if (regions.empty()) {
@@ -523,26 +523,17 @@ const Block *getBlockFor(const Event *target) {
     if (parent->getIRInst()->type == IR::Type::OpenMPTask) {  // check parent spawn site
       return getBlockFor<Start, End>(parent);
     } else {
-      return nullptr;  // no such block
+      return std::nullopt;  // no such block
     }
   }
 
   for (auto const &region : regions) {
     if (region.contains(target->getID())) {
-      return new Block(region.start, region.end, thread);
+      return Block(region.start, region.end, thread);
     }
   }
-  return nullptr;  // no such block
+  return std::nullopt;  // no such block
 }
-
-// check whether two regions are from the same code block
-bool blocksMatch(const Block *b1, const Block *b2) {
-  const ThreadTrace &thread1 = b1->thread;
-  const ThreadTrace &thread2 = b2->thread;
-  return (b1->end - b1->start) == (b2->end - b2->start)  // same size of ir stmts in the omp block
-         && thread1.getEvent(b1->start)->getInst() == thread2.getEvent(b2->start)->getInst() &&  // same start/end ir
-         thread1.getEvent(b1->end)->getInst() == thread2.getEvent(b2->end)->getInst();
-};
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
@@ -560,7 +551,7 @@ bool inSame(const Event *event1, const Event *event2) {
   }
 
   // Omp threads in same team may or may not have identical traces so we see them separately
-  if (blocksMatch(block1, block2)) {
+  if (block1.value() == block2.value()) {
     return true;
   }
 
