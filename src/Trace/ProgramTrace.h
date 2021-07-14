@@ -81,6 +81,8 @@ struct TraceBuildState {
   // omp tasks without joins, e.g., single nowait, master, no barrier
   std::queue<std::shared_ptr<race::OpenMPTask>> taskWOJoins;
   std::queue<const ForkEvent *> taskForkEvents;
+
+  std::vector<std::shared_ptr<const OpenMPTask>> unjoinedTaskForks;
 };
 
 class ProgramTrace {

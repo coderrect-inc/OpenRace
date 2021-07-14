@@ -43,6 +43,13 @@ void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, TraceBui
     std::shared_ptr<const JoinIR> join(ir, joinIR);
     events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), fork));
   }
+
+  for (auto const &task : state.unjoinedTaskForks) {
+    auto taskJoin = std::make_shared<OpenMPTaskJoin>(task);
+    std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
+    events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), nullptr));
+  }
+  state.unjoinedTaskForks.clear();
 }
 
 // handle omp single/master events
@@ -159,6 +166,9 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         state.taskWOJoins.push(tasks.front());
         tasks.pop();
         state.taskForkEvents.push(forkEvent);
+
+        std::shared_ptr<const OpenMPTask> task(fork, llvm::cast<OpenMPTask>(fork.get()));
+        state.unjoinedTaskForks.push_back(task);
       }
 
       auto entries = forkEvent->getThreadEntry();
