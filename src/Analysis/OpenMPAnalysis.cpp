@@ -523,7 +523,11 @@ std::optional<Region> getContainingRegion(const Event *event) {
   // If we are on thread spawned wihtin parallel region,
   // we can also check to see if this thread was spawned within a region on the parent thread
   if (regions.empty()) {
-    return getContainingRegion<Start, End>(thread.spawnSite.value());
+    auto parent = thread.spawnSite.value();
+    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {
+      return getContainingRegion<Start, End>(parent);
+    }
+    return std::nullopt;
   }
 
   for (auto const &region : regions) {
@@ -543,15 +547,15 @@ bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
   // get omp block contains the event
-  auto const block1 = getContainingRegion<Start, End>(event1);
-  auto const block2 = getContainingRegion<Start, End>(event2);
+  auto const region1 = getContainingRegion<Start, End>(event1);
+  auto const region2 = getContainingRegion<Start, End>(event2);
 
-  if (!block1 || !block2) {  // should have block
+  if (!region1 || !region2) {  // should have block
     return false;
   }
 
   // Omp threads in same team may or may not have identical traces so we see them separately
-  if (block1.value() == block2.value()) {
+  if (region1.value().sameAs(region2.value())) {
     return true;
   }
 

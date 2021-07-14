@@ -24,20 +24,20 @@ struct Region {
   const ThreadTrace& thread;
 
   Region(EventID start, EventID end, const ThreadTrace& thread) : start(start), end(end), thread(thread){};
-  Region(const Region&) = default;
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 
-  friend bool operator==(const Region& lhs, const Region& rhs) {
-    auto const rhsStartInst = rhs.thread.getEvent(rhs.start)->getInst();
-    auto const rhsEndInst = rhs.thread.getEvent(rhs.end)->getInst();
-    auto const lhsStartInst = lhs.thread.getEvent(lhs.start)->getInst();
-    auto const lhsEndInst = lhs.thread.getEvent(lhs.end)->getInst();
-    return (lhs.start == rhs.start) && (lhs.end == rhs.end) && lhsStartInst == rhsStartInst && lhsEndInst == rhsEndInst;
-  }
-};
+  // Return true of the other region is the same region in the IR
+  bool sameAs(const Region& other) const {
+    // Quickly check if the size of both regions match
+    if ((end - start) != (other.end - other.start)) return false;
 
-bool operator==(const Region& lhs, const Region& rhs);
+    auto const getInst = [](EventID eid, const ThreadTrace& thread) { return thread.getEvent(eid)->getInst(); };
+
+    return getInst(start, thread) == getInst(other.start, other.thread) &&
+           getInst(end, thread) == getInst(other.end, other.thread);
+  }
+};  // namespace race
 
 class ReduceAnalysis {
   using ReduceInst = const llvm::Instruction*;
