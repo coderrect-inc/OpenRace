@@ -78,11 +78,18 @@ struct TraceBuildState {
   const llvm::CallBase *exlSingleStart = nullptr;
   const llvm::CallBase *exlSingleEnd = nullptr;  // to match skip until
 
-  // omp tasks without joins, e.g., single nowait, master, no barrier
-  std::queue<std::shared_ptr<race::OpenMPTask>> taskWOJoins;
-  std::queue<const ForkEvent *> taskForkEvents;
+  // NOTE: this ugliness is only needed because there is no way to get the shared_ptr
+  // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
+  struct UnjoinedTask {
+    const ForkEvent *forkEvent;
+    std::shared_ptr<const OpenMPTask> forkIR;
 
-  std::vector<std::shared_ptr<const OpenMPTask>> unjoinedTaskForks;
+    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
+        : forkEvent(forkEvent), forkIR(forkIR) {}
+  };
+
+  // List of unjoined OpenMP task threads
+  std::vector<UnjoinedTask> unjoinedTasks;
 };
 
 class ProgramTrace {

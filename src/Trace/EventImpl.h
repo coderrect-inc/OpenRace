@@ -97,7 +97,12 @@ class JoinEventImpl : public JoinEvent {
  public:
   const std::shared_ptr<const JoinIR> join;
   const EventID id;
-  const ForkEvent *forkEvent;  // the event id of its corresponding fork; is nullptr if not OpenMPTaskJoin
+
+  // the corresponding fork event if it is known
+  std::optional<const ForkEvent *> forkEvent;
+
+  JoinEventImpl(std::shared_ptr<const JoinIR> join, std::shared_ptr<EventInfo> info, EventID id)
+      : info(std::move(info)), join(std::move(join)), id(id), forkEvent(std::nullopt) {}
 
   JoinEventImpl(std::shared_ptr<const JoinIR> join, std::shared_ptr<EventInfo> info, EventID id,
                 const ForkEvent *forkEvent)
@@ -108,7 +113,7 @@ class JoinEventImpl : public JoinEvent {
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::JoinIR *getIRInst() const override { return join.get(); }
 
-  [[nodiscard]] const ForkEvent *getForkEvent() const override { return forkEvent; }
+  [[nodiscard]] std::optional<const ForkEvent *> getForkEvent() const override { return forkEvent; }
   [[nodiscard]] std::vector<const pta::ObjTy *> getThreadHandle() const override {
     // TODO
     return std::vector<const pta::ObjTy *>();

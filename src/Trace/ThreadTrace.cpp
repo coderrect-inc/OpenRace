@@ -27,29 +27,12 @@ namespace {
 // 3. the end of the parallel region is encountered.
 void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, TraceBuildState &state,
                      std::shared_ptr<struct EventInfo> &einfo) {
-  auto tasks = state.taskWOJoins;
-  auto taskForks = state.taskForkEvents;
-  assert(tasks.size() == taskForks.size());
-
-  while (!tasks.empty()) {
-    auto t = tasks.front();
-    tasks.pop();
-    auto fork = taskForks.front();
-    taskForks.pop();
-
-    // push a task join
-    auto ir = std::make_shared<OpenMPTaskJoin>(t);
-    auto joinIR = llvm::dyn_cast<JoinIR>(ir.get());
-    std::shared_ptr<const JoinIR> join(ir, joinIR);
-    events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), fork));
-  }
-
-  for (auto const &task : state.unjoinedTaskForks) {
-    auto taskJoin = std::make_shared<OpenMPTaskJoin>(task);
+  for (auto const &task : state.unjoinedTasks) {
+    auto taskJoin = std::make_shared<OpenMPTaskJoin>(task.forkIR);
     std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
-    events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), nullptr));
+    events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), task.forkEvent));
   }
-  state.unjoinedTaskForks.clear();
+  state.unjoinedTasks.clear();
 }
 
 // handle omp single/master events
@@ -69,7 +52,7 @@ bool handleOMPEvents(const CallIR *callIR, std::vector<std::unique_ptr<const Eve
   } else if (callIR->type == IR::Type::OpenMPSingleEnd) {
     // the implicit barrier is represented as __kmpc_barrier in the successor basicblock,
     // if omp nowait, __kmpc_barrier will be absent. we will add join at omp barrier
-    if (!state.taskWOJoins.empty()) {  // single(+task)
+    if (!state.unjoinedTasks.empty()) {  // single(+task)
       // we want them exclusive
       state.insert(state.exlSingleStart, inst);
     } else {  // single(+stmt)
@@ -137,8 +120,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 
   auto summary = state.builder.getFunctionSummary(func);
   auto const &irFunc = summary->instructions;
-  auto tasks =
-      std::queue<std::shared_ptr<OpenMPTask>>(summary->tasks);  // will push/pop tasks, do not mess up the summary
+
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
@@ -161,14 +143,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto event = events.back().get();
       auto forkEvent = static_cast<const ForkEvent *>(event);
 
-      // maintain the current traversed tasks in taskWOJoins
+      // maintain the current traversed tasks in state.unjoinedTasks
       if (forkIR->type == IR::Type::OpenMPTask) {
-        state.taskWOJoins.push(tasks.front());
-        tasks.pop();
-        state.taskForkEvents.push(forkEvent);
-
         std::shared_ptr<const OpenMPTask> task(fork, llvm::cast<OpenMPTask>(fork.get()));
-        state.unjoinedTaskForks.push_back(task);
+        state.unjoinedTasks.emplace_back(forkEvent, task);
       }
 
       auto entries = forkEvent->getThreadEntry();
@@ -190,7 +168,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
       std::shared_ptr<const JoinIR> join(ir, joinIR);
-      events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), nullptr));
+      events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size()));
     } else if (auto lockIR = llvm::dyn_cast<LockIR>(ir.get())) {
       std::shared_ptr<const LockIR> lock(ir, lockIR);
       events.push_back(std::make_unique<const LockEventImpl>(lock, einfo, events.size()));

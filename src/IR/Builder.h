@@ -23,7 +23,6 @@ namespace race {
 
 struct FunctionSummary {
   std::vector<std::shared_ptr<const IR>> instructions;
-  std::queue<std::shared_ptr<OpenMPTask>> tasks;  // indicate whether there are omp tasks, for omp use only
 };
 
 // cache FunctionSummary here
