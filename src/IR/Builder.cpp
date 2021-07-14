@@ -136,7 +136,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         } else if (PthreadModel::isPthreadSpinLock(funcName)) {
           instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
         } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
+          instructions.push_back(std::make_shared<PthreadSpinUnlock>(callInst));
         } else if (OpenMPModel::isForStaticInit(funcName)) {
           instructions.push_back(std::make_shared<OmpForInit>(callInst));
         } else if (OpenMPModel::isForStaticFini(funcName)) {
@@ -157,9 +157,7 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
           instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
-        } else if (OpenMPModel::isReduceStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
-        } else if (OpenMPModel::isReduceNowaitStart(funcName)) {
+        } else if (OpenMPModel::isReduceStart(funcName) || OpenMPModel::isReduceNowaitStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isCriticalStart(funcName)) {
           instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));

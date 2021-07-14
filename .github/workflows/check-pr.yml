@@ -7,12 +7,16 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/check-pr.yml'
   push:
     branches:
       - develop
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/check-pr.yml'
 
 jobs:
   build-test:

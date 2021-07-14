@@ -17,7 +17,8 @@ TEST_CASE("pthreadrace", "[integration][pthread]") {
   // NOTE: add new test input/output pair here.
   // If the test case has no race, set the ouput as empty string.
   std::vector<Oracle> oracles = {
-      Oracle("pthread-account-no.ll", {}), Oracle("pthread-spinlock-no.ll", {}), Oracle("pthread-spinlock-yes.ll", {}),
+      Oracle("pthread-account-no.ll", {}),
+      // Oracle("pthread-spinlock-no.ll", {}), Oracle("pthread-spinlock-yes.ll", {}), // spinlock unimplemented
       // Oracle("pthread-array-no.ll", {}), // We cannot handle array index outside of OpenMP
       Oracle("pthread-simple-yes.ll", {"pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9",
                                        "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9"})};
