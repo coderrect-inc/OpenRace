@@ -20,7 +20,7 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
   // This handles cases where given to accesses with pts to sets like
   // write: { O1, O2 }
   // other: { O1, O3 }
-  // where O1 is the onlt thread local object
+  // where O1 is the only thread local object
 
   // We should not report a race because the only possible
   // shared object is thread local.
@@ -28,6 +28,7 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
   auto writePtsTo = write->getAccessedMemory();
   auto otherPtsTo = other->getAccessedMemory();
 
+  // Must be sorted to do set_intersection
   std::sort(writePtsTo.begin(), writePtsTo.end());
   std::sort(otherPtsTo.begin(), otherPtsTo.end());
 
@@ -39,7 +40,6 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
     auto const val = obj->getValue();
 
     auto const global = llvm::dyn_cast_or_null<llvm::GlobalVariable>(val);
-    llvm::outs() << *val << " " << (global && global->isThreadLocal()) << "\n";
     return global && global->isThreadLocal();
   });
 }
