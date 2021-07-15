@@ -451,11 +451,14 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 namespace {
 
 // recursively find the root spawnsite (from #pragma omp parallel) for this event
-// this works when the event is from omp task fork
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
-  while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
+  IR::Type typ = eSpawn.value()->getIRInst()->type;
+  if (typ == IR::Type::OpenMPForkTeams) {
+    return eSpawn;
+  }
+  while (typ != IR::Type::OpenMPFork) {  // this works when the event is from omp task fork
     auto parentSpawn = eSpawn.value()->getThread().spawnSite;
     if (!parentSpawn) return std::nullopt;
     eSpawn = parentSpawn;
