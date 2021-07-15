@@ -212,7 +212,7 @@ TEST_LL("DRB093", "DRB093-doall2-collapse-orig-no.ll", NORACE)
 // 96 collapse + taskloop + multi-dimen
 // TEST_LL("DRB096", /*TODO*/, EXPECTED(/*TODO*/))
 
-TEST_LL("DRB097", "DRB097-target-teams-distribute-orig-no.ll", NORACE)
+// TEST_LL("DRB097", "DRB097-target-teams-distribute-orig-no.ll", NORACE)
 
 // 98 simd + collpase
 // TEST_LL("DRB098", /*TODO*/, EXPECTED(/*TODO*/))
@@ -312,9 +312,9 @@ TEST_LL("DRB141", "DRB141-reduction-barrier-orig-no.ll", NORACE)
 //    EXPECTED(
 //        "DRB144-critical-missingreduction-orig-gpu-yes.c:26:8 DRB144-critical-missingreduction-orig-gpu-yes.c:26:8",
 //        "DRB144-critical-missingreduction-orig-gpu-yes.c:26:8 DRB144-critical-missingreduction-orig-gpu-yes.c:26:8"))
-TEST_LL("DRB145", "DRB145-atomiccritical-orig-gpu-no.ll", NORACE)
-TEST_LL("DRB146", "DRB146-atomicupdate-orig-gpu-no.ll", NORACE)
-TEST_LL("DRB147", "DRB147-critical1-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB145", "DRB145-atomiccritical-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB146", "DRB146-atomicupdate-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB147", "DRB147-critical1-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB148", "DRB148-critical1-orig-gpu-yes.ll",
 //        EXPECTED("DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:31:8",
 //                 "DRB148-critical1-orig-gpu-yes.c:31:8 DRB148-critical1-orig-gpu-yes.c:31:8",
@@ -324,7 +324,7 @@ TEST_LL("DRB147", "DRB147-critical1-orig-gpu-no.ll", NORACE)
 //                 "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:31:8",
 //                 "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:34:9",
 //                 "DRB148-critical1-orig-gpu-yes.c:34:9 DRB148-critical1-orig-gpu-yes.c:34:9"))
-TEST_LL("DRB149", "DRB149-missingdata1-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB149", "DRB149-missingdata1-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB150", "DRB150-missinglock1-orig-gpu-yes.ll",
 //        EXPECTED("DRB150-missinglock1-orig-gpu-yes.c:30:8 DRB150-missinglock1-orig-gpu-yes.c:30:8",
 //                 "DRB150-missinglock1-orig-gpu-yes.c:30:8 DRB150-missinglock1-orig-gpu-yes.c:30:8"))
@@ -338,8 +338,8 @@ TEST_LL("DRB149", "DRB149-missingdata1-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB153", "DRB153-missinglock2-orig-gpu-yes.ll",
 //        EXPECTED("DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8",
 //                 "DRB153-missinglock2-orig-gpu-yes.c:28:8 DRB153-missinglock2-orig-gpu-yes.c:28:8"))
-TEST_LL("DRB154", "DRB154-missinglock3-orig-gpu-no.ll", NORACE)
-TEST_LL("DRB155", "DRB155-missingordered-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB154", "DRB154-missinglock3-orig-gpu-no.ll", NORACE)
+// TEST_LL("DRB155", "DRB155-missingordered-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB156", "DRB156-missingordered-orig-gpu-yes.ll",
 //        EXPECTED("DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:12",
 //                 "DRB156-missingordered-orig-gpu-yes.c:28:11 DRB156-missingordered-orig-gpu-yes.c:28:11"))
