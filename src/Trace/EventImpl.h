@@ -98,14 +98,22 @@ class JoinEventImpl : public JoinEvent {
   const std::shared_ptr<const JoinIR> join;
   const EventID id;
 
+  // the corresponding fork event if it is known
+  std::optional<const ForkEvent *> forkEvent;
+
   JoinEventImpl(std::shared_ptr<const JoinIR> join, std::shared_ptr<EventInfo> info, EventID id)
-      : info(std::move(info)), join(std::move(join)), id(id) {}
+      : info(std::move(info)), join(std::move(join)), id(id), forkEvent(std::nullopt) {}
+
+  JoinEventImpl(std::shared_ptr<const JoinIR> join, std::shared_ptr<EventInfo> info, EventID id,
+                const ForkEvent *forkEvent)
+      : info(std::move(info)), join(std::move(join)), id(id), forkEvent(forkEvent) {}
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::JoinIR *getIRInst() const override { return join.get(); }
 
+  [[nodiscard]] std::optional<const ForkEvent *> getForkEvent() const override { return forkEvent; }
   [[nodiscard]] std::vector<const pta::ObjTy *> getThreadHandle() const override {
     // TODO
     return std::vector<const pta::ObjTy *>();

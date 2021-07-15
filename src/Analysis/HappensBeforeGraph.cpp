@@ -65,23 +65,12 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   return nullptr;
 }
 
-const ForkEvent *getForkWithEntry(const llvm::Value *handle, const ThreadTrace &thread) {
-  for (auto const &fork : thread.getForkEvents()) {
-    if (fork->getIRInst()->getThreadEntry() == handle) {
-      return fork;
-    }
-  }
-
-  return nullptr;
-}
-
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
   for (auto const &fork : thread.getForkEvents()) {
     if (fork->getIRInst()->getThreadHandle() == handle) {
       return fork;
     }
   }
-
   return nullptr;
 }
 
@@ -92,23 +81,18 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
       return fork;
     }
   }
-
   return nullptr;
 }
 
+// avoid inserted fake task join to find the same task fork, e.g., task-yes.c
+// TODO: both tasks have the same ir in task joins, e.g., task-single-call.c, cannot distinguish
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
-  if (join->getIRInst()->type == IR::Type::OpenMPTaskJoin) {
-    // joins of openmp tasks have the same getThreadHandle() value: %.kmpc_loc.addr.i,
-    // so we use getThreadEntry() to distinguish them
-    const OpenMPTaskJoin *taskJoin = static_cast<const OpenMPTaskJoin *>(join->getIRInst());
-    auto const joinEntry = taskJoin->getThreadEntry();
-    if (auto fork = getForkWithEntry(joinEntry, join->getThread()); fork != nullptr) {
-      return fork;
-    }
-  }
+  // if fork has been explicitly set, use it
+  auto const fork = join->getForkEvent();  // is OpenMPTaskJoin
+  if (fork) return fork.value();
 
+  // Else need to use hueristics to match join to a fork
   auto const joinHandle = join->getIRInst()->getThreadHandle();
-
   // Check for fork on this thread with matching handle first
   if (auto fork = getForkWithHandle(joinHandle, join->getThread()); fork != nullptr) {
     return fork;
@@ -406,7 +390,7 @@ void HappensBeforeGraph::debugDump(llvm::raw_ostream &os) const {
   for (auto const &[src, dsts] : syncEdges) {
     os << src.tid << ":" << src.eid << " ->";
     for (auto const &dst : dsts) {
-      os << "\n\t" << dst.tid << ":" << src.tid << "\n";
+      os << "\n\t" << dst.tid << ":" << dst.eid << "\n";
     }
   }
   os << "\n";

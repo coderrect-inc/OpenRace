@@ -99,6 +99,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
 
     return true;
   }
+
   if (OpenMPModel::isTask(funcName)) {
     // Link 3rd arg of __kmpc_omp_task (kmp_tsking.cpp:1684) with task functions 2nd
     auto calleeArg = callee->getFunction()->arg_begin();
@@ -127,13 +128,11 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
   } else if (OpenMPModel::isTaskAlloc(callee->getName())) {  // handled by openmp-specific model
     // the type will be something like %struct.kmp_task_t_with_privates
     Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
-
     if (type == nullptr) {
-      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
       return;
     }
 
-    // we are going to model the points-to constraints like this:
+    // we are going to model the points-to constraints like this (not consider global var/ptr):
     //  taskObj = &sharedObj -> { sharedObj } ∈ pts(taskobj)
     //  ptr = &taskObj       -> { taskObj } ∈ pts(ptr)
     // where sharedObj, taskObj and ptr are:
