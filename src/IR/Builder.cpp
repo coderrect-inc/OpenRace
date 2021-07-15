@@ -159,7 +159,7 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
           summary.instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
-          auto ompFork = std::make_shared<OpenMPFork>(callInst);
+          auto ompFork = std::make_shared<OpenMPFork>(callInst, true);
           auto twinOmpFork = getTwinOmpFork(callInst);
           if (!twinOmpFork) {
             // without duplicated fork we cannot detect any races in omp region so just skip it

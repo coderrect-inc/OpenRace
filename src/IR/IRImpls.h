@@ -131,7 +131,10 @@ class OpenMPFork : public ForkIR {
   const llvm::CallBase *inst;
 
  public:
-  explicit OpenMPFork(const llvm::CallBase *inst) : ForkIR(Type::OpenMPFork), inst(inst) {}
+  const bool isMasterThread;
+
+  explicit OpenMPFork(const llvm::CallBase *inst, bool isMasterThread = false)
+      : ForkIR(Type::OpenMPFork), inst(inst), isMasterThread(isMasterThread) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
