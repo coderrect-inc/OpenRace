@@ -99,7 +99,6 @@ struct TraceBuildState {
   std::vector<UnjoinedTask> unjoinedTasks;
 
   OpenMPState openmp;
-
 };
 
 class ProgramTrace {
