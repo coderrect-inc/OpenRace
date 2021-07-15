@@ -220,8 +220,8 @@ TEST_LL("DRB097", "DRB097-target-teams-distribute-orig-no.ll", NORACE)
 TEST_LL("DRB099", "DRB099-targetparallelfor2-orig-no.ll", NORACE)
 
 // 100-101 task
-// TEST_LL("DRB100", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB101", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB100", "DRB100-task-reference-orig-no.ll", NORACE)
+TEST_LL("DRB101", "DRB101-task-value-orig-no.ll", NORACE)
 
 TEST_LL("DRB102", "DRB102-copyprivate-orig-no.ll", NORACE)
 TEST_LL("DRB103", "DRB103-master-orig-no.ll", NORACE)
