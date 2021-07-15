@@ -26,7 +26,7 @@ using OMPStartEnd = std::map<const llvm::CallBase *, const llvm::CallBase *>;
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
 struct TraceBuildState {
-  Builder builder;
+  FunctionSummaryBuilder builder;
 
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
@@ -78,9 +78,18 @@ struct TraceBuildState {
   const llvm::CallBase *exlSingleStart = nullptr;
   const llvm::CallBase *exlSingleEnd = nullptr;  // to match skip until
 
-  // omp tasks without joins, e.g., single nowait, master, no barrier
-  std::queue<std::shared_ptr<race::OpenMPTask>> taskWOJoins;
-  std::queue<const ForkEvent *> taskForkEvents;
+  // NOTE: this ugliness is only needed because there is no way to get the shared_ptr
+  // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
+  struct UnjoinedTask {
+    const ForkEvent *forkEvent;
+    std::shared_ptr<const OpenMPTask> forkIR;
+
+    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
+        : forkEvent(forkEvent), forkIR(forkIR) {}
+  };
+
+  // List of unjoined OpenMP task threads
+  std::vector<UnjoinedTask> unjoinedTasks;
 };
 
 class ProgramTrace {

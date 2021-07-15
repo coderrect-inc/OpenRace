@@ -53,19 +53,8 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
 
 // TODO: need different system for storing and organizing these "recognizers"
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
-}  // namespace
 
-std::shared_ptr<FunctionSummary> Builder::generateFunctionSummary(const llvm::Function *func) {
-  assert(func != nullptr);
-  auto summary = getSummary(func);
-  if (!summary.get()) {
-    FunctionSummary newSummary = generateFunctionSummary(*func);
-    summary = insert(func, newSummary);
-  }
-  return summary;
-}
-
-FunctionSummary Builder::generateFunctionSummary(const llvm::Function &func) {
+FunctionSummary generateFunctionSummary(const llvm::Function &func) {
   FunctionSummary summary;
 
   for (auto const &basicblock : func.getBasicBlockList()) {
@@ -156,7 +145,6 @@ FunctionSummary Builder::generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isTask(funcName)) {
           auto taskStart = std::make_shared<OpenMPTask>(callInst);
           summary.instructions.push_back(taskStart);
-          summary.tasks.push(taskStart);
         } else if (OpenMPModel::isTaskAlloc(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPTaskAlloc>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {
@@ -204,4 +192,22 @@ FunctionSummary Builder::generateFunctionSummary(const llvm::Function &func) {
   }
 
   return summary;
+}
+}  // namespace
+
+std::shared_ptr<FunctionSummary> FunctionSummaryBuilder::getFunctionSummary(const llvm::Function *func) {
+  assert(func != nullptr);
+
+  // Check the cache
+  auto it = cache.find(func);
+  if (it != cache.end()) {
+    return it->second;
+  }
+
+  // Else compute the summary and add to cache
+  auto const summary = generateFunctionSummary(*func);
+
+  auto sharedSummary = std::make_shared<FunctionSummary>(summary);
+  cache.insert(std::make_pair(func, sharedSummary));
+  return sharedSummary;
 }
