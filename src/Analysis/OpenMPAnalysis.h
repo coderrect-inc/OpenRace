@@ -64,8 +64,8 @@ class SimpleGetThreadNumAnalysis {
   // compute any guarded blocks for this omp_get_thread call and add them to the guardedBlocks map
   void computeGuardedBlocks(const Event* event);
 
-  // set of functions who's guarded blocks have already been computed
-  std::set<const llvm::Function*> visited;
+  // set of get_thread_num calls who's guarded blocks have already been computed
+  std::set<const llvm::Instruction*> visited;
 
   // Get the tid that guards this event or None if it is not guarded
   std::optional<u_int64_t> getGuardedBy(const Event* event) const;
@@ -78,12 +78,31 @@ class SimpleGetThreadNumAnalysis {
   bool guardedBySameTid(const Event* event1, const Event* event2) const;
 };
 
+class LastprivateAnalysis {
+  // We model last private by only checking if some access is in a last private block
+  // We may miss some real races if different last private blocks can race with each other
+  // However, it looks like clang always inserts a barrier after lastprivate (even if it is not needed)
+  // This means we can never detect a race between two different lastprivate sections
+  // so I kept this version of the analysis because it is simpler.
+  std::set<const llvm::BasicBlock*> lastprivateBlocks;
+
+  std::set<const llvm::BasicBlock*> computeLastprivateBlocks(const llvm::Function& func);
+
+ public:
+  LastprivateAnalysis(const llvm::Module& module);
+
+  [[nodiscard]] inline bool isGuarded(const llvm::BasicBlock* block) const {
+    return lastprivateBlocks.find(block) != lastprivateBlocks.end();
+  }
+};
+
 class OpenMPAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
 
   ReduceAnalysis reduceAnalysis;
   SimpleGetThreadNumAnalysis getThreadNumAnalysis;
+  LastprivateAnalysis lastprivate;
 
   // Start/End of omp loop
   using LoopRegion = Region;
@@ -127,6 +146,8 @@ class OpenMPAnalysis {
   bool guardedBySameTid(const Event* event1, const Event* event2) const {
     return getThreadNumAnalysis.guardedBySameTid(event1, event2);
   }
+
+  bool isInLastprivate(const Event* event) const { return lastprivate.isGuarded(event->getInst()->getParent()); }
 };
 
 }  // namespace race

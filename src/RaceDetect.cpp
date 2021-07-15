@@ -18,6 +18,7 @@ limitations under the License.
 #include "Analysis/OpenMPAnalysis.h"
 #include "Analysis/SharedMemory.h"
 #include "Analysis/SimpleAlias.h"
+#include "Analysis/ThreadLocalAnalysis.h"
 #include "LanguageModel/RaceModel.h"
 #include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
@@ -43,6 +44,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::LockSet lockset(program);
   race::SimpleAlias simpleAlias;
   race::OpenMPAnalysis ompAnalysis(program);
+  race::ThreadLocalAnalysis threadlocal;
 
   race::Reporter reporter;
 
@@ -61,8 +63,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
                    << " " << other->getID() << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
                    << "\n";
     }
-    if (write->getID() == 2 && other->getID() == 5) {
-      llvm::outs() << "HIT\n";
+
+    if (threadlocal.isThreadLocalAccess(write, other)) {
+      return;
     }
 
     if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
@@ -91,6 +94,12 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
       // No race if guaranteed to be executed by same thread
       if (ompAnalysis.guardedBySameTid(write, other)) return;
+
+      // Lastprivate code will only be executed by one thread
+      // Model lastprivate by assuming lastprivate code cannot race with other last private code
+      // This may miss races according to OpenMP specification,
+      //  but will not miss races according to how Clang generates OpenMP code (as of clang 10.0.1)
+      if (ompAnalysis.isInLastprivate(write) && ompAnalysis.isInLastprivate(other)) return;
     }
 
     // Race detected
@@ -130,7 +139,9 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
     }
   }
 
-  llvm::outs() << program << "\n";
+  if (config.printTrace) {
+    llvm::outs() << program << "\n";
+  }
 
   if (DEBUG_PTA) {
     happensbefore.debugDump(llvm::outs());

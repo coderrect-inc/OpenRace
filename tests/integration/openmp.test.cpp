@@ -78,7 +78,19 @@ TEST_CASE("OpenMP get_thread_num", "[integration][omp]") {
       // Oracle("get-thread-num-interproc-no.ll", {}), // cannot handle interproc yet
       Oracle("get-thread-num-loop-no.ll", {}),
       Oracle("get-thread-num-nested-branch-no.ll", {}),
+      Oracle("get-thread-num-double-no.ll", {}),
+  };
+  checkOracles(oracles, "integration/openmp/");
+}
 
+TEST_CASE("OpenMP lastprivate", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("lastprivate-before-yes.ll", {"lastprivate-before-yes.c:13:14 lastprivate-before-yes.c:15:29",
+                                           "lastprivate-before-yes.c:15:29 lastprivate-before-yes.c:13:14"}),
+      // Cannot pass because there is no race in clang
+      // Oracle("last-private-yes.ll", {/*TODO*/}),
+      Oracle("lastprivate-no.ll", {}),
+      Oracle("lastprivate-loop-split-no.ll", {}),
   };
   checkOracles(oracles, "integration/openmp/");
 }
@@ -92,6 +104,13 @@ TEST_CASE("OpenMP task", "[integration][omp]") {
       Oracle("task-master-single-yes.ll", {"task-master-single-yes.c:18:14 task-master-single-yes.c:14:16"}),
       Oracle("task-tid-no.ll", {"task-tid-no.c:15:16 task-tid-no.c:15:16"}),  // cannot identify if condition
       Oracle("task-yes.ll", {"task-yes.c:13:14 task-yes.c:13:14"}),
+    };
+  checkOracles(oracles, "integration/openmp/");
+}
+
+TEST_CASE("OpenMP threadlocal", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("threadlocal-no.ll", {}),
   };
   checkOracles(oracles, "integration/openmp/");
 }

@@ -193,9 +193,7 @@ class EnterCallEventImpl : public EnterCallEvent {
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
 
-  [[nodiscard]] const llvm::Function *getCalledFunction() const override {
-    return call->getInst()->getCalledFunction();
-  }
+  [[nodiscard]] const llvm::Function *getCalledFunction() const override { return call->getCalledFunction(); }
 };
 
 class LeaveCallEventImpl : public LeaveCallEvent {
@@ -213,9 +211,7 @@ class LeaveCallEventImpl : public LeaveCallEvent {
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
 
-  [[nodiscard]] const llvm::Function *getCalledFunction() const override {
-    return call->getInst()->getCalledFunction();
-  }
+  [[nodiscard]] const llvm::Function *getCalledFunction() const override { return call->getCalledFunction(); }
 };
 
 class ExternCallEventImpl : public ExternCallEvent {

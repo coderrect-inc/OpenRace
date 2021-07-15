@@ -11,18 +11,11 @@ limitations under the License.
 
 #pragma once
 
-#include "Reporter/Reporter.h"
+#include "Trace/Event.h"
 
 namespace race {
-
-struct DetectRaceConfig {
-  // writes preprocessedIR to a file specified by the string
-  std::optional<std::string> dumpPreprocessedIR;
-
-  // Print the ProgramTrace when true
-  bool printTrace = false;
+struct ThreadLocalAnalysis {
+  // return true if all shared objects between the two accesses are thread local
+  bool isThreadLocalAccess(const MemAccessEvent *write, const MemAccessEvent *other);
 };
-
-Report detectRaces(llvm::Module *module, DetectRaceConfig config = DetectRaceConfig());
-
 }  // namespace race

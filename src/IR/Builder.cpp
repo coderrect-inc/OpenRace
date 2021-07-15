@@ -26,7 +26,10 @@ extern llvm::cl::opt<bool> DEBUG_PTA;
 
 namespace {
 
+// return true if the operand of inst must be a thread local object
 bool hasThreadLocalOperand(const llvm::Instruction *inst) {
+  // this is just a lightweight check during IR phase
+  // the full check is done at analysis time by ThreadLocalAnalysis
   auto ptr = getPointerOperand(inst);
   assert(ptr);
   if (auto global = llvm::dyn_cast<llvm::GlobalVariable>(ptr)) {
@@ -35,20 +38,31 @@ bool hasThreadLocalOperand(const llvm::Instruction *inst) {
   return false;
 }
 
-// Assuming ompForkCall points to a OpenMP fork call, the next inst should be a duplicate omp fork call
-// this returns that omp fork or null if the next inst is not a omp fork call
-std::shared_ptr<OpenMPFork> getTwinOmpFork(const llvm::CallBase *ompForkCall) {
-  auto next = ompForkCall->getNextNode();
+// Get the next inst if it is call, else return nullptr
+const llvm::CallBase *getNextCall(const llvm::CallBase *call) {
+  auto const next = call->getNextNode();
   if (!next) return nullptr;
+  return llvm::dyn_cast<llvm::CallBase>(next);
+}
 
-  auto twinOmpForkInst = llvm::dyn_cast<llvm::Instruction>(next);
-  if (!twinOmpForkInst) return nullptr;
+// this returns the duplicated omp fork or null if the next inst is not a omp fork call
+std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
+  auto const twinForkInst = getNextCall(fork->getInst());
+  if (!twinForkInst) return nullptr;
+  if (!OpenMPModel::isFork(twinForkInst)) return nullptr;
 
-  auto twinCallInst = llvm::dyn_cast<llvm::CallBase>(twinOmpForkInst);
-  if (!twinCallInst) return nullptr;
-  if (!OpenMPModel::isFork(twinCallInst)) return nullptr;
+  return std::make_shared<OpenMPFork>(twinForkInst);
+}
 
-  return std::make_shared<OpenMPFork>(twinCallInst);
+std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) {
+  auto const twinForkInst = getNextCall(fork->getInst());
+  if (!twinForkInst) return nullptr;
+  // Only difference between this function and the base omp fork one is this line
+  // if we can add the "recognizers" as static functions on the IRImpl classes themselves
+  // these two functions can be combined into a single template function like getTwin<OpenMPForkTeams>(...)
+  if (!OpenMPModel::isForkTeams(twinForkInst)) return nullptr;
+
+  return std::make_shared<OpenMPForkTeams>(twinForkInst);
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
@@ -109,7 +123,7 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
         } else if (PthreadModel::isPthreadSpinLock(funcName)) {
           summary.instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
         } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
-          summary.instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
+          summary.instructions.push_back(std::make_shared<PthreadSpinUnlock>(callInst));
         } else if (OpenMPModel::isForStaticInit(funcName)) {
           summary.instructions.push_back(std::make_shared<OmpForInit>(callInst));
         } else if (OpenMPModel::isForStaticFini(funcName)) {
@@ -132,7 +146,7 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
           summary.instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
-        } else if (OpenMPModel::isReduceNowaitStart(funcName)) {
+        } else if (OpenMPModel::isReduceStart(funcName) || OpenMPModel::isReduceNowaitStart(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isCriticalStart(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
@@ -178,11 +192,33 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
           // omp fork has implicit join, so immediately join both threads
           summary.instructions.push_back(std::make_shared<OpenMPJoin>(ompFork));
           summary.instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
+        } else if (OpenMPModel::isForkTeams(funcName)) {
+          // duplicate omp preprocessing should duplicate all omp fork calls
+          auto ompForkTeams = std::make_shared<OpenMPForkTeams>(callInst);
+          auto twinOmpForkTeams = getTwinOmpForkTeams(ompForkTeams);
+          if (!twinOmpForkTeams) {
+            // without duplicated fork we cannot detect any races in omp region so just skip it
+            llvm::errs() << "Encountered non-duplicated omp fork instruction: " << *callInst << "\n";
+            llvm::errs() << "Next Inst was: " << *callInst->getNextNode() << "\n";
+            llvm::errs() << "Skipping entire OpenMP region\n";
+            continue;
+          }
+          // We matched the next inst as twin omp fork
+          ++it;
+
+          // push the two forks and joins such tha the two threads created for the parallel region are in parallel
+          summary.instructions.push_back(ompForkTeams);
+          summary.instructions.push_back(twinOmpForkTeams);
+
+          // omp fork teams has implicit join, so immediately join both threads
+          summary.instructions.push_back(std::make_shared<OpenMPJoinTeams>(ompForkTeams));
+          summary.instructions.push_back(std::make_shared<OpenMPJoinTeams>(twinOmpForkTeams));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
         } else {
           // Used to make sure we are not implicitly ignoring any OpenMP features
           // We should instead make sure we take the correct action for any OpenMP call
+          llvm::errs() << "Unhandled OpenMP call: " << funcName << "\n";
           assert((!OpenMPModel::isOpenMP(funcName) || OpenMPModel::isNoEffect(funcName)) && "Unhandled OpenMP Call!");
 
           summary.instructions.push_back(std::make_shared<CallIR>(callInst));

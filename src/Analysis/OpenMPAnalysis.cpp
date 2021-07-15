@@ -2,6 +2,7 @@
 
 #include "LanguageModel/OpenMP.h"
 #include "Trace/Event.h"
+#include "Trace/ProgramTrace.h"
 #include "Trace/ThreadTrace.h"
 
 using namespace race;
@@ -277,7 +278,8 @@ const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) 
   return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
-OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program) : getThreadNumAnalysis(program) {
+OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program)
+    : getThreadNumAnalysis(program), lastprivate(program.getModule()) {
   PB.registerFunctionAnalyses(FAM);
 }
 
@@ -489,7 +491,7 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
   std::optional<EventID> start;
   for (auto const &event : thread.getEvents()) {
-    switch (event->getIRInst()->type) {
+    switch (event->getIRType()) {
       case Start: {
         assert(!start.has_value() && "encountered two start types in a row");
         start = event->getID();
@@ -761,36 +763,53 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
 
 namespace {
 
-// Get any cmp insts that use this value and compare against a constant integer
+// Get any icmp_eq insts that use this value and compare against a constant integer
 // return list of pairs (cmp, c) where cmp is the cmpInst and c is the constant value compared against
-std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpInsts(const llvm::Value *value) {
+std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const llvm::Value *value) {
   std::vector<std::pair<const llvm::CmpInst *, uint64_t>> result;
 
-  for (auto const user : value->users()) {
-    auto cmp = llvm::dyn_cast<llvm::CmpInst>(user);
-    if (cmp == nullptr) continue;
+  std::vector<const llvm::User *> worklist;
 
-    if (cmp->getPredicate() != llvm::CmpInst::Predicate::ICMP_EQ) continue;
+  for (auto user : value->users()) {
+    worklist.push_back(user);
+  }
 
-    if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(1))) {
-      result.emplace_back(cmp, val->getZExtValue());
+  while (!worklist.empty()) {
+    auto const user = worklist.back();
+    worklist.pop_back();
+
+    // follow loads
+    if (auto load = llvm::dyn_cast<llvm::LoadInst>(user)) {
+      for (auto loadUser : load->users()) {
+        worklist.push_back(loadUser);
+      }
       continue;
     }
 
-    if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(0))) {
-      result.emplace_back(cmp, val->getZExtValue());
-      continue;
+    if (auto cmp = llvm::dyn_cast<llvm::CmpInst>(user)) {
+      if (cmp->getPredicate() != llvm::CmpInst::Predicate::ICMP_EQ) continue;
+
+      if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(1))) {
+        result.emplace_back(cmp, val->getZExtValue());
+        continue;
+      }
+
+      if (auto val = llvm::dyn_cast<llvm::ConstantInt>(cmp->getOperand(0))) {
+        result.emplace_back(cmp, val->getZExtValue());
+        continue;
+      }
     }
   }
 
   return result;
 }
 
-// Get list of blocks guarded by the true case of this branch.
-// Start by assuming the true block is guarded
-// Iterate from the true block until we find a block that has an unguarded predecessor
+// Get list of blocks guarded by one case of this branch.
+// branch arg decides if checking for blocks guarded by true or false branch
+// Start by assuming the target block is guarded
+// Iterate from the target block until we find a block that has an unguarded predecessor
 // Cannot handle loops
-std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *branchInst) {
+std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *branchInst, bool branch = true) {
   // This branch should use a cmp eq instruction
   // Otherwise the true/false blocks below may be wrong
   assert(llvm::isa<llvm::CmpInst>(branchInst->getOperand(0)));
@@ -799,15 +818,17 @@ std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *bran
   auto trueBlock = llvm::cast<llvm::BasicBlock>(branchInst->getOperand(2));
   auto falseBlock = llvm::cast<llvm::BasicBlock>(branchInst->getOperand(1));
 
+  auto const targetBlock = (branch) ? trueBlock : falseBlock;
+
   // This will be the returned result
   std::set<const llvm::BasicBlock *> guardedBlocks;
-  guardedBlocks.insert(trueBlock);
+  guardedBlocks.insert(targetBlock);
 
   std::set<const llvm::BasicBlock *> visited;
   std::vector<const llvm::BasicBlock *> worklist;
 
-  visited.insert(trueBlock);
-  for (auto next : successors(trueBlock)) {
+  visited.insert(targetBlock);
+  for (auto next : successors(targetBlock)) {
     worklist.push_back(next);
   }
 
@@ -838,13 +859,13 @@ std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *bran
 }  // namespace
 
 void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
-  assert(event->getIRInst()->type == IR::Type::OpenMPGetThreadNum);
-  auto const func = event->getFunction();
-  // Check if we have already computed guardedBlocks for this LLVM function
-  if (visited.find(func) != visited.end()) return;
+  assert(event->getIRType() == IR::Type::OpenMPGetThreadNum);
+  auto const call = event->getInst();
+  // Check if we have already computed guardedBlocks for this omp_get_thread_num call
+  if (visited.find(call) != visited.end()) return;
 
   // Find all cmpInsts that compare the omp_get_thread_num call to a const value
-  auto const cmpInsts = getConstCmpInsts(event->getInst());
+  auto const cmpInsts = getConstCmpEqInsts(call);
   for (auto const &pair : cmpInsts) {
     auto const cmpInst = pair.first;
     auto const tid = pair.second;
@@ -864,8 +885,8 @@ void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
     }
   }
 
-  // Mark this function as visited
-  visited.insert(func);
+  // Mark this get_thread_num call as visited
+  visited.insert(call);
 }
 
 std::optional<u_int64_t> SimpleGetThreadNumAnalysis::getGuardedBy(const Event *event) const {
@@ -879,7 +900,7 @@ SimpleGetThreadNumAnalysis::SimpleGetThreadNumAnalysis(const ProgramTrace &progr
   for (auto const &thread : program.getThreads()) {
     for (auto const &event : thread->getEvents()) {
       // Only care about get_thread_num calls
-      if (event->getIRInst()->type != IR::Type::OpenMPGetThreadNum) continue;
+      if (event->getIRType() != IR::Type::OpenMPGetThreadNum) continue;
       computeGuardedBlocks(event.get());
     }
   }
@@ -895,7 +916,53 @@ bool SimpleGetThreadNumAnalysis::guardedBySameTid(const Event *event1, const Eve
   return tid1.value() == tid2.value();
 }
 
-// void GetThreadNumAnalysis::doit(const ProgramTrace &program) {}
+std::set<const llvm::BasicBlock *> LastprivateAnalysis::computeLastprivateBlocks(const llvm::Function &func) {
+  /* kmpc_static_for_init takes a pointer to an "isLast" flag
+     if the parallel loop has a last private member, the flag will be set for the last thread
+     and that thread will execute the lastprivate code.
+
+     This function looks for omp loops, finds the last private flag, and looks for blocks guarded by the flag */
+  std::set<const llvm::BasicBlock *> blocks;
+
+  for (auto const &block : func.getBasicBlockList()) {
+    for (auto const &inst : block.getInstList()) {
+      // Find calls to isForStaticInit
+      auto call = llvm::dyn_cast<llvm::CallBase>(&inst);
+      if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) continue;
+      auto const calledName = call->getCalledFunction()->getName();
+      if (!OpenMPModel::isForStaticInit(calledName)) continue;
+
+      // Get the "isLast" flag
+      auto isLastFlag = call->getArgOperand(3);
+      // Find cmp instructions that use the flag
+      // clang should always generate cmp_eq instructions for the lastprivate check after a loop
+      auto const cmps = getConstCmpEqInsts(isLastFlag);
+      for (auto cmp : cmps) {
+        // Only care about cmp instructions checking that the flag is "true" or non-zero
+        if (cmp.second != 0) continue;
+
+        // Find branches using result of the cmp
+        for (auto user : cmp.first->users()) {
+          auto branch = llvm::dyn_cast<llvm::BranchInst>(user);
+          // find blocks in the false path
+          // the cmp is equal to if(isLast == 0)
+          // and we care about the path where the flag is non-zero or "true"
+          auto const guarded = getGuardedBlocks(branch, false);
+          blocks.insert(guarded.begin(), guarded.end());
+        }
+      }
+    }
+  }
+
+  return blocks;
+}
+
+LastprivateAnalysis::LastprivateAnalysis(const llvm::Module &module) {
+  for (auto const &func : module.getFunctionList()) {
+    auto const blocks = computeLastprivateBlocks(func);
+    lastprivateBlocks.insert(blocks.begin(), blocks.end());
+  }
+}
 
 bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
   // assertion: threads of the same team are identical
