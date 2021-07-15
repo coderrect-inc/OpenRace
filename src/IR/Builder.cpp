@@ -144,8 +144,6 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
           summary.instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
-        } else if (OpenMPModel::isReduceStart(funcName)) {
-          summary.instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName) || OpenMPModel::isReduceNowaitStart(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isCriticalStart(funcName)) {
@@ -174,7 +172,7 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompFork = std::make_shared<OpenMPFork>(callInst, true);
-          auto twinOmpFork = getTwinOmpFork(callInst);
+          auto twinOmpFork = getTwinOmpFork(ompFork);
           if (!twinOmpFork) {
             // without duplicated fork we cannot detect any races in omp region so just skip it
             llvm::errs() << "Encountered non-duplicated omp fork instruction: " << *callInst << "\n";
