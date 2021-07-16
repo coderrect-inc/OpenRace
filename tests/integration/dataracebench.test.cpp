@@ -147,8 +147,14 @@ TEST_LL("DRB049", "DRB049-fprintf-orig-no.ll", NORACE)
 TEST_LL("DRB050", "DRB050-functionparameter-orig-no.ll", NORACE)
 TEST_LL("DRB051", "DRB051-getthreadnum-orig-no.ll", NORACE)
 
-// 52 indirect array
-// TEST_LL("DRB052", /*TODO*/, EXPECTED(/*TODO*/))
+// 52 indirect array: this is impossible to identify without reading the data of int indexSet[N]
+// and the distance of 12, and more importantly compute the index value for each iteration.
+// Will conservatively report the races here as FPs
+TEST_LL("DRB052", "DRB052-indirectaccesssharebase-orig-no",
+        EXPECTED("DRB052-indirectaccesssharebase-orig-no.c:119:13 DRB052-indirectaccesssharebase-orig-no.c:120:13",
+                 "DRB052-indirectaccesssharebase-orig-no.c:119:13 DRB052-indirectaccesssharebase-orig-no.c:120:13",
+                 "DRB052-indirectaccesssharebase-orig-no.c:120:13 DRB052-indirectaccesssharebase-orig-no.c:119:13",
+                 "DRB052-indirectaccesssharebase-orig-no.c:120:13 DRB052-indirectaccesssharebase-orig-no.c:119:13", ))
 
 TEST_LL("DRB053", "DRB053-inneronly1-orig-no.ll", NORACE)
 TEST_LL("DRB054", "DRB054-inneronly2-orig-no.ll", NORACE)
