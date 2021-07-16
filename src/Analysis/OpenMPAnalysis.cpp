@@ -454,7 +454,9 @@ namespace {
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
-  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTask) {  // this works when the event is from omp task fork
+  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTask) {
+    // this works when the event is from omp task fork: we need the parent spawn site here,
+    // and the code may have nested tasks
     while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
       auto parentSpawn = eSpawn.value()->getThread().spawnSite;
       if (!parentSpawn) return std::nullopt;
