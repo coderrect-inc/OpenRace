@@ -15,18 +15,6 @@ const llvm::GetElementPtrInst *getGEP(const MemAccessEvent *event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
-// get the incremented value of index/other var used in a loop by each loop iteration
-// e.g., %inc.i = add nsw i32 %22, 1, !dbg !130
-Value *getIncrementForIndex(Value *idx) {
-  auto add = llvm::dyn_cast<llvm::Instruction>(idx);
-  if (add->getOpcode() == llvm::Instruction::Add) {
-    // this is the incremented value of idx
-    Value *incre = add->getOperand(1);
-    return incre;
-  }
-  return nullptr;
-}
-
 // whether the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
 // if the name of index var/ptr starts by "indvars.", it is declared by loops, e.g., %indvars.iv.i
 // refer to https://llvm.org/docs/Passes.html#indvars-canonicalize-induction-variables
@@ -49,6 +37,12 @@ bool idxDeclaredByLoopInduction(const llvm::GetElementPtrInst *gep) {
           auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
           if (gep_Op) {
             // check if idx is incremented related to loop induction, e.g., DRB005-008
+            // the related IR is like:
+            //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
+            //    // --> this is gen_Op, which index is indvars %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa
+            //    !112, !noalias !91
+            //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
+            //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
             return idxDeclaredByLoopInduction(gep_Op);
           }
         }
