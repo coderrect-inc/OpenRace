@@ -15,6 +15,50 @@ const llvm::GetElementPtrInst *getGEP(const MemAccessEvent *event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
+// get the incremented value of index/other var used in a loop by each loop iteration
+// e.g., %inc.i = add nsw i32 %22, 1, !dbg !130
+Value *getIncrementForIndex(Value *idx) {
+  auto add = llvm::dyn_cast<llvm::Instruction>(idx);
+  if (add->getOpcode() == llvm::Instruction::Add) {
+    // this is the incremented value of idx
+    Value *incre = add->getOperand(1);
+    return incre;
+  }
+  return nullptr;
+}
+
+// whether the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
+// if the name of index var/ptr starts by "indvars.", it is declared by loops, e.g., %indvars.iv.i
+// refer to https://llvm.org/docs/Passes.html#indvars-canonicalize-induction-variables
+// if starting by "idxprom" + an int, it is declared outside, or declared inside but increment
+// by self update rules, e.g., %idxprom15.i
+bool idxDeclaredByLoopInduction(const llvm::GetElementPtrInst *gep) {
+  for (int i = 1; i < gep->getNumOperands(); i++) {  // exclude the base ptr when i==0, iterate all indexes
+    auto idx = gep->getOperand(i);
+    if (idx->hasName()) {
+      const StringRef &name = idx->getName();
+      if (name.startswith("indvars.")) {  // from loop induction
+        continue;
+      } else if (name.startswith("idxprom")) {
+        // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
+        // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
+        auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
+        Value *op = sext->getOperand(0);
+        if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
+          op = load->getPointerOperand();
+          auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
+          if (gep_Op) {
+            // check if idx is incremented related to loop induction, e.g., DRB005-008
+            return idxDeclaredByLoopInduction(gep_Op);
+          }
+        }
+        return false;
+      }
+    }  // no name, e.g., i32 0
+  }
+  return true;
+}
+
 // move add operation out the (sext ) SCEV
 class BitExtSCEVRewriter : public llvm::SCEVRewriteVisitor<BitExtSCEVRewriter> {
  private:
@@ -321,8 +365,11 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
     return true;
   }
 
-  if (diff->isZero()) {
-    // simplest case, array access patterns are perfectly aligned an there is not overlap
+  if (diff->isZero() && idxDeclaredByLoopInduction(gep1) && idxDeclaredByLoopInduction(gep2)) {
+    // simplest case, array access patterns are perfectly aligned and there is not overlap
+    // PS: this is valid when index, e.g., i or j, is declared in loop, e.g., for (i=0;i<len;i++) {...},
+    // but for index declared outside of loop, this can still overlap since it has a different
+    // self-update rule, e.g., DRB018
     return false;
   }
 

@@ -28,11 +28,27 @@ TEST_LL("DRB003", "DRB003-antidep2-orig-yes.ll",
 TEST_LL("DRB004", "DRB004-antidep2-var-yes.ll",
         EXPECTED("DRB004-antidep2-var-yes.c:70:15 DRB004-antidep2-var-yes.c:70:18"))
 
-// // 5-8 are indirect array access
-// TEST_LL("DRB005", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB006", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB007", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB008", /*TODO*/, EXPECTED(/*TODO*/))
+// 5-8 are indirect array access: conservatively report the races
+TEST_LL("DRB005", "DRB005-indirectaccess1-orig-yes.ll",
+        EXPECTED("DRB005-indirectaccess1-orig-yes.c:128:13 DRB005-indirectaccess1-orig-yes.c:129:13",
+                 "DRB005-indirectaccess1-orig-yes.c:128:13 DRB005-indirectaccess1-orig-yes.c:129:13",
+                 "DRB005-indirectaccess1-orig-yes.c:129:13 DRB005-indirectaccess1-orig-yes.c:128:13",
+                 "DRB005-indirectaccess1-orig-yes.c:129:13 DRB005-indirectaccess1-orig-yes.c:128:13"))
+TEST_LL("DRB006", "DRB006-indirectaccess2-orig-yes.ll",
+        EXPECTED("DRB006-indirectaccess2-orig-yes.c:128:13 DRB006-indirectaccess2-orig-yes.c:129:13",
+                 "DRB006-indirectaccess2-orig-yes.c:128:13 DRB006-indirectaccess2-orig-yes.c:129:13",
+                 "DRB006-indirectaccess2-orig-yes.c:129:13 DRB006-indirectaccess2-orig-yes.c:128:13",
+                 "DRB006-indirectaccess2-orig-yes.c:129:13 DRB006-indirectaccess2-orig-yes.c:128:13"))
+TEST_LL("DRB007", "DRB007-indirectaccess3-orig-yes.ll",
+        EXPECTED("DRB007-indirectaccess3-orig-yes.c:128:13 DRB007-indirectaccess3-orig-yes.c:129:13",
+                 "DRB007-indirectaccess3-orig-yes.c:128:13 DRB007-indirectaccess3-orig-yes.c:129:13",
+                 "DRB007-indirectaccess3-orig-yes.c:129:13 DRB007-indirectaccess3-orig-yes.c:128:13",
+                 "DRB007-indirectaccess3-orig-yes.c:129:13 DRB007-indirectaccess3-orig-yes.c:128:13"))
+TEST_LL("DRB008", "DRB008-indirectaccess4-orig-yes.ll",
+        EXPECTED("DRB008-indirectaccess4-orig-yes.c:128:13 DRB008-indirectaccess4-orig-yes.c:129:13",
+                 "DRB008-indirectaccess4-orig-yes.c:128:13 DRB008-indirectaccess4-orig-yes.c:129:13",
+                 "DRB008-indirectaccess4-orig-yes.c:129:13 DRB008-indirectaccess4-orig-yes.c:128:13",
+                 "DRB008-indirectaccess4-orig-yes.c:129:13 DRB008-indirectaccess4-orig-yes.c:128:13"))
 
 TEST_LL("DRB009", "DRB009-lastprivatemissing-orig-yes.ll",
         EXPECTED("DRB009-lastprivatemissing-orig-yes.c:59:6 DRB009-lastprivatemissing-orig-yes.c:59:6"))
@@ -58,8 +74,14 @@ TEST_LL("DRB017", "DRB017-outputdep-var-yes.ll",
                  "DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:72:6"))
 
 // DRB 18 and 19 array index fails // misses the race on output
-// TEST_LL("DRB018", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB019", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB018", "DRB018-plusplus-orig-yes.ll",
+        EXPECTED("DRB018-plusplus-orig-yes.c:72:18 DRB018-plusplus-orig-yes.c:72:18",
+                 "DRB018-plusplus-orig-yes.c:72:18 DRB018-plusplus-orig-yes.c:72:18",
+                 "DRB018-plusplus-orig-yes.c:72:22 DRB018-plusplus-orig-yes.c:72:22"))  // the race on output
+TEST_LL("DRB019", "DRB019-plusplus-var-yes.ll",
+        EXPECTED("DRB019-plusplus-var-yes.c:72:18 DRB019-plusplus-var-yes.c:72:18",
+                 "DRB019-plusplus-var-yes.c:72:18 DRB019-plusplus-var-yes.c:72:18",
+                 "DRB019-plusplus-var-yes.c:72:22 DRB019-plusplus-var-yes.c:72:22"))  // the race on output
 
 // 20 the racy object is opted out by SROA
 // TEST_LL("DRB020", /*TODO*/, EXPECTED(/*TODO*/))
@@ -238,7 +260,9 @@ TEST_LL("DRB109", "DRB109-orderedmissing-orig-yes.ll",
                  "DRB109-orderedmissing-orig-yes.c:56:6 DRB109-orderedmissing-orig-yes.c:56:6"))
 TEST_LL("DRB110", "DRB110-ordered-orig-no.ll", NORACE)
 TEST_LL("DRB111", "DRB111-linearmissing-orig-yes.ll",
-        EXPECTED("DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:67:7",
+        EXPECTED("DRB111-linearmissing-orig-yes.c:67:9 DRB111-linearmissing-orig-yes.c:67:9",
+                 "DRB111-linearmissing-orig-yes.c:67:9 DRB111-linearmissing-orig-yes.c:67:9",
+                 "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:67:7",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6"))
 
