@@ -28,12 +28,12 @@ namespace {
 // 3. the end of the parallel region is encountered.
 void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, TraceBuildState &state,
                      std::shared_ptr<struct EventInfo> &einfo) {
-  for (auto const &task : state.unjoinedTasks) {
+  for (auto const &task : state.openmp.unjoinedTasks) {
     auto taskJoin = std::make_shared<OpenMPTaskJoin>(task.forkIR);
     std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
     events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), task.forkEvent));
   }
-  state.unjoinedTasks.clear();
+  state.openmp.unjoinedTasks.clear();
 }
 
 // return the spawning omp fork if this is an omp thread, else return nullptr
@@ -44,47 +44,10 @@ const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
 
 // return true if the current instruction should be skipped
 bool handleOpenMPSingle(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
-  // Model single by only traversing the single region on the master thread unless there are no tasks in the single
-  // TODO: this modelling is technically wrong.
-  // In cases where single is only traversed by the master thread we may miss races between single regions:
-  // e.g.
-  //    #pragma omp single nowait
-  //    { shared++; }
-  //    #pragma omp single nowait
-  //    { shared++; }
-  //
-  // In cases where single is traversed by both threads we may report false positives
-  // because we see both threads making an access when in reality there is only a single thread access
-  // e.g.
-  //    #pragma omp single
-  //    { singleAccess++; }
-  //
-
   if (callIR->type == IR::Type::OpenMPSingleStart) {
-    if (!isMasterThread) {
-      // Try skipping
-      auto end = state.find(callIR->getInst());
-      // end may be nullptr meaning this thread should not skip the single region
-      state.exlSingleEnd = end;
-      // if end is not nullptr, this single region should be skipped
-      return end;
-    }
-    // Save the start of this single region
-    assert(!state.exlSingleStart && "encountered two single starts in a row");
-    state.exlSingleStart = callIR->getInst();
-    return false;
-  }
-
-  if (callIR->type == IR::Type::OpenMPSingleEnd && isMasterThread) {
-    if (state.unjoinedTasks.empty()) {
-      // This should not be skipped if there are no tasks
-      state.insert(state.exlSingleStart, nullptr);
-    } else {
-      // This should be skipped if there are tasks
-      // (only spawn tasks on one thread)
-      state.insert(state.exlSingleStart, callIR->getInst());
-    }
-    state.exlSingleStart = nullptr;
+    state.openmp.inSingle = true;
+  } else if (callIR->type == IR::Type::OpenMPSingleEnd) {
+    state.openmp.inSingle = false;
   }
 
   return false;
@@ -98,22 +61,20 @@ bool handleOpenMPMaster(const CallIR *callIR, TraceBuildState &state, bool isMas
   if (callIR->type == IR::Type::OpenMPMasterStart) {
     if (!isMasterThread) {
       // skip on non-master threads
-      auto end = state.find(callIR->getInst());
+      auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
       assert(end && "encountered master start without end");
-      state.exlMasterEnd = end;
+      state.skipUntil = end;
       return true;
     }
 
     // Save the beggining of the master region
-    assert(!state.exlMasterStart && "encountered two master starts in a row");
-    state.exlMasterStart = callIR->getInst();
+    state.openmp.markMasterStart(callIR->getInst());
     return false;
   }
 
   if (callIR->type == IR::Type::OpenMPMasterEnd && isMasterThread) {
     // Save the end of the master region
-    state.insert(state.exlMasterStart, callIR->getInst());
-    state.exlMasterStart = nullptr;
+    state.openmp.markMasterEnd(callIR->getInst());
   }
 
   return false;
@@ -133,20 +94,16 @@ bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMaster
   return false;
 }
 
-// avoid duplicate omp single/master blocks
-bool doSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state, bool isFork) {
-  if (state.exlMasterEnd) {
-    if (state.exlMasterEnd == ir->getInst()) {
-      state.exlMasterEnd = nullptr;  // matched and reset
-    }
-    return true;  // skip traversing to avoid FP
-  }
-  if (isFork && state.exlSingleEnd) {
-    if (state.exlSingleEnd == ir->getInst()) {
-      state.exlSingleEnd = nullptr;  // matched and reset
-    }
-    return true;  // skip traversing to avoid FP
-  }
+// return true if the current instruction should be skipped
+bool shouldSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) {
+  if (!state.skipUntil) return false;
+
+  // Skip until we reach the target instruction
+  if (ir->getInst() != state.skipUntil) return true;
+
+  // Else we reached the target instruction
+  // reset skipUntil ptr and continue traversing
+  state.skipUntil = nullptr;
   return false;
 }
 
@@ -189,7 +146,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
   for (auto const &ir : irFunc) {
-    if (doSkipIR(ir, state, isFork)) {
+    if (shouldSkipIR(ir, state)) {
       continue;
     }
     // Skip OpenMP synchronizations that have no affect across teams
@@ -205,6 +162,12 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const WriteIR> write(ir, writeIR);
       events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
+      // Only put omp task forks on master thread if spawned in single region
+      if (forkIR->type == IR::Type::OpenMPTask && state.openmp.inSingle) {
+        auto ompFork = isOpenMPThread(thread);
+        if (ompFork && !ompFork->isMasterThread) continue;
+      }
+
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       events.push_back(std::make_unique<const ForkEventImpl>(fork, einfo, events.size()));
 
@@ -216,10 +179,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto event = events.back().get();
       auto forkEvent = static_cast<const ForkEvent *>(event);
 
-      // maintain the current traversed tasks in state.unjoinedTasks
+      // maintain the current traversed tasks in state.openmp.unjoinedTasks
       if (forkIR->type == IR::Type::OpenMPTask) {
         std::shared_ptr<const OpenMPTask> task(fork, llvm::cast<OpenMPTask>(fork.get()));
-        state.unjoinedTasks.emplace_back(forkEvent, task);
+        state.openmp.unjoinedTasks.emplace_back(forkEvent, task);
       }
 
       auto entries = forkEvent->getThreadEntry();

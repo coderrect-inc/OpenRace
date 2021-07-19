@@ -27,63 +27,27 @@ using OMPStartEnd = std::map<const llvm::CallBase *, const llvm::CallBase *>;
 struct OpenMPState {
   // Track if we are currently in parallel region created from kmpc_fork_teams
   size_t teamsDepth = 0;
-
   bool inTeamsRegion() const { return teamsDepth > 0; }
-};
 
-// all included states are ONLY used when building ProgramTrace/ThreadTrace
-struct TraceBuildState {
-  FunctionSummaryBuilder builder;
+  // Track if we are in single region
+  bool inSingle = false;
 
-  // the counter of thread id: since we are constructing ThreadTrace while building events,
-  // pState.threads.size() will be updated after finishing the construction, we need such a counter
-  ThreadID currentTID = 0;
-
-  // when using omp master/single(+task), there should be only one omp fork thread (we always have two) that execute
-  // this part of the code solution:
-  // 1. we will attach this part of ir to the omp fork seen first, so it only appear once
-  // 2. make sync edges between single(+task) and the first event afterwards from other parallel irs, so guarantee the
-  // hb relation
-  // when using single(+stmt), we attach this part of ir to both omp forks, so we can find the race between
-  // two single blocks. PS: exl = exclusive
-  std::map<ThreadID, OMPStartEnd>
-      tid2ExlStartEnd;  // record a map of tid to a set of traversed single(+task)/master blocks
-
-  // find the corresponding end if exist any that is in currentTID
-  // return the corresponding end, or null if not exist
-  const llvm::CallBase *find(const llvm::CallBase *start) {
-    for (auto it = tid2ExlStartEnd.begin(); it != tid2ExlStartEnd.end(); it++) {
-      if (it->first == currentTID) {
-        continue;  // skip self check
-      }
-      auto itExl = it->second.find(start);
-      if (itExl != it->second.end()) {
-        return itExl->second;
-      }
-    }
-    return nullptr;
+  // Track the start/end instructions of master regions
+  std::map<const llvm::CallBase *, const llvm::CallBase *> masterRegions;
+  const llvm::CallBase *currentMasterStart = nullptr;
+  // record the start of a master
+  void markMasterStart(const llvm::CallBase *start) {
+    assert(!currentMasterStart && "encountered two master starts in a row");
+    currentMasterStart = start;
   }
-
-  // insert into tid2ExlStartEnd for currentTID
-  void insert(const llvm::CallBase *start, const llvm::CallBase *end) {
-    auto pair = std::make_pair(start, end);
-    auto it = tid2ExlStartEnd.find(currentTID);
-    if (it == tid2ExlStartEnd.end()) {  // no such tid in the record
-      OMPStartEnd map;
-      map.insert(pair);
-      tid2ExlStartEnd.insert(std::make_pair(currentTID, map));
-    } else {
-      tid2ExlStartEnd.at(currentTID).insert(pair);
-    }
+  // mark the end of a master region
+  void markMasterEnd(const llvm::CallBase *end) {
+    assert(currentMasterStart && "encountered master end without start");
+    masterRegions.insert({currentMasterStart, end});
+    currentMasterStart = nullptr;
   }
-
-  // the matched master start/end in traverseCallNode
-  const llvm::CallBase *exlMasterStart = nullptr;
-  const llvm::CallBase *exlMasterEnd = nullptr;  // to match skip until
-
-  // the matched single(+task) start/end in traverseCallNode
-  const llvm::CallBase *exlSingleStart = nullptr;
-  const llvm::CallBase *exlSingleEnd = nullptr;  // to match skip until
+  // Get the end of a previously encountered master region
+  const llvm::CallBase *getMasterRegionEnd(const llvm::CallBase *start) const { return masterRegions.at(start); }
 
   // NOTE: this ugliness is only needed because there is no way to get the shared_ptr
   // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
@@ -94,10 +58,23 @@ struct TraceBuildState {
     UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
         : forkEvent(forkEvent), forkIR(forkIR) {}
   };
-
   // List of unjoined OpenMP task threads
   std::vector<UnjoinedTask> unjoinedTasks;
+};
 
+// all included states are ONLY used when building ProgramTrace/ThreadTrace
+struct TraceBuildState {
+  // Cached function summaries
+  FunctionSummaryBuilder builder;
+
+  // the counter of thread id: since we are constructing ThreadTrace while building events,
+  // pState.threads.size() will be updated after finishing the construction, we need such a counter
+  ThreadID currentTID = 0;
+
+  // When set, skip traversing until this instruction is reached
+  const llvm::Instruction *skipUntil = nullptr;
+
+  // Track state specific to OpenMP
   OpenMPState openmp;
 };
 
