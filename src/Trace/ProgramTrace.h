@@ -48,6 +48,18 @@ struct OpenMPState {
   }
   // Get the end of a previously encountered master region
   const llvm::CallBase *getMasterRegionEnd(const llvm::CallBase *start) const { return masterRegions.at(start); }
+
+  // NOTE: this ugliness is only needed because there is no way to get the shared_ptr
+  // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
+  struct UnjoinedTask {
+    const ForkEvent *forkEvent;
+    std::shared_ptr<const OpenMPTask> forkIR;
+
+    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
+        : forkEvent(forkEvent), forkIR(forkIR) {}
+  };
+  // List of unjoined OpenMP task threads
+  std::vector<UnjoinedTask> unjoinedTasks;
 };
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
@@ -65,19 +77,6 @@ struct TraceBuildState {
   // the matched single(+task) start/end in traverseCallNode
   const llvm::CallBase *exlSingleStart = nullptr;
   const llvm::CallBase *exlSingleEnd = nullptr;  // to match skip until
-
-  // NOTE: this ugliness is only needed because there is no way to get the shared_ptr
-  // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
-  struct UnjoinedTask {
-    const ForkEvent *forkEvent;
-    std::shared_ptr<const OpenMPTask> forkIR;
-
-    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
-        : forkEvent(forkEvent), forkIR(forkIR) {}
-  };
-
-  // List of unjoined OpenMP task threads
-  std::vector<UnjoinedTask> unjoinedTasks;
 
   OpenMPState openmp;
 };

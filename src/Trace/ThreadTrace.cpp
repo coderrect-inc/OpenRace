@@ -28,12 +28,12 @@ namespace {
 // 3. the end of the parallel region is encountered.
 void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, TraceBuildState &state,
                      std::shared_ptr<struct EventInfo> &einfo) {
-  for (auto const &task : state.unjoinedTasks) {
+  for (auto const &task : state.openmp.unjoinedTasks) {
     auto taskJoin = std::make_shared<OpenMPTaskJoin>(task.forkIR);
     std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
     events.push_back(std::make_unique<const JoinEventImpl>(join, einfo, events.size(), task.forkEvent));
   }
-  state.unjoinedTasks.clear();
+  state.openmp.unjoinedTasks.clear();
 }
 
 // return the spawning omp fork if this is an omp thread, else return nullptr
@@ -81,7 +81,7 @@ bool handleOpenMPSingle(const CallIR *callIR, TraceBuildState &state, bool isMas
   }
 
   // if (callIR->type == IR::Type::OpenMPSingleEnd && isMasterThread) {
-  //   if (state.unjoinedTasks.empty()) {
+  //   if (state.openmp.unjoinedTasks.empty()) {
   //     // This should not be skipped if there are no tasks
   //     state.insert(state.exlSingleStart, nullptr);
   //   } else {
@@ -225,10 +225,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto event = events.back().get();
       auto forkEvent = static_cast<const ForkEvent *>(event);
 
-      // maintain the current traversed tasks in state.unjoinedTasks
+      // maintain the current traversed tasks in state.openmp.unjoinedTasks
       if (forkIR->type == IR::Type::OpenMPTask) {
         std::shared_ptr<const OpenMPTask> task(fork, llvm::cast<OpenMPTask>(fork.get()));
-        state.unjoinedTasks.emplace_back(forkEvent, task);
+        state.openmp.unjoinedTasks.emplace_back(forkEvent, task);
       }
 
       auto entries = forkEvent->getThreadEntry();
