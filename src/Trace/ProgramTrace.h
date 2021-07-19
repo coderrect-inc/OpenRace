@@ -29,7 +29,25 @@ struct OpenMPState {
   size_t teamsDepth = 0;
   bool inTeamsRegion() const { return teamsDepth > 0; }
 
+  // Track if we are in single region
   bool inSingle = false;
+
+  // Track the start/end instructions of master regions
+  std::map<const llvm::CallBase *, const llvm::CallBase *> masterRegions;
+  const llvm::CallBase *currentMasterStart = nullptr;
+  // record the start of a master
+  void markMasterStart(const llvm::CallBase *start) {
+    assert(!currentMasterStart && "encountered two master starts in a row");
+    currentMasterStart = start;
+  }
+  // mark the end of a master region
+  void markMasterEnd(const llvm::CallBase *end) {
+    assert(currentMasterStart && "encountered master end without start");
+    masterRegions.insert({currentMasterStart, end});
+    currentMasterStart = nullptr;
+  }
+  // Get the end of a previously encountered master region
+  const llvm::CallBase *getMasterRegionEnd(const llvm::CallBase *start) const { return masterRegions.at(start); }
 };
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
@@ -39,44 +57,6 @@ struct TraceBuildState {
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
   ThreadID currentTID = 0;
-
-  // when using omp master/single(+task), there should be only one omp fork thread (we always have two) that execute
-  // this part of the code solution:
-  // 1. we will attach this part of ir to the omp fork seen first, so it only appear once
-  // 2. make sync edges between single(+task) and the first event afterwards from other parallel irs, so guarantee the
-  // hb relation
-  // when using single(+stmt), we attach this part of ir to both omp forks, so we can find the race between
-  // two single blocks. PS: exl = exclusive
-  std::map<ThreadID, OMPStartEnd>
-      tid2ExlStartEnd;  // record a map of tid to a set of traversed single(+task)/master blocks
-
-  // find the corresponding end if exist any that is in currentTID
-  // return the corresponding end, or null if not exist
-  const llvm::CallBase *find(const llvm::CallBase *start) {
-    for (auto it = tid2ExlStartEnd.begin(); it != tid2ExlStartEnd.end(); it++) {
-      if (it->first == currentTID) {
-        continue;  // skip self check
-      }
-      auto itExl = it->second.find(start);
-      if (itExl != it->second.end()) {
-        return itExl->second;
-      }
-    }
-    return nullptr;
-  }
-
-  // insert into tid2ExlStartEnd for currentTID
-  void insert(const llvm::CallBase *start, const llvm::CallBase *end) {
-    auto pair = std::make_pair(start, end);
-    auto it = tid2ExlStartEnd.find(currentTID);
-    if (it == tid2ExlStartEnd.end()) {  // no such tid in the record
-      OMPStartEnd map;
-      map.insert(pair);
-      tid2ExlStartEnd.insert(std::make_pair(currentTID, map));
-    } else {
-      tid2ExlStartEnd.at(currentTID).insert(pair);
-    }
-  }
 
   // the matched master start/end in traverseCallNode
   const llvm::CallBase *exlMasterStart = nullptr;

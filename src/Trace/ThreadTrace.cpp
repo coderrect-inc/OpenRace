@@ -103,22 +103,20 @@ bool handleOpenMPMaster(const CallIR *callIR, TraceBuildState &state, bool isMas
   if (callIR->type == IR::Type::OpenMPMasterStart) {
     if (!isMasterThread) {
       // skip on non-master threads
-      auto end = state.find(callIR->getInst());
+      auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
       assert(end && "encountered master start without end");
       state.exlMasterEnd = end;
       return true;
     }
 
     // Save the beggining of the master region
-    assert(!state.exlMasterStart && "encountered two master starts in a row");
-    state.exlMasterStart = callIR->getInst();
+    state.openmp.markMasterStart(callIR->getInst());
     return false;
   }
 
   if (callIR->type == IR::Type::OpenMPMasterEnd && isMasterThread) {
     // Save the end of the master region
-    state.insert(state.exlMasterStart, callIR->getInst());
-    state.exlMasterStart = nullptr;
+    state.openmp.markMasterEnd(callIR->getInst());
   }
 
   return false;
