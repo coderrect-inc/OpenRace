@@ -27,8 +27,9 @@ using OMPStartEnd = std::map<const llvm::CallBase *, const llvm::CallBase *>;
 struct OpenMPState {
   // Track if we are currently in parallel region created from kmpc_fork_teams
   size_t teamsDepth = 0;
-
   bool inTeamsRegion() const { return teamsDepth > 0; }
+
+  bool inSingle = false;
 };
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace

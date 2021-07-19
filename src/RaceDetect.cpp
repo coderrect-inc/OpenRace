@@ -39,6 +39,10 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
     }
   }
 
+  if (config.printTrace) {
+    llvm::outs() << program << "\n";
+  }
+
   race::SharedMemory sharedmem(program);
   race::HappensBeforeGraph happensbefore(program);
   race::LockSet lockset(program);
@@ -137,10 +141,6 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
         }
       }
     }
-  }
-
-  if (config.printTrace) {
-    llvm::outs() << program << "\n";
   }
 
   if (DEBUG_PTA) {
