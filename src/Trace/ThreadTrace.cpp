@@ -44,53 +44,11 @@ const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
 
 // return true if the current instruction should be skipped
 bool handleOpenMPSingle(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
-  // Model single by only traversing the single region on the master thread unless there are no tasks in the single
-  // TODO: this modelling is technically wrong.
-  // In cases where single is only traversed by the master thread we may miss races between single regions:
-  // e.g.
-  //    #pragma omp single nowait
-  //    { shared++; }
-  //    #pragma omp single nowait
-  //    { shared++; }
-  //
-  // In cases where single is traversed by both threads we may report false positives
-  // because we see both threads making an access when in reality there is only a single thread access
-  // e.g.
-  //    #pragma omp single
-  //    { singleAccess++; }
-  //
-
   if (callIR->type == IR::Type::OpenMPSingleStart) {
     state.openmp.inSingle = true;
-    // if (!isMasterThread) {
-    //   // Try skipping
-    //   auto end = state.find(callIR->getInst());
-    //   // end may be nullptr meaning this thread should not skip the single region
-    //   state.exlSingleEnd = end;
-    //   // if end is not nullptr, this single region should be skipped
-    //   return end;
-    // }
-    // // Save the start of this single region
-    // assert(!state.exlSingleStart && "encountered two single starts in a row");
-    // state.exlSingleStart = callIR->getInst();
-    // return false;
-  }
-
-  if (callIR->type == IR::Type::OpenMPSingleEnd) {
+  } else if (callIR->type == IR::Type::OpenMPSingleEnd) {
     state.openmp.inSingle = false;
   }
-
-  // if (callIR->type == IR::Type::OpenMPSingleEnd && isMasterThread) {
-  //   if (state.openmp.unjoinedTasks.empty()) {
-  //     // This should not be skipped if there are no tasks
-  //     state.insert(state.exlSingleStart, nullptr);
-  //   } else {
-  //     // This should be skipped if there are tasks
-  //     // (only spawn tasks on one thread)
-  //     state.insert(state.exlSingleStart, callIR->getInst());
-  //   }
-  //   state.exlSingleStart = nullptr;
-  // }
 
   return false;
 }
