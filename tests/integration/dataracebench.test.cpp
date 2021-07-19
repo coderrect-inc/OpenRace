@@ -150,7 +150,7 @@ TEST_LL("DRB051", "DRB051-getthreadnum-orig-no.ll", NORACE)
 // 52 indirect array: this is impossible to identify without reading the data of int indexSet[N]
 // and the distance of 12, and more importantly compute the index value for each iteration.
 // Will conservatively report the races here as FPs
-TEST_LL("DRB052", "DRB052-indirectaccesssharebase-orig-no",
+TEST_LL("DRB052", "DRB052-indirectaccesssharebase-orig-no.ll",
         EXPECTED("DRB052-indirectaccesssharebase-orig-no.c:119:13 DRB052-indirectaccesssharebase-orig-no.c:120:13",
                  "DRB052-indirectaccesssharebase-orig-no.c:119:13 DRB052-indirectaccesssharebase-orig-no.c:120:13",
                  "DRB052-indirectaccesssharebase-orig-no.c:120:13 DRB052-indirectaccesssharebase-orig-no.c:119:13",
@@ -396,7 +396,7 @@ TEST_LL("DRB159", "DRB159-nobarrier-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB168", /*TODO*/, EXPECTED(/*TODO*/))
 
 // 169 multi-dimen array // Missed TP
-// TEST_LL("DRB169", /*TODO*/, EXPECTED(/*TODO*/))
+// TEST_LL("DRB169", "DRB169-missingsyncwrite-orig-yes.ll", EXPECTED("DRB169-missingsyncwrite-orig-yes.c:38:15 DRB169-missingsyncwrite-orig-yes.c:38:15"))
 
 TEST_LL("DRB170", "DRB170-nestedloops-orig-no.ll", NORACE)
 TEST_LL("DRB171", "DRB171-threadprivate3-orig-no.ll", NORACE)

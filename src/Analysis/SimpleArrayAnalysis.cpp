@@ -1,0 +1,621 @@
+
+#include "SimpleArrayAnalysis.h"
+
+namespace {
+
+bool regionEndLessThan(const race::Region &region1, const race::Region &region2) { return region1.end < region2.end; }
+
+// this is more like "get def"/"get getelementptr", not all getelementptr is array-related
+const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
+  return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
+}
+
+// whether this index is the one that omp for directive will parallelize on, e.g., DRB169
+//    #pragma omp parallel for
+//    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on if there is no collapse clause
+//      for (j = 1; j < N-1; j++) { ...
+bool isParallelOnIdx(const llvm::GetElementPtrInst *gep, const StringRef &idxName) {
+  auto bb = gep->getParent();
+  // this gep must be in the for loop body basic block, e.g., with name of "for.body5.i" or "for.body.i"
+  assert(bb->getName().contains("for.body") && bb->getName().endswith(".i") &&
+         "Index not used in basic block of for.body.xxx");
+
+  const llvm::BasicBlock *incBB = nullptr;
+  for (const llvm::BasicBlock *succ : successors(bb)) {
+    if (succ->getName().contains("for.inc")) {
+      // if the name of basic block has "for.inc", this code has nested loops without collapse
+      incBB = succ;
+      break;
+    }
+  }
+
+  if (!incBB) return false;  // only one index, no nested loop
+
+  // check whether this idx is the one that omp parallel on
+  for (const llvm::BasicBlock *succ : successors(incBB)) {
+    if (succ->getName().contains(".preheader.i")) {
+      // this is the basic block with phi node of paralleled index:
+      // (1) if using "omp parallel for", find the basic block has name "omp.inner.for.body.i"
+      // (2) others, e.g., "omp target", find the basic block has name "for.body.i"
+      // maybe have other cases for other directives
+      auto func = succ->getParent();
+      for (auto it = func->begin(); it != func->end(); it++) {
+        const StringRef &bbName = it->getName();
+        if (bbName == "omp.inner.for.body.i") {
+          it->front().print(llvm::outs(), true);
+          llvm::outs() << it->front().getName();
+          return it->front().getName() == idxName;
+        } else if (bbName == "for.body.i") {
+          // this is the one
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+// For the following conditions, when diff == 0, array access patterns are perfectly aligned and there is not overlap:
+// (1) for one dimension loop:
+// a. the index var/ptr used by gep is declared by loop induction
+// a (continue). or is loop-induction-related,
+// (2) for multi dimension loops:
+// a. the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
+// b. this index is the one that omp for directive will parallelize on, e.g.,
+//    #pragma omp parallel for
+//    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on
+//      for (j = 1; j < N-1; j++) { ...
+//        a[i][j] = ... // i == paralleled index with perfect arrangement: no race
+//        b[j] = ...    // j != paralleled index, different threads can access the same j element together
+// c. if there is collapse clause: should not have dependency across loops and perfect aligned, should not have race
+
+// whether the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
+// AND
+// this index is the one that omp for directive will parallelize on:
+// if the name of index var/ptr starts by "indvars.", it is declared by loops, e.g., %indvars.iv.i
+// refer to https://llvm.org/docs/Passes.html#indvars-canonicalize-induction-variables
+// if starting by "idxprom" + an int, it is declared outside, or declared inside but increment
+// by self update rules, e.g., %idxprom15.i
+bool idxDeclaredByLoopInduction(const llvm::GetElementPtrInst *gep) {
+  for (int i = 1; i < gep->getNumOperands(); i++) {  // exclude the base ptr when i==0, iterate all indexes
+    auto idx = gep->getOperand(i);
+    if (idx->hasName()) {
+      const StringRef &name = idx->getName();
+      if (name.startswith("indvars.")) {  // from loop induction
+        continue;                         // omp is parallel on this idx
+      } else if (name.startswith("idxprom")) {
+        // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
+        // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
+        auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
+        Value *op = sext->getOperand(0);
+        if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
+          op = load->getPointerOperand();
+          auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
+          if (gep_Op) {
+            // check if idx is incremented related to loop induction and other arrays, e.g., DRB005-008
+            // the related IR is like:
+            //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
+            //    // --> this is gen_Op, which index is indvars %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa
+            //    !112, !noalias !91
+            //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
+            //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
+            return idxDeclaredByLoopInduction(gep_Op);
+          }
+        } else if (op->hasName()) {
+          // maybe nested loop using collapse, e.g.,DRB093, the IR is like:
+          //  %idxprom.i = sext i32 %div.i to i64, !dbg !60
+          //  %idxprom7.i = sext i32 %sub.i to i64, !dbg !60
+          //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
+          //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
+          const StringRef &opName = op->getName();
+          if (name.startswith("div.") || name.startswith("sub.")) {
+            // this is nested loop with the collapse clause: no race, TODO: but how do we return this?
+            return true;
+          }
+        }
+        return false;
+      }
+    }  // no name, e.g., i32 0
+  }
+  return true;
+}
+
+// move add operation out the (sext ) SCEV
+class BitExtSCEVRewriter : public llvm::SCEVRewriteVisitor<BitExtSCEVRewriter> {
+ private:
+  const SCEV *rewriteCastExpr(const SCEVCastExpr *Expr);
+
+ public:
+  using super = SCEVRewriteVisitor<BitExtSCEVRewriter>;
+  explicit BitExtSCEVRewriter(llvm::ScalarEvolution &SE) : super(SE) {}
+
+  const SCEV *visit(const SCEV *S);
+
+  inline const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) { return rewriteCastExpr(Expr); };
+
+  inline const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) { return rewriteCastExpr(Expr); }
+};
+
+class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
+ private:
+  using super = SCEVRewriteVisitor<SCEVBoundApplier>;
+  const llvm::Loop *ompLoop;
+
+ public:
+  SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : super(SE), ompLoop(ompLoop) {}
+
+  const llvm::SCEV *visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr);
+};
+
+class OpenMPLoopManager {
+ private:
+  Function *F;
+
+  // dependent pass from LLVM
+  DominatorTree *DT;
+
+  // cached result. TODO: use const pointer
+  SmallDenseMap<BasicBlock *, CallBase *, 4> ompStaticInitBlocks;
+  SmallDenseMap<BasicBlock *, CallBase *, 4> ompDispatchInitBlocks;
+
+  void init();
+
+  Optional<int64_t> resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const;
+
+ public:
+  // constructor
+  OpenMPLoopManager(AnalysisManager<Function> &FAM, Function &fun)
+      : F(&fun), DT(&FAM.getResult<DominatorTreeAnalysis>(fun)) {
+    init();
+  }
+
+  // getter
+  [[nodiscard]] inline Function *getTargetFunction() const { return F; }
+
+  // query.
+  // TODO: handle dynamic dispatch calls.
+  inline CallBase *getStaticInitCallIfExist(const BasicBlock *block) const {
+    auto it = ompStaticInitBlocks.find(block);
+    return it == ompStaticInitBlocks.end() ? nullptr : it->second;
+  }
+
+  // TODO: handle dynamic dispatch for loop
+  inline CallBase *getStaticInitCallIfExist(const Loop *L) const {
+    if (L->getLoopPreheader() == nullptr) {
+      return nullptr;
+    }
+
+    auto initBlock = L->getLoopPreheader()->getUniquePredecessor();
+    return getStaticInitCallIfExist(initBlock);
+  }
+
+  std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const Loop *L) const {
+    return resolveOMPLoopBound(getStaticInitCallIfExist(L));
+  }
+  std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const CallBase *initForCall) const;
+
+  const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root) const;
+
+  // TODO: handle dynamic dispatch for loop
+  inline bool isOMPForLoop(const Loop *L) const { return this->getStaticInitCallIfExist(L) != nullptr; }
+};
+
+template <typename PredTy>
+const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
+  struct FindClosure {
+    const SCEV *Found = nullptr;
+    PredTy Pred;
+
+    FindClosure(PredTy Pred) : Pred(Pred) {}
+
+    bool follow(const llvm::SCEV *S) {
+      if (!Pred(S)) return true;
+
+      Found = S;
+      return false;
+    }
+
+    bool isDone() const { return Found != nullptr; }
+  };
+
+  FindClosure FC(Pred);
+  visitAll(Root, FC);
+  return FC.Found;
+}
+
+inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
+  return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
+}
+
+const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
+  auto step = root->getOperand(1);
+  return SE.getAddRecExpr(SE.getAddExpr(root->getOperand(0), step), step, root->getLoop(), root->getNoWrapFlags());
+}
+
+}  // namespace
+
+race::SimpleArrayAnalysis::SimpleArrayAnalysis(const OpenMPAnalysis &ompAnalysis) : ompAnalysis(ompAnalysis) {
+  PB.registerFunctionAnalyses(FAM);
+}
+
+const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
+  auto result = super::visit(S);
+  // recursively into the sub expression
+  while (result != S) {
+    S = result;
+    result = super::visit(S);
+  }
+  return result;
+}
+
+const SCEV *BitExtSCEVRewriter::rewriteCastExpr(const SCEVCastExpr *Expr) {
+  auto buildCastExpr = [&](const SCEV *op, Type *type) -> const SCEV * {
+    switch (Expr->getSCEVType()) {
+      case scSignExtend:
+        return SE.getSignExtendExpr(op, type);
+      case scZeroExtend:
+        return SE.getZeroExtendExpr(op, type);
+      default:
+        llvm_unreachable("unhandled type of scev cast expression");
+    }
+  };
+
+  const llvm::SCEV *Operand = super::visit(Expr->getOperand());
+  if (auto add = llvm::dyn_cast<llvm::SCEVNAryExpr>(Operand)) {
+    llvm::SmallVector<const llvm::SCEV *, 2> Operands;
+    for (auto op : add->operands()) {
+      Operands.push_back(buildCastExpr(op, Expr->getType()));
+    }
+    switch (add->getSCEVType()) {
+      case llvm::scMulExpr:
+        return SE.getMulExpr(Operands);
+      case llvm::scAddExpr:
+        return SE.getAddExpr(Operands);
+      case llvm::scAddRecExpr:
+        auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(add);
+        return SE.getAddRecExpr(Operands, addRec->getLoop(), addRec->getNoWrapFlags());
+    }
+  }
+  return Operand == Expr->getOperand() ? Expr : buildCastExpr(Operand, Expr->getType());
+}
+
+const llvm::SCEV *SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) {
+  // stop at the OpenMP Loop
+  if (Expr->getLoop() == ompLoop) {
+    return Expr;
+  }
+
+  if (Expr->isAffine()) {
+    auto op = visit(Expr->getOperand(0));
+    auto step = Expr->getOperand(1);
+
+    auto backEdgeCount = SE.getBackedgeTakenCount(Expr->getLoop());
+    if (isa<SCEVConstant>(backEdgeCount)) {
+      auto bounded = SE.getAddExpr(op, SE.getMulExpr(backEdgeCount, step));
+      return bounded;
+    }
+  }
+  return Expr;
+}
+
+void OpenMPLoopManager::init() {
+  // initialize the map to the omp related calls
+  for (auto &BB : *F) {
+    for (auto &I : BB) {
+      if (auto call = dyn_cast<CallBase>(&I)) {
+        if (call->getCalledFunction() != nullptr && call->getCalledFunction()->hasName()) {
+          auto funcName = call->getCalledFunction()->getName();
+          if (OpenMPModel::isForStaticInit(funcName)) {
+            this->ompStaticInitBlocks.insert(std::make_pair(&BB, call));
+          } else if (OpenMPModel::isForDispatchInit(funcName)) {
+            this->ompDispatchInitBlocks.insert(std::make_pair(&BB, call));
+          }
+        }
+      }
+    }
+  }
+}
+
+Optional<int64_t> OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const {
+  const llvm::StoreInst *storeInst = nullptr;
+  for (auto user : V->users()) {
+    if (auto SI = llvm::dyn_cast<llvm::StoreInst>(user)) {
+      // simple cases, only has one store instruction
+      if (storeInst == nullptr) {
+        if (this->DT->dominates(SI, initCall)) {
+          storeInst = SI;
+        }
+      } else {
+        if (this->DT->dominates(SI, initCall)) {
+          return Optional<int64_t>();
+        }
+      }
+    }
+  }
+
+  if (storeInst) {
+    auto bound = dyn_cast<ConstantInt>(storeInst->getValueOperand());
+    if (bound) {
+      return bound->getSExtValue();
+    }
+    return Optional<int64_t>();
+  } else {
+    // LOG_DEBUG("omp bound has no store??");
+    return Optional<int64_t>();
+  }
+}
+
+std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoopBound(
+    const CallBase *initForCall) const {
+  Value *ompLB = nullptr, *ompUB = nullptr;  // up bound and lower bound
+  if (OpenMPModel::isForStaticInit(initForCall->getCalledFunction()->getName())) {
+    ompLB = initForCall->getArgOperand(4);
+    ompUB = initForCall->getArgOperand(5);
+  } else if (OpenMPModel::isForDispatchInit(initForCall->getCalledFunction()->getName())) {
+    ompLB = initForCall->getArgOperand(3);
+    ompUB = initForCall->getArgOperand(4);
+  } else {
+    return std::make_pair(Optional<int64_t>(), Optional<int64_t>());
+  }
+
+  auto allocaLB = llvm::dyn_cast<llvm::AllocaInst>(ompLB);
+  auto allocaUB = llvm::dyn_cast<llvm::AllocaInst>(ompUB);
+
+  // omp.ub and omp.lb are always alloca?
+  if (allocaLB == nullptr || allocaUB == nullptr) {
+    return std::make_pair(Optional<int64_t>(), Optional<int64_t>());
+  }
+
+  auto LB = resolveBoundValue(allocaLB, initForCall);
+  auto UB = resolveBoundValue(allocaUB, initForCall);
+  return std::make_pair(LB, UB);
+}
+
+const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) const {
+  // get the outter-most loop (omp loop should always be the outter-most
+  // loop within an OpenMP region)
+  auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
+    if (auto addRec = llvm::dyn_cast<llvm::SCEVAddRecExpr>(S)) {
+      if (this->isOMPForLoop(addRec->getLoop())) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
+}
+
+const std::vector<race::SimpleArrayAnalysis::LoopRegion> &race::SimpleArrayAnalysis::getOmpForLoops(
+    const ThreadTrace &thread) {
+  // Check if result is already computed
+  auto it = ompForLoops.find(thread.id);
+  if (it != ompForLoops.end()) {
+    return it->second;
+  }
+
+  // Else find the loop regions
+  // auto const loopRegions = ;
+  ompForLoops[thread.id] = ompAnalysis.getLoopRegions(thread);
+
+  return ompForLoops.at(thread.id);
+}
+
+bool race::SimpleArrayAnalysis::inParallelFor(const race::MemAccessEvent *event) {
+  auto loopRegions = getOmpForLoops(event->getThread());
+  auto const eid = event->getID();
+
+  auto it =
+      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
+  if (it != loopRegions.end()) {
+    if (it->contains(eid)) return true;
+  }
+
+  return false;
+}
+
+// refer to https://llvm.org/docs/GetElementPtr.html
+// an array access (load/store) is probably like this (the simplest case):
+//   %arrayidx4 = getelementptr inbounds [10 x i32], [10 x i32]* %3, i64 0, i64 %idxprom3, !dbg !67
+//   store i32 %add2, i32* %arrayidx4, align 4, !dbg !68, !tbaa !21
+// the ptr %arrayidx4 should come from an getelementptr with array type load ptr
+// HOWEVER, many "arrays" in C/C++ are actually pointers so that we cannot always confirm the array type,
+// e.g., DRB014-outofbounds-orig-yes.ll
+bool race::SimpleArrayAnalysis::isArrayAccess(const llvm::GetElementPtrInst *gep) {
+  // must be array type
+  bool isArray =
+      gep->getPointerOperand()->getType()->getPointerElementType()->isArrayTy();  // fixed array size, e.g., int A[100];
+  if (isArray || gep->getName().startswith(
+                     "arrayidx")) {  // array size is a var or user input, e.g., DRB014-outofbounds-orig-yes.ll
+    return true;
+  }
+  // must NOT be array type, e.g., DRB119-nestlock-orig-yes.ll
+  if (gep->getPointerOperand()->getType()->getPointerElementType()->isStructTy()) {  // a non array field of a
+    // struct
+    return false;
+  }
+
+  // others we cannot determine, assume they might be array type to be conservative
+  return true;
+}
+
+bool race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1,
+                                                  const race::MemAccessEvent *event2) {
+  auto gep1 = getGEP(event1);
+  if (!gep1) return false;
+
+  auto gep2 = getGEP(event2);
+  if (!gep2) return false;
+
+  return isArrayAccess(gep1) && isArrayAccess(gep2) && inParallelFor(event1) && inParallelFor(event2);
+}
+
+bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *event1,
+                                                const race::MemAccessEvent *event2) {
+  auto gep1 = getGEP(event1);
+  if (!gep1) return false;
+
+  auto gep2 = getGEP(event2);
+  if (!gep2) return false;
+
+  if (!isArrayAccess(gep1) || !isArrayAccess(gep2)) {
+    return false;
+  }
+
+  // should be in same function
+  if (gep1->getFunction() != gep2->getFunction()) {
+    return false;
+  }
+
+  // TODO: get rid of const cast?
+  auto &targetFun = *const_cast<llvm::Function *>(gep1->getFunction());
+  auto &scev = FAM.getResult<ScalarEvolutionAnalysis>(targetFun);
+
+  BitExtSCEVRewriter rewriter(scev);
+  auto scev1 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep1)));
+  auto scev2 = scev.getSCEV(const_cast<llvm::Value *>(llvm::cast<llvm::Value>(gep2)));
+
+  // the rewriter here move sext adn zext operations into the deepest scope
+  // e.g., (4 + (4 * (sext i32 (2 * %storemerge2) to i64))<nsw> + %a) will be rewritten to
+  //   ==> (4 + (8 * (sext i32 %storemerge2 to i64)) + %a)
+  // this will simplied the scev expression as sext and zext are considered as variable instead of constant
+  // during the computation between two scev expression.
+  scev1 = rewriter.visit(scev1);
+  scev2 = rewriter.visit(scev2);
+  auto diff = dyn_cast<SCEVConstant>(scev.getMinusSCEV(scev1, scev2));
+
+  if (diff == nullptr) {
+    // TODO: we are unable to analyze unknown gap array index for now.
+    return true;
+  }
+
+  if (diff->isZero() && idxDeclaredByLoopInduction(gep1) && idxDeclaredByLoopInduction(gep2)) {
+    // simplest case, array access patterns are perfectly aligned and there is not overlap
+    // PS: this is valid when index, e.g., i or j, is declared in loop, e.g., for (i=0;i<len;i++) {...},
+    // but for index declared outside of loop, this can still overlap since it has a different
+    // self-update rule, e.g., DRB018
+    return false;
+  }
+
+  OpenMPLoopManager ompManager(FAM, targetFun);
+
+  // Get the SCEV expression containing only OpenMP loop induction variable.
+  auto omp1 = ompManager.getOMPLoopSCEV(scev1);
+  auto omp2 = ompManager.getOMPLoopSCEV(scev2);
+
+  // the scev expression does not contains OpenMP for loop
+  if (!omp1 || !omp2) {
+    return true;
+  }
+
+  if (!omp1->isAffine() || !omp2->isAffine()) {
+    return true;
+  }
+
+  // different OpenMP loop, should never happen though
+  if (omp1->getLoop() != omp2->getLoop()) {
+    return true;
+  }
+
+  /* stripSCEVBaseAddr simplifies SCEV expressions when there is a nested parallel loop
+
+  float A[N][N];
+  for (int i = 0; ....)
+   #pragma omp parallel for
+   for (int j = 0; ...)
+      A[i][j] = ...
+
+  Before Strip:
+  ((160 * (sext i32 %14 to i64))<nsw> + {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>)
+  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+                  Base
+  After Strip:
+                                        {((8 * (sext i32 %12 to i64))<nsw> + %a),+,8}<nw><%omp.inner.for.body.i>
+
+  From OpenMP's perspective there is no multi-dimensional array in this case.
+  The outlined OpenMP region will see (i*sizeof(float)) + A as the base address and j as the *only* induction variable.
+  stripSCEVBaseAddr strips (i*sizeof(float)) from the SCEV.
+
+  Because this base value is constant with regard to the OpenMP region, the stripped portion can be safely ignored. */
+  scev1 = stripSCEVBaseAddr(scev1);
+  scev2 = stripSCEVBaseAddr(scev2);
+
+  // This will be true when the parallel loop is nested in a non-parallel outer loop
+  if (omp1 == scev1 && omp2 == scev2) {
+    uint64_t distance = diff->getAPInt().abs().getLimitedValue();
+    auto step = omp1->getOperand(1);
+
+    if (auto constStep = llvm::dyn_cast<llvm::SCEVConstant>(step)) {
+      // the step of the loop
+      uint64_t loopStep = constStep->getAPInt().abs().getLimitedValue();
+      // assume we iterate at least one time
+      if (distance == loopStep) {
+        return true;
+      }
+
+      /* When the loopStep is greater than distance, overlapping accesses are not possible
+        Consider the following loop
+          for (int i = 0; i < N; i+=2)
+            A[i] = i;
+            A[i+1] = i;
+        The two accesses being considered are A[i] and A[i+1].
+        The distance between these two accesses is 1
+        As long as the step is greater than this distance there will be no overlap
+          i=0 {0, 1} | i=2 {2, 3} | i=4 {4, 5} | ...
+        But iof the loopstep is not greater, there may be an overlap.
+        Consider a loopstep of 1
+          i=0 {0, 1} | i=1 {1, 2} | ...
+        Iterations 0 and 1 both access A at an offset of 1*/
+      if (distance < loopStep) {
+        return false;
+      }
+
+      auto bounds = ompManager.resolveOMPLoopBound(omp1->getLoop());
+      if (bounds.first.hasValue() && bounds.second.hasValue()) {
+        // do we need special handling for negative bound?
+        int64_t lowerBound = std::abs(bounds.first.getValue());
+        int64_t upperBound = std::abs(bounds.second.getValue());
+
+        // if both bound are resolvable
+        // FIXME: why do we need to divide by loopstep?
+        assert(std::max(lowerBound, upperBound) >= 0);  // both bounds should be >=0, isn't it?
+        long unsigned int maxBound = static_cast<long unsigned int>(std::max(lowerBound, upperBound));
+        if (maxBound < (distance / loopStep)) {
+          return false;
+        }
+      }
+    }
+  } else {
+    // FIXME: what is this check doing and why does it work?
+    SCEVBoundApplier boundApplier(omp1->getLoop(), scev);
+
+    // this scev represent the largest array elements that will be accessed in the nested loop
+    auto b1 = boundApplier.visit(scev1);
+    auto b2 = boundApplier.visit(scev2);
+
+    // thus if the largest index is smaller than the smallest index in the next OpenMP loop iteration
+    // there is no race
+    // TODO: negative loop? are they canonicalized?
+    auto n1 = getNextIterSCEV(omp1, scev);
+    auto n2 = getNextIterSCEV(omp2, scev);
+
+    std::vector<const SCEV *> gaps = {scev.getMinusSCEV(n1, b1), scev.getMinusSCEV(n1, b2), scev.getMinusSCEV(n2, b1),
+                                      scev.getMinusSCEV(n2, b2)};
+
+    if (std::all_of(gaps.begin(), gaps.end(), [](const SCEV *expr) -> bool {
+          if (auto constExpr = dyn_cast<SCEVConstant>(expr)) {
+            // the gaps are smaller or equal to zero
+            return !constExpr->getAPInt().isNonPositive();
+          }
+          return false;
+        })) {
+      // then there is no race
+      return false;
+    }
+  }
+
+  // If unsure report they do alias
+  llvm::errs() << "unsure so reporting alias\n";
+  return true;
+}

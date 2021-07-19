@@ -104,28 +104,10 @@ class OpenMPAnalysis {
   SimpleGetThreadNumAnalysis getThreadNumAnalysis;
   LastprivateAnalysis lastprivate;
 
-  // Start/End of omp loop
-  using LoopRegion = Region;
-
-  // per-thread map of omp for loop regions
-  std::map<ThreadID, std::vector<LoopRegion>> ompForLoops;
-
-  // get cached list of loop regions, else create them
-  const std::vector<LoopRegion>& getOmpForLoops(const ThreadTrace& trace);
-
-  bool inParallelFor(const race::MemAccessEvent* event);
-
  public:
   OpenMPAnalysis(const ProgramTrace& program);
 
-  // return true if events are array accesses who's access sets could overlap
-  bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
-
-  // return true if both events are array accesses in an omp loop
-  bool isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
-
-  // return true if event is an array access, not every getelementptr is an array access
-  bool isArrayAccess(const llvm::GetElementPtrInst* gep);
+  std::vector<Region> getLoopRegions(const ThreadTrace& thread) const;
 
   // return true if both events are part of the same omp team
   bool fromSameParallelRegion(const Event* event1, const Event* event2) const;
