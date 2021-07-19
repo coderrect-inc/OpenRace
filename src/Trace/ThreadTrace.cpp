@@ -105,7 +105,7 @@ bool handleOpenMPMaster(const CallIR *callIR, TraceBuildState &state, bool isMas
       // skip on non-master threads
       auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
       assert(end && "encountered master start without end");
-      state.exlMasterEnd = end;
+      state.skipUntil = end;
       return true;
     }
 
@@ -136,20 +136,16 @@ bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMaster
   return false;
 }
 
-// avoid duplicate omp single/master blocks
-bool doSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state, bool isFork) {
-  if (state.exlMasterEnd) {
-    if (state.exlMasterEnd == ir->getInst()) {
-      state.exlMasterEnd = nullptr;  // matched and reset
-    }
-    return true;  // skip traversing to avoid FP
-  }
-  if (isFork && state.exlSingleEnd) {
-    if (state.exlSingleEnd == ir->getInst()) {
-      state.exlSingleEnd = nullptr;  // matched and reset
-    }
-    return true;  // skip traversing to avoid FP
-  }
+// return true if the current instruction should be skipped
+bool shouldSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) {
+  if (!state.skipUntil) return false;
+
+  // Skip until we reach the target instruction
+  if (ir->getInst() != state.skipUntil) return true;
+
+  // Else we reached the target instruction
+  // reset skipUntil ptr and continue traversing
+  state.skipUntil = nullptr;
   return false;
 }
 
@@ -192,7 +188,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
   for (auto const &ir : irFunc) {
-    if (doSkipIR(ir, state, isFork)) {
+    if (shouldSkipIR(ir, state)) {
       continue;
     }
     // Skip OpenMP synchronizations that have no affect across teams

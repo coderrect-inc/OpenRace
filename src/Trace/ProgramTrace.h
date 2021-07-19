@@ -64,20 +64,17 @@ struct OpenMPState {
 
 // all included states are ONLY used when building ProgramTrace/ThreadTrace
 struct TraceBuildState {
+  // Cached function summaries
   FunctionSummaryBuilder builder;
 
   // the counter of thread id: since we are constructing ThreadTrace while building events,
   // pState.threads.size() will be updated after finishing the construction, we need such a counter
   ThreadID currentTID = 0;
 
-  // the matched master start/end in traverseCallNode
-  const llvm::CallBase *exlMasterStart = nullptr;
-  const llvm::CallBase *exlMasterEnd = nullptr;  // to match skip until
+  // When set, skip traversing until this instruction is reached
+  const llvm::Instruction *skipUntil = nullptr;
 
-  // the matched single(+task) start/end in traverseCallNode
-  const llvm::CallBase *exlSingleStart = nullptr;
-  const llvm::CallBase *exlSingleEnd = nullptr;  // to match skip until
-
+  // Track state specific to OpenMP
   OpenMPState openmp;
 };
 
