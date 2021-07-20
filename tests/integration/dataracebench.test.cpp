@@ -396,7 +396,8 @@ TEST_LL("DRB159", "DRB159-nobarrier-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB168", /*TODO*/, EXPECTED(/*TODO*/))
 
 // 169 multi-dimen array // Missed TP
-// TEST_LL("DRB169", "DRB169-missingsyncwrite-orig-yes.ll", EXPECTED("DRB169-missingsyncwrite-orig-yes.c:38:15 DRB169-missingsyncwrite-orig-yes.c:38:15"))
+TEST_LL("DRB169", "DRB169-missingsyncwrite-orig-yes.ll",
+        EXPECTED("DRB169-missingsyncwrite-orig-yes.c:38:15 DRB169-missingsyncwrite-orig-yes.c:38:15"))
 
 TEST_LL("DRB170", "DRB170-nestedloops-orig-no.ll", NORACE)
 TEST_LL("DRB171", "DRB171-threadprivate3-orig-no.ll", NORACE)

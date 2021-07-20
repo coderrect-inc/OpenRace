@@ -10,115 +10,158 @@ const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
-// whether this index is the one that omp for directive will parallelize on, e.g., DRB169
+// return the name of the ONE index that omp for directive will parallelize on, e.g., DRB169
 //    #pragma omp parallel for
-//    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on if there is no collapse clause
+//    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on IF there is no collapse clause
 //      for (j = 1; j < N-1; j++) { ...
-bool isParallelOnIdx(const llvm::GetElementPtrInst *gep, const StringRef &idxName) {
+std::string getLoopReductionIndexes(const llvm::GetElementPtrInst *gep) {
   auto bb = gep->getParent();
   // this gep must be in the for loop body basic block, e.g., with name of "for.body5.i" or "for.body.i"
   assert(bb->getName().contains("for.body") && bb->getName().endswith(".i") &&
          "Index not used in basic block of for.body.xxx");
 
-  const llvm::BasicBlock *incBB = nullptr;
-  for (const llvm::BasicBlock *succ : successors(bb)) {
-    if (succ->getName().contains("for.inc")) {
-      // if the name of basic block has "for.inc", this code has nested loops without collapse
-      incBB = succ;
+  //  const llvm::BasicBlock *incBB = nullptr;
+  //  for (const llvm::BasicBlock *succ : successors(bb)) {
+  //    if (succ->getName().contains("for.inc")) {
+  //      // if the name of basic block has "for.inc", this code has nested loops without collapse
+  //      // but this is not always valid, e.g., DRB003
+  //      incBB = succ;
+  //      break;
+  //    }
+  //  }
+
+  // check whether this idx is the one that omp parallel on
+  auto func = bb->getParent();
+  for (auto it = func->begin(); it != func->end(); it++) {
+    const StringRef &bbName = it->getName();
+    // this is the basic block with phi node of paralleled index:
+    // (1) if using "omp parallel for", find the basic block has name "omp.inner.for.body.i"
+    // (2) others, e.g., "omp target", find the basic block has name "for.body.i"
+    // maybe have other cases for other directives
+    if (bbName == "omp.inner.for.body.i") {
+      return it->front().getName().str();
+    } else if (bbName == "for.body.i") {
+      // this is the one
+      return it->front().getName().str();
+    } else if (bbName == "for.cond.preheader.i") {  // e.g., DRB003
+      return it->front().getName().str();
+    }
+  }
+
+  return "";
+}
+
+// return the index name if the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
+// WITH a prerequisite of which index is the one that omp for directive will parallelize on:
+// if the name of index var/ptr starts by "indvars.", it is declared by loops, e.g., %indvars.iv.i
+// refer to https://llvm.org/docs/Passes.html#indvars-canonicalize-induction-variables
+// if starting by "idxprom" + an int, e.g., %idxprom15.i, it is declared outside,
+// or declared inside but increment by its self-updating rules
+std::string getRootIdxName(const llvm::GetElementPtrInst *gep) {
+  auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last op
+  if (idx->hasName()) {
+    const StringRef &name = idx->getName();
+    if (name.startswith("indvars.")) {  // from loop induction
+      return name.str();                // omp is parallel on this idx
+    }
+    if (name.startswith("idxprom")) {
+      // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
+      // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
+      auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
+      Value *op = sext->getOperand(0);
+      if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
+        op = load->getPointerOperand();
+        auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
+        if (gep_Op) {
+          // check if idx is incremented related to loop induction and other arrays, e.g., DRB005-008
+          // the related IR is like:
+          //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
+          //    // --> this is gen_Op, which index is indvars %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa
+          //    !112, !noalias !91
+          //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
+          //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
+          return getRootIdxName(gep_Op);
+        }
+      } else if (op->hasName()) {
+        // maybe nested loop using collapse, e.g.,DRB093, the IR is like:
+        //  %idxprom.i = sext i32 %div.i to i64, !dbg !60
+        //  %idxprom7.i = sext i32 %sub.i to i64, !dbg !60
+        //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
+        //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
+        const StringRef &opName = op->getName();
+        if (opName.startswith("div.") || opName.startswith("sub.")) {
+          // this is nested loop with the collapse clause: no race, TODO: but how do we return this?
+          return "collapse";
+        }
+      }
+      return "";
+    }
+  }
+
+  llvm::errs() << "Unhandled loop index types: " << idx << "\n";
+  return "";
+}
+
+bool isFromLoopInduction(std::string name) { return name != ""; }
+
+// find all indexes/GEPs for this array access
+std::queue<const llvm::GetElementPtrInst *> findAllGEPForArrayAccess(const llvm::GetElementPtrInst *gep) {
+  std::queue<const llvm::GetElementPtrInst *> idxes;
+
+  while (gep != nullptr) {
+    idxes.push(gep);
+
+    auto base = gep->getOperand(0);
+    if (base->getType()->isArrayTy() || base->getType()->getContainedType(0)->isArrayTy()) {
+      gep = llvm::dyn_cast<llvm::GetElementPtrInst>(base->stripPointerCasts());
+    } else {
       break;
     }
   }
 
-  if (!incBB) return false;  // only one index, no nested loop
-
-  // check whether this idx is the one that omp parallel on
-  for (const llvm::BasicBlock *succ : successors(incBB)) {
-    if (succ->getName().contains(".preheader.i")) {
-      // this is the basic block with phi node of paralleled index:
-      // (1) if using "omp parallel for", find the basic block has name "omp.inner.for.body.i"
-      // (2) others, e.g., "omp target", find the basic block has name "for.body.i"
-      // maybe have other cases for other directives
-      auto func = succ->getParent();
-      for (auto it = func->begin(); it != func->end(); it++) {
-        const StringRef &bbName = it->getName();
-        if (bbName == "omp.inner.for.body.i") {
-          it->front().print(llvm::outs(), true);
-          llvm::outs() << it->front().getName();
-          return it->front().getName() == idxName;
-        } else if (bbName == "for.body.i") {
-          // this is the one
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  return idxes;
 }
 
 // For the following conditions, when diff == 0, array access patterns are perfectly aligned and there is not overlap:
 // (1) for one dimension loop:
 // a. the index var/ptr used by gep is declared by loop induction
 // a (continue). or is loop-induction-related,
+//
 // (2) for multi dimension loops:
 // a. the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
 // b. this index is the one that omp for directive will parallelize on, e.g.,
 //    #pragma omp parallel for
 //    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on
 //      for (j = 1; j < N-1; j++) { ...
-//        a[i][j] = ... // i == paralleled index with perfect arrangement: no race
-//        b[j] = ...    // j != paralleled index, different threads can access the same j element together
+//        a[i][j] = ... // i == paralleled index with perfect arrangement: no write/write race
+//        b[j] = ...    // j != paralleled index, different threads can access the same j element together: can have
+//        write/write race
 // c. if there is collapse clause: should not have dependency across loops and perfect aligned, should not have race
-
-// whether the index var/ptr used by gep is declared by loop induction or is loop-induction-related,
-// AND
-// this index is the one that omp for directive will parallelize on:
-// if the name of index var/ptr starts by "indvars.", it is declared by loops, e.g., %indvars.iv.i
-// refer to https://llvm.org/docs/Passes.html#indvars-canonicalize-induction-variables
-// if starting by "idxprom" + an int, it is declared outside, or declared inside but increment
-// by self update rules, e.g., %idxprom15.i
-bool idxDeclaredByLoopInduction(const llvm::GetElementPtrInst *gep) {
-  for (int i = 1; i < gep->getNumOperands(); i++) {  // exclude the base ptr when i==0, iterate all indexes
-    auto idx = gep->getOperand(i);
-    if (idx->hasName()) {
-      const StringRef &name = idx->getName();
-      if (name.startswith("indvars.")) {  // from loop induction
-        continue;                         // omp is parallel on this idx
-      } else if (name.startswith("idxprom")) {
-        // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
-        // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
-        auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
-        Value *op = sext->getOperand(0);
-        if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
-          op = load->getPointerOperand();
-          auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
-          if (gep_Op) {
-            // check if idx is incremented related to loop induction and other arrays, e.g., DRB005-008
-            // the related IR is like:
-            //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
-            //    // --> this is gen_Op, which index is indvars %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa
-            //    !112, !noalias !91
-            //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
-            //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
-            return idxDeclaredByLoopInduction(gep_Op);
-          }
-        } else if (op->hasName()) {
-          // maybe nested loop using collapse, e.g.,DRB093, the IR is like:
-          //  %idxprom.i = sext i32 %div.i to i64, !dbg !60
-          //  %idxprom7.i = sext i32 %sub.i to i64, !dbg !60
-          //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
-          //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
-          const StringRef &opName = op->getName();
-          if (name.startswith("div.") || name.startswith("sub.")) {
-            // this is nested loop with the collapse clause: no race, TODO: but how do we return this?
-            return true;
-          }
-        }
-        return false;
-      }
-    }  // no name, e.g., i32 0
+//
+// The corresponding multi-dimension array access IR for x[i][j] can be like:
+//     %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
+//     %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
+//     %18 = load i32, i32* %17, align 4, !dbg !60, !tbaa !57, !noalias !39
+//
+// PS: this is valid when index, e.g., i or j, is declared by loop induction, e.g., for (i=0;i<len;i++) {...},
+// but for index declared outside of loop, this can still overlap since it has a different
+// self-update rule, e.g., DRB018
+bool isPerfectlyAligned(const llvm::GetElementPtrInst *gep) {
+  auto idxes = findAllGEPForArrayAccess(gep);
+  if (idxes.size() == 1) {  // one-dimension array
+    auto idxName = getRootIdxName(gep);
+    return isFromLoopInduction(idxName);
+  } else {  // multi-dimension
+    const GetElementPtrInst *idx = idxes.front();
+    idxes.pop();
+    auto idxName = getRootIdxName(idx);
+    if (idxName == "collapse") {
+      return true;
+    } else {
+      auto idxInduction = getLoopReductionIndexes(gep);
+      return idxInduction == idxName;
+    }
   }
-  return true;
 }
 
 // move add operation out the (sext ) SCEV
@@ -490,11 +533,8 @@ bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *even
     return true;
   }
 
-  if (diff->isZero() && idxDeclaredByLoopInduction(gep1) && idxDeclaredByLoopInduction(gep2)) {
+  if (diff->isZero() && isPerfectlyAligned(gep1) && isPerfectlyAligned(gep2)) {
     // simplest case, array access patterns are perfectly aligned and there is not overlap
-    // PS: this is valid when index, e.g., i or j, is declared in loop, e.g., for (i=0;i<len;i++) {...},
-    // but for index declared outside of loop, this can still overlap since it has a different
-    // self-update rule, e.g., DRB018
     return false;
   }
 
