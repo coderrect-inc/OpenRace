@@ -150,14 +150,14 @@ class OpenMPFork : public ForkIR {
   static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
 };
 
-class OpenMPTask : public ForkIR {
+class OpenMPTaskFork : public ForkIR {
   // https://github.com/llvm/llvm-project/blob/ef32c611aa214dea855364efd7ba451ec5ec3f74/openmp/runtime/src/kmp_tasking.cpp#L1684
   constexpr static unsigned int threadEntryOffset = 2;
   constexpr static unsigned int taskEntryOffset = 5;
   const llvm::CallBase *inst;
 
  public:
-  explicit OpenMPTask(const llvm::CallBase *inst) : ForkIR(Type::OpenMPTask), inst(inst) {}
+  explicit OpenMPTaskFork(const llvm::CallBase *inst) : ForkIR(Type::OpenMPTaskFork), inst(inst) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -176,7 +176,7 @@ class OpenMPTask : public ForkIR {
   }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::OpenMPTask; }
+  static inline bool classof(const IR *e) { return e->type == Type::OpenMPTaskFork; }
 };
 
 class OpenMPForkTeams : public ForkIR {
@@ -244,10 +244,11 @@ class OpenMPJoin : public JoinIR {
 };
 
 class OpenMPTaskJoin : public JoinIR {
-  std::shared_ptr<const OpenMPTask> task;
+  std::shared_ptr<const OpenMPTaskFork> task;
 
  public:
-  explicit OpenMPTaskJoin(const std::shared_ptr<const OpenMPTask> _task) : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
+  explicit OpenMPTaskJoin(const std::shared_ptr<const OpenMPTaskFork> _task)
+      : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
 

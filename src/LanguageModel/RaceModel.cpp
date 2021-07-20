@@ -44,7 +44,7 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
   }
 
   if (OpenMPModel::isTask(funcName) || OpenMPModel::isTaskAlloc(funcName)) {
-    race::OpenMPTask task(llvm::cast<CallBase>(callsite));
+    race::OpenMPTaskFork task(llvm::cast<CallBase>(callsite));
     return {task.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
 

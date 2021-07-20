@@ -454,7 +454,7 @@ namespace {
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
-  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTask) {
+  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTaskFork) {
     // this works when the event is from omp task fork: we need the parent spawn site here,
     // and the code may have nested tasks
     while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
@@ -529,7 +529,7 @@ std::optional<Region> getContainingRegion(const Event *event) {
   // we can also check to see if this thread was spawned within a region on the parent thread
   if (regions.empty()) {
     auto parent = thread.spawnSite.value();
-    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {
+    if (parent->getIRInst()->type == IR::Type::OpenMPTaskFork) {
       return getContainingRegion<Start, End>(parent);
     }
     return std::nullopt;

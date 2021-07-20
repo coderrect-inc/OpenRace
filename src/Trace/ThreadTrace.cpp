@@ -163,7 +163,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       // Only put omp task forks on master thread if spawned in single region
-      if (forkIR->type == IR::Type::OpenMPTask && state.openmp.inSingle) {
+      if (forkIR->type == IR::Type::OpenMPTaskFork && state.openmp.inSingle) {
         auto ompFork = isOpenMPThread(thread);
         if (ompFork && !ompFork->isMasterThread) continue;
       }
@@ -180,8 +180,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto forkEvent = static_cast<const ForkEvent *>(event);
 
       // maintain the current traversed tasks in state.openmp.unjoinedTasks
-      if (forkIR->type == IR::Type::OpenMPTask) {
-        std::shared_ptr<const OpenMPTask> task(fork, llvm::cast<OpenMPTask>(fork.get()));
+      if (forkIR->type == IR::Type::OpenMPTaskFork) {
+        std::shared_ptr<const OpenMPTaskFork> task(fork, llvm::cast<OpenMPTaskFork>(fork.get()));
         state.openmp.unjoinedTasks.emplace_back(forkEvent, task);
       }
 

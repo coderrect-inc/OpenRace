@@ -53,9 +53,9 @@ struct OpenMPState {
   // from the forkEvent. forkEvent->getIRInst() returns a raw pointer instead.
   struct UnjoinedTask {
     const ForkEvent *forkEvent;
-    std::shared_ptr<const OpenMPTask> forkIR;
+    std::shared_ptr<const OpenMPTaskFork> forkIR;
 
-    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTask> forkIR)
+    UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTaskFork> forkIR)
         : forkEvent(forkEvent), forkIR(forkIR) {}
   };
   // List of unjoined OpenMP task threads

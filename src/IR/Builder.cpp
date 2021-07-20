@@ -155,7 +155,7 @@ FunctionSummary generateFunctionSummary(const llvm::Function &func) {
         } else if (OpenMPModel::isUnsetLock(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isTask(funcName)) {
-          auto taskStart = std::make_shared<OpenMPTask>(callInst);
+          auto taskStart = std::make_shared<OpenMPTaskFork>(callInst);
           summary.instructions.push_back(taskStart);
         } else if (OpenMPModel::isTaskAlloc(funcName)) {
           summary.instructions.push_back(std::make_shared<OpenMPTaskAlloc>(callInst));
