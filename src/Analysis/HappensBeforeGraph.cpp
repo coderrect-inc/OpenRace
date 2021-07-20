@@ -87,8 +87,7 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
   // if fork has been explicitly set, use it.
   // now we only store the corresponding fork for OpenMPTaskJoin
-  auto const fork = join->getForkEvent();  // is OpenMPTaskJoin
-  if (fork) return fork.value();
+  if (auto const fork = join->getForkEvent()) return fork.value();
 
   // Else need to use hueristics to match join to a fork
   auto const joinHandle = join->getIRInst()->getThreadHandle();
