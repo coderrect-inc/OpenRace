@@ -84,10 +84,9 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
   return nullptr;
 }
 
-// avoid inserted fake task join to find the same task fork, e.g., task-yes.c
-// TODO: both tasks have the same ir in task joins, e.g., task-single-call.c, cannot distinguish
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
-  // if fork has been explicitly set, use it
+  // if fork has been explicitly set, use it.
+  // now we only store the corresponding fork for OpenMPTaskJoin
   auto const fork = join->getForkEvent();  // is OpenMPTaskJoin
   if (fork) return fork.value();
 

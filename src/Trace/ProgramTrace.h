@@ -22,8 +22,6 @@ limitations under the License.
 
 namespace race {
 
-using OMPStartEnd = std::map<const llvm::CallBase *, const llvm::CallBase *>;
-
 struct OpenMPState {
   // Track if we are currently in parallel region created from kmpc_fork_teams
   size_t teamsDepth = 0;
@@ -35,17 +33,20 @@ struct OpenMPState {
   // Track the start/end instructions of master regions
   std::map<const llvm::CallBase *, const llvm::CallBase *> masterRegions;
   const llvm::CallBase *currentMasterStart = nullptr;
+
   // record the start of a master
   void markMasterStart(const llvm::CallBase *start) {
     assert(!currentMasterStart && "encountered two master starts in a row");
     currentMasterStart = start;
   }
+
   // mark the end of a master region
   void markMasterEnd(const llvm::CallBase *end) {
     assert(currentMasterStart && "encountered master end without start");
     masterRegions.insert({currentMasterStart, end});
     currentMasterStart = nullptr;
   }
+
   // Get the end of a previously encountered master region
   const llvm::CallBase *getMasterRegionEnd(const llvm::CallBase *start) const { return masterRegions.at(start); }
 
@@ -58,6 +59,7 @@ struct OpenMPState {
     UnjoinedTask(const ForkEvent *forkEvent, std::shared_ptr<const OpenMPTaskFork> forkIR)
         : forkEvent(forkEvent), forkIR(forkIR) {}
   };
+
   // List of unjoined OpenMP task threads
   std::vector<UnjoinedTask> unjoinedTasks;
 };

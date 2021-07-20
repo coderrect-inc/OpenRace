@@ -75,8 +75,8 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
 
-inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
 inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc"); }
+inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
 inline bool isTask(const llvm::CallBase* callInst) {
   if (!callInst) return false;
   auto const func = callInst->getCalledFunction();

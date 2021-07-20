@@ -22,7 +22,7 @@ using namespace race;
 
 namespace {
 
-// all tasks in state.taskWOJoins should be joined when any of the following occur:
+// all tasks in state.unjoinedTasks should be joined when any of the following occur:
 // 1. a barrier is encountered (from anywhere, not just after single)
 // 2. taskwait is encountered (TODO)
 // 3. the end of the parallel region is encountered.
@@ -44,12 +44,12 @@ const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
 
 // handle omp single/master events
 // return true if the current instruction should be skipped
-bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
+bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, OpenMPFork::Type isMasterThread) {
   switch (callIR->type) {
     // OpenMP master is modeled by only traversing the master region on master omp threads
     // skip the region on non-master threads
     case IR::Type::OpenMPMasterStart: {
-      if (!isMasterThread) {
+      if (isMasterThread != OpenMPFork::Type::Master) {
         // skip on non-master threads
         auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
         assert(end && "encountered master start without end");
@@ -62,7 +62,7 @@ bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMaster
       return false;
     }
     case IR::Type::OpenMPMasterEnd: {
-      if (isMasterThread) {
+      if (isMasterThread == OpenMPFork::Type::Master) {
         // Save the end of the master region
         state.openmp.markMasterEnd(callIR->getInst());
       }
@@ -113,6 +113,7 @@ bool isOpenMPTeamSpecific(const IR *ir) {
 // events    - list of events to append newly created events to
 // threads   - list of threads to append and newly created threads to
 // state     - used to track data across the construction of the entire program trace
+// TODO: the behavior might be different when this traversal is for a fork or a function call
 void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
                       const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events,
                       std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state) {
@@ -121,9 +122,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     // prevent recursion
     return;
   }
-
-  // the behavior is different when this traversal is for a fork or a call, e.g., task-single-call.ll
-  bool isFork = callstack.isEmpty();
 
   callstack.push(func);
 
@@ -153,10 +151,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       std::shared_ptr<const WriteIR> write(ir, writeIR);
       events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
-      // Only put omp task forks on master thread if spawned in single region
+      // if spawned in single region, put omp task forks on master thread only
       if (forkIR->type == IR::Type::OpenMPTaskFork && state.openmp.inSingle) {
         auto ompFork = isOpenMPThread(thread);
-        if (ompFork && !ompFork->isMasterThread) continue;
+        if (ompFork && ompFork->isMasterThread != OpenMPFork::Type::Master) continue;
       }
 
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
@@ -193,7 +191,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       }
 
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
-      // check if need to insert joins for tasks
+      // insert task joins for state.unjoinedTasks before the end of this omp parallel region
       if (joinIR->type == IR::Type::OpenMPJoin) {
         insertTaskJoins(events, state, einfo);
       }

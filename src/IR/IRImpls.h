@@ -126,15 +126,17 @@ class OpenMPFork : public ForkIR {
   // @param microtask  pointer to callback routine consisting of outlined parallel
   // construct
   // @param ...  pointers to shared variables that aren't global
+
   constexpr static unsigned int threadHandleOffset = 0;
   constexpr static unsigned int threadEntryOffset = 2;
   const llvm::CallBase *inst;
 
  public:
-  const bool isMasterThread;
+  enum class Type { Master, Other };
+  const OpenMPFork::Type isMasterThread;
 
-  explicit OpenMPFork(const llvm::CallBase *inst, bool isMasterThread = false)
-      : ForkIR(Type::OpenMPFork), inst(inst), isMasterThread(isMasterThread) {}
+  explicit OpenMPFork(const llvm::CallBase *inst, OpenMPFork::Type isMasterThread = OpenMPFork::Type::Other)
+      : ForkIR(IR::Type::OpenMPFork), inst(inst), isMasterThread(isMasterThread) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 
@@ -147,7 +149,7 @@ class OpenMPFork : public ForkIR {
   }
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
-  static inline bool classof(const IR *e) { return e->type == Type::OpenMPFork; }
+  static inline bool classof(const IR *e) { return e->type == IR::Type::OpenMPFork; }
 };
 
 class OpenMPTaskFork : public ForkIR {

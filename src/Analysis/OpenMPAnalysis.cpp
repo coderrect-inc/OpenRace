@@ -450,7 +450,7 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
 namespace {
 
-// recursively find the root spawnsite (from #pragma omp parallel) for this event
+// recursively find the spawn site of the closest/innermost OpenMPFork for this event
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
@@ -526,7 +526,11 @@ std::optional<Region> getContainingRegion(const Event *event) {
   auto const regions = getRegions<Start, End>(thread);
 
   // If we are on thread spawned wihtin parallel region,
-  // we can also check to see if this thread was spawned within a region on the parent thread
+  // we can also check to see if this thread was spawned within a region on the parent thread:
+  // This ONLY valid when the event is from threads spawned by OpenMPTask (or maybe also OpenMPForkTeams later if we
+  // also need such checks). For other cases (e.g., events from threads spawned by OpenMPFork), if there exists such a
+  // region, the region must be in the same thread, not parent thread. If we remove the check, we will get wrong/null
+  // regions for the other cases.
   if (regions.empty()) {
     auto parent = thread.spawnSite.value();
     if (parent->getIRInst()->type == IR::Type::OpenMPTaskFork) {
@@ -546,16 +550,16 @@ std::optional<Region> getContainingRegion(const Event *event) {
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
-// (event1 always has the thread trace with full irs)
+// (event1 is always from Thread1, i.e., the master thread, which has the full thread trace with all IRs)
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  // get omp block contains the event
+  // get omp region contains the event
   auto const region1 = getContainingRegion<Start, End>(event1);
   auto const region2 = getContainingRegion<Start, End>(event2);
 
-  if (!region1 || !region2) {  // should have block
+  if (!region1 || !region2) {
     return false;
   }
 
@@ -579,7 +583,6 @@ const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(co
   }
 
   // Else find the loop regions
-  // auto const loopRegions = ;
   ompForLoops[thread.id] = _getLoopRegions(thread);
 
   return ompForLoops.at(thread.id);
@@ -637,8 +640,6 @@ bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *ev
   return _fromSameParallelRegion(event1, event2);
 }
 
-// this does not filter out FP when single has multiple tasks inside, e.g., DRB027-taskdependmissing-orig-yes.ll
-// only use this when no tasks in single block
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
 }
@@ -748,7 +749,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRInst()->type == race::IR::Type::OpenMPReduce) {
+    if (event->getIRType() == race::IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());
