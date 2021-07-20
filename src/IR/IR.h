@@ -69,7 +69,6 @@ class IR {
     OpenMPReduce,
     OpenMPMasterStart,
     OpenMPMasterEnd,
-    OpenMPTaskAlloc,
     OpenMPGetThreadNum,
     END_Call
   } type;
