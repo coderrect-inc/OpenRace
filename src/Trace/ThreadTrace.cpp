@@ -166,7 +166,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 
       // traverse this fork
       auto event = events.back().get();
-      auto forkEvent = static_cast<const ForkEvent *>(event);
+      auto forkEvent = llvm::cast<ForkEvent>(event);
 
       // maintain the current traversed tasks in state.openmp.unjoinedTasks
       if (forkIR->type == IR::Type::OpenMPTaskFork) {
