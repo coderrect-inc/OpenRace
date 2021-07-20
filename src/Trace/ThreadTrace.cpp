@@ -12,9 +12,7 @@ limitations under the License.
 #include "Trace/ThreadTrace.h"
 
 #include "EventImpl.h"
-#include "IR/Builder.h"
 #include "IR/IRImpls.h"
-#include "LanguageModel/OpenMP.h"
 #include "Trace/CallStack.h"
 #include "Trace/ProgramTrace.h"
 
