@@ -42,55 +42,47 @@ const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
   return llvm::dyn_cast<OpenMPFork>(thread.spawnSite.value()->getIRInst());
 }
 
-// return true if the current instruction should be skipped
-bool handleOpenMPSingle(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
-  if (callIR->type == IR::Type::OpenMPSingleStart) {
-    state.openmp.inSingle = true;
-  } else if (callIR->type == IR::Type::OpenMPSingleEnd) {
-    state.openmp.inSingle = false;
-  }
-
-  return false;
-}
-
-// Return true if the current instruction should be skipped
-bool handleOpenMPMaster(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
-  // Model master by only traversing the master region on master omp threads
-  // skip the region on non-master threads
-
-  if (callIR->type == IR::Type::OpenMPMasterStart) {
-    if (!isMasterThread) {
-      // skip on non-master threads
-      auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
-      assert(end && "encountered master start without end");
-      state.skipUntil = end;
-      return true;
-    }
-
-    // Save the beggining of the master region
-    state.openmp.markMasterStart(callIR->getInst());
-    return false;
-  }
-
-  if (callIR->type == IR::Type::OpenMPMasterEnd && isMasterThread) {
-    // Save the end of the master region
-    state.openmp.markMasterEnd(callIR->getInst());
-  }
-
-  return false;
-}
-
 // handle omp single/master events
-// return true if skip pushing this event to event trace
+// return true if the current instruction should be skipped
 bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
-  if (handleOpenMPMaster(callIR, state, isMasterThread)) {
-    return true;
-  }
+  switch (callIR->type) {
+    // OpenMP master is modeled by only traversing the master region on master omp threads
+    // skip the region on non-master threads
+    case IR::Type::OpenMPMasterStart: {
+      if (!isMasterThread) {
+        // skip on non-master threads
+        auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
+        assert(end && "encountered master start without end");
+        state.skipUntil = end;
+        return true;
+      }
 
-  if (handleOpenMPSingle(callIR, state, isMasterThread)) {
-    return true;
+      // Save the beggining of the master region
+      state.openmp.markMasterStart(callIR->getInst());
+      return false;
+    }
+    case IR::Type::OpenMPMasterEnd: {
+      if (isMasterThread) {
+        // Save the end of the master region
+        state.openmp.markMasterEnd(callIR->getInst());
+      }
+      return false;
+    }
+    // OpenMP single is modeled by placing events on both threads and filtering impossible races during analysis phase
+    // However we need to ensure tasks spawned inside a single region are only created one
+    // To do this we need to track when we are in a single region
+    case IR::Type::OpenMPSingleStart: {
+      state.openmp.inSingle = true;
+      return false;
+    }
+    case IR::Type::OpenMPSingleEnd: {
+      state.openmp.inSingle = false;
+      return false;
+    }
+    default: {
+      // Do Nothing
+    }
   }
-
   return false;
 }
 
