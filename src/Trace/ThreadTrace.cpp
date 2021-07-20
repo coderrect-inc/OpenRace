@@ -131,13 +131,12 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
     llvm::outs() << "Generating Func Sum: TID: " << thread.id << " Func: " << func->getName() << "\n";
   }
 
-  auto summary = state.builder.getFunctionSummary(func);
-  auto const &irFunc = summary->instructions;
+  auto const &summary = *state.builder.getFunctionSummary(func);
 
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
-  for (auto const &ir : irFunc) {
+  for (auto const &ir : summary) {
     if (shouldSkipIR(ir, state)) {
       continue;
     }

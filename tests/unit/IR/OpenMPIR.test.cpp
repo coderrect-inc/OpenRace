@@ -61,7 +61,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   auto func = module->getFunction("main");
 
   race::FunctionSummaryBuilder builder;
-  auto racefunc = builder.getFunctionSummary(func)->instructions;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 4);
 
   auto ompFork = llvm::dyn_cast<race::OpenMPFork>(racefunc.at(0).get());
@@ -110,7 +110,7 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
   auto func = module->getFunction(".omp_outlined.");
 
   race::FunctionSummaryBuilder builder;
-  auto racefunc = builder.getFunctionSummary(func)->instructions;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 2);
 
   CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPSingleStart);
@@ -144,7 +144,7 @@ declare dso_local void @__kmpc_barrier(%struct.ident_t*, i32)
   auto func = module->getFunction(".omp_outlined.");
 
   race::FunctionSummaryBuilder builder;
-  auto racefunc = builder.getFunctionSummary(func)->instructions;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 1);
 
   CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPBarrier);
@@ -184,7 +184,7 @@ declare dso_local void @__kmpc_end_critical(%struct.ident_t*, i32, [8 x i32]*)
   auto func = module->getFunction(".omp_outlined.");
 
   race::FunctionSummaryBuilder builder;
-  auto racefunc = builder.getFunctionSummary(func)->instructions;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 6);
 
   CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPCriticalStart);
@@ -224,7 +224,7 @@ declare dso_local i32 @__kmpc_master(%struct.ident_t*, i32)
   auto func = module->getFunction(".omp_outlined.");
 
   race::FunctionSummaryBuilder builder;
-  auto racefunc = builder.getFunctionSummary(func)->instructions;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 6);
 
   CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPMasterStart);
