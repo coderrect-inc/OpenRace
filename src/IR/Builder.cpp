@@ -168,7 +168,7 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
           summary.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
-          auto ompFork = std::make_shared<OpenMPFork>(callInst, OpenMPFork::Type::Master);
+          auto ompFork = std::make_shared<OpenMPFork>(callInst, OpenMPFork::ThreadType::Master);
           auto twinOmpFork = getTwinOmpFork(ompFork);
           if (!twinOmpFork) {
             // without duplicated fork we cannot detect any races in omp region so just skip it

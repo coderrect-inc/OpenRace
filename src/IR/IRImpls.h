@@ -132,11 +132,13 @@ class OpenMPFork : public ForkIR {
   const llvm::CallBase *inst;
 
  public:
-  enum class Type { Master, Other };
-  const OpenMPFork::Type isMasterThread;
+  enum class ThreadType { Master, Other };
+  const OpenMPFork::ThreadType forkedThreadType;
 
-  explicit OpenMPFork(const llvm::CallBase *inst, OpenMPFork::Type isMasterThread = OpenMPFork::Type::Other)
-      : ForkIR(IR::Type::OpenMPFork), inst(inst), isMasterThread(isMasterThread) {}
+  explicit OpenMPFork(const llvm::CallBase *inst, ThreadType forkedThreadType = ThreadType::Other)
+      : ForkIR(IR::Type::OpenMPFork), inst(inst), forkedThreadType(forkedThreadType) {}
+
+  [[nodiscard]] inline bool isForkingMaster() const { return forkedThreadType == ThreadType::Master; }
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return inst; }
 

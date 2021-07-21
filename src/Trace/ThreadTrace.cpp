@@ -40,14 +40,21 @@ const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
   return llvm::dyn_cast<OpenMPFork>(thread.spawnSite.value()->getIRInst());
 }
 
+// return true if thread is an OpenMP master thread
+bool isOpenMPMasterThread(const ThreadTrace &thread) {
+  auto const ompThread = isOpenMPThread(thread);
+  if (!ompThread) return false;
+  return ompThread->isForkingMaster();
+}
+
 // handle omp single/master events
 // return true if the current instruction should be skipped
-bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, OpenMPFork::Type isMasterThread) {
+bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
   switch (callIR->type) {
     // OpenMP master is modeled by only traversing the master region on master omp threads
     // skip the region on non-master threads
     case IR::Type::OpenMPMasterStart: {
-      if (isMasterThread != OpenMPFork::Type::Master) {
+      if (!isMasterThread) {
         // skip on non-master threads
         auto end = state.openmp.getMasterRegionEnd(callIR->getInst());
         assert(end && "encountered master start without end");
@@ -60,7 +67,7 @@ bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, OpenMPFork::T
       return false;
     }
     case IR::Type::OpenMPMasterEnd: {
-      if (isMasterThread == OpenMPFork::Type::Master) {
+      if (isMasterThread) {
         // Save the end of the master region
         state.openmp.markMasterEnd(callIR->getInst());
       }
@@ -150,9 +157,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       events.push_back(std::make_unique<const WriteEventImpl>(write, einfo, events.size()));
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       // if spawned in single region, put omp task forks on master thread only
-      if (forkIR->type == IR::Type::OpenMPTaskFork && state.openmp.inSingle) {
-        auto ompFork = isOpenMPThread(thread);
-        if (ompFork && ompFork->isMasterThread != OpenMPFork::Type::Master) continue;
+      if (forkIR->type == IR::Type::OpenMPTaskFork && state.openmp.inSingle && !isOpenMPMasterThread(thread)) {
+        continue;
       }
 
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
@@ -230,7 +236,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
 
       // Special OpenMP execution modelling
       if (auto ompFork = isOpenMPThread(thread)) {
-        if (handleOMPEvents(callIR, state, ompFork->isMasterThread)) {
+        if (handleOMPEvents(callIR, state, isOpenMPMasterThread(thread))) {
           continue;
         }
       }
