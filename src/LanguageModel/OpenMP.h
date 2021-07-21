@@ -83,6 +83,7 @@ inline bool isTask(const llvm::CallBase* callInst) {
   if (!func->hasName()) return false;
   return isTask(func->getName());
 }
+inline bool isTaskWait(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_taskwait"); }
 
 inline bool isSetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_nest_lock"); }
 inline bool isUnsetNestLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_nest_lock"); }
