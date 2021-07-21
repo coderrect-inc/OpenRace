@@ -81,8 +81,8 @@ TEST_LL("DRB023", "DRB023-sections1-orig-yes.ll",
 TEST_LL("DRB026", "DRB026-targetparallelfor-orig-yes.ll",
         EXPECTED("DRB026-targetparallelfor-orig-yes.c:64:9 DRB026-targetparallelfor-orig-yes.c:64:10"))
 
-// DRB 27 is task
-// TEST_LL("DRB027", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB027", "DRB027-taskdependmissing-orig-yes.ll",
+        EXPECTED("DRB027-taskdependmissing-orig-yes.c:61:7 DRB027-taskdependmissing-orig-yes.c:63:7"))
 
 // DRB 28 the racy object is opted out by SROA
 // TEST_LL("DRB028", /*TODO*/, EXPECTED(/*TODO*/))
@@ -220,16 +220,17 @@ TEST_LL("DRB097", "DRB097-target-teams-distribute-orig-no.ll", NORACE)
 TEST_LL("DRB099", "DRB099-targetparallelfor2-orig-no.ll", NORACE)
 
 // 100-101 task
-// TEST_LL("DRB100", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB101", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB100", "DRB100-task-reference-orig-no.ll", NORACE)
+TEST_LL("DRB101", "DRB101-task-value-orig-no.ll", NORACE)
 
 TEST_LL("DRB102", "DRB102-copyprivate-orig-no.ll", NORACE)
 TEST_LL("DRB103", "DRB103-master-orig-no.ll", NORACE)
 TEST_LL("DRB104", "DRB104-nowait-barrier-orig-no.ll", NORACE)
-
-// 105-107 task
-// TEST_LL("DRB105", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB106", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB105", "DRB105-taskwait-orig-no.ll", NORACE)
+TEST_LL("DRB106", "DRB106-taskwaitmissing-orig-yes.ll",
+        EXPECTED("DRB106-taskwaitmissing-orig-yes.c:61:6 DRB106-taskwaitmissing-orig-yes.c:65:14",
+                 "DRB106-taskwaitmissing-orig-yes.c:63:6 DRB106-taskwaitmissing-orig-yes.c:65:16"))
+// taskgroup
 // TEST_LL("DRB107", /*TODO*/, EXPECTED(/*TODO*/))
 
 TEST_LL("DRB108", "DRB108-atomic-orig-no.ll", NORACE)
@@ -278,11 +279,15 @@ TEST_LL("DRB125", "DRB125-single-orig-no.ll", NORACE)
 // 126 // doesn't check thread counts
 // TEST_LL("DRB126", /*TODO*/, EXPECTED(/*TODO*/))
 
-// 127-136 task
+// 127 task outside of parallel region
 // TEST_LL("DRB127", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB128", /*TODO*/, EXPECTED(/*TODO*/))
+
+// 129-130 task mergable
 // TEST_LL("DRB129", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB130", /*TODO*/, EXPECTED(/*TODO*/))
+
+// 131-136 task
 // TEST_LL("DRB131", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB132", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB133", /*TODO*/, EXPECTED(/*TODO*/))
@@ -299,8 +304,7 @@ TEST_LL("DRB125", "DRB125-single-orig-no.ll", NORACE)
 
 TEST_LL("DRB140", "DRB140-reduction-barrier-orig-yes.ll",
         EXPECTED("DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:31",
-                 "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33",
-                 "DRB140-reduction-barrier-orig-yes.c:27:31 DRB140-reduction-barrier-orig-yes.c:25:7"))
+                 "DRB140-reduction-barrier-orig-yes.c:25:7 DRB140-reduction-barrier-orig-yes.c:27:33"))
 TEST_LL("DRB141", "DRB141-reduction-barrier-orig-no.ll", NORACE)
 
 // 142-143 atomic details

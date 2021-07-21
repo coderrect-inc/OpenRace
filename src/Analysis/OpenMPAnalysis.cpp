@@ -1,6 +1,5 @@
 #include "Analysis/OpenMPAnalysis.h"
 
-#include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
 #include "Trace/Event.h"
 #include "Trace/ProgramTrace.h"
@@ -451,15 +450,31 @@ bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const r
 
 namespace {
 
-// return true if both events belong to the same OpenMP team
+// recursively find the spawn site of the closest/innermost OpenMPFork for this event
+std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
+  auto eSpawn = event->getThread().spawnSite;
+  if (!eSpawn) return std::nullopt;
+  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTaskFork) {
+    // this works when the event is from omp task fork: we need the parent spawn site here,
+    // and the code may have nested tasks
+    while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
+      auto parentSpawn = eSpawn.value()->getThread().spawnSite;
+      if (!parentSpawn) return std::nullopt;
+      eSpawn = parentSpawn;
+    }
+  }
+  return eSpawn;
+}
+
+// return true if both events belong to the same OpenMP team (e.g., under the same #pragma omp parallel)
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
 bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
-  auto e1Spawn = event1->getThread().spawnSite;
-  auto const e1Type = e1Spawn.value()->getIRType();
-  if (!e1Spawn || (e1Type != IR::Type::OpenMPFork && e1Type != IR::Type::OpenMPForkTeams)) return false;
+  // Check both spawn events are OpenMP forks
+  auto e1Spawn = getRootSpawnSite(event1);
+  if (!e1Spawn || !e1Spawn.value()) return false;
 
-  auto e2Spawn = event2->getThread().spawnSite;
-  if (!e2Spawn || e2Spawn.value()->getIRType() != e1Type) return false;
+  auto e2Spawn = getRootSpawnSite(event2);
+  if (!e2Spawn || !e2Spawn.value()) return false;
 
   // Check they are spawned from same thread
   if (e1Spawn.value()->getThread().id != e2Spawn.value()->getThread().id) return false;
@@ -487,7 +502,7 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
       }
       case End: {
         assert(start.has_value() && "encountered end type without a matching start type");
-        regions.emplace_back(start.value(), event->getID());
+        regions.emplace_back(start.value(), event->getID(), thread);
         start.reset();
         break;
       }
@@ -502,46 +517,61 @@ std::vector<Region> getRegions(const ThreadTrace &thread) {
 
 auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::OpenMPForFini>;
 
-// return true if event is inside of a region marked by Start and End
-// see getRegions for more detail on regions
+// Get the innermost region that contains event
 template <IR::Type Start, IR::Type End>
-bool in(const race::Event *event) {
-  auto const regions = getRegions<Start, End>(event->getThread());
-  auto const eid = event->getID();
-  auto it = lower_bound(regions.begin(), regions.end(), Region(eid, eid), regionEndLessThan);
-  if (it != regions.end()) {
-    if (it->contains(eid)) return true;
+std::optional<Region> getContainingRegion(const Event *event) {
+  if (!event) return std::nullopt;
+
+  auto const &thread = event->getThread();
+  auto const regions = getRegions<Start, End>(thread);
+
+  // If we are on thread spawned wihtin parallel region,
+  // we can also check to see if this thread was spawned within a region on the parent thread:
+  // This ONLY valid when the event is from threads spawned by OpenMPTask (or maybe also OpenMPForkTeams later if we
+  // also need such checks). For other cases (e.g., events from threads spawned by OpenMPFork), if there exists such a
+  // region, the region must be in the same thread, not parent thread. If we remove the check, we will get wrong/null
+  // regions for the other cases.
+  if (regions.empty()) {
+    auto parent = thread.spawnSite.value();
+    if (parent->getIRInst()->type == IR::Type::OpenMPTaskFork) {
+      return getContainingRegion<Start, End>(parent);
+    }
+    return std::nullopt;
   }
-  return false;
+
+  for (auto const &region : regions) {
+    if (region.contains(event->getID())) {
+      return region;
+    }
+  }
+
+  return std::nullopt;
 }
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
+// (event1 is always from Thread1, i.e., the master thread, which has the full thread trace with all IRs)
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  auto const eid1 = event1->getID();
-  auto const eid2 = event2->getID();
+  // get omp region contains the event
+  auto const region1 = getContainingRegion<Start, End>(event1);
+  auto const region2 = getContainingRegion<Start, End>(event2);
 
-  // Trace events are ordered, so we can save time by finding the region containing the smaller
-  // ID first, and then checking if that region also contains the bigger ID.
-  auto const minID = (eid1 < eid2) ? eid1 : eid2;
-  auto const maxID = (eid1 > eid2) ? eid1 : eid2;
-
-  // Omp threads in same team will have identical traces so we only need one set of events
-  auto const regions = getRegions<Start, End>(event1->getThread());
-  auto it = lower_bound(regions.begin(), regions.end(), Region(minID, minID), regionEndLessThan);
-  if (it != regions.end()) {
-    if (it->contains(minID)) {
-      return it->contains(maxID);
-    }
+  if (!region1 || !region2) {
+    return false;
   }
+
+  // Omp threads in same team may or may not have identical traces so we see them separately
+  if (region1.value().sameAs(region2.value())) {
+    return true;
+  }
+
   return false;
 }
 
 auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
-auto const _inMasterBlock = in<IR::Type::OpenMPMasterStart, IR::Type::OpenMPMasterEnd>;
 
 }  // namespace
 
@@ -553,8 +583,7 @@ const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(co
   }
 
   // Else find the loop regions
-  auto const loopRegions = _getLoopRegions(thread);
-  ompForLoops[thread.id] = loopRegions;
+  ompForLoops[thread.id] = _getLoopRegions(thread);
 
   return ompForLoops.at(thread.id);
 }
@@ -563,7 +592,8 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
 
-  auto it = lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid), regionEndLessThan);
+  auto it =
+      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
   if (it != loopRegions.end()) {
     if (it->contains(eid)) return true;
   }
@@ -612,11 +642,6 @@ bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *ev
 
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
-}
-
-bool OpenMPAnalysis::bothInMasterBlock(const Event *event1, const Event *event2) const {
-  assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
-  return _inMasterBlock(event1) && _inMasterBlock(event2);
 }
 
 std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {
@@ -714,9 +739,12 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
   // Find reduce events
   for (auto const &event : event1->getThread().getEvents()) {
     // If an event e is inside of a reduce block it must occur *after* the reduce event
-    // so, if either event is encountered before finding a reduce that contains both event1 and event2
+    // so, if either event is encountered before finding a reduce that contains event1
     // we know that they are not in the same reduce block
-    if (event->getID() == event1->getID() || event->getID() == event2->getID()) return false;
+    // since event2 might in a thread that removes single/master events (since we always traverse
+    // them in a small thread ID and here the TID of event1 <= TID of event2), so event2 can
+    // have smaller eventID than event1's
+    if (event->getID() == event1->getID()) return false;
 
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)

@@ -27,6 +27,7 @@ class CallStack {
     return f;
   }
   bool contains(const llvm::Function *func) const { return std::find(stack.begin(), stack.end(), func) != stack.end(); }
+  bool isEmpty() { return stack.empty(); }
 };
 
 }  // namespace race

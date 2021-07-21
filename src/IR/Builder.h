@@ -12,17 +12,22 @@ limitations under the License.
 #pragma once
 
 #include <memory>
+#include <queue>
+#include <set>
 #include <vector>
 
 #include "IR/IR.h"
+#include "IRImpls.h"
 
 namespace race {
+
 using FunctionSummary = std::vector<std::shared_ptr<const IR>>;
 
-FunctionSummary generateFunctionSummary(const llvm::Function *func);
-FunctionSummary generateFunctionSummary(const llvm::Function &func);
+// cache FunctionSummary here
+class FunctionSummaryBuilder {
+  std::map<const llvm::Function *, std::shared_ptr<const FunctionSummary>> cache;
 
-// class Builder {
-//     mutable std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
-// };
+ public:
+  std::shared_ptr<const FunctionSummary> getFunctionSummary(const llvm::Function *func);
+};
 }  // namespace race

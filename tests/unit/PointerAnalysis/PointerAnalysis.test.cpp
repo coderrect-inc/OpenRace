@@ -119,7 +119,7 @@ TEST_CASE("PointerAnalysis", "[unit][PointerAnalysis]") {
 
     passes.add(new LegacyCanonicalizeGEPPass());
     passes.add(new LoweringMemCpyLegacyPass());
-    passes.add(new RemoveExceptionHandlerPass());
+    passes.add(new RemoveExceptionHandlerLegacyPass());
 
     passes.add(new InsertGlobalCtorCallPass());
     passes.add(new PointerAnalysisPass<Solver>());
