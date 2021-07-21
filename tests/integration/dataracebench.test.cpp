@@ -267,7 +267,6 @@ TEST_LL("DRB109", "DRB109-orderedmissing-orig-yes.ll",
 TEST_LL("DRB110", "DRB110-ordered-orig-no.ll", NORACE)
 TEST_LL("DRB111", "DRB111-linearmissing-orig-yes.ll",
         EXPECTED("DRB111-linearmissing-orig-yes.c:67:9 DRB111-linearmissing-orig-yes.c:67:9",
-                 "DRB111-linearmissing-orig-yes.c:67:9 DRB111-linearmissing-orig-yes.c:67:9",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:67:7",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6"))

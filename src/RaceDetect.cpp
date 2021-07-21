@@ -60,23 +60,18 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
     if (DEBUG_PTA) {
-      llvm::outs() << "Checking Race: " << write->getID() << "(TID " << write->getThread().id
-                   << ") "
-                   //                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+      llvm::outs() << "Checking Race: " << write->getID() << "(TID " << write->getThread().id << ") "
+                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine()
+                   << ")"
                    //                   //DRB149 crash on this line
-                   << " " << other->getID() << "(TID " << other->getThread().id
-                   << ") "
-                   //                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+                   << " " << other->getID() << "(TID " << other->getThread().id << ") "
+                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
                    << "\n";
       llvm::outs() << " (IR: ";
       write->getInst()->print(llvm::outs(), false);
       llvm::outs() << "\n\t";
       other->getInst()->print(llvm::outs(), false);
       llvm::outs() << ")\n";
-    }
-
-    if (write->getID() == 17 && other->getID() == 17) {
-      llvm::outs() << "HIT\n";
     }
 
     if (threadlocal.isThreadLocalAccess(write, other)) {
