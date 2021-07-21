@@ -749,7 +749,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRType() == race::IR::Type::OpenMPReduce) {
+    if (event->getIRType() == IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());

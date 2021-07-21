@@ -118,7 +118,6 @@ bool isOpenMPTeamSpecific(const IR *ir) {
 // events    - list of events to append newly created events to
 // threads   - list of threads to append and newly created threads to
 // state     - used to track data across the construction of the entire program trace
-// TODO: the behavior might be different when this traversal is for a fork or a function call
 void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
                       const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events,
                       std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state) {
