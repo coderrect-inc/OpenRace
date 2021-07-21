@@ -238,6 +238,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
         if (handleOMPEvents(callIR, state, isOpenMPMasterThread(thread))) {
           continue;
         }
+        // insert task joins for state.unjoinedTasks when taskwait is encountered
+        if (callIR->type == IR::Type::OpenMPTaskWait) {
+          insertTaskJoins(events, state, einfo);
+        }
       }
 
       if (directNode->getTargetFun()->isExtFunction()) {

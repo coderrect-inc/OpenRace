@@ -226,10 +226,11 @@ TEST_LL("DRB101", "DRB101-task-value-orig-no.ll", NORACE)
 TEST_LL("DRB102", "DRB102-copyprivate-orig-no.ll", NORACE)
 TEST_LL("DRB103", "DRB103-master-orig-no.ll", NORACE)
 TEST_LL("DRB104", "DRB104-nowait-barrier-orig-no.ll", NORACE)
-
-// 105-107 task
-// TEST_LL("DRB105", /*TODO*/, EXPECTED(/*TODO*/))
-// TEST_LL("DRB106", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB105", "DRB105-taskwait-orig-no.ll", NORACE)
+TEST_LL("DRB106", "DRB106-taskwaitmissing-orig-yes.ll",
+        EXPECTED("DRB106-taskwaitmissing-orig-yes.c:61:6 DRB106-taskwaitmissing-orig-yes.c:65:14",
+                 "DRB106-taskwaitmissing-orig-yes.c:63:6 DRB106-taskwaitmissing-orig-yes.c:65:16"))
+// taskgroup
 // TEST_LL("DRB107", /*TODO*/, EXPECTED(/*TODO*/))
 
 TEST_LL("DRB108", "DRB108-atomic-orig-no.ll", NORACE)
@@ -278,11 +279,15 @@ TEST_LL("DRB125", "DRB125-single-orig-no.ll", NORACE)
 // 126 // doesn't check thread counts
 // TEST_LL("DRB126", /*TODO*/, EXPECTED(/*TODO*/))
 
-// 127-136 task
+// 127 task outside of parallel region
 // TEST_LL("DRB127", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB128", /*TODO*/, EXPECTED(/*TODO*/))
+
+// 129-130 task mergable
 // TEST_LL("DRB129", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB130", /*TODO*/, EXPECTED(/*TODO*/))
+
+// 131-136 task
 // TEST_LL("DRB131", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB132", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB133", /*TODO*/, EXPECTED(/*TODO*/))

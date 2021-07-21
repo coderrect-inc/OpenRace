@@ -156,6 +156,8 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
           summary.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isTask(funcName)) {
           summary.push_back(std::make_shared<OpenMPTaskFork>(callInst));
+        } else if (OpenMPModel::isTaskWait(funcName)) {
+          summary.push_back(std::make_shared<OpenMPTaskWait>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {
           summary.push_back(std::make_shared<OpenMPSetLock>(callInst));
         } else if (OpenMPModel::isUnsetNestLock(funcName)) {
