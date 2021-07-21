@@ -65,9 +65,6 @@ class OpenMPLoopManager {
     init();
   }
 
-  // getter
-  [[nodiscard]] inline Function *getTargetFunction() const { return F; }
-
   // query.
   // TODO: handle dynamic dispatch calls.
   inline CallBase *getStaticInitCallIfExist(const BasicBlock *block) const {
