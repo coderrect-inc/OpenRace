@@ -246,8 +246,8 @@ class OpenMPTaskJoin : public JoinIR {
   std::shared_ptr<const OpenMPTaskFork> task;
 
  public:
-  explicit OpenMPTaskJoin(const std::shared_ptr<const OpenMPTaskFork> _task)
-      : JoinIR(Type::OpenMPTaskJoin), task(_task) {}
+  explicit OpenMPTaskJoin(const std::shared_ptr<const OpenMPTaskFork> task)
+      : JoinIR(Type::OpenMPTaskJoin), task(task) {}
 
   [[nodiscard]] inline const llvm::CallBase *getInst() const override { return task->getInst(); }
 
