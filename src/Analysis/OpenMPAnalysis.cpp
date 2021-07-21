@@ -102,7 +102,7 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
     const SCEV *Found = nullptr;
     PredTy Pred;
 
-    FindClosure(PredTy Pred) : Pred(Pred) {}
+    explicit FindClosure(PredTy Pred) : Pred(Pred) {}
 
     bool follow(const llvm::SCEV *S) {
       if (!Pred(S)) return true;
