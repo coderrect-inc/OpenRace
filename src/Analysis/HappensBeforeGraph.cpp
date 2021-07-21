@@ -58,11 +58,6 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   auto thread = std::find_if(threads.begin(), threads.end(), [&fork](auto const &thread) {
     return thread->spawnSite.has_value() && thread->spawnSite.value() == fork;
   });
-  // for (auto const &thread : program.getThreads()) {
-  //   if (thread->spawnSite.has_value() && thread->spawnSite.value() == fork) {
-  //     return thread.get();
-  //   }
-  // }
 
   assert(thread != threads.end() && "Some forkEvent in does not correspond to a thread");
   return thread->get();
