@@ -103,6 +103,8 @@ class JoinEvent : public Event {
   JoinEvent() : Event(Type::Join) {}
 
  public:
+  // return the corresponding fork event if it is known
+  [[nodiscard]] virtual std::optional<const ForkEvent *> getForkEvent() const = 0;
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
 
   [[nodiscard]] inline const race::JoinIR *getIRInst() const override = 0;

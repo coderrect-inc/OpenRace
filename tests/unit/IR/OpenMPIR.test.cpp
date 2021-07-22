@@ -60,7 +60,8 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
 
   auto func = module->getFunction("main");
 
-  auto racefunc = race::generateFunctionSummary(func);
+  race::FunctionSummaryBuilder builder;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 4);
 
   auto ompFork = llvm::dyn_cast<race::OpenMPFork>(racefunc.at(0).get());
@@ -108,7 +109,8 @@ declare dso_local i32 @__kmpc_single(%struct.ident_t*, i32)
 
   auto func = module->getFunction(".omp_outlined.");
 
-  auto racefunc = race::generateFunctionSummary(func);
+  race::FunctionSummaryBuilder builder;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 2);
 
   CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPSingleStart);
@@ -141,14 +143,15 @@ declare dso_local void @__kmpc_barrier(%struct.ident_t*, i32)
 
   auto func = module->getFunction(".omp_outlined.");
 
-  auto racefunc = race::generateFunctionSummary(func);
+  race::FunctionSummaryBuilder builder;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 1);
 
   CHECK(racefunc.at(0)->type == race::IR::Type::OpenMPBarrier);
 }
 
 TEST_CASE("Build OpenMP critical IR") {
-const char *ModuleString = R"(
+  const char *ModuleString = R"(
 %struct.ident_t = type { i32, i32, i32, i32, i8* }
 @.str = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00", align 1
 @0 = private unnamed_addr global %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i32 0, i32 0) }, align 8
@@ -180,7 +183,8 @@ declare dso_local void @__kmpc_end_critical(%struct.ident_t*, i32, [8 x i32]*)
 
   auto func = module->getFunction(".omp_outlined.");
 
-  auto racefunc = race::generateFunctionSummary(func);
+  race::FunctionSummaryBuilder builder;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 6);
 
   CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPCriticalStart);
@@ -219,7 +223,8 @@ declare dso_local i32 @__kmpc_master(%struct.ident_t*, i32)
 
   auto func = module->getFunction(".omp_outlined.");
 
-  auto racefunc = race::generateFunctionSummary(func);
+  race::FunctionSummaryBuilder builder;
+  auto &racefunc = *builder.getFunctionSummary(func);
   REQUIRE(racefunc.size() == 6);
 
   CHECK(racefunc.at(4)->type == race::IR::Type::OpenMPMasterStart);

@@ -43,6 +43,11 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
     return {fork.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
 
+  if (OpenMPModel::isTask(funcName)) {
+    race::OpenMPTaskFork task(llvm::cast<CallBase>(callsite));
+    return {task.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
+  }
+
   // By default always try to expand the function body
   return {F, InterceptResult::Option::EXPAND_BODY};
 }
@@ -95,6 +100,16 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
     return true;
   }
 
+  if (OpenMPModel::isTask(funcName)) {
+    // Link 3rd arg of __kmpc_omp_task (kmp_tsking.cpp:1684) with task functions 2nd
+    auto calleeArg = callee->getFunction()->arg_begin();
+    std::advance(calleeArg, 1);
+    PtrNode *formal = this->getPtrNode(callee->getContext(), calleeArg);
+    PtrNode *actual = this->getPtrNode(caller->getContext(), call->getArgOperand(2));
+    this->consGraph->addConstraints(actual, formal, Constraints::copy);
+    return true;
+  }
+
   return false;
 }
 
@@ -113,13 +128,11 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
   } else if (OpenMPModel::isTaskAlloc(callee->getName())) {  // handled by openmp-specific model
     // the type will be something like %struct.kmp_task_t_with_privates
     Type *type = heapModel.inferHeapAllocTypeForOpenMP(callee->getFunction(), callsite);
-
     if (type == nullptr) {
-      llvm::errs() << "cannot infer type for omp task alloc? callsite=" << callsite << "\n";
       return;
     }
 
-    // we are going to model the points-to constraints like this:
+    // we are going to model the points-to constraints like this (not consider global var/ptr):
     //  taskObj = &sharedObj -> { sharedObj } ∈ pts(taskobj)
     //  ptr = &taskObj       -> { taskObj } ∈ pts(ptr)
     // where sharedObj, taskObj and ptr are:
@@ -148,14 +161,18 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
 }
 
 bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
-  if (!F->hasName()) return false;
+  if (!F->hasName()) {
+    return false;
+  }
   auto const name = F->getName();
-  return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm");
+  return name.equals("malloc") || name.equals("calloc") || name.equals("_Zname") || name.equals("_Znwm") ||
+         name.equals("__kmpc_omp_task_alloc");
 }
 
 namespace {
 // TODO: better way of handling these
-const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_fork_teams"};
+const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "__kmpc_omp_task",
+                                        "__kmpc_omp_task_alloc", "__kmpc_fork_teams"};
 }  // namespace
 
 bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {

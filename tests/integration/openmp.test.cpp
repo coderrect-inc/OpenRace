@@ -91,7 +91,20 @@ TEST_CASE("OpenMP lastprivate", "[integration][omp]") {
       // Oracle("last-private-yes.ll", {/*TODO*/}),
       Oracle("lastprivate-no.ll", {}),
       Oracle("lastprivate-loop-split-no.ll", {}),
+  };
+  checkOracles(oracles, "integration/openmp/");
+}
 
+TEST_CASE("OpenMP task", "[integration][omp]") {
+  std::vector<Oracle> oracles = {
+      Oracle("task-master-no.ll", {}),
+      Oracle("task-single-call.ll", {}),
+      Oracle("task-single-no.ll", {}),
+      Oracle("task-single-yes.ll", {"task-single-yes.c:15:17 task-single-yes.c:21:17"}),
+      Oracle("task-master-single-yes.ll", {"task-master-single-yes.c:18:14 task-master-single-yes.c:14:16",
+                                           "task-master-single-yes.c:14:16 task-master-single-yes.c:18:14"}),
+      Oracle("task-tid-no.ll", {"task-tid-no.c:15:16 task-tid-no.c:15:16"}),  // cannot identify if condition
+      Oracle("task-yes.ll", {"task-yes.c:13:14 task-yes.c:13:14"}),
   };
   checkOracles(oracles, "integration/openmp/");
 }

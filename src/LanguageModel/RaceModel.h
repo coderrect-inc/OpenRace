@@ -10,7 +10,6 @@ limitations under the License.
 ==============================================================================*/
 
 #pragma once
-
 #include "PointerAnalysis/Context/HybridCtx.h"
 #include "PointerAnalysis/Context/KCallSite.h"
 #include "PointerAnalysis/Context/KOrigin.h"

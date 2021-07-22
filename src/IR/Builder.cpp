@@ -67,15 +67,9 @@ std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkT
 
 // TODO: need different system for storing and organizing these "recognizers"
 bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
-}  // namespace
 
-FunctionSummary race::generateFunctionSummary(const llvm::Function *func) {
-  assert(func != nullptr);
-  return generateFunctionSummary(*func);
-}
-
-FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
-  FunctionSummary instructions;
+std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Function &func) {
+  FunctionSummary summary;
 
   for (auto const &basicblock : func.getBasicBlockList()) {
     if (DEBUG_PTA) {
@@ -83,34 +77,27 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
     }
     for (auto it = basicblock.begin(), end = basicblock.end(); it != end; ++it) {
       auto inst = llvm::cast<llvm::Instruction>(it);
+
       if (DEBUG_PTA) {
         inst->print(llvm::outs(), false);
         llvm::outs() << "\n";
       }
+
       // TODO: try switch on inst->getOpCode instead
       if (auto loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
-        if (DEBUG_PTA) {
-          loadInst->print(llvm::outs(), false);
-        }
         if (loadInst->isAtomic() || loadInst->isVolatile() || hasThreadLocalOperand(loadInst)) {
           continue;
         }
-        instructions.push_back(std::make_shared<race::Load>(loadInst));
+        summary.push_back(std::make_shared<race::Load>(loadInst));
       } else if (auto storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
-        if (DEBUG_PTA) {
-          storeInst->print(llvm::outs(), false);
-        }
         if (storeInst->isAtomic() || storeInst->isVolatile() || hasThreadLocalOperand(storeInst)) {
           continue;
         }
-        instructions.push_back(std::make_shared<race::Store>(storeInst));
+        summary.push_back(std::make_shared<race::Store>(storeInst));
       } else if (auto callInst = llvm::dyn_cast<llvm::CallBase>(inst)) {
-        if (DEBUG_PTA) {
-          callInst->print(llvm::outs(), false);
-        }
         if (callInst->isIndirectCall()) {
           // let trace deal with indirect calls
-          instructions.push_back(std::make_shared<race::CallIR>(callInst));
+          summary.push_back(std::make_shared<race::CallIR>(callInst));
           continue;
         }
 
@@ -126,60 +113,64 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
         if (LLVMModel::isNoEffect(funcName)) {
           /* Do nothing */
         } else if (PthreadModel::isPthreadCreate(funcName)) {
-          instructions.push_back(std::make_shared<PthreadCreate>(callInst));
+          summary.push_back(std::make_shared<PthreadCreate>(callInst));
         } else if (PthreadModel::isPthreadJoin(funcName)) {
-          instructions.push_back(std::make_shared<PthreadJoin>(callInst));
+          summary.push_back(std::make_shared<PthreadJoin>(callInst));
         } else if (PthreadModel::isPthreadMutexLock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadMutexLock>(callInst));
+          summary.push_back(std::make_shared<PthreadMutexLock>(callInst));
         } else if (PthreadModel::isPthreadMutexUnlock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadMutexUnlock>(callInst));
+          summary.push_back(std::make_shared<PthreadMutexUnlock>(callInst));
         } else if (PthreadModel::isPthreadSpinLock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadSpinLock>(callInst));
+          summary.push_back(std::make_shared<PthreadSpinLock>(callInst));
         } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
-          instructions.push_back(std::make_shared<PthreadSpinUnlock>(callInst));
+          summary.push_back(std::make_shared<PthreadSpinUnlock>(callInst));
         } else if (OpenMPModel::isForStaticInit(funcName)) {
-          instructions.push_back(std::make_shared<OmpForInit>(callInst));
+          summary.push_back(std::make_shared<OmpForInit>(callInst));
         } else if (OpenMPModel::isForStaticFini(funcName)) {
-          instructions.push_back(std::make_shared<OmpForFini>(callInst));
+          summary.push_back(std::make_shared<OmpForFini>(callInst));
         } else if (OpenMPModel::isForDispatchInit(funcName)) {
-          instructions.push_back(std::make_shared<OmpDispatchInit>(callInst));
+          summary.push_back(std::make_shared<OmpDispatchInit>(callInst));
         } else if (OpenMPModel::isForDispatchNext(funcName)) {
-          instructions.push_back(std::make_shared<OmpDispatchNext>(callInst));
+          summary.push_back(std::make_shared<OmpDispatchNext>(callInst));
         } else if (OpenMPModel::isForDispatchFini(funcName)) {
-          instructions.push_back(std::make_shared<OmpDispatchFini>(callInst));
+          summary.push_back(std::make_shared<OmpDispatchFini>(callInst));
         } else if (OpenMPModel::isSingleStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPSingleStart>(callInst));
+          summary.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
+          summary.push_back(std::make_shared<OpenMPSingleEnd>(callInst));
         } else if (OpenMPModel::isMasterStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPMasterStart>(callInst));
+          summary.push_back(std::make_shared<OpenMPMasterStart>(callInst));
         } else if (OpenMPModel::isMasterEnd(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
+          summary.push_back(std::make_shared<OpenMPMasterEnd>(callInst));
         } else if (OpenMPModel::isBarrier(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPBarrier>(callInst));
+          summary.push_back(std::make_shared<OpenMPBarrier>(callInst));
         } else if (OpenMPModel::isReduceStart(funcName) || OpenMPModel::isReduceNowaitStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPReduce>(callInst));
+          summary.push_back(std::make_shared<OpenMPReduce>(callInst));
         } else if (OpenMPModel::isCriticalStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
+          summary.push_back(std::make_shared<OpenMPCriticalStart>(callInst));
         } else if (OpenMPModel::isCriticalEnd(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPCriticalEnd>(callInst));
+          summary.push_back(std::make_shared<OpenMPCriticalEnd>(callInst));
         } else if (OpenMPModel::isSetLock(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
+          summary.push_back(std::make_shared<OpenMPSetLock>(callInst));
         } else if (OpenMPModel::isUnsetLock(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
+          summary.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
+        } else if (OpenMPModel::isTask(funcName)) {
+          summary.push_back(std::make_shared<OpenMPTaskFork>(callInst));
+        } else if (OpenMPModel::isTaskWait(funcName)) {
+          summary.push_back(std::make_shared<OpenMPTaskWait>(callInst));
         } else if (OpenMPModel::isSetNestLock(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPSetLock>(callInst));
+          summary.push_back(std::make_shared<OpenMPSetLock>(callInst));
         } else if (OpenMPModel::isUnsetNestLock(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
+          summary.push_back(std::make_shared<OpenMPUnsetLock>(callInst));
         } else if (OpenMPModel::isGetThreadNum(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPGetThreadNum>(callInst));
+          summary.push_back(std::make_shared<OpenMPGetThreadNum>(callInst));
         } else if (OpenMPModel::isOrderedStart(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
+          summary.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
         } else if (OpenMPModel::isOrderedEnd(funcName)) {
-          instructions.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
+          summary.push_back(std::make_shared<OpenMPOrderedEnd>(callInst));
         } else if (OpenMPModel::isFork(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
-          auto ompFork = std::make_shared<OpenMPFork>(callInst);
+          auto ompFork = std::make_shared<OpenMPFork>(callInst, OpenMPFork::ThreadType::Master);
           auto twinOmpFork = getTwinOmpFork(ompFork);
           if (!twinOmpFork) {
             // without duplicated fork we cannot detect any races in omp region so just skip it
@@ -192,12 +183,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           ++it;
 
           // push the two forks and joins such tha the two threads created for the parallel region are in parallel
-          instructions.push_back(ompFork);
-          instructions.push_back(twinOmpFork);
+          summary.push_back(ompFork);
+          summary.push_back(twinOmpFork);
 
           // omp fork has implicit join, so immediately join both threads
-          instructions.push_back(std::make_shared<OpenMPJoin>(ompFork));
-          instructions.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
+          summary.push_back(std::make_shared<OpenMPJoin>(ompFork));
+          summary.push_back(std::make_shared<OpenMPJoin>(twinOmpFork));
         } else if (OpenMPModel::isForkTeams(funcName)) {
           // duplicate omp preprocessing should duplicate all omp fork calls
           auto ompForkTeams = std::make_shared<OpenMPForkTeams>(callInst);
@@ -213,12 +204,12 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           ++it;
 
           // push the two forks and joins such tha the two threads created for the parallel region are in parallel
-          instructions.push_back(ompForkTeams);
-          instructions.push_back(twinOmpForkTeams);
+          summary.push_back(ompForkTeams);
+          summary.push_back(twinOmpForkTeams);
 
           // omp fork teams has implicit join, so immediately join both threads
-          instructions.push_back(std::make_shared<OpenMPJoinTeams>(ompForkTeams));
-          instructions.push_back(std::make_shared<OpenMPJoinTeams>(twinOmpForkTeams));
+          summary.push_back(std::make_shared<OpenMPJoinTeams>(ompForkTeams));
+          summary.push_back(std::make_shared<OpenMPJoinTeams>(twinOmpForkTeams));
         } else if (isPrintf(funcName)) {
           // TODO: model as read?
         } else {
@@ -227,11 +218,27 @@ FunctionSummary race::generateFunctionSummary(const llvm::Function &func) {
           llvm::errs() << "Unhandled OpenMP call: " << funcName << "\n";
           assert((!OpenMPModel::isOpenMP(funcName) || OpenMPModel::isNoEffect(funcName)) && "Unhandled OpenMP Call!");
 
-          instructions.push_back(std::make_shared<CallIR>(callInst));
+          summary.push_back(std::make_shared<CallIR>(callInst));
         }
       }
     }
   }
 
-  return instructions;
+  return std::make_shared<const FunctionSummary>(summary);
+}
+}  // namespace
+
+std::shared_ptr<const FunctionSummary> FunctionSummaryBuilder::getFunctionSummary(const llvm::Function *func) {
+  assert(func != nullptr);
+
+  // Check the cache
+  auto it = cache.find(func);
+  if (it != cache.end()) {
+    return it->second;
+  }
+
+  // Else compute the summary and add to cache
+  auto const summary = generateFunctionSummary(*func);
+  cache.insert(std::make_pair(func, summary));
+  return summary;
 }

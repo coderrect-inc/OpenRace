@@ -11,6 +11,8 @@ limitations under the License.
 
 #include "Analysis/HappensBeforeGraph.h"
 
+#include <IR/IRImpls.h>
+
 /*
 Happens before depends on each event having an increasing ID per thread:
 
@@ -68,7 +70,6 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace 
   auto it = std::find_if(events.begin(), events.end(),
                          [&handle](auto forkEvent) { return forkEvent->getIRInst()->getThreadHandle() == handle; });
   if (it != events.end()) return *it;
-
   return nullptr;
 }
 
@@ -79,13 +80,16 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
       return fork;
     }
   }
-
   return nullptr;
 }
 
 const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
-  auto const joinHandle = join->getIRInst()->getThreadHandle();
+  // if fork has been explicitly set, use it.
+  // now we only store the corresponding fork for OpenMPTaskJoin
+  if (auto const fork = join->getForkEvent()) return fork.value();
 
+  // Else need to use hueristics to match join to a fork
+  auto const joinHandle = join->getIRInst()->getThreadHandle();
   // Check for fork on this thread with matching handle first
   if (auto fork = getForkWithHandle(joinHandle, join->getThread()); fork != nullptr) {
     return fork;
@@ -370,6 +374,7 @@ std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findPrevSync(con
 }
 
 void HappensBeforeGraph::debugDump(llvm::raw_ostream &os) const {
+  os << "==== Sync Nodes ====\n";
   for (auto const &[tid, syncs] : threadSyncs) {
     os << "T" << tid << " Syncs";
     for (auto const &sync : syncs) {
@@ -382,7 +387,7 @@ void HappensBeforeGraph::debugDump(llvm::raw_ostream &os) const {
   for (auto const &[src, dsts] : syncEdges) {
     os << src.tid << ":" << src.eid << " ->";
     for (auto const &dst : dsts) {
-      os << "\n\t" << dst.tid << ":" << src.tid << "\n";
+      os << "\n\t" << dst.tid << ":" << dst.eid << "\n";
     }
   }
   os << "\n";

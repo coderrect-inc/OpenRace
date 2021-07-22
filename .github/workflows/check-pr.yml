@@ -19,7 +19,7 @@ on:
       - '.github/workflows/check-pr.yml'
 
 jobs:
-  build-test:
+  build-clang-test:
     runs-on: ubuntu-latest
     container: coderrect/openrace-env
 
@@ -29,7 +29,7 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
       
       - name: Test
@@ -37,7 +37,7 @@ jobs:
           cd build
           ctest --parallel $(nproc)
   
-  build-clang:
+  build-gcc:
     runs-on: ubuntu-latest
     container: coderrect/openrace-env
 
@@ -47,7 +47,7 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
   
   formatting-check:
