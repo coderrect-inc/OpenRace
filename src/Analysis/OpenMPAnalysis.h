@@ -27,11 +27,8 @@ struct Region {
 
   inline bool contains(EventID e) const { return end >= e && e >= start; }
 
-  // Return true of the other region is the same region in the IR
+  // Return true if the other region is the same region in the IR
   bool sameAs(const Region& other) const {
-    // Quickly check if the size of both regions match
-    if ((end - start) != (other.end - other.start)) return false;
-
     auto const getInst = [](EventID eid, const ThreadTrace& thread) { return thread.getEvent(eid)->getInst(); };
 
     return getInst(start, thread) == getInst(other.start, other.thread) &&

@@ -15,11 +15,11 @@ OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program)
 
 namespace {
 
-// recursively find the root spawnsite (from #pragma omp parallel) for this event
+// recursively find the spawn site of the closest/innermost OpenMPFork for this event
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
-  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTask) {
+  if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTaskFork) {
     // this works when the event is from omp task fork: we need the parent spawn site here,
     // and the code may have nested tasks
     while (eSpawn.value()->getIRInst()->type != IR::Type::OpenMPFork) {
@@ -90,11 +90,15 @@ std::optional<Region> getContainingRegion(const Event *event) {
   auto const &thread = event->getThread();
   auto const regions = getRegions<Start, End>(thread);
 
-  // If we are on thread spawned wihtin parallel region,
-  // we can also check to see if this thread was spawned within a region on the parent thread
+  // If we are on thread spawned within parallel region,
+  // we can also check to see if this thread was spawned within a region on the parent thread:
+  // This ONLY valid when the event is from threads spawned by OpenMPTask (or maybe also OpenMPForkTeams later if we
+  // also need such checks). For other cases (e.g., events from threads spawned by OpenMPFork), if there exists such a
+  // region, the region must be in the same thread, not parent thread. If we remove the check, we will get wrong/null
+  // regions for the other cases.
   if (regions.empty()) {
     auto parent = thread.spawnSite.value();
-    if (parent->getIRInst()->type == IR::Type::OpenMPTask) {
+    if (parent->getIRInst()->type == IR::Type::OpenMPTaskFork) {
       return getContainingRegion<Start, End>(parent);
     }
     return std::nullopt;
@@ -111,16 +115,16 @@ std::optional<Region> getContainingRegion(const Event *event) {
 
 // return true if both events are inside of the region marked by Start and End
 // see getRegions for more detail on regions
-// (event1 always has the thread trace with full irs)
+// (event1 is always from Thread1, i.e., the master thread, which has the full thread trace with all IRs)
 template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  // get omp block contains the event
+  // get omp region contains the event
   auto const region1 = getContainingRegion<Start, End>(event1);
   auto const region2 = getContainingRegion<Start, End>(event2);
 
-  if (!region1 || !region2) {  // should have block
+  if (!region1 || !region2) {
     return false;
   }
 

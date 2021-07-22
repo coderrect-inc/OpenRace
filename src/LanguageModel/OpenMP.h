@@ -75,8 +75,8 @@ inline bool isMasterEnd(const llvm::StringRef& funcName) { return funcName.equal
 inline bool isSetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_set_lock"); }
 inline bool isUnsetLock(const llvm::StringRef& funcName) { return funcName.equals("omp_unset_lock"); }
 
-inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
 inline bool isTaskAlloc(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task_alloc"); }
+inline bool isTask(const llvm::StringRef& funcName) { return funcName.equals("__kmpc_omp_task"); }
 inline bool isTask(const llvm::CallBase* callInst) {
   if (!callInst) return false;
   auto const func = callInst->getCalledFunction();
@@ -95,7 +95,7 @@ inline bool isNoEffect(const llvm::StringRef& funcName) {
   return matchesAny(funcName, {"__kmpc_push_num_threads", "__kmpc_global_thread_num", "__kmpc_copyprivate",
                                "__kmpc_push_num_teams"})
          // we dont rely on reduce end to find end of reduce region
-         || isReduceEnd(funcName) || isReduceNowaitEnd(funcName);
+         || isReduceEnd(funcName) || isReduceNowaitEnd(funcName) || isTaskAlloc(funcName);
 }
 
 // Used only for debug to try and catch unhandled OpenMP calls

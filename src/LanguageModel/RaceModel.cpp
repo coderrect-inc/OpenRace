@@ -43,8 +43,8 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
     return {fork.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
 
-  if (OpenMPModel::isTask(funcName) || OpenMPModel::isTaskAlloc(funcName)) {
-    race::OpenMPTask task(llvm::cast<CallBase>(callsite));
+  if (OpenMPModel::isTask(funcName)) {
+    race::OpenMPTaskFork task(llvm::cast<CallBase>(callsite));
     return {task.getThreadEntry(), InterceptResult::Option::EXPAND_BODY};
   }
 

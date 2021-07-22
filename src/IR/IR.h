@@ -32,7 +32,7 @@ class IR {
     Fork,
     PthreadCreate,
     OpenMPFork,
-    OpenMPTask,
+    OpenMPTaskFork,
     OpenMPForkTeams,
     END_Fork,
     Join,

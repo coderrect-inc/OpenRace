@@ -21,15 +21,13 @@ limitations under the License.
 
 namespace race {
 
-struct FunctionSummary {
-  std::vector<std::shared_ptr<const IR>> instructions;
-};
+using FunctionSummary = std::vector<std::shared_ptr<const IR>>;
 
 // cache FunctionSummary here
 class FunctionSummaryBuilder {
-  std::map<const llvm::Function *, std::shared_ptr<FunctionSummary>> cache;
+  std::map<const llvm::Function *, std::shared_ptr<const FunctionSummary>> cache;
 
  public:
-  std::shared_ptr<FunctionSummary> getFunctionSummary(const llvm::Function *func);
+  std::shared_ptr<const FunctionSummary> getFunctionSummary(const llvm::Function *func);
 };
 }  // namespace race
