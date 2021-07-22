@@ -10,9 +10,190 @@ const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
-// whether this is a math operation, e.g., add, mul
-bool isMathOp(unsigned int op) {
-  return op >= 13 && op <= 24;  // the range of llvm standard binary operators, in llvm/IR/Instruction.def
+bool isBinaryOp(unsigned int op) { return op >= 13 && op <= 24; }
+
+bool isLogicalOp(unsigned int op) { return op >= 25 && op <= 30; }
+
+bool isMathCast(unsigned int op) { return op >= 38 && op <= 46; }
+
+// whether this is a math operation, e.g., add, mul, or
+// the range of llvm standard binary (13-24) and logical (25-30) and cast (38-46) operators, see llvm/IR/Instruction.def
+bool isMathOp(unsigned int op) { return isBinaryOp(op) || isLogicalOp(op) || isMathCast(op); }
+
+bool isIndvars(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("indvars."); }
+
+// intermediate var between "indvars." and index
+bool isIndvarsNext(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("indvars.iv.next"); }
+
+bool isIdxprom(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("idxprom"); }
+
+bool isStoreMerge(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("storemerge"); }
+
+bool isFromCollapse(llvm::Value *idx) {
+  if (!idx->hasName()) return false;
+  const StringRef &idxName = idx->getName();
+  return idxName.startswith("div.") || idxName.startswith("sub.");
+}
+
+std::string recursivelyRetrieveIdx(llvm::Instruction *ir);
+std::string getIterateIndex(const llvm::GetElementPtrInst *gep);
+
+// the name of idx must starts with "idxprom"
+std::string getIdxForIdxprom(Value *idx) {
+  assert(isIdxprom(idx) && "The name of idx must starts with idxprom");
+
+  // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
+  // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
+  auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
+  Value *op = sext->getOperand(0);
+  if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
+    op = load->getPointerOperand();
+    auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
+    if (gep_Op) {
+      // parallel-related:
+      // check if idx is incremented related to the index variable and other arrays, e.g., DRB005-008, DRB052
+      // the related IR is like:
+      //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
+      //    // --> this is gen_Op, which index is indvars
+      //  %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa !112, !noalias !91
+      //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
+      //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
+      return getIterateIndex(gep_Op);
+    } else {
+      return op->getName();
+    }
+  } else if (isFromCollapse(op)) {
+    // maybe are nested loops using collapse, e.g.,DRB093, the IR is like:
+    //  %idxprom.i = sext i32 %div.i to i64, !dbg !60
+    //  %idxprom7.i = sext i32 %sub.i to i64, !dbg !60
+    //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
+    //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
+    // if so, this is nested loop with the collapse clause: should have no dependency and no race
+    return "collapse";
+  } else if (isStoreMerge(op)) {
+    // maybe this index is not private, e.g., DRB073, the IR is like:
+    //  %storemerge6.i = phi i32 [ 0, %for.cond.preheader.i ], [ %inc.i, %for.body.i ]
+    //  %idxprom3.i = sext i32 %storemerge6.i to i64, !dbg !67
+    //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %indvars.iv.i, !dbg !67
+    //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom3.i, !dbg !67
+    return op->getName().str();
+  } else if (auto math = llvm::dyn_cast<llvm::Instruction>(op)) {
+    return recursivelyRetrieveIdx(math);
+  }
+  return "";
+}
+
+llvm::Value *getNonConstOperand(llvm::Instruction *ir) {
+  auto rhs = ir->getOperand(0);
+  if (llvm::isa<llvm::Constant>(rhs)) {
+    rhs = ir->getOperand(1);
+  }
+  return rhs;
+}
+
+// recursively check if this IR is a mul/add/sub/div on another index, e.g., DRB014, DRB033
+//     %indvars.iv.next23.i = add nsw i64 %indvars.iv22.i, 1, !dbg !61
+//     %17 = mul nsw i64 %indvars.iv.next23.i, 100, !dbg !98
+// 1st op is lhs, 2nd op is the first element on rhs
+std::string recursivelyRetrieveIdx(llvm::Instruction *ir) {
+  if (!isMathOp(ir->getOpcode())) return "";
+
+  while (isMathOp(ir->getOpcode())) {
+    assert(ir->getNumOperands() >= 1 && "The index IR of standard binary operators should have at least 1 operands.");
+    auto rhs = getNonConstOperand(ir);  // lhs = ir
+    if (isIndvars(rhs)) {
+      ir = llvm::dyn_cast<llvm::Instruction>(rhs);
+    } else if (isIndvars(ir)) {
+      return ir->getName();
+    } else if (isIdxprom(ir)) {
+      return getIdxForIdxprom(ir);
+    } else if (isLogicalOp(ir->getOpcode()) || isMathCast(ir->getOpcode()) ||
+               !ir->hasName()) {  // complex operation on index
+      ir = llvm::dyn_cast<llvm::Instruction>(rhs);
+    } else {  // too complex, cannot handle now
+      return "";
+    }
+  }
+  return ir->getName();
+}
+
+// return the name of the index variable that the loop (containing gep) will iterate on (or related to this index var),
+// which might not be the index that omp parallel will parallel on:
+// (1) if the name of index var/ptr starts with "indvars.", it is the index variable of loop, e.g., %indvars.iv.i, and
+// it is private (2) if starting with "idxprom" + an int, e.g., %idxprom15.i, can be: a. it is not the index variable
+// and declared outside of loop, and has its own self-incrementing rules b. it is not the index variable, but computed
+// from the index variable c. it is the index variable but is not private d. it is the index variable but not in omp
+// parallel region (3) if starting with "storemerge" + an int, e.g., %storemerge6.i, it is the index variable but is not
+// private
+std::string getIterateIndex(const llvm::GetElementPtrInst *gep) {
+  auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last operand
+  if (isIndvarsNext(idx)) {
+    auto math = llvm::dyn_cast<llvm::Instruction>(idx);
+    return recursivelyRetrieveIdx(math);
+  } else if (isIndvars(idx)) {
+    return idx->getName().str();
+  } else if (isIdxprom(idx)) {
+    return getIdxForIdxprom(idx);
+  } else if (auto math = llvm::dyn_cast<llvm::Instruction>(idx)) {
+    return recursivelyRetrieveIdx(math);
+  }
+
+  llvm::errs() << "Unhandled loop index types: " << idx << "\n";
+  return "";
+}
+
+class my_stack : public std::stack<const llvm::GetElementPtrInst *> {
+ public:
+  using std::stack<const llvm::GetElementPtrInst *>::c;  // expose the container
+};
+
+// record the result of findAllGEPForArrayAccess
+struct ArrayAccess {
+  my_stack idxes;
+  std::string outerMostIdxName;
+
+  ArrayAccess(my_stack idxes, std::string outerMostIdxName) : idxes(idxes), outerMostIdxName(outerMostIdxName) {}
+
+  bool hasOuterMostIdxName() { return outerMostIdxName != ""; }
+  std::string getOuterMostIdxName() { return outerMostIdxName; }
+};
+
+// find all the indexes/GEPs for this array access
+ArrayAccess findAllGEPForArrayAccess(const llvm::GetElementPtrInst *gep) {
+  my_stack idxes;
+  while (gep != nullptr) {
+    idxes.push(gep);
+    auto base = gep->getOperand(0);
+    // (base->getType()->isArrayTy() || base->getType()->getContainedType(0)->isArrayTy()) --> this is not always valid
+    gep = llvm::dyn_cast<llvm::GetElementPtrInst>(base->stripPointerCasts());
+  }
+
+  // check if the base ptr has operations on index, e.g., DRB003, the IR looks like:
+  //    %21 = mul nsw i64 %indvars.iv21.i, %vla1, !dbg !137 --> this is the operation on index
+  //    %22 = getelementptr double, double* %a, i64 %21, !dbg !137
+  //    %25 = getelementptr double, double* %22, i64 %indvars.iv.i, !dbg !140
+  //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
+  auto lastGep = idxes.top();
+  auto lastIdx = lastGep->getOperand(lastGep->getNumOperands() - 1);
+  long removedIdx = idxes.empty() ? 0 : idxes.size() - 1;
+  if (idxes.size() > 1) {  // reversely check
+    long i = idxes.size() - 2;
+    while (isIdxprom(lastIdx) && i >= 0) {  // skip if this idx is "idxprom", e.g., DRB037
+      lastIdx = idxes.c[i]->getOperand(lastGep->getNumOperands() - 1);
+      removedIdx = i;
+      i--;
+    }
+  }
+  if (!isIdxprom(lastIdx)) {
+    auto ir = llvm::dyn_cast<llvm::Instruction>(lastIdx);
+    std::string name = recursivelyRetrieveIdx(ir);
+    if (name != "") {  // remove this idx from idxes since we already record its index name
+      idxes.c.erase(idxes.c.begin() + removedIdx);
+    }
+    return ArrayAccess{idxes, name};
+  }
+
+  return ArrayAccess{idxes, ""};
 }
 
 // return the name of the ONE index that omp parallel will parallel on, e.g., DRB169
@@ -40,124 +221,53 @@ std::string getLoopParallelIndexes(const llvm::GetElementPtrInst *gep) {
   return "";
 }
 
-bool isIndvars(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("indvars."); }
-
-bool isIdxprom(llvm::Value *idx) { return idx->hasName() && idx->getName().startswith("idxprom"); }
-
-bool isFromCollapse(llvm::Value *idx) {
-  if (!idx->hasName()) return false;
-  const StringRef &idxName = idx->getName();
-  return idxName.startswith("div.") || idxName.startswith("sub.");
-}
-
-// return the name of the index variable that the loop (containing gep) will iterate on (or related to this index var),
-// which might not be the index that omp parallel will parallel on:
-// (1) if the name of index var/ptr starts with "indvars.", it is the index variable of loop, e.g., %indvars.iv.i
-// (2) if starting with "idxprom" + an int, e.g., %idxprom15.i, it is not the index variable and declared outside of
-// loop, and has its own self-incrementing rules
-std::string getIterateIndex(const llvm::GetElementPtrInst *gep) {
-  auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last operand
-  if (isIndvars(idx)) {
-    return idx->getName().str();
-  } else if (isIdxprom(idx)) {
-    // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
-    // refer to https://llvm.org/docs/LangRef.html#sext-to-instruction
-    auto sext = llvm::dyn_cast<llvm::SExtInst>(idx);
-    Value *op = sext->getOperand(0);
-    if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
-      op = load->getPointerOperand();
-      auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
-      if (gep_Op) {
-        // parallel-related:
-        // check if idx is incremented related to the index variable and other arrays, e.g., DRB005-008, DRB052
-        // the related IR is like:
-        //  %18 = getelementptr [180 x i32], [180 x i32]* @indexSet, i32 0, i64 %indvars.iv.i, !dbg !114
-        //    // --> this is gen_Op, which index is indvars
-        //  %19 = load i32, i32* %18, align 4, !dbg !114, !tbaa !112, !noalias !91
-        //  %idxprom4.i = sext i32 %19 to i64, !dbg !118
-        //  %22 = getelementptr double, double* %21, i64 %idxprom4.i, !dbg !118
-        return getIterateIndex(gep_Op);
-      }
-    } else if (isFromCollapse(op)) {
-      // maybe are nested loops using collapse, e.g.,DRB093, the IR is like:
-      //  %idxprom.i = sext i32 %div.i to i64, !dbg !60
-      //  %idxprom7.i = sext i32 %sub.i to i64, !dbg !60
-      //  %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
-      //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
-      // if so, this is nested loop with the collapse clause: should have no dependency and no race
-      return "collapse";
-    }
-    return "";
-  }
-
-  llvm::errs() << "Unhandled loop index types: " << idx << "\n";
-  return "";
-}
-
-// record the result of findAllGEPForArrayAccess
-struct ArrayAccess {
-  std::queue<const llvm::GetElementPtrInst *> idxes;
-  std::string outMostIdxName;
-
-  ArrayAccess(std::queue<const llvm::GetElementPtrInst *> idxes, std::string outMostIdxName)
-      : idxes(idxes), outMostIdxName(outMostIdxName) {}
-
-  bool hasOutMostIdxName() { return outMostIdxName != ""; }
-  std::string getOutMostIdxName() { return outMostIdxName; }
-};
-
-// find all the indexes/GEPs for this array access
-ArrayAccess findAllGEPForArrayAccess(const llvm::GetElementPtrInst *gep) {
-  std::queue<const llvm::GetElementPtrInst *> idxes;
-  while (gep != nullptr) {
-    idxes.push(gep);
-    auto base = gep->getOperand(0);
-    // (base->getType()->isArrayTy() || base->getType()->getContainedType(0)->isArrayTy()) --> this is not always valid
-    gep = llvm::dyn_cast<llvm::GetElementPtrInst>(base->stripPointerCasts());
-  }
-
-  // check if the base ptr has operations on index, e.g., DRB003, the IR looks like:
-  //    %21 = mul nsw i64 %indvars.iv21.i, %vla1, !dbg !137 --> this is the operation on index
-  //    %22 = getelementptr double, double* %a, i64 %21, !dbg !137
-  //    %25 = getelementptr double, double* %22, i64 %indvars.iv.i, !dbg !140
-  //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
-  auto lastGep = idxes.back();
-  auto lastIdx = lastGep->getOperand(lastGep->getNumOperands() - 1);
-  if (!isIdxprom(lastIdx)) {  // skip if this idx is "idxprom"
-    auto ir = llvm::dyn_cast<llvm::Instruction>(lastIdx);
-    if (isMathOp(ir->getOpcode())) {
-      // check if this IR is a mul/add/sub/div on another index, e.g., DRB014,
-      //     %indvars.iv.next23.i = add nsw i64 %indvars.iv22.i, 1, !dbg !61
-      //     %17 = mul nsw i64 %indvars.iv.next23.i, 100, !dbg !98
-      // 1st op is lhs, 2nd op is the first element on rhs
-      while (isMathOp(ir->getOpcode())) {
-        assert(ir->getNumOperands() == 2 && "The index IR of standard binary operators should have 2 operands.");
-        auto rhs = ir->getOperand(0);  // lhs = ir
-        if (isIndvars(rhs)) {
-          ir = llvm::dyn_cast<llvm::Instruction>(rhs);
-        } else if (isIndvars(ir)) {
-          return ArrayAccess{idxes, ir->getName()};
-        } else {  // cannot handle now
-          return ArrayAccess{idxes, ""};
-        }
-      }
-      return ArrayAccess{idxes, ir->getName()};
-    }
-  }
-
-  return ArrayAccess{idxes, ""};
-}
-
-bool isPerfectlyAligned(const GetElementPtrInst *idx, std::string parallelIdx) {
-  auto idxName = getIterateIndex(idx);
-  if (idxName == "collapse") {
-    return true;
-  } else {
-    return parallelIdx == idxName;  // the omp parallel loop will parallel on this idx
+bool isPerfectlyAligned(const GetElementPtrInst *idx, std::string parallelIdx, bool isInnerIdx) {
+  std::string idxName = getIterateIndex(idx);
+  if (isInnerIdx) {  // the omp parallel loop will parallel on this idx
+    return idxName == "collapse" ? true : idxName.rfind("indvars.", 0) == 0;
+  } else {  // the omp parallel loop will parallel on this idx
+    return idxName == "collapse" ? true : parallelIdx == idxName;
   }
 }
 
-// For the following conditions, when diff == 0, array access patterns are perfectly aligned and there is not overlap:
+// return true this index is used within the scope of omp parallel region, used for multi-dimension array
+bool isOmpRelevant(std::string idxName) {
+  return idxName == "collapse" || idxName.rfind("indvars.", 0) == 0 || idxName.rfind("idxprom", 0) == 0 ||
+         idxName.rfind("storemerge", 0) == 0;
+}
+
+// return true this index is used within the scope of omp parallel region, used for multi-dimension array
+bool isOmpRelevant(const GetElementPtrInst *idx) {
+  std::string idxName = getIterateIndex(idx);
+  return isOmpRelevant(idxName);
+}
+
+// return result of noRaceFor
+enum class NoRaceType { NoRace, Race, ND };  // ND = not determined: too complex -> leave it to SCEV
+
+NoRaceType noRaceForMultiDim(my_stack idxes, std::string parallelIdx) {
+  // skip index outside of omp parallel region
+  const GetElementPtrInst *idx = idxes.top();
+  idxes.pop();
+  while (!isOmpRelevant(idx)) {
+    idx = idxes.top();
+    idxes.pop();
+  }
+
+  // this is the outermost omp parallel index of the array
+  if (!isPerfectlyAligned(idx, parallelIdx, false)) return NoRaceType::Race;
+
+  // for inner loopIdxes
+  while (!idxes.empty()) {
+    auto innerIdx = idxes.top();
+    idxes.pop();
+    if (!isPerfectlyAligned(innerIdx, parallelIdx, true)) return NoRaceType::Race;
+  }
+  return NoRaceType::NoRace;
+}
+
+// For the following conditions, when diff == 0, array access patterns are perfectly aligned and there is not overlap
+// and there is no race when:
 // (1) for one dimension loop:
 // the index var used by gep is the one that
 // a. the loop(s) will iterate over,
@@ -166,36 +276,47 @@ bool isPerfectlyAligned(const GetElementPtrInst *idx, std::string parallelIdx) {
 // (2) for multi dimension loops:
 // the index var used by gep is the one that
 // a. the loop(s) will iterate over,
-// b. the omp parallel loop will parallel on or is parallel-related,
-//    #pragma omp parallel for
+// b. the omp parallel loop will parallel on or is parallel-related (see line 28),
+//    #pragma omp parallel for private(j)
 //    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on
 //      for (j = 1; j < N-1; j++) { ...
 //        a[i][j] = ... // i == paralleled index with perfect arrangement: no write/write race, can have read/write race
-//        b[j] = ...    // j != paralleled index, different threads can access the same j element together: can have
 //        write/write and read/write races
 // c. if there is collapse clause: should not have dependency across loops and perfect aligned, should not have race
+// d. if the index of inner loop(s) is shared, e.g., j is shared across threads
+//    #pragma omp parallel for
+//    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on
+//      for (j = 1; j < N-1; j++) { ...
+//        a[i][j] = ... // can have write/write and read/write race on both j and array element
 //
-// The corresponding multi-dimension array access IR for x[i][j] can be like:
+// An example IR of multi-dimension array access IR for x[i][j] is (array struct might be other types):
 //     %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
 //     %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
 //     %18 = load i32, i32* %17, align 4, !dbg !60, !tbaa !57, !noalias !39
 //
-// PS: this is valid when the loop iterate over the index, e.g., i or j in for (i=0;i<len;i++) {...},
-// but for index declared outside of loop, this can still overlap since it has a different
-// self-update rule, e.g., DRB018
-bool noRaceFor(const llvm::GetElementPtrInst *gep) {
-  auto ret = findAllGEPForArrayAccess(gep);
-  auto parallelIdx = getLoopParallelIndexes(gep);
+// PS: this is valid when the loop iterate over the index, e.g., j not i,
+//    for (i = 1; i < N-1; i++) {
+//      #pragma omp parallel for
+//      for (j = 1; j < N-1; j++) { // "j" is the index that omp will parallel on
+// but for the index declared outside of loop, this can still overlap since it has a different
+// self-update rule, e.g., DRB018; for the index that is out of omp parallel region, e.g., i,
+// the run will be sequential and should skip its check
+NoRaceType noRaceFor(const llvm::GetElementPtrInst *gep) {
+  auto loopIdxes = findAllGEPForArrayAccess(gep);
+  auto parallelIdx = getLoopParallelIndexes(gep);  // the outermost index of the loop that omp parallels on
 
-  if (ret.hasOutMostIdxName()) {  // both are possible
-    auto idxName = ret.getOutMostIdxName();
-    return parallelIdx == idxName;
-  } else if (ret.idxes.size() == 1) {  // one-dimension array
-    return isPerfectlyAligned(gep, parallelIdx);
-  } else {                                            // multi-dimension
-    if (ret.hasOutMostIdxName()) return false;        // too complex -> leave it to SCEV
-    const GetElementPtrInst *idx = ret.idxes.back();  // this is the outmost index of the array
-    return isPerfectlyAligned(idx, parallelIdx);
+  if (loopIdxes.hasOuterMostIdxName()) {  // may be one-dimension or multi-dimension
+    auto idxName = loopIdxes.getOuterMostIdxName();
+    if (loopIdxes.idxes.size() > 0) {  // multi-dimension
+      if (!isOmpRelevant(idxName)) {   // skip index outside of omp parallel region
+        return noRaceForMultiDim(loopIdxes.idxes, parallelIdx);
+      }
+    }
+    return parallelIdx == idxName ? NoRaceType::NoRace : NoRaceType::ND;
+  } else if (loopIdxes.idxes.size() == 1) {  // one-dimension array
+    return isPerfectlyAligned(gep, parallelIdx, false) ? NoRaceType::NoRace : NoRaceType::ND;
+  } else {  // multi-dimension array
+    return noRaceForMultiDim(loopIdxes.idxes, parallelIdx);
   }
 }
 
@@ -548,17 +669,33 @@ bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *even
   }
 
   // an array write may include two IRs: load + store, e.g.,
+  //     %19 = getelementptr [20 x [20 x double]], [20 x [20 x double]]* %a, i32 0, i64 %indvars.iv.next22.i, !dbg !108
+  //     %20 = getelementptr [20 x double], [20 x double]* %19, i32 0, i64 %indvars.iv.i, !dbg !108
+  //     %21 = load double, double* %20, align 8, !dbg !108, !tbaa !46, !noalias !77
   //     %22 = getelementptr [20 x [20 x double]], [20 x [20 x double]]* %a, i32 0, i64 %indvars.iv21.i, !dbg !110
   //     %23 = getelementptr [20 x double], [20 x double]* %22, i32 0, i64 %indvars.iv.i, !dbg !110
   //     %24 = load double, double* %23, align 8, !dbg !111, !tbaa !46, !noalias !77 // --> get the array element: load
   //     %add17.i = fadd double %21, %24, !dbg !111  // --> do computation on this element
   //     store double %add17.i, double* %23, align 8, !dbg !111, !tbaa !46, !noalias !77 // --> put it back: store
-  // this pair of load and store from different threads is FP and should not race with each other
+  // this pair of load and store from different threads is FP: even though they race with each other, we should report
+  // the corresponding write/write race.
+  // note: the ir stmt before the last store must be operating on different geps
   if (event2->type == Event::Type::Read) {
     auto loadBase = event2->getInst()->getOperand(0);
-    auto storeBase = event1->getInst()->getOperand(1);
+    auto storeBase = event1->getInst()->getOperand(1);  // must be write
     if (loadBase == storeBase) {
-      return false;
+      auto storeOp = event1->getInst()->getOperand(0);
+      if (auto inst = llvm::cast<llvm::Instruction>(storeOp)) {
+        auto op1 = inst->getOperand(0);
+        auto op2 = inst->getOperand(1);
+        auto opGep1 = llvm::dyn_cast<llvm::GetElementPtrInst>(op1->stripPointerCasts());
+        auto opGep2 = llvm::dyn_cast<llvm::GetElementPtrInst>(op2->stripPointerCasts());
+        if (opGep1 != opGep2) {
+          // avoid the case that: its self load, conduct operation on it, then store back on the same element, should be
+          // race, e.g.,
+          return false;
+        }
+      }
     }
   }
 
@@ -585,10 +722,13 @@ bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *even
   }
 
   if (diff->isZero()) {
-    // array access patterns are perfectly aligned and there is not overlap,
-    // or there is overlap but will not trigger race
-    if (noRaceFor(gep1) && noRaceFor(gep2)) {
+    // array access patterns are perfectly aligned and there is not overlap
+    NoRaceType typ1 = noRaceFor(gep1);
+    NoRaceType typ2 = noRaceFor(gep2);
+    if (typ1 == NoRaceType::NoRace && typ2 == NoRaceType::NoRace) {
       return false;
+    } else if (typ1 == NoRaceType::Race || typ2 == NoRaceType::Race) {
+      return true;
     }
   }
 

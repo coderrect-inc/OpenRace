@@ -65,11 +65,11 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
     if (DEBUG_PTA) {
       llvm::outs() << "Checking Race: " << write->getID() << "(TID " << write->getThread().id << ") "
-                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine()
-                   << ")"
-                   //                   //DRB149 crash on this line
+                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine()  // DRB149 crash on this line
+                   << " col" << write->getIRInst()->getInst()->getDebugLoc().getCol() << ")"
                    << " " << other->getID() << "(TID " << other->getThread().id << ") "
-                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << " col"
+                   << other->getIRInst()->getInst()->getDebugLoc().getCol() << ")"
                    << "\n";
       llvm::outs() << " (IR: ";
       write->getInst()->print(llvm::outs(), false);
