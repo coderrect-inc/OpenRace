@@ -71,11 +71,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
                    << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << " col"
                    << other->getIRInst()->getInst()->getDebugLoc().getCol() << ")"
                    << "\n";
-      llvm::outs() << " (IR: ";
-      write->getInst()->print(llvm::outs(), false);
-      llvm::outs() << "\n\t";
-      other->getInst()->print(llvm::outs(), false);
-      llvm::outs() << ")\n";
+      llvm::outs() << " (IR: " << *write->getInst() << "\n\t" << *other->getInst() << ")\n";
     }
 
     if (threadlocal.isThreadLocalAccess(write, other)) {

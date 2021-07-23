@@ -692,7 +692,7 @@ bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *even
         auto opGep2 = llvm::dyn_cast<llvm::GetElementPtrInst>(op2->stripPointerCasts());
         if (opGep1 != opGep2) {
           // avoid the case that: its self load, conduct operation on it, then store back on the same element, should be
-          // race, e.g.,
+          // race, e.g., DRB073
           return false;
         }
       }
