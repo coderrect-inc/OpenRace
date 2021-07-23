@@ -10,32 +10,20 @@ limitations under the License.
 ==============================================================================*/
 
 #include <Trace/Event.h>
-
-#include "OpenMPAnalysis.h"
+#include <Trace/ThreadTrace.h>
+#include <llvm/Passes/PassBuilder.h>
 
 namespace race {
+
+class OpenMPAnalysis;
+struct Region;
 
 class SimpleArrayAnalysis {
   llvm::PassBuilder PB;
   llvm::FunctionAnalysisManager FAM;
-  const OpenMPAnalysis& ompAnalysis;
-
-  // NOTE: the following are from OpenMPAnalysis, and should belong to it,
-  // but the functions only used by array analysis, so moved here tmp
-  // Start/End of omp loop
-  using LoopRegion = Region;
-
-  // per-thread map of omp for loop regions
-  std::map<ThreadID, std::vector<LoopRegion>> ompForLoops;
-
-  // get cached list of loop regions, else create them
-  const std::vector<LoopRegion>& getOmpForLoops(const ThreadTrace& trace);
-
-  // return true if this event is in a omp fork loop
-  bool inParallelFor(const race::MemAccessEvent* event);
 
  public:
-  SimpleArrayAnalysis(const OpenMPAnalysis& ompAnalysis);
+  SimpleArrayAnalysis();
 
   // return true if events are array accesses who's access sets could overlap
   bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);

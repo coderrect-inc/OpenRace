@@ -11,9 +11,6 @@ limitations under the License.
 
 #include "RaceDetect.h"
 
-#include <Analysis/SimpleArrayAnalysis.h>
-#include <llvm/Analysis/ScopedNoAliasAA.h>
-
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
 #include "Analysis/OpenMPAnalysis.h"
@@ -21,7 +18,6 @@ limitations under the License.
 #include "Analysis/SimpleAlias.h"
 #include "Analysis/ThreadLocalAnalysis.h"
 #include "LanguageModel/RaceModel.h"
-#include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
@@ -50,7 +46,6 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   race::SimpleAlias simpleAlias;
   race::OpenMPAnalysis ompAnalysis(program);
   race::ThreadLocalAnalysis threadlocal;
-  race::SimpleArrayAnalysis arrayAnalysis(ompAnalysis);
 
   race::Reporter reporter;
 
@@ -92,7 +87,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       //  #pragma omp parallel for shared(A)
       //  for (int i = 0; i < N: i++) { A[i] = i; }
       // even though A is shared, each index is unique so there is no race
-      if (arrayAnalysis.isLoopArrayAccess(write, other) && !arrayAnalysis.canIndexOverlap(write, other)) {
+      if (ompAnalysis.isLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
         return;
       }
 

@@ -9,11 +9,13 @@ using namespace race;
 using namespace llvm;
 
 OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program)
-    : getThreadNumAnalysis(program), lastprivate(program.getModule()) {
+    : getThreadNumAnalysis(program), lastprivate(program.getModule()), arrayAnalysis() {
   PB.registerFunctionAnalyses(FAM);
 }
 
 namespace {
+
+bool regionEndLessThan(const race::Region &region1, const race::Region &region2) { return region1.end < region2.end; }
 
 // recursively find the spawn site of the closest/innermost OpenMPFork for this event
 std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
@@ -140,7 +142,39 @@ auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::Op
 
 }  // namespace
 
-std::vector<Region> OpenMPAnalysis::getLoopRegions(const ThreadTrace &thread) const { return _getLoopRegions(thread); }
+const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(const ThreadTrace &thread) {
+  // Check if result is already computed
+  auto it = ompForLoops.find(thread.id);
+  if (it != ompForLoops.end()) {
+    return it->second;
+  }
+
+  // Else find the loop regions
+  ompForLoops[thread.id] = _getLoopRegions(thread);
+
+  return ompForLoops.at(thread.id);
+}
+
+bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
+  auto loopRegions = getOmpForLoops(event->getThread());
+  auto const eid = event->getID();
+
+  auto it =
+      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
+  if (it != loopRegions.end()) {
+    if (it->contains(eid)) return true;
+  }
+
+  return false;
+}
+
+bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
+  return arrayAnalysis.isLoopArrayAccess(event1, event2) && inParallelFor(event1) && inParallelFor(event2);
+}
+
+bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
+  return arrayAnalysis.canIndexOverlap(event1, event2);
+}
 
 bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {
   return _fromSameParallelRegion(event1, event2);

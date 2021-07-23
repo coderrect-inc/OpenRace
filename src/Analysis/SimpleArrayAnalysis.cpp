@@ -1,9 +1,7 @@
 
-#include "SimpleArrayAnalysis.h"
+#include "Analysis/SimpleArrayAnalysis.h"
 
 namespace {
-
-bool regionEndLessThan(const race::Region &region1, const race::Region &region2) { return region1.end < region2.end; }
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
 const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
@@ -434,9 +432,7 @@ const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
 
 }  // namespace
 
-race::SimpleArrayAnalysis::SimpleArrayAnalysis(const OpenMPAnalysis &ompAnalysis) : ompAnalysis(ompAnalysis) {
-  PB.registerFunctionAnalyses(FAM);
-}
+race::SimpleArrayAnalysis::SimpleArrayAnalysis() { PB.registerFunctionAnalyses(FAM); }
 
 const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
   auto result = super::visit(S);
@@ -586,34 +582,6 @@ const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) 
   return llvm::dyn_cast_or_null<llvm::SCEVAddRecExpr>(omp);
 }
 
-const std::vector<race::SimpleArrayAnalysis::LoopRegion> &race::SimpleArrayAnalysis::getOmpForLoops(
-    const ThreadTrace &thread) {
-  // Check if result is already computed
-  auto it = ompForLoops.find(thread.id);
-  if (it != ompForLoops.end()) {
-    return it->second;
-  }
-
-  // Else find the loop regions
-  // auto const loopRegions = ;
-  ompForLoops[thread.id] = ompAnalysis.getLoopRegions(thread);
-
-  return ompForLoops.at(thread.id);
-}
-
-bool race::SimpleArrayAnalysis::inParallelFor(const race::MemAccessEvent *event) {
-  auto loopRegions = getOmpForLoops(event->getThread());
-  auto const eid = event->getID();
-
-  auto it =
-      lower_bound(loopRegions.begin(), loopRegions.end(), Region(eid, eid, event->getThread()), regionEndLessThan);
-  if (it != loopRegions.end()) {
-    if (it->contains(eid)) return true;
-  }
-
-  return false;
-}
-
 // refer to https://llvm.org/docs/GetElementPtr.html
 // an array access (load/store) is probably like this (the simplest case):
 //   %arrayidx4 = getelementptr inbounds [10 x i32], [10 x i32]* %3, i64 0, i64 %idxprom3, !dbg !67
@@ -647,7 +615,7 @@ bool race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *ev
   auto gep2 = getGEP(event2);
   if (!gep2) return false;
 
-  return isArrayAccess(gep1) && isArrayAccess(gep2) && inParallelFor(event1) && inParallelFor(event2);
+  return isArrayAccess(gep1) && isArrayAccess(gep2);
 }
 
 // event1 must be write, event2 can be either read/write
