@@ -38,6 +38,7 @@ set(racedetect-lib-sources
     Analysis/OpenMPAnalysis.cpp
     Analysis/SimpleAlias.cpp
     Analysis/ThreadLocalAnalysis.cpp
+    Analysis/SimpleArrayAnalysis.cpp
     IR/Builder.cpp
     IR/IR.cpp
     Trace/Event.cpp
@@ -45,7 +46,7 @@ set(racedetect-lib-sources
     Trace/ProgramTrace.cpp
     Trace/ThreadTrace.cpp
     Reporter/Reporter.cpp
-    RaceDetect.cpp Analysis/SimpleArrayAnalysis.cpp)
+    RaceDetect.cpp )
 add_library(racedetect-lib STATIC ${racedetect-lib-sources})
 target_link_libraries(racedetect-lib pta CONAN_PKG::nlohmann_json)
 target_include_directories(racedetect-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -9,14 +9,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#pragma once
+
 #include <Trace/Event.h>
-#include <Trace/ThreadTrace.h>
 #include <llvm/Passes/PassBuilder.h>
 
 namespace race {
-
-class OpenMPAnalysis;
-struct Region;
 
 class SimpleArrayAnalysis {
   llvm::PassBuilder PB;

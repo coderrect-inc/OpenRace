@@ -112,7 +112,7 @@ class OpenMPAnalysis {
   // get cached list of loop regions, else create them
   const std::vector<LoopRegion>& getOmpForLoops(const ThreadTrace& trace);
 
-  // return true if this event is in a omp fork loop
+  // return true if this event is in a omp for loop
   bool inParallelFor(const race::MemAccessEvent* event);
 
  public:

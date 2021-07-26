@@ -180,8 +180,6 @@ bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *ev
   return _fromSameParallelRegion(event1, event2);
 }
 
-// this does not filter out FP when single has multiple tasks inside, e.g., DRB027-taskdependmissing-orig-yes.ll
-// only use this when no tasks in single block
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
   return _inSameSingleBlock(event1, event2);
 }
@@ -291,7 +289,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRInst()->type == race::IR::Type::OpenMPReduce) {
+    if (event->getIRType() == race::IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());
