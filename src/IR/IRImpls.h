@@ -427,4 +427,6 @@ using OpenMPMasterEnd = CallIRImpl<IR::Type::OpenMPMasterEnd>;
 
 using OpenMPGetThreadNum = CallIRImpl<IR::Type::OpenMPGetThreadNum>;
 
+using OpenMPTaskWait = CallIRImpl<IR::Type::OpenMPTaskWait>;
+
 }  // namespace race
