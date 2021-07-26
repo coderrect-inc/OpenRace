@@ -280,7 +280,7 @@ TEST_LL("DRB111", "DRB111-linearmissing-orig-yes.ll",
                  "DRB111-linearmissing-orig-yes.c:68:6 DRB111-linearmissing-orig-yes.c:68:6"))
 
 // 112 linear
-// TEST_LL("DRB112", /*TODO*/, EXPECTED(/*TODO*/))
+TEST_LL("DRB112", "DRB112-linear-orig-no.ll", NORACE)
 
 TEST_LL("DRB113", "DRB113-default-orig-no.ll", NORACE)
 

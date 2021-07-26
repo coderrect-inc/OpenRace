@@ -118,11 +118,12 @@ std::string recursivelyRetrieveIdx(llvm::Instruction *ir) {
 // return the name of the index variable that the loop (containing gep) will iterate on (or related to this index var),
 // which might not be the index that omp parallel will parallel on:
 // (1) if the name of index var/ptr starts with "indvars.", it is the index variable of loop, e.g., %indvars.iv.i, and
-// it is private (2) if starting with "idxprom" + an int, e.g., %idxprom15.i, can be: a. it is not the index variable
-// and declared outside of loop, and has its own self-incrementing rules b. it is not the index variable, but computed
-// from the index variable c. it is the index variable but is not private d. it is the index variable but not in omp
-// parallel region (3) if starting with "storemerge" + an int, e.g., %storemerge6.i, it is the index variable but is not
-// private
+// it is private or linear;
+// (2) if starting with "idxprom" + an int, e.g., %idxprom15.i, can be:
+// a. it is not the index variable and declared outside of loop, and has its own self-incrementing rules,
+// b. it is not the index variable, but computed from the index variable,
+// c. it is the index variable but is not private d. it is the index variable but not in omp parallel region;
+// (3) if starting with "storemerge" + an int, e.g., %storemerge6.i, it is the index variable but is not private
 std::string getIterateIndex(const llvm::GetElementPtrInst *gep) {
   auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last operand
   if (isIndvarsNext(idx)) {
