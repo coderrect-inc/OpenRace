@@ -73,7 +73,7 @@ TEST_LL("DRB017", "DRB017-outputdep-var-yes.ll",
         EXPECTED("DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:71:12",
                  "DRB017-outputdep-var-yes.c:72:6 DRB017-outputdep-var-yes.c:72:6"))
 
-// DRB 18 and 19 array index fails // misses the race on output
+// DRB 18 and 19 array index
 TEST_LL("DRB018", "DRB018-plusplus-orig-yes.ll",
         EXPECTED("DRB018-plusplus-orig-yes.c:72:18 DRB018-plusplus-orig-yes.c:72:18",
                  "DRB018-plusplus-orig-yes.c:72:18 DRB018-plusplus-orig-yes.c:72:18",
@@ -182,8 +182,8 @@ TEST_LL("DRB071", "DRB071-targetparallelfor-orig-no.ll", NORACE)
 // 72 task
 // TEST_LL("DRB072", /*TODO*/, EXPECTED(/*TODO*/))
 
-//// 73 broken debug info:
-//TEST_LL("DRB073", "DRB073-doall2-orig-yes.ll",
+// 73 broken debug info:
+// TEST_LL("DRB073", "DRB073-doall2-orig-yes.ll",
 //        EXPECTED("DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",  // races on array index
 //                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",
 //                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:21",
@@ -230,7 +230,7 @@ TEST_LL("DRB089", "DRB089-dynamic-storage2-orig-yes.ll",
         EXPECTED("DRB089-dynamic-storage2-orig-yes.c:73:15 DRB089-dynamic-storage2-orig-yes.c:73:15",
                  "DRB089-dynamic-storage2-orig-yes.c:73:15 DRB089-dynamic-storage2-orig-yes.c:73:15"))
 
-// 90 missed read-write race
+// 90 missed read-write race: the racy object is opted out by SROA
 // TEST_LL("DRB090", /*TODO*/, EXPECTED(/*TODO*/))
 
 TEST_LL("DRB091", "DRB091-threadprivate2-orig-no.ll", NORACE)
@@ -403,7 +403,7 @@ TEST_LL("DRB159", "DRB159-nobarrier-orig-gpu-no.ll", NORACE)
 // TEST_LL("DRB167", /*TODO*/, EXPECTED(/*TODO*/))
 // TEST_LL("DRB168", /*TODO*/, EXPECTED(/*TODO*/))
 
-// 169 multi-dimen array // Missed TP
+// 169 multi-dimen array
 TEST_LL("DRB169", "DRB169-missingsyncwrite-orig-yes.ll",
         EXPECTED("DRB169-missingsyncwrite-orig-yes.c:38:15 DRB169-missingsyncwrite-orig-yes.c:38:15"))
 
