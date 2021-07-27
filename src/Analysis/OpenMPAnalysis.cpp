@@ -168,12 +168,8 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   return false;
 }
 
-bool OpenMPAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
-  return arrayAnalysis.isLoopArrayAccess(event1, event2) && inParallelFor(event1) && inParallelFor(event2);
-}
-
-bool OpenMPAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2) {
-  return arrayAnalysis.canIndexOverlap(event1, event2);
+bool OpenMPAnalysis::isLoopArrayAccessWOIdxOverlap(const MemAccessEvent *event1, const MemAccessEvent *event2) {
+  return arrayAnalysis.isLoopArrayAccess(event1, event2) && !arrayAnalysis.canIndexOverlap(event1, event2);
 }
 
 bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {

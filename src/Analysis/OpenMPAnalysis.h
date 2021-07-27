@@ -118,12 +118,6 @@ class OpenMPAnalysis {
  public:
   OpenMPAnalysis(const ProgramTrace& program);
 
-  // return true if both events are array accesses in an omp loop
-  bool isLoopArrayAccess(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
-
-  // return true if events are array accesses who's access sets could overlap
-  bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);
-
   // return true if both events are part of the same omp team
   bool fromSameParallelRegion(const Event* event1, const Event* event2) const;
 
@@ -145,6 +139,9 @@ class OpenMPAnalysis {
   }
 
   bool isInLastprivate(const Event* event) const { return lastprivate.isGuarded(event->getInst()->getParent()); }
+
+  // return true if both events are array accesses in an omp loop and their access sets cannot overlap
+  bool isLoopArrayAccessWOIdxOverlap(const MemAccessEvent* event1, const MemAccessEvent* event2);
 };
 
 }  // namespace race
