@@ -13,15 +13,19 @@ limitations under the License.
 
 #include "helpers/ReportChecking.h"
 
-TEST_CASE("pthreadrace", "[integration][pthread]") {
-  // NOTE: add new test input/output pair here.
-  // If the test case has no race, set the ouput as empty string.
-  std::vector<Oracle> oracles = {
-      Oracle("pthread-account-no.ll", {}),
-      // Oracle("pthread-spinlock-no.ll", {}), Oracle("pthread-spinlock-yes.ll", {}), // spinlock unimplemented
-      // Oracle("pthread-array-no.ll", {}), // We cannot handle array index outside of OpenMP
-      Oracle("pthread-simple-yes.ll", {"pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9",
-                                       "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9"})};
+#define TEST_LL(name, file, ...) \
+  TEST_CASE(name, "[integration][pthread]") { checkTest(file, "integration/pthreadrace/", {__VA_ARGS__}); }
 
-  checkOracles(oracles, "integration/pthreadrace/");
-}
+#define EXPECTED(...) __VA_ARGS__
+#define NORACE
+
+// NOTE: add new test input/output pair here.
+// If the test case has no race, set the ouput as empty string.
+
+TEST_LL("pthread-account-no", "pthread-account-no.ll", NORACE)
+// TEST_LL("pthread-spinlock-no", "pthread-spinlock-no.ll", NORACE)
+// TEST_LL("pthread-spinlock-yes", "pthread-spinlock-yes.ll", NORACE) // spinlock unimplemented
+// TEST_LL("pthread-array-no", "pthread-array-no.ll", NORACE), // We cannot handle array index outside of OpenMP
+TEST_LL("pthread-simple-yes", "pthread-simple-yes.ll", 
+      EXPECTED("pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9",
+               "pthread-simple-yes.c:8:9 pthread-simple-yes.c:8:9"))
