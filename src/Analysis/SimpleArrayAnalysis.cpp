@@ -71,8 +71,8 @@ std::optional<llvm::StringRef> getIdxForIdxprom(Value *idx) {
   Value *op = sext->getOperand(0);
   if (auto load = llvm::dyn_cast<llvm::LoadInst>(op)) {
     op = load->getPointerOperand();
-    auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts());
-    if (gep_Op) {  // check if it is parallel-related
+    if (auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts())) {
+      // check if it is parallel-related
       return getIterateIndex(gep_Op);
     } else {
       return op->getName();
@@ -133,6 +133,7 @@ std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir) {
       return getIdxForIdxprom(ir);
     } else if (isMathOpOrNoName(ir)) {
       ir = llvm::dyn_cast<llvm::Instruction>(rhs);
+      if (!ir) return std::nullopt;
     } else {  // too complex, cannot handle now
       return std::nullopt;
     }
