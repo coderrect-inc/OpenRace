@@ -717,6 +717,7 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
 
 const std::vector<const llvm::BasicBlock *> &ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const {
   // Check cache first
+  // cppcheck-suppress stlIfFind
   if (auto it = reduceBlocks.find(reduce); it != reduceBlocks.end()) {
     return it->second;
   }

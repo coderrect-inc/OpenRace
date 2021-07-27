@@ -294,6 +294,7 @@ bool HappensBeforeGraph::syncEdgesDFS(HappensBeforeGraph::EventPID src, HappensB
     }
 
     // Add next nodes from sync edges
+    // cppcheck-suppress stlIfFind
     if (auto it = syncEdges.find(node); it != syncEdges.end()) {
       for (auto const next : it->second) {
         addToWorklist(next);
