@@ -169,19 +169,19 @@ std::optional<llvm::StringRef> getIterateIndex(const llvm::GetElementPtrInst *ge
 struct ArrayAccess {
   std::vector<const llvm::GetElementPtrInst *> idxes;  // the outermost index is at the end
   std::optional<llvm::StringRef>
-      outerMostOMPParallelIdxName;  // TODO: can be collapse if has outerMostOMPParallelIdxName? for now, no such tests
+      outerMostIdxName;  // TODO: can be collapse if has outerMostIdxName? for now, no such tests
 
   bool hasCollapse = false;                        // whether this access involves indexes using collapse
   unsigned int collapseLevel = 0;                  // the param in collapse clause
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
   ArrayAccess(std::vector<const llvm::GetElementPtrInst *> idxes)
-      : idxes(idxes), outerMostOMPParallelIdxName(computeOuterMostIdxName()), collapseRootIdx(checkCollapse()) {
+      : idxes(idxes), outerMostIdxName(computeOuterMostIdxName()), collapseRootIdx(checkCollapse()) {
     if (!hasCollapse) removeOMPIrrelevantIdx();
   }
 
-  std::optional<llvm::StringRef> getOuterMostIdxName() { return outerMostOMPParallelIdxName; }
-  bool isMultiDim() { return outerMostOMPParallelIdxName.has_value() ? idxes.size() > 0 : idxes.size() > 1; }
+  std::optional<llvm::StringRef> getOuterMostIdxName() { return outerMostIdxName; }
+  bool isMultiDim() { return outerMostIdxName.has_value() ? idxes.size() > 0 : idxes.size() > 1; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -395,9 +395,9 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
       poptime--;
     }
   } else {
-    // this is the outermost omp parallel index of the array access: from outerMostOMPParallelIdxName or the last
+    // this is the outermost omp parallel index of the array access: from outerMostIdxName or the last
     // element of idxes
-    auto outerMostIdx = loopIdxes.outerMostOMPParallelIdxName;
+    auto outerMostIdx = loopIdxes.outerMostIdxName;
     if (outerMostIdx.has_value()) {
       if (!isPerfectlyAligned(outerMostIdx.value(), parallelIdx, false)) return AccessType::Race;
     } else {
@@ -459,8 +459,8 @@ AccessType getAccessTypeFor(const llvm::GetElementPtrInst *gep) {
   auto loopIdxes = getAllLoopIndexesForArrayAccess(gep);
   auto parallelIdx = getOMPParallelLoopIndex(gep);
 
-  if (loopIdxes.outerMostOMPParallelIdxName.has_value()) {  // may be one-dimension or multi-dimension
-    if (loopIdxes.isMultiDim()) {                           // multi-dimension
+  if (loopIdxes.outerMostIdxName.has_value()) {  // may be one-dimension or multi-dimension
+    if (loopIdxes.isMultiDim()) {                // multi-dimension
       return getAccessTypeForMultiDim(loopIdxes, parallelIdx);
     }
     // one-dimension
