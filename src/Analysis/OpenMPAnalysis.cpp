@@ -709,7 +709,7 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
 
     // Keep traversing
     std::copy_if(succ_begin(block), succ_end(block), std::back_inserter(worklist),
-                 [&notVisited](auto succBlock) { return notVisited(succBlock); });
+                 [&visited](auto succBlock) { return visited.find(succBlock) == visited.end(); });
   }
 
   return blocks;
