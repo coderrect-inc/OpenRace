@@ -404,7 +404,7 @@ class OpenMPBarrier : public BarrierIR {
 template <const IR::Type T>
 class CallIRImpl : public CallIR {
  public:
-  CallIRImpl(const llvm::CallBase *inst) : CallIR(inst, T) {}
+  explicit CallIRImpl(const llvm::CallBase *inst) : CallIR(inst, T) {}
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static inline bool classof(const IR *e) { return e->type == T; }
