@@ -29,6 +29,15 @@ target_compile_definitions(pta PUBLIC ${LLVM_DEFINITIONS})
 target_compile_options(pta PUBLIC -fno-rtti)
 target_compile_features(pta PUBLIC cxx_std_17)
 
+if (CMAKE_CXX_CPPCHECK)
+    list(APPEND CMAKE_CXX_CPPCHECK
+            "--enable=warning"
+            "--inconclusive"
+            "--force"
+            "--inline-suppr"
+    )
+endif()
+
 
 set(racedetect-lib-sources
     LanguageModel/RaceModel.cpp

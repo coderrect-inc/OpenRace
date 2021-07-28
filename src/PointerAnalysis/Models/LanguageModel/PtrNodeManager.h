@@ -32,7 +32,7 @@ class PtrNodeManager : public SingleInstanceOwner<Pointer<ctx>> {
   PtrNode *uniPtrNode;   // special node that can point to every object.
 
  protected:
-  explicit PtrNodeManager() : consGraph(nullptr) {}
+  explicit PtrNodeManager() : consGraph(nullptr), nullPtrNode(nullptr), uniPtrNode(nullptr) {}
 
   template <typename PT>
   void init(ConsGraph *CG, llvm::LLVMContext &context) {

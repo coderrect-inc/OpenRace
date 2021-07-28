@@ -54,23 +54,21 @@ using namespace race;
 
 namespace {
 const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &program) {
-  for (auto const &thread : program.getThreads()) {
-    if (thread->spawnSite.has_value() && thread->spawnSite.value() == fork) {
-      return thread.get();
-    }
-  }
-  assert(false && "Some forkEvent in does not correspond to a thread");
-  return nullptr;
+  auto const &threads = program.getThreads();
+  auto thread = std::find_if(threads.begin(), threads.end(), [&fork](auto const &thread) {
+    return thread->spawnSite.has_value() && thread->spawnSite.value() == fork;
+  });
+
+  assert(thread != threads.end() && "Some forkEvent in does not correspond to a thread");
+  return thread->get();
 }
 
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
-  for (auto const &fork : thread.getForkEvents()) {
-    if (fork->getIRInst()->getThreadHandle() == handle) {
-      return fork;
-    }
-  }
+  auto const &events = thread.getForkEvents();
+  auto it = std::find_if(events.begin(), events.end(),
+                         [&handle](auto forkEvent) { return forkEvent->getIRInst()->getThreadHandle() == handle; });
 
-  return nullptr;
+  return (it != events.end()) ? *it : nullptr;
 }
 
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
@@ -291,6 +289,7 @@ bool HappensBeforeGraph::syncEdgesDFS(HappensBeforeGraph::EventPID src, HappensB
     }
 
     // Add next nodes from sync edges
+    // cppcheck-suppress stlIfFind
     if (auto it = syncEdges.find(node); it != syncEdges.end()) {
       for (auto const next : it->second) {
         addToWorklist(next);
