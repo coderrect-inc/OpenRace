@@ -68,7 +68,7 @@ class SimpleGetThreadNumAnalysis {
   std::optional<u_int64_t> getGuardedBy(const Event* event) const;
 
  public:
-  SimpleGetThreadNumAnalysis(const ProgramTrace& program);
+  explicit SimpleGetThreadNumAnalysis(const ProgramTrace& program);
 
   // Check if both events are guaranteed to be executed by a particular thread
   // via a branch on omp_get_thread_num checked against a constant value
@@ -86,7 +86,7 @@ class LastprivateAnalysis {
   std::set<const llvm::BasicBlock*> computeLastprivateBlocks(const llvm::Function& func);
 
  public:
-  LastprivateAnalysis(const llvm::Module& module);
+  explicit LastprivateAnalysis(const llvm::Module& module);
 
   [[nodiscard]] inline bool isGuarded(const llvm::BasicBlock* block) const {
     return lastprivateBlocks.find(block) != lastprivateBlocks.end();
@@ -113,7 +113,7 @@ class OpenMPAnalysis {
   bool inParallelFor(const race::MemAccessEvent* event);
 
  public:
-  OpenMPAnalysis(const ProgramTrace& program);
+  explicit OpenMPAnalysis(const ProgramTrace& program);
 
   // return true if events are array accesses who's access sets could overlap
   bool canIndexOverlap(const race::MemAccessEvent* event1, const race::MemAccessEvent* event2);

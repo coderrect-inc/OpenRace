@@ -14,6 +14,7 @@ using namespace race;
 
 SharedMemory::SharedMemory(const ProgramTrace &program) {
   auto const getObjId = [&](const pta::ObjTy *obj) {
+    // cppcheck-suppress stlIfFind
     if (auto it = objIDs.find(obj); it != objIDs.end()) {
       return it->second;
     }
@@ -132,6 +133,7 @@ std::map<ThreadID, std::vector<const ReadEvent *>> SharedMemory::getThreadedRead
   auto id = objIDs.find(obj);
   if (id == objIDs.end()) return {};
 
+  // cppcheck-suppress stlIfFind
   if (auto it = objReads.find(id->second); it != objReads.end()) {
     return it->second;
   }
@@ -142,6 +144,7 @@ std::map<ThreadID, std::vector<const WriteEvent *>> SharedMemory::getThreadedWri
   auto id = objIDs.find(obj);
   if (id == objIDs.end()) return {};
 
+  // cppcheck-suppress stlIfFind
   if (auto it = objWrites.find(id->second); it != objWrites.end()) {
     return it->second;
   }

@@ -128,7 +128,7 @@ class SCCIterator : public llvm::iterator_facade_base<SCCIterator<ctx, cons, rev
     }
   }
 
-  ChildItTy child_end(NodeRef node) {
+  ChildItTy child_end(NodeRef node) const {
     if constexpr (cons == Constraints::copy) {
       if constexpr (reverse) {
         return node->pred_copy_end();
