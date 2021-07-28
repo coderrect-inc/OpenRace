@@ -70,7 +70,7 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace 
   auto it = std::find_if(events.begin(), events.end(),
                          [&handle](auto forkEvent) { return forkEvent->getIRInst()->getThreadHandle() == handle; });
 
-  return (it != events.end())? *it : nullptr;
+  return (it != events.end()) ? *it : nullptr;
 }
 
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
