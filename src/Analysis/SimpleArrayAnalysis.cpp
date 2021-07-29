@@ -1,3 +1,13 @@
+/* Copyright 2021 Coderrect Inc. All Rights Reserved.
+Licensed under the GNU Affero General Public License, version 3 or later (“AGPL”), as published by the Free Software
+Foundation. You may not use this file except in compliance with the License. You may obtain a copy of the License at
+https://www.gnu.org/licenses/agpl-3.0.en.html
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
 
 #include "Analysis/SimpleArrayAnalysis.h"
 
@@ -11,10 +21,11 @@ const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
 // return true if this is a math-related operation, e.g., add, mul, or, trunc. for details, see llvm/IR/Instruction.def:
 // isBinaryOp includes standard binary (13-24) and logical (25-30) operators
 // isCast includes cast (38-50) operators (actually we want 38-46)
-bool isMathOp(llvm::Instruction *ir) { return ir->isBinaryOp() || ir->isCast(); }
+// ir can be nullptr
+bool isMathOp(llvm::Instruction *ir) { return ir ? ir->isBinaryOp() || ir->isCast() : false; }
 
 // return true if this is a math-related operation on the index or the index has no name
-bool isMathOpOrNoName(llvm::Instruction *ir) { return isMathOp(ir) || !ir->hasName(); }
+bool isMathOpOrNoName(llvm::Instruction *ir) { return ir ? isMathOp(ir) || !ir->hasName() : false; }
 
 enum class IndexType {
   Indvars,      // the name of index var/ptr starts with "indvars.", it is the index variable of loop,
@@ -23,8 +34,8 @@ enum class IndexType {
   Idxprom,      // starting with "idxprom" + an int, e.g., %idxprom15.i, can be one of the following case:
             // a. it is not the index variable and declared outside of loop, and has its own self-incrementing rules,
             // b. it is not the index variable, but computed from the index variable,
-            // c. it is the index variable but is not private d. it is the index variable but not in omp parallel
-            // region;
+            // c. it is the index variable but is not private,
+            // d. it is the index variable but not in omp parallel region;
   StoreMerge,    // starting with "storemerge" + an int, e.g., %storemerge6.i, it is the index variable but is not
                  // private but shared
   Intermediate,  // intermediate var between index and other index with math/logic/cast operation
@@ -50,19 +61,18 @@ IndexType getIndexType(llvm::Value *idx) {
     const StringRef &name = idx->getName();
     return getIndexType(name);
   }
-  if (auto math = llvm::dyn_cast<llvm::Instruction>(idx)) {
-    if (isMathOp(math)) return IndexType::Intermediate;
-  }
+  auto math = llvm::dyn_cast<llvm::Instruction>(idx);
+  if (isMathOp(math)) return IndexType::Intermediate;
 
   return IndexType::Unknown;
 }
 
 std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir);
-std::optional<llvm::StringRef> getIterateIndex(const llvm::GetElementPtrInst *gep);
+std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep);
 
 // conduct a simple backward dataflow analysis to retrieve the name of the index that
 // idx can refer to (the name of idx must starts with "idxprom")
-std::optional<llvm::StringRef> getIdxForIdxprom(Value *idx) {
+std::optional<llvm::StringRef> getInductionVarNameForIdxprom(Value *idx) {
   assert(getIndexType(idx) == IndexType::Idxprom && "The name of idx must starts with idxprom");
 
   // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
@@ -73,7 +83,7 @@ std::optional<llvm::StringRef> getIdxForIdxprom(Value *idx) {
     op = load->getPointerOperand();
     if (auto gep_Op = llvm::dyn_cast<llvm::GetElementPtrInst>(op->stripPointerCasts())) {
       // check if it is parallel-related
-      return getIterateIndex(gep_Op);
+      return getInductionVarName(gep_Op);
     } else {
       return op->getName();
     }
@@ -99,7 +109,7 @@ bool isOmpRelevant(llvm::StringRef idxName) {
 
 // return true this index is used within the scope of omp parallel region, used for multi-dimension array
 bool isOmpRelevant(const GetElementPtrInst *idx) {
-  auto idxName = getIterateIndex(idx);
+  auto idxName = getInductionVarName(idx);
   return idxName.has_value() ? isOmpRelevant(idxName.value()) : false;
 }
 
@@ -130,20 +140,20 @@ std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir) {
     } else if (getIndexType(ir) == IndexType::Indvars) {
       return ir->getName();
     } else if (getIndexType(ir) == IndexType::Idxprom) {
-      return getIdxForIdxprom(ir);
+      return getInductionVarNameForIdxprom(ir);
     } else if (isMathOpOrNoName(ir)) {
       ir = llvm::dyn_cast<llvm::Instruction>(rhs);
-      if (!ir) return std::nullopt;
     } else {  // too complex, cannot handle now
       return std::nullopt;
     }
   }
+  if (!ir) return std::nullopt;
   return ir->getName();
 }
 
 // return the name of the index variable that the loop (containing gep) will iterate on (or related to this index var),
 // this might not be the index that omp parallel will parallel on
-std::optional<llvm::StringRef> getIterateIndex(const llvm::GetElementPtrInst *gep) {
+std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep) {
   auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last operand
   switch (getIndexType(idx)) {
     case IndexType::IndvarsNext:
@@ -157,7 +167,7 @@ std::optional<llvm::StringRef> getIterateIndex(const llvm::GetElementPtrInst *ge
       return idx->getName();
     }
     case IndexType::Idxprom: {
-      return getIdxForIdxprom(idx);
+      return getInductionVarNameForIdxprom(idx);
     }
     default:
       llvm::errs() << "Unhandled loop index types: " << *idx << "\n";
@@ -212,7 +222,7 @@ struct ArrayAccess {
       if (getIndexType(idx) != IndexType::Idxprom) {
         break;
       }
-      auto idxName = getIterateIndex(gep);
+      auto idxName = getInductionVarName(gep);
       if (!idxName.has_value()) {
         break;
       } else if (rootIdx.empty()) {  // initialize
@@ -348,9 +358,11 @@ std::optional<llvm::StringRef> getOMPParallelLoopIndex(const llvm::GetElementPtr
       }
       BBType typ = getBasicBlockType(it->getName());
       if (typ == BBType::ForPreheader || typ == BBType::OMPInnerForBody) {  // e.g., DRB003 and DRB031
-        assert(it->front().getOpcode() == llvm::Instruction::PHI &&
-               "The index must be from a phi node at the beginning of the basic block.");
-        return it->front().getName();
+        if (llvm::isa<llvm::PHINode>(it->front())) {
+          assert(it->front().getOpcode() == llvm::Instruction::PHI &&
+                 "The index must be from a phi node at the beginning of the basic block.");
+          return it->front().getName();
+        }
       }
     }
   }
@@ -370,7 +382,7 @@ bool isPerfectlyAligned(llvm::StringRef idxName, std::optional<llvm::StringRef> 
 
 // return true if the index of this array access is perfectly aligned without races
 bool isPerfectlyAligned(const GetElementPtrInst *gep, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) {
-  auto idxName = getIterateIndex(gep);
+  auto idxName = getInductionVarName(gep);
   if (!idxName.has_value() || !parallelIdx.has_value()) return false;  // cannot determine now
   return isPerfectlyAligned(idxName.value(), parallelIdx, isInnerIdx);
 }
@@ -389,10 +401,10 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
     // when using collapse, we need to compare each index using collapse (recorded in collapseRootIdx) with parallelIdx
     if (!isPerfectlyAligned(loopIdxes.collapseRootIdx.value(), parallelIdx, false)) return AccessType::Race;
     // if still have remaining indexes that do not using collapse, continue check starting from that idx
-    auto poptime = loopIdxes.collapseLevel;
-    while (poptime > 0) {
+    auto popCount = loopIdxes.collapseLevel;
+    while (popCount > 0) {
       idxes.pop_back();
-      poptime--;
+      popCount--;
     }
   } else {
     // this is the outermost omp parallel index of the array access: from outerMostIdxName or the last

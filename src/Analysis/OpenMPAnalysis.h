@@ -141,7 +141,7 @@ class OpenMPAnalysis {
   bool isInLastprivate(const Event* event) const { return lastprivate.isGuarded(event->getInst()->getParent()); }
 
   // return true if both events are array accesses in an omp loop and their access sets cannot overlap
-  bool isLoopArrayAccessWOIdxOverlap(const MemAccessEvent* event1, const MemAccessEvent* event2);
+  bool isNonOverlappingLoopAccess(const MemAccessEvent* event1, const MemAccessEvent* event2);
 };
 
 }  // namespace race

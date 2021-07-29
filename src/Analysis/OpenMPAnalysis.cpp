@@ -1,3 +1,14 @@
+/* Copyright 2021 Coderrect Inc. All Rights Reserved.
+Licensed under the GNU Affero General Public License, version 3 or later (“AGPL”), as published by the Free Software
+Foundation. You may not use this file except in compliance with the License. You may obtain a copy of the License at
+https://www.gnu.org/licenses/agpl-3.0.en.html
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
 #include "Analysis/OpenMPAnalysis.h"
 
 #include "LanguageModel/OpenMP.h"
@@ -168,7 +179,7 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   return false;
 }
 
-bool OpenMPAnalysis::isLoopArrayAccessWOIdxOverlap(const MemAccessEvent *event1, const MemAccessEvent *event2) {
+bool OpenMPAnalysis::isNonOverlappingLoopAccess(const MemAccessEvent *event1, const MemAccessEvent *event2) {
   return arrayAnalysis.isLoopArrayAccess(event1, event2) && !arrayAnalysis.canIndexOverlap(event1, event2);
 }
 
@@ -285,7 +296,7 @@ bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) cons
     // Once a reduce is found, check that it contains both events (true)
     // or that it contains neither event (keep searching)
     // if it contains one but not the other, return false
-    if (event->getIRType() == race::IR::Type::OpenMPReduce) {
+    if (event->getIRType() == IR::Type::OpenMPReduce) {
       auto const reduce = event->getInst();
       auto const contains1 = reduceAnalysis.reduceContains(reduce, event1->getInst());
       auto const contains2 = reduceAnalysis.reduceContains(reduce, event2->getInst());
