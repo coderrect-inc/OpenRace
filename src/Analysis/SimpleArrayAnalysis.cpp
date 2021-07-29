@@ -263,7 +263,6 @@ struct ArrayAccess {
       auto outerMostIdx = getLastOp(gep);
       return getIndexType(outerMostIdx) != IndexType::Idxprom;
     });
-    // auto remove = (it != idxes.rend()) ? std::distance(it, idxes.rend()) - 1 : idxes.size() - 1;
     if (it == idxes.rend()) return std::nullopt;
 
     auto const outerMostIdx = getLastOp(*it);
