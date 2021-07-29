@@ -67,7 +67,7 @@ IndexType getIndexType(llvm::Value *idx) {
   return IndexType::Unknown;
 }
 
-std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir);
+std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir);
 std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep);
 
 // conduct a simple backward dataflow analysis to retrieve the name of the index that
@@ -95,7 +95,7 @@ std::optional<llvm::StringRef> getInductionVarNameForIdxprom(Value *idx) {
     //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom3.i, !dbg !67
     return op->getName();
   } else if (auto math = llvm::dyn_cast<llvm::Instruction>(op)) {
-    return recursivelyRetrieveIdx(math);
+    return computeIdxName(math);
   }
 
   return std::nullopt;
@@ -128,7 +128,7 @@ llvm::Value *getNonConstOperand(llvm::Instruction *ir) {
 //     %indvars.iv.next23.i = add nsw i64 %indvars.iv22.i, 1, !dbg !61
 //     %17 = mul nsw i64 %indvars.iv.next23.i, 100, !dbg !98
 // 1st op is lhs, 2nd op is the non-constant element on rhs
-std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir) {
+std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir) {
   if (!isMathOp(ir)) return std::nullopt;
 
   while (isMathOp(ir)) {
@@ -159,7 +159,7 @@ std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst
     case IndexType::IndvarsNext:
     case IndexType::Intermediate: {
       if (auto math = llvm::dyn_cast<llvm::Instruction>(idx))
-        return recursivelyRetrieveIdx(math);
+        return computeIdxName(math);
       else
         return std::nullopt;
     }
@@ -279,7 +279,7 @@ struct ArrayAccess {
     auto const inst = llvm::dyn_cast<llvm::Instruction>(outerMostIdx);
     if (!inst) return std::nullopt;
 
-    auto const name = recursivelyRetrieveIdx(inst);
+    auto const name = computeIdxName(inst);
     if (name.has_value() && isOmpRelevant(name.value())) {
       idxes.erase(std::next(it).base());
       return name;
