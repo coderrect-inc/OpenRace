@@ -229,6 +229,14 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
     }
   }
 
+  // we repeatedly need to check if one node is reachable from another
+  // to optimise this, and since the connectivity of this graph is relatively low, we pre-search all reachable sync
+  // events from each sync event and keep a cache for later since this graph is (effectively) unmodifiable
+  //
+  // there are two kinds of edges: thread-internal edges (from/to the same thread) and cross-thread edges (stored in
+  // syncEdges)
+  // we iterate over all thread sync events to pick up all possible sources and keep track of both thread-internal and
+  // cross-thread edges
   std::set<EventPID> allSrcs;
   for (auto const &thread : threadSyncs) {
     std::copy(thread.second.begin(), thread.second.end(), std::inserter(allSrcs, allSrcs.end()));
@@ -251,6 +259,9 @@ HappensBeforeGraph::HappensBeforeGraph(const race::ProgramTrace &program) {
       auto const node = worklist.front();
       visited.insert(node);
       worklist.pop_front();
+
+      // connectivity is low, so there's no need to perform a lookup to see if we already have reachable for this node
+      // as the chances are we don't
 
       // Add next nodes from sync edges
       // cppcheck-suppress stlIfFind
