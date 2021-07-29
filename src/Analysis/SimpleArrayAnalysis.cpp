@@ -335,33 +335,34 @@ BBType getBasicBlockType(const BasicBlock *bb) {
 //      for (j = 1; j < N-1; j++) { ...
 // TODO: maybe have other cases for other omp directives
 std::optional<llvm::StringRef> getOMPParallelLoopIndex(const llvm::GetElementPtrInst *gep) {
-  auto bb = gep->getParent();
-  if (getBasicBlockType(bb) == BBType::OMPInnerForBody) {
-    assert(bb->front().getOpcode() == llvm::Instruction::PHI &&
-           "The index must be from a phi node at the beginning of the basic block.");
-    return bb->front().getName();
-  } else if (getBasicBlockType(bb) == BBType::ForBody) {
-    // check the phi node containing the index from the basicblock with name "for.cond.preheader.i" or
-    // "omp.inner.for.bodyxxx.i": we traverse the basic blocks starting from bb in a reversed order, to avoid get the
-    // index for other omp parallel loops in the same function, e.g., DRB058
-    auto func = bb->getParent();
-    bool start = false;
-    for (auto it = func->end(); it != func->begin(); it--) {
-      if (!start) {
-        if (it->getName() == bb->getName()) {
-          start = true;
-        }
-        continue;
-      }
-      BBType typ = getBasicBlockType(it->getName());
-      if (typ == BBType::ForPreheader || typ == BBType::OMPInnerForBody) {  // e.g., DRB003 and DRB031
-        if (llvm::isa<llvm::PHINode>(it->front())) {
-          assert(it->front().getOpcode() == llvm::Instruction::PHI &&
-                 "The index must be from a phi node at the beginning of the basic block.");
-          return it->front().getName();
+  auto const bb = gep->getParent();
+
+  switch (getBasicBlockType(bb)) {
+    case BBType::OMPInnerForBody:
+      assert(llvm::isa<llvm::PHINode>(bb->front()) &&
+             "The index must be from a phi node at the beginning of the basic block.");
+      return bb->front().getName();
+    case BBType::ForBody: {
+      // check the phi node containing the index from the basicblock with name "for.cond.preheader.i" or
+      // "omp.inner.for.bodyxxx.i": we traverse the basic blocks starting from bb in a reversed order, to avoid get the
+      // index for other omp parallel loops in the same function, e.g., DRB058
+      auto const func = bb->getParent();
+      auto const &blocks = func->getBasicBlockList();
+      auto start =
+          std::find_if(blocks.rbegin(), blocks.rend(), [&bb](const llvm::BasicBlock &block) { return &block == bb; });
+
+      for (auto it = start, end = blocks.rend(); it != end; ++it) {
+        auto const &block = *it;
+        auto ty = getBasicBlockType(block.getName());
+        if ((ty == BBType::ForPreheader || ty == BBType::OMPInnerForBody) && llvm::isa<llvm::PHINode>(block.front())) {
+          return block.front().getName();
         }
       }
+      break;
     }
+    case BBType::ForPreheader:
+    case BBType::Unknown:
+      break;
   }
 
   llvm::errs() << "Cannot find the the omp parallel loop index for: " << *gep << "\n";
