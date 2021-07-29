@@ -68,11 +68,11 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
                    << "\n";
     }
 
-    if (threadlocal.isThreadLocalAccess(write, other)) {
+    if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
       return;
     }
 
-    if (!happensbefore.areParallel(write, other) || lockset.sharesLock(write, other)) {
+    if (threadlocal.isThreadLocalAccess(write, other)) {
       return;
     }
 

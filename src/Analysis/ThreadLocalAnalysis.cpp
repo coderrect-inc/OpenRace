@@ -32,14 +32,25 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
   std::sort(writePtsTo.begin(), writePtsTo.end());
   std::sort(otherPtsTo.begin(), otherPtsTo.end());
 
-  std::vector<const pta::ObjTy *> shared;
-  std::set_intersection(writePtsTo.begin(), writePtsTo.end(), otherPtsTo.begin(), otherPtsTo.end(),
-                        std::back_inserter(shared));
+  auto wptIter = writePtsTo.begin();
+  auto optIter = otherPtsTo.begin();
 
-  return std::all_of(shared.begin(), shared.end(), [](const pta::ObjTy *obj) {
-    auto const val = obj->getValue();
+  while (wptIter != writePtsTo.end() || optIter != otherPtsTo.end()) {
+    if (optIter == otherPtsTo.end() || *wptIter < *optIter) {
+      wptIter++;
+    } else if (wptIter == writePtsTo.end() || *wptIter > *optIter) {
+      optIter++;
+    } else {
+      auto const val = (*wptIter)->getValue();
 
-    auto const global = llvm::dyn_cast_or_null<llvm::GlobalVariable>(val);
-    return global && global->isThreadLocal();
-  });
+      auto const global = llvm::dyn_cast_or_null<llvm::GlobalVariable>(val);
+      if (!global || !global->isThreadLocal()) {
+        return false;
+      }
+      wptIter++;
+      optIter++;
+    }
+  }
+
+  return true;
 }
