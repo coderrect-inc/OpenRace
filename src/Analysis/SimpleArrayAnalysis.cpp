@@ -67,7 +67,7 @@ IndexType getIndexType(llvm::Value *idx) {
   return IndexType::Unknown;
 }
 
-std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir);
+std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir);
 std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep);
 
 // conduct a simple backward dataflow analysis to retrieve the name of the index that
@@ -95,7 +95,7 @@ std::optional<llvm::StringRef> getInductionVarNameForIdxprom(Value *idx) {
     //  %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom3.i, !dbg !67
     return op->getName();
   } else if (auto math = llvm::dyn_cast<llvm::Instruction>(op)) {
-    return recursivelyRetrieveIdx(math);
+    return computeIdxName(math);
   }
 
   return std::nullopt;
@@ -128,7 +128,7 @@ llvm::Value *getNonConstOperand(llvm::Instruction *ir) {
 //     %indvars.iv.next23.i = add nsw i64 %indvars.iv22.i, 1, !dbg !61
 //     %17 = mul nsw i64 %indvars.iv.next23.i, 100, !dbg !98
 // 1st op is lhs, 2nd op is the non-constant element on rhs
-std::optional<llvm::StringRef> recursivelyRetrieveIdx(llvm::Instruction *ir) {
+std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir) {
   if (!isMathOp(ir)) return std::nullopt;
 
   while (isMathOp(ir)) {
@@ -159,7 +159,7 @@ std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst
     case IndexType::IndvarsNext:
     case IndexType::Intermediate: {
       if (auto math = llvm::dyn_cast<llvm::Instruction>(idx))
-        return recursivelyRetrieveIdx(math);
+        return computeIdxName(math);
       else
         return std::nullopt;
     }
@@ -249,13 +249,12 @@ struct ArrayAccess {
     assert(hasCollapse() == false && "Only remove omp irrelevant indexes (idxprom) when not using collapse.");
     if (!isMultiDim()) return;
 
-    // pop the index outside of omp parallel region
-    const GetElementPtrInst *gep = geps.back();
-    while (!isOmpRelevant(gep)) {
-      geps.pop_back();
-      if (geps.empty()) break;
-      gep = geps.back();
-    }
+    std::vector<const llvm::GetElementPtrInst *> ompRelevantIndexes;
+    ompRelevantIndexes.reserve(idxes.size());
+    std::copy_if(idxes.begin(), idxes.end(), std::back_inserter(ompRelevantIndexes),
+                 [](auto gep) { return isOmpRelevant(gep); });
+    ompRelevantIndexes.shrink_to_fit();
+    idxes = ompRelevantIndexes;
   }
 
   // we basically do a simple backward dataflow analysis to retrieve the index whenever the base ptr of gep has math
@@ -267,25 +266,23 @@ struct ArrayAccess {
   //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
   // we are trying to locate %indvars.iv21.i from %21 in the above example
   std::optional<llvm::StringRef> computeOuterMostGEPIdxName() {
-    llvm::Value *outerMostIdx = nullptr;
-    long removedIdx = geps.empty() ? 0 : geps.size() - 1;
-    for (int i = geps.size() - 1; i >= 0; i--) {  // reversely check to get the outermost idx
-      auto gep = geps[i];
-      outerMostIdx = gep->getOperand(gep->getNumOperands() - 1);
-      if (getIndexType(outerMostIdx) != IndexType::Idxprom) {  // skip if this idx is "idxprom", e.g., DRB037
-        removedIdx = i;
-        break;
-      }
-    }
+    auto getLastOp = [](const llvm::GetElementPtrInst *gep) { return gep->getOperand(gep->getNumOperands() - 1); };
 
-    if (outerMostIdx && getIndexType(outerMostIdx) != IndexType::Idxprom) {
-      if (auto ir = llvm::dyn_cast<llvm::Instruction>(outerMostIdx)) {
-        auto name = recursivelyRetrieveIdx(ir);
-        if (name.has_value()) {  // remove this idx from geps since we already record its index name
-          geps.erase(geps.begin() + removedIdx);
-          if (isOmpRelevant(name.value())) return name;
-        }
-      }
+    // Find last index that does not have Idxprom type
+    auto it = std::find_if(idxes.rbegin(), idxes.rend(), [&getLastOp](auto gep) {
+      auto outerMostIdx = getLastOp(gep);
+      return getIndexType(outerMostIdx) != IndexType::Idxprom;
+    });
+    if (it == idxes.rend()) return std::nullopt;
+
+    auto const outerMostIdx = getLastOp(*it);
+    auto const inst = llvm::dyn_cast<llvm::Instruction>(outerMostIdx);
+    if (!inst) return std::nullopt;
+
+    auto const name = computeIdxName(inst);
+    if (name.has_value() && isOmpRelevant(name.value())) {
+      idxes.erase(std::next(it).base());
+      return name;
     }
 
     return std::nullopt;
@@ -339,33 +336,34 @@ BBType getBasicBlockType(const BasicBlock *bb) {
 //      for (j = 1; j < N-1; j++) { ...
 // TODO: maybe have other cases for other omp directives
 std::optional<llvm::StringRef> getOMPParallelLoopIndex(const llvm::GetElementPtrInst *gep) {
-  auto bb = gep->getParent();
-  if (getBasicBlockType(bb) == BBType::OMPInnerForBody) {
-    assert(bb->front().getOpcode() == llvm::Instruction::PHI &&
-           "The index must be from a phi node at the beginning of the basic block.");
-    return bb->front().getName();
-  } else if (getBasicBlockType(bb) == BBType::ForBody) {
-    // check the phi node containing the index from the basicblock with name "for.cond.preheader.i" or
-    // "omp.inner.for.bodyxxx.i": we traverse the basic blocks starting from bb in a reversed order, to avoid get the
-    // index for other omp parallel loops in the same function, e.g., DRB058
-    auto func = bb->getParent();
-    bool start = false;
-    for (auto it = func->end(); it != func->begin(); it--) {
-      if (!start) {
-        if (it->getName() == bb->getName()) {
-          start = true;
-        }
-        continue;
-      }
-      BBType typ = getBasicBlockType(it->getName());
-      if (typ == BBType::ForPreheader || typ == BBType::OMPInnerForBody) {  // e.g., DRB003 and DRB031
-        if (llvm::isa<llvm::PHINode>(it->front())) {
-          assert(it->front().getOpcode() == llvm::Instruction::PHI &&
-                 "The index must be from a phi node at the beginning of the basic block.");
-          return it->front().getName();
+  auto const bb = gep->getParent();
+
+  switch (getBasicBlockType(bb)) {
+    case BBType::OMPInnerForBody:
+      assert(llvm::isa<llvm::PHINode>(bb->front()) &&
+             "The index must be from a phi node at the beginning of the basic block.");
+      return bb->front().getName();
+    case BBType::ForBody: {
+      // check the phi node containing the index from the basicblock with name "for.cond.preheader.i" or
+      // "omp.inner.for.bodyxxx.i": we traverse the basic blocks starting from bb in a reversed order, to avoid get the
+      // index for other omp parallel loops in the same function, e.g., DRB058
+      auto const func = bb->getParent();
+      auto const &blocks = func->getBasicBlockList();
+      auto start =
+          std::find_if(blocks.rbegin(), blocks.rend(), [&bb](const llvm::BasicBlock &block) { return &block == bb; });
+
+      for (auto it = start, end = blocks.rend(); it != end; ++it) {
+        auto const &block = *it;
+        auto ty = getBasicBlockType(block.getName());
+        if ((ty == BBType::ForPreheader || ty == BBType::OMPInnerForBody) && llvm::isa<llvm::PHINode>(block.front())) {
+          return block.front().getName();
         }
       }
+      break;
     }
+    case BBType::ForPreheader:
+    case BBType::Unknown:
+      break;
   }
 
   llvm::errs() << "Cannot find the the omp parallel loop index for: " << *gep << "\n";
