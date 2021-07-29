@@ -35,7 +35,7 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
   auto wptIter = writePtsTo.begin();
   auto optIter = otherPtsTo.begin();
 
-  while (wptIter != writePtsTo.end() || optIter != otherPtsTo.end()) {
+  while (wptIter != writePtsTo.end() && optIter != otherPtsTo.end()) {
     if (optIter == otherPtsTo.end() || *wptIter < *optIter) {
       wptIter++;
     } else if (wptIter == writePtsTo.end() || *wptIter > *optIter) {
