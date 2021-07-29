@@ -113,7 +113,38 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
   return false;
 }
 
-bool RaceModel::isCompatible(const llvm::Instruction * /* callsite */, const llvm::Function * /* target */) {
+bool RaceModel::isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) {
+  auto call = llvm::cast<llvm::CallBase>(callsite);
+  auto threadCreate = call->getCalledFunction();
+  assert(threadCreate && "Indirect call should point to a function.");
+
+  if (DEBUG_PTA) {
+    threadCreate->print(llvm::outs());
+    llvm::outs() << "\n";
+    target->print(llvm::outs());
+  }
+
+  // refer to https://releases.llvm.org/10.0.0/docs/LangRef.html#callback-metadata
+  if (PthreadModel::isPthreadCreate(threadCreate->getName())) {
+    // this is a pthread or thread library written in C, pthread call back type is i8* (*) (i8*), e.g.,
+    // declare !callback !1 dso_local i32 @pthread_create(i64*, %union.pthread_attr_t*, i8* (i8*)*, i8*)
+    if (target->arg_size() != 1) {
+      return false;
+    }
+    // pthread's callback's return type does not matter.
+    return target->arg_begin()->getType() == llvm::Type::getInt8PtrTy(callsite->getContext());
+  } else if (OpenMPModel::isFork(threadCreate->getName())) {
+    // The callback callee of omp fork is the second argument of the __kmpc_fork_call function,
+    // of which type is i32, e.g.,
+    // declare !callback !0 dso_local void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...)
+    if (target->arg_size() != 4) {
+      return false;
+    }
+    // omp fork's callback's return type should be void
+    return target->getArg(1)->getType() == llvm::Type::getInt32PtrTy(callsite->getContext()) &&
+           target->getReturnType()->isVoidTy();
+  }
+
   llvm_unreachable("unrecognizable function");
 }
 
