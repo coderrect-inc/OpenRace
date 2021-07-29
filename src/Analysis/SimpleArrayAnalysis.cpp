@@ -248,13 +248,12 @@ struct ArrayAccess {
     assert(hasCollapse == false && "Only remove omp irrelevant indexes (idxprom) when not using collapse.");
     if (!isMultiDim()) return;
 
-    // pop the index outside of omp parallel region
-    const GetElementPtrInst *idx = idxes.back();
-    while (!isOmpRelevant(idx)) {
-      idxes.pop_back();
-      if (idxes.empty()) break;
-      idx = idxes.back();
-    }
+    std::vector<const llvm::GetElementPtrInst *> ompRelevantIndexes;
+    ompRelevantIndexes.reserve(idxes.size());
+    std::copy_if(idxes.begin(), idxes.end(), std::back_inserter(ompRelevantIndexes),
+                 [](auto gep) { return isOmpRelevant(gep); });
+    ompRelevantIndexes.shrink_to_fit();
+    idxes = ompRelevantIndexes;
   }
 
   // we basically do a simple backward dataflow analysis to retrieve the index whenever the base ptr of gep has math
