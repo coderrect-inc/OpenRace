@@ -238,9 +238,10 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
 
   std::vector<const llvm::BasicBlock *> worklist;
   std::set<const llvm::BasicBlock *> visited;
-  for (auto const succ : successors(switchInst)) {
-    worklist.push_back(succ);
-  }
+  auto const notVisited = [&visited](const llvm::BasicBlock *block) { return visited.find(block) == visited.end(); };
+
+  // Add switch successors to worklist
+  std::copy(succ_begin(switchInst), succ_end(switchInst), std::back_inserter(worklist));
 
   while (!worklist.empty()) {
     auto block = worklist.back();
@@ -257,11 +258,8 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
     assert(llvm::succ_size(block) > 0 && "block should have successors");
 
     // Keep traversing
-    for (auto const succ : llvm::successors(block)) {
-      if (visited.find(succ) == visited.end()) {
-        worklist.push_back(succ);
-      }
-    }
+    std::copy_if(succ_begin(block), succ_end(block), std::back_inserter(worklist),
+                 [&visited](auto succBlock) { return visited.find(succBlock) == visited.end(); });
   }
 
   return blocks;
@@ -269,6 +267,7 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
 
 const std::vector<const llvm::BasicBlock *> &ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const {
   // Check cache first
+  // cppcheck-suppress stlIfFind
   if (auto it = reduceBlocks.find(reduce); it != reduceBlocks.end()) {
     return it->second;
   }
@@ -331,9 +330,7 @@ std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const
 
     // follow loads
     if (auto load = llvm::dyn_cast<llvm::LoadInst>(user)) {
-      for (auto loadUser : load->users()) {
-        worklist.push_back(loadUser);
-      }
+      std::copy(load->users().begin(), load->users().end(), std::back_inserter(worklist));
       continue;
     }
 
@@ -379,9 +376,7 @@ std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *bran
   std::vector<const llvm::BasicBlock *> worklist;
 
   visited.insert(targetBlock);
-  for (auto next : successors(targetBlock)) {
-    worklist.push_back(next);
-  }
+  std::copy(succ_begin(targetBlock), succ_end(targetBlock), std::back_inserter(worklist));
 
   do {
     auto const currentBlock = worklist.back();

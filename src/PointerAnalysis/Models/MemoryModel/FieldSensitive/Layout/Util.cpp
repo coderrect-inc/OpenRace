@@ -31,11 +31,13 @@ size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
   // since we canonicalized the getelementptr instruction before, the
   // getelementptr that uses variable to index object can only two different
   // forms
-  assert(GEP->getNumOperands() == 2 || GEP->getNumOperands() == 3);
+  assert(GEP->getNumOperands() == 2 || GEP->getNumOperands() == 3 ||
+         (GEP->getNumOperands() == 4 && llvm::isa<llvm::UndefValue>(GEP->getOperand(3))));
 
   for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP); GTI != GTE; GTI++) {
     // 1st, the first idx is zero, and the second idx is a variable
     // getelementptr [type], [type *] %obj, 0, %var
+    // or the first and second indexes are zero, and the third idx is a undef
     if (isa<UndefValue>(GTI.getOperand())) {
       return std::numeric_limits<size_t>::max();
     } else if (isa<Constant>(GTI.getOperand())) {
