@@ -268,7 +268,7 @@ class CppMemModel : public FSMemModel<ctx> {
     // here handle the different constainer API
     VectorAPI vecAPI(callSite);
     if (vecAPI.getAPIKind() != VectorAPI::APIKind::UNKNOWN) {
-      modelVectorAPIs<PT>(callee->getContext(), vecAPI);
+      modelVectorAPIs<PT>(caller->getContext(), vecAPI);
       return true;
     }
     return false;
