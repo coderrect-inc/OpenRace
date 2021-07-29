@@ -177,21 +177,23 @@ std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst
 
 // record the result of getAllLoopIndexesForArrayAccess
 struct ArrayAccess {
-  std::vector<const llvm::GetElementPtrInst *> idxes;  // the outermost index is at the end
+  std::vector<const llvm::GetElementPtrInst *> geps;  // the outermost index is at the end
   std::optional<llvm::StringRef>
       outerMostIdxName;  // TODO: can be collapse if has outerMostIdxName? for now, no such tests
 
-  bool hasCollapse = false;                        // whether this access involves indexes using collapse
   unsigned int collapseLevel = 0;                  // the param in collapse clause
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
   ArrayAccess(std::vector<const llvm::GetElementPtrInst *> idxes)
-      : idxes(idxes), outerMostIdxName(computeOuterMostIdxName()), collapseRootIdx(checkCollapse()) {
-    if (!hasCollapse) removeOMPIrrelevantIdx();
+      : geps(idxes), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
+    if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
-  std::optional<llvm::StringRef> getOuterMostIdxName() { return outerMostIdxName; }
-  bool isMultiDim() { return outerMostIdxName.has_value() ? idxes.size() > 0 : idxes.size() > 1; }
+  bool hasCollapse() const {
+    return collapseRootIdx.has_value();
+  }  // whether this access involves indexes using collapse
+  bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
+  std::optional<llvm::StringRef> getOuterMostIdxName() const { return outerMostIdxName; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -216,8 +218,8 @@ struct ArrayAccess {
 
     llvm::StringRef rootIdx;
     int i = 0;
-    while (i < idxes.size()) {
-      auto gep = idxes[i];
+    while (i < geps.size()) {
+      auto gep = geps[i];
       auto idx = gep->getOperand(gep->getNumOperands() - 1);
       if (getIndexType(idx) != IndexType::Idxprom) {
         break;
@@ -238,38 +240,37 @@ struct ArrayAccess {
       return std::nullopt;
     }
 
-    collapseLevel = i == idxes.size() ? i : i - 1;  // all indexes vs. some indexes are using collapse
-    hasCollapse = true;
+    collapseLevel = i == geps.size() ? i : i - 1;  // all indexes vs. some indexes are using collapse
     return rootIdx;
   }
 
-  // remove omp irrelevant indexes (i.e., the index outside omp parallel regions) for multi-dimension array access
-  void removeOMPIrrelevantIdx() {
-    assert(hasCollapse == false && "Only remove omp irrelevant indexes (idxprom) when not using collapse.");
+  // remove omp irrelevant geps (i.e., the gep index outside omp parallel regions) for multi-dimension array access
+  void removeOMPIrrelevantGEP() {
+    assert(hasCollapse() == false && "Only remove omp irrelevant indexes (idxprom) when not using collapse.");
     if (!isMultiDim()) return;
 
     // pop the index outside of omp parallel region
-    const GetElementPtrInst *idx = idxes.back();
-    while (!isOmpRelevant(idx)) {
-      idxes.pop_back();
-      if (idxes.empty()) break;
-      idx = idxes.back();
+    const GetElementPtrInst *gep = geps.back();
+    while (!isOmpRelevant(gep)) {
+      geps.pop_back();
+      if (geps.empty()) break;
+      gep = geps.back();
     }
   }
 
   // we basically do a simple backward dataflow analysis to retrieve the index whenever the base ptr of gep has math
-  // operations on index, we only do this on the outermost index of idxes if it is not of type IndexType::Idxprom;
+  // operations on index, we only do this on the outermost index of geps if it is not of type IndexType::Idxprom;
   // e.g., DRB003, the IR looks like:
   //    %21 = mul nsw i64 %indvars.iv21.i, %vla1, !dbg !137 --> this is the operation on index
   //    %22 = getelementptr double, double* %a, i64 %21, !dbg !137
   //    %25 = getelementptr double, double* %22, i64 %indvars.iv.i, !dbg !140
   //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
   // we are trying to locate %indvars.iv21.i from %21 in the above example
-  std::optional<llvm::StringRef> computeOuterMostIdxName() {
+  std::optional<llvm::StringRef> computeOuterMostGEPIdxName() {
     llvm::Value *outerMostIdx = nullptr;
-    long removedIdx = idxes.empty() ? 0 : idxes.size() - 1;
-    for (int i = idxes.size() - 1; i >= 0; i--) {  // reversely check to get the outermost idx
-      auto gep = idxes[i];
+    long removedIdx = geps.empty() ? 0 : geps.size() - 1;
+    for (int i = geps.size() - 1; i >= 0; i--) {  // reversely check to get the outermost idx
+      auto gep = geps[i];
       outerMostIdx = gep->getOperand(gep->getNumOperands() - 1);
       if (getIndexType(outerMostIdx) != IndexType::Idxprom) {  // skip if this idx is "idxprom", e.g., DRB037
         removedIdx = i;
@@ -280,8 +281,8 @@ struct ArrayAccess {
     if (outerMostIdx && getIndexType(outerMostIdx) != IndexType::Idxprom) {
       if (auto ir = llvm::dyn_cast<llvm::Instruction>(outerMostIdx)) {
         auto name = recursivelyRetrieveIdx(ir);
-        if (name.has_value()) {  // remove this idx from idxes since we already record its index name
-          idxes.erase(idxes.begin() + removedIdx);
+        if (name.has_value()) {  // remove this idx from geps since we already record its index name
+          geps.erase(geps.begin() + removedIdx);
           if (isOmpRelevant(name.value())) return name;
         }
       }
@@ -297,15 +298,15 @@ struct ArrayAccess {
 //     %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
 //     %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
 //     %18 = load i32, i32* %17, align 4, !dbg !60, !tbaa !57, !noalias !39
-ArrayAccess getAllLoopIndexesForArrayAccess(const llvm::GetElementPtrInst *gep) {
-  std::vector<const llvm::GetElementPtrInst *> idxes;
+ArrayAccess getAllGEPIndexes(const llvm::GetElementPtrInst *gep) {
+  std::vector<const llvm::GetElementPtrInst *> geps;
   while (gep != nullptr) {
-    idxes.push_back(gep);
+    geps.push_back(gep);
     auto base = gep->getOperand(0);
     gep = llvm::dyn_cast<llvm::GetElementPtrInst>(base->stripPointerCasts());
   }
 
-  return ArrayAccess{idxes};
+  return ArrayAccess{geps};
 }
 
 enum class BBType {
@@ -396,8 +397,8 @@ enum class AccessType {
 
 // check each index in this multi-dimension array access, see if every index is perfectly aligned
 AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::StringRef> parallelIdx) {
-  auto idxes = loopIdxes.idxes;
-  if (loopIdxes.hasCollapse) {
+  auto idxes = loopIdxes.geps;
+  if (loopIdxes.hasCollapse()) {
     // when using collapse, we need to compare each index using collapse (recorded in collapseRootIdx) with parallelIdx
     if (!isPerfectlyAligned(loopIdxes.collapseRootIdx.value(), parallelIdx, false)) return AccessType::Race;
     // if still have remaining indexes that do not using collapse, continue check starting from that idx
@@ -408,7 +409,7 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
     }
   } else {
     // this is the outermost omp parallel index of the array access: from outerMostIdxName or the last
-    // element of idxes
+    // element of geps
     auto outerMostIdx = loopIdxes.outerMostIdxName;
     if (outerMostIdx.has_value()) {
       if (!isPerfectlyAligned(outerMostIdx.value(), parallelIdx, false)) return AccessType::Race;
@@ -468,20 +469,19 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
 // self-update rule, e.g., DRB018; for the index that is out of omp parallel region, e.g., i, the run will be sequential
 // and should skip its check
 AccessType getAccessTypeFor(const llvm::GetElementPtrInst *gep) {
-  auto loopIdxes = getAllLoopIndexesForArrayAccess(gep);
+  auto loopIdxes = getAllGEPIndexes(gep);
   auto parallelIdx = getOMPParallelLoopIndex(gep);
 
-  if (loopIdxes.outerMostIdxName.has_value()) {  // may be one-dimension or multi-dimension
-    if (loopIdxes.isMultiDim()) {                // multi-dimension
-      return getAccessTypeForMultiDim(loopIdxes, parallelIdx);
-    }
-    // one-dimension
+  if (loopIdxes.isMultiDim()) {  // multi-dimension
+    return getAccessTypeForMultiDim(loopIdxes, parallelIdx);
+  }
+
+  // one-dimension
+  if (loopIdxes.outerMostIdxName.has_value()) {  // one-dimension only using outerMostIdxName
     auto idxName = loopIdxes.getOuterMostIdxName();
     return parallelIdx == idxName ? AccessType::NoRace : AccessType::ND;
-  } else if (loopIdxes.idxes.size() == 1) {  // one-dimension array
+  } else {  // one-dimension only using geps
     return isPerfectlyAligned(gep, parallelIdx, false) ? AccessType::NoRace : AccessType::ND;
-  } else {  // multi-dimension array
-    return getAccessTypeForMultiDim(loopIdxes, parallelIdx);
   }
 }
 
