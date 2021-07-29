@@ -9,6 +9,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
+
 #include <llvm/AsmParser/Parser.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -19,7 +21,6 @@ limitations under the License.
 #include "IR/Builder.h"
 #include "IR/IRImpls.h"
 #include "LanguageModel/OpenMP.h"
-#include "PreProcessing/Passes/DuplicateOpenMPForks.h"
 
 TEST_CASE("Duplicate OpenMP Forks", "[unit][preprocessing][omp]") {
   const char *ModuleString = R"(
