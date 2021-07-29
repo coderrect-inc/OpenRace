@@ -184,16 +184,15 @@ struct ArrayAccess {
   unsigned int collapseLevel = 0;                  // the param in collapse clause
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
-  ArrayAccess(std::vector<const llvm::GetElementPtrInst *> idxes)
-      : geps(idxes), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
+  ArrayAccess(std::vector<const llvm::GetElementPtrInst *> geps)
+      : geps(geps), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
-  bool hasCollapse() const {
+  bool hasCollapse() const {  // whether this access involves indexes using collapse
     return collapseRootIdx.has_value();
-  }  // whether this access involves indexes using collapse
+  }
   bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
-  std::optional<llvm::StringRef> getOuterMostIdxName() const { return outerMostIdxName; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -250,11 +249,11 @@ struct ArrayAccess {
     if (!isMultiDim()) return;
 
     std::vector<const llvm::GetElementPtrInst *> ompRelevantIndexes;
-    ompRelevantIndexes.reserve(idxes.size());
-    std::copy_if(idxes.begin(), idxes.end(), std::back_inserter(ompRelevantIndexes),
+    ompRelevantIndexes.reserve(geps.size());
+    std::copy_if(geps.begin(), geps.end(), std::back_inserter(ompRelevantIndexes),
                  [](auto gep) { return isOmpRelevant(gep); });
     ompRelevantIndexes.shrink_to_fit();
-    idxes = ompRelevantIndexes;
+    geps = ompRelevantIndexes;
   }
 
   // we basically do a simple backward dataflow analysis to retrieve the index whenever the base ptr of gep has math
@@ -269,11 +268,11 @@ struct ArrayAccess {
     auto getLastOp = [](const llvm::GetElementPtrInst *gep) { return gep->getOperand(gep->getNumOperands() - 1); };
 
     // Find last index that does not have Idxprom type
-    auto it = std::find_if(idxes.rbegin(), idxes.rend(), [&getLastOp](auto gep) {
+    auto it = std::find_if(geps.rbegin(), geps.rend(), [&getLastOp](auto gep) {
       auto outerMostIdx = getLastOp(gep);
       return getIndexType(outerMostIdx) != IndexType::Idxprom;
     });
-    if (it == idxes.rend()) return std::nullopt;
+    if (it == geps.rend()) return std::nullopt;
 
     auto const outerMostIdx = getLastOp(*it);
     auto const inst = llvm::dyn_cast<llvm::Instruction>(outerMostIdx);
@@ -281,7 +280,7 @@ struct ArrayAccess {
 
     auto const name = computeIdxName(inst);
     if (name.has_value() && isOmpRelevant(name.value())) {
-      idxes.erase(std::next(it).base());
+      geps.erase(std::next(it).base());
       return name;
     }
 
@@ -467,19 +466,19 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
 // self-update rule, e.g., DRB018; for the index that is out of omp parallel region, e.g., i, the run will be sequential
 // and should skip its check
 AccessType getAccessTypeFor(const llvm::GetElementPtrInst *gep) {
-  auto loopIdxes = getAllGEPIndexes(gep);
-  auto parallelIdx = getOMPParallelLoopIndex(gep);
+  auto gepIdxes = getAllGEPIndexes(gep);
+  auto parallelLoopIdx = getOMPParallelLoopIndex(gep);
 
-  if (loopIdxes.isMultiDim()) {  // multi-dimension
-    return getAccessTypeForMultiDim(loopIdxes, parallelIdx);
+  if (gepIdxes.isMultiDim()) {  // multi-dimension
+    return getAccessTypeForMultiDim(gepIdxes, parallelLoopIdx);
   }
 
   // one-dimension
-  if (loopIdxes.outerMostIdxName.has_value()) {  // one-dimension only using outerMostIdxName
-    auto idxName = loopIdxes.getOuterMostIdxName();
-    return parallelIdx == idxName ? AccessType::NoRace : AccessType::ND;
+  if (gepIdxes.outerMostIdxName.has_value()) {  // one-dimension only using outerMostIdxName
+    auto idxName = gepIdxes.outerMostIdxName;
+    return parallelLoopIdx == idxName ? AccessType::NoRace : AccessType::ND;
   } else {  // one-dimension only using geps
-    return isPerfectlyAligned(gep, parallelIdx, false) ? AccessType::NoRace : AccessType::ND;
+    return isPerfectlyAligned(gep, parallelLoopIdx, false) ? AccessType::NoRace : AccessType::ND;
   }
 }
 
