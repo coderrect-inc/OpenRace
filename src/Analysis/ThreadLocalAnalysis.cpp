@@ -29,12 +29,17 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
   auto otherPtsTo = other->getAccessedMemory();
 
   // Must be sorted to do set_intersection
+  // this is sorted by pointer value, not by anything to do with the actual memory accesses itself
+  // this oddity is perfectly fine for our purposes since we do not care about order of evaluation, just that we can do
+  // set intersection consistently based on *some* order
   std::sort(writePtsTo.begin(), writePtsTo.end());
   std::sort(otherPtsTo.begin(), otherPtsTo.end());
 
+  // this is set intersection, but we can fail fast unlike the stl implementation
+  // this allows us to have superior speeds in cases that definitely don't involve globals faster since it will just
+  // return false earlier
   auto wptIter = writePtsTo.begin();
   auto optIter = otherPtsTo.begin();
-
   while (wptIter != writePtsTo.end() && optIter != otherPtsTo.end()) {
     if (optIter == otherPtsTo.end() || *wptIter < *optIter) {
       wptIter++;
@@ -52,5 +57,6 @@ bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const
     }
   }
 
+  // they were all threadlocal -- or none were shared, so in a sense they were thread local :)
   return true;
 }
