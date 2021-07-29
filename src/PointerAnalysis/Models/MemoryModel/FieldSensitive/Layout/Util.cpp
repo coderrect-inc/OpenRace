@@ -37,7 +37,7 @@ size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
   for (gep_type_iterator GTI = gep_type_begin(GEP), GTE = gep_type_end(GEP); GTI != GTE; GTI++) {
     // 1st, the first idx is zero, and the second idx is a variable
     // getelementptr [type], [type *] %obj, 0, %var
-    // or the first and second idxes are zero, and the third idx is a undef
+    // or the first and second indexes are zero, and the third idx is a undef
     if (isa<UndefValue>(GTI.getOperand())) {
       return std::numeric_limits<size_t>::max();
     } else if (isa<Constant>(GTI.getOperand())) {

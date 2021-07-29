@@ -134,7 +134,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   }
 
   auto const &summary = *state.builder.getFunctionSummary(func);
-
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
