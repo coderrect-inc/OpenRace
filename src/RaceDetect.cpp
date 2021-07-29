@@ -11,8 +11,6 @@ limitations under the License.
 
 #include "RaceDetect.h"
 
-#include <llvm/Analysis/ScopedNoAliasAA.h>
-
 #include "Analysis/HappensBeforeGraph.h"
 #include "Analysis/LockSet.h"
 #include "Analysis/OpenMPAnalysis.h"
@@ -20,7 +18,6 @@ limitations under the License.
 #include "Analysis/SimpleAlias.h"
 #include "Analysis/ThreadLocalAnalysis.h"
 #include "LanguageModel/RaceModel.h"
-#include "PreProcessing/PreProcessing.h"
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
@@ -62,10 +59,14 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
     if (DEBUG_PTA) {
-      llvm::outs() << "Checking Race: " << write->getID() << "(line"
-                   << write->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
-                   << " " << other->getID() << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << ")"
+      llvm::outs() << "Checking Race: " << write->getID() << "(TID " << write->getThread().id << ") "
+                   << "(line" << write->getIRInst()->getInst()->getDebugLoc().getLine()  // DRB149 crash on this line
+                   << " col" << write->getIRInst()->getInst()->getDebugLoc().getCol() << ")"
+                   << " " << other->getID() << "(TID " << other->getThread().id << ") "
+                   << "(line" << other->getIRInst()->getInst()->getDebugLoc().getLine() << " col"
+                   << other->getIRInst()->getInst()->getDebugLoc().getCol() << ")"
                    << "\n";
+      llvm::outs() << " (IR: " << *write->getInst() << "\n\t" << *other->getInst() << ")\n";
     }
 
     if (threadlocal.isThreadLocalAccess(write, other)) {
@@ -86,7 +87,7 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
       //  #pragma omp parallel for shared(A)
       //  for (int i = 0; i < N: i++) { A[i] = i; }
       // even though A is shared, each index is unique so there is no race
-      if (ompAnalysis.isLoopArrayAccess(write, other) && !ompAnalysis.canIndexOverlap(write, other)) {
+      if (ompAnalysis.isNonOverlappingLoopAccess(write, other)) {
         return;
       }
 
@@ -141,6 +142,10 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
         }
       }
     }
+  }
+
+  if (DEBUG_PTA) {
+    happensbefore.debugDump(llvm::outs());
   }
 
   if (DEBUG_PTA) {
