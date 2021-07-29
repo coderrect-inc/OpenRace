@@ -256,25 +256,24 @@ struct ArrayAccess {
   //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
   // we are trying to locate %indvars.iv21.i from %21 in the above example
   std::optional<llvm::StringRef> computeOuterMostIdxName() {
-    llvm::Value *outerMostIdx = nullptr;
-    long removedIdx = idxes.empty() ? 0 : idxes.size() - 1;
-    for (int i = idxes.size() - 1; i >= 0; i--) {  // reversely check to get the outermost idx
-      auto gep = idxes[i];
-      outerMostIdx = gep->getOperand(gep->getNumOperands() - 1);
-      if (getIndexType(outerMostIdx) != IndexType::Idxprom) {  // skip if this idx is "idxprom", e.g., DRB037
-        removedIdx = i;
-        break;
-      }
-    }
+    auto getLastOp = [](const llvm::GetElementPtrInst *gep) { return gep->getOperand(gep->getNumOperands() - 1); };
 
-    if (outerMostIdx && getIndexType(outerMostIdx) != IndexType::Idxprom) {
-      if (auto ir = llvm::dyn_cast<llvm::Instruction>(outerMostIdx)) {
-        auto name = recursivelyRetrieveIdx(ir);
-        if (name.has_value()) {  // remove this idx from idxes since we already record its index name
-          idxes.erase(idxes.begin() + removedIdx);
-          if (isOmpRelevant(name.value())) return name;
-        }
-      }
+    // Find last index that does not have Idxprom type
+    auto it = std::find_if(idxes.rbegin(), idxes.rend(), [&getLastOp](auto gep) {
+      auto outerMostIdx = getLastOp(gep);
+      return getIndexType(outerMostIdx) != IndexType::Idxprom;
+    });
+    // auto remove = (it != idxes.rend()) ? std::distance(it, idxes.rend()) - 1 : idxes.size() - 1;
+    if (it == idxes.rend()) return std::nullopt;
+
+    auto const outerMostIdx = getLastOp(*it);
+    auto const inst = llvm::dyn_cast<llvm::Instruction>(outerMostIdx);
+    if (!inst) return std::nullopt;
+
+    auto const name = recursivelyRetrieveIdx(inst);
+    if (name.has_value() && isOmpRelevant(name.value())) {
+      idxes.erase(std::next(it).base());
+      return name;
     }
 
     return std::nullopt;
