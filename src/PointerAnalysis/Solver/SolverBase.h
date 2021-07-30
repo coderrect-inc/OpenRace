@@ -339,7 +339,7 @@ class SolverBase {
     result.push_back(lockStrObjects.at(lockStr)->getObject());
   }
 
-  void getPointsTo(const ctx *context, const llvm::Value *V, std::vector<const ObjTy *> &result) const {
+  void getPointsTo(const ctx *context, const llvm::Value *V, std::multiset<const ObjTy *> &result) const {
     assert(V->getType()->isPointerTy());
 
     // get the node value
@@ -354,7 +354,7 @@ class SolverBase {
       if (objNode->isSpecialNode()) {
         continue;
       }
-      result.push_back(objNode->getObject());
+      result.insert(objNode->getObject());
     }
   }
 
