@@ -84,9 +84,6 @@ class FSMemModel {
       c = CT::getGlobalCtx();
     }
     auto it = memBlockMap.find(std::make_pair(c, v));
-    if (it == memBlockMap.end()) {
-      llvm::outs() << "HIT\n";
-    }
     assert(it != memBlockMap.end() && "can not find the memory block");
     return it->second;
   }
