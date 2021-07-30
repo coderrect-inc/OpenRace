@@ -20,6 +20,7 @@ add_executable(tester
     integration/openmp.test.cpp
 
     regression/EmptyThread.test.cpp
+    regression/OpenMPRegression.test.cpp
 
     # Helper logic
     helpers/ReportChecking.cpp
