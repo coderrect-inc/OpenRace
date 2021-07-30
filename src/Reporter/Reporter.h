@@ -99,7 +99,7 @@ class Report {
  public:
   std::set<Race> races;
 
-  Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> rawRaces);
+  Report(const std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> &rawRaces);
 
   inline bool empty() { return races.empty(); };
   inline std::size_t size() { return races.size(); };

@@ -11,17 +11,19 @@ limitations under the License.
 
 #pragma once
 
-#include <set>
-
 #include "LanguageModel/RaceModel.h"
 #include "Trace/ProgramTrace.h"
 
 namespace race {
 
 class LockSet {
+ private:
+  std::map<const Event *, std::multiset<const llvm::Value *>> cache;
+  std::multiset<const llvm::Value *> heldLocks(const Event *targetEvent);
+
  public:
   explicit LockSet(const ProgramTrace &program);
 
-  [[nodiscard]] bool sharesLock(const MemAccessEvent *lhs, const MemAccessEvent *rhs) const;
+  [[nodiscard]] bool sharesLock(const MemAccessEvent *lhs, const MemAccessEvent *rhs);
 };
 }  // namespace race
