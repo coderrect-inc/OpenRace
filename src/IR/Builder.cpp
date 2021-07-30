@@ -217,7 +217,7 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
           // We should instead make sure we take the correct action for any OpenMP call
           if (OpenMPModel::isOpenMP(funcName) && !OpenMPModel::isNoEffect(funcName)) {
             llvm::errs() << "Unhandled OpenMP call: " << funcName << "\n";
-            llvm_unreachable("Unhandled OpenMP Call!");
+            assert(false && "Unhandled OpenMP Call!");
           }
 
           summary.push_back(std::make_shared<CallIR>(callInst));
