@@ -85,15 +85,19 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc
 
 void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; }
 
-Report::Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> racepairs) {
+Report::Report(const std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> &racepairs) {
+  size_t skipped = 0;
   for (auto const &racepair : racepairs) {
     Race race(racepair.first, racepair.second);
     if (race.missingLocation()) {
-      llvm::errs() << "skipping race with unknown location: " << race << "\n";
+      skipped++;
       continue;
     }
 
     races.insert(race);
+  }
+  if (skipped > 0) {
+    llvm::errs() << "skipped " << skipped << " races with unknown location\n";
   }
 }
 
