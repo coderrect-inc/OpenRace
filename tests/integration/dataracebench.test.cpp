@@ -179,15 +179,15 @@ TEST_LL("DRB071", "DRB071-targetparallelfor-orig-no.ll", NORACE)
 // TEST_LL("DRB072", /*TODO*/, EXPECTED(/*TODO*/))
 
 // 73 broken debug info:
-// TEST_LL("DRB073", "DRB073-doall2-orig-yes.ll",
-//        EXPECTED("DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",  // races on array index
-//                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",
-//                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:21",
-//                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",
-//                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:0",
-//                 "DRB073-doall2-orig-yes.c:61:0 DRB073-doall2-orig-yes.c:61:21",
-//                 "DRB073-doall2-orig-yes.c:62:14 DRB073-doall2-orig-yes.c:62:14",  // races on array elements
-//                 "DRB073-doall2-orig-yes.c:62:14 DRB073-doall2-orig-yes.c:62:15"))
+TEST_LL("DRB073", "DRB073-doall2-orig-yes.ll",
+        EXPECTED("DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:5",  // races on array index
+                 "DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:5",
+                 "DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:21",
+                 "DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:5",
+                 "DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:5",
+                 "DRB073-doall2-orig-yes.c:61:5 DRB073-doall2-orig-yes.c:61:21",
+                 "DRB073-doall2-orig-yes.c:62:14 DRB073-doall2-orig-yes.c:62:14",  // races on array elements
+                 "DRB073-doall2-orig-yes.c:62:14 DRB073-doall2-orig-yes.c:62:15"))
 
 // 74 critical and flush
 // TEST_LL("DRB074", /*TODO*/, EXPECTED(/*TODO*/))
