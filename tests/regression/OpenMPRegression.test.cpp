@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "Analysis/HappensBeforeGraph.h"
 
-// I'm not sure how to make this test pass in release and debug mode
-// right now we have failed assertion for unhandled openmp cases which will cause the test to fail in debug mode
 TEST_CASE("Infinite loop on unhandled openmp", "[regression][omp][!mayfail][.]") {
   // Previously a bug caused infinite loop when an unhandled openmp call was encountered in release mode
   // __kmpc_not_a_real_call should be considdred an penmp call but does not exist, so should be unhandled
