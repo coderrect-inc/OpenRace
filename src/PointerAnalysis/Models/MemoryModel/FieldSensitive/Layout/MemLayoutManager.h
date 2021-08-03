@@ -246,7 +246,7 @@ class MemLayoutManager {
  public:
   const MemLayout *getLayoutForType(llvm::Type *T, const llvm::DataLayout &DL, bool collapseArray = true,
                                     CallBackT &callback = nullptr) {
-    // offset index the layout table might be different than the phsical layout
+    // offset index the layout table might be different than the physical layout
     // of the type as arrays are collapsed.
 
     size_t lOffset = 0, pOffset = 0;

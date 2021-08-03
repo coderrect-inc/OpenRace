@@ -66,6 +66,7 @@ struct RaceAccess {
   bool operator==(const RaceAccess &other) const;
   bool operator!=(const RaceAccess &other) const;
   bool operator<(const RaceAccess &other) const;
+  void updateMisleadingDebugLoc();
 };
 
 void to_json(json &j, const RaceAccess &access);
