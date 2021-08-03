@@ -46,7 +46,9 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
 }
 
 RaceAccess::RaceAccess(const MemAccessEvent *event)
-    : location(getSourceLoc(event)), type(event->type), inst(event->getInst()) {}
+    : location(getSourceLoc(event)), type(event->type), inst(event->getInst()) {
+  updateMisleadingDebugLoc();
+}
 
 void race::to_json(json &j, const RaceAccess &access) {
   if (access.location.has_value()) {
@@ -63,6 +65,21 @@ bool RaceAccess::operator<(const RaceAccess &other) const {
   if (location != other.location) return location < other.location;
   return inst < other.inst;
 }
+
+// update the line when a "line 0" location happens
+void RaceAccess::updateMisleadingDebugLoc() {
+  if (location->line != 0) return;
+
+  auto loc = inst->getDebugLoc().get();
+  if (auto *F = llvm::dyn_cast<llvm::DILexicalBlock>(loc->getScope())) {
+    // here stores the original loc before debug info merged
+    location = SourceLoc(loc->getFilename(), F->getLine(), F->getColumn());
+    return;
+  }
+
+  llvm::errs() << "Cannot correctly udpate misleading debugloc for " << *inst << "\n";
+}
+
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const std::optional<SourceLoc> &location) {
   if (location.has_value()) {
     os << location.value();
@@ -85,15 +102,19 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc
 
 void race::to_json(json &j, const Race &race) { j = json{{"access1", race.first}, {"access2", race.second}}; }
 
-Report::Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> racepairs) {
+Report::Report(const std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> &racepairs) {
+  size_t skipped = 0;
   for (auto const &racepair : racepairs) {
     Race race(racepair.first, racepair.second);
     if (race.missingLocation()) {
-      llvm::errs() << "skipping race with unknown location: " << race << "\n";
+      skipped++;
       continue;
     }
 
     races.insert(race);
+  }
+  if (skipped > 0) {
+    llvm::errs() << "skipped " << skipped << " races with unknown location\n";
   }
 }
 

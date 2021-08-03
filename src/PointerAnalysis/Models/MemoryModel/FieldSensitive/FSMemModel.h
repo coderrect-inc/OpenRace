@@ -481,6 +481,20 @@ class FSMemModel {
             objNode = createNode<PT>(FSobj);
           }
         }
+      } else if (auto expr = llvm::dyn_cast<llvm::ConstantExpr>(C)) {
+        switch (expr->getOpcode()) {
+          case llvm::Instruction::BitCast: {
+            // e.g., in gromacs (the following three lines are one IR):
+            //  void (%"class.gmx::(anonymous namespace)::DefaultInputRedirector"*)* bitcast (void
+            //  (%"class.gmx::Any::IContent"*)* @_ZN3gmx17IOptionsContainerD2Ev to void (%"class.gmx::(anonymous
+            //  namespace)::DefaultInputRedirector"*)*)
+            auto baseObj = expr->getOperand(0);
+            objNode = getMemBlock(CT::getGlobalCtx(), baseObj)->getObjectAt(0)->getObjNode();
+            break;
+          }
+          default:
+            llvm::errs() << "Cannot handle this llvm::ConstantExpr: " << C << "\n";
+        }
       } else {
         objNode = getMemBlock(CT::getGlobalCtx(), C)->getObjectAt(0)->getObjNode();
       }

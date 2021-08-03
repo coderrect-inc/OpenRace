@@ -66,6 +66,7 @@ struct RaceAccess {
   bool operator==(const RaceAccess &other) const;
   bool operator!=(const RaceAccess &other) const;
   bool operator<(const RaceAccess &other) const;
+  void updateMisleadingDebugLoc();
 };
 
 void to_json(json &j, const RaceAccess &access);
@@ -99,7 +100,7 @@ class Report {
  public:
   std::set<Race> races;
 
-  Report(std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> rawRaces);
+  Report(const std::vector<std::pair<const WriteEvent *, const MemAccessEvent *>> &rawRaces);
 
   inline bool empty() { return races.empty(); };
   inline std::size_t size() { return races.size(); };
