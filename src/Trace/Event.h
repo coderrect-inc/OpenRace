@@ -56,7 +56,7 @@ class MemAccessEvent : public Event {
 
  public:
   [[nodiscard]] const race::MemAccessIR *getIRInst() const override = 0;
-  [[nodiscard]] virtual std::vector<const pta::ObjTy *> getAccessedMemory() const = 0;
+  [[nodiscard]] virtual const std::multiset<const pta::ObjTy *> &getAccessedMemory() const = 0;
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   [[nodiscard]] static inline bool classof(const Event *e) { return e->type == Type::Read || e->type == Type::Write; }

@@ -11,22 +11,11 @@ limitations under the License.
 
 #include "Trace/EventImpl.h"
 
-#include "Trace/ProgramTrace.h"
-#include "Trace/ThreadTrace.h"
-
 using namespace race;
 
-std::vector<const pta::ObjTy *> ReadEventImpl::getAccessedMemory() const {
-  std::vector<const pta::ObjTy *> pts;
-  info->thread.program.pta.getPointsTo(info->context, read->getAccessedValue(), pts);
-  return pts;
-}
+const std::multiset<const pta::ObjTy *> &ReadEventImpl::getAccessedMemory() const { return accessedMemory; }
 
-std::vector<const pta::ObjTy *> WriteEventImpl::getAccessedMemory() const {
-  std::vector<const pta::ObjTy *> pts;
-  info->thread.program.pta.getPointsTo(info->context, write->getAccessedValue(), pts);
-  return pts;
-}
+const std::multiset<const pta::ObjTy *> &WriteEventImpl::getAccessedMemory() const { return accessedMemory; }
 
 std::vector<const pta::CallGraphNodeTy *> ForkEventImpl::getThreadEntry() const {
   auto entryVal = fork->getThreadEntry();

@@ -13,6 +13,8 @@ limitations under the License.
 
 #include "IR/IR.h"
 #include "Trace/Event.h"
+#include "Trace/ProgramTrace.h"
+#include "Trace/ThreadTrace.h"
 
 // These are implementation of the Event interfaces in Event.h
 
@@ -35,38 +37,44 @@ struct EventInfo {
 
 class ReadEventImpl : public ReadEvent {
   std::shared_ptr<EventInfo> info;
+  std::multiset<const pta::ObjTy *> accessedMemory;
 
  public:
   const std::shared_ptr<const ReadIR> read;
   const EventID id;
 
   ReadEventImpl(std::shared_ptr<const ReadIR> read, std::shared_ptr<EventInfo> info, EventID id)
-      : info(std::move(info)), read(std::move(read)), id(id) {}
+      : info(std::move(info)), read(std::move(read)), id(id), accessedMemory({}) {
+    this->info->thread.program.pta.getPointsTo(this->info->context, this->read->getAccessedValue(), accessedMemory);
+  }
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::ReadIR *getIRInst() const override { return read.get(); }
 
-  [[nodiscard]] std::vector<const pta::ObjTy *> getAccessedMemory() const override;
+  [[nodiscard]] const std::multiset<const pta::ObjTy *> &getAccessedMemory() const override;
 };
 
 class WriteEventImpl : public WriteEvent {
   std::shared_ptr<EventInfo> info;
+  std::multiset<const pta::ObjTy *> accessedMemory;
 
  public:
   const std::shared_ptr<const WriteIR> write;
   const EventID id;
 
   WriteEventImpl(std::shared_ptr<const WriteIR> write, std::shared_ptr<EventInfo> info, EventID id)
-      : info(std::move(info)), write(std::move(write)), id(id) {}
+      : info(std::move(info)), write(std::move(write)), id(id), accessedMemory({}) {
+    this->info->thread.program.pta.getPointsTo(this->info->context, this->write->getAccessedValue(), accessedMemory);
+  }
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
   [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
   [[nodiscard]] inline const race::WriteIR *getIRInst() const override { return write.get(); }
 
-  [[nodiscard]] std::vector<const pta::ObjTy *> getAccessedMemory() const override;
+  [[nodiscard]] const std::multiset<const pta::ObjTy *> &getAccessedMemory() const override;
 };
 
 class ForkEventImpl : public ForkEvent {
