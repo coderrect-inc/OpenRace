@@ -49,6 +49,24 @@ jobs:
           mkdir build && cd build
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
+          
+  generate-coverage-report:
+    name: Generate Reports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: | 
+          lcov --zerocounters  --directory .
+          ctest --parallel $(nproc)
+          lcov --directory . --capture --output-file codecov.info
+          genhtml --output-directory coverage \ --demangle-cpp --num-spaces 2 --sort \ --title "My Program's Test Coverage" \ --function-coverage --branch-coverage --legend \ codecov.info
+  
+  upload-to-codecov:
+    name: Upload Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: codecov/codecov-action@v2
   
   formatting-check:
     name: Formatting Check
