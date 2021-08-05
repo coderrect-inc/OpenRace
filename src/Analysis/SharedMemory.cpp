@@ -38,7 +38,7 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
       switch (event->type) {
         case Event::Type::Read: {
           auto readEvent = llvm::cast<ReadEvent>(event.get());
-          auto const ptsTo = readEvent->getAccessedMemory();
+          auto const& ptsTo = readEvent->getAccessedMemory();
           if (DEBUG_PTA) {
             if (ptsTo.empty()) {
               llvm::outs() << "Read: ID " << readEvent->getID();
@@ -67,7 +67,7 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
         }
         case Event::Type::Write: {
           auto writeEvent = llvm::cast<WriteEvent>(event.get());
-          auto const ptsTo = writeEvent->getAccessedMemory();
+          auto const& ptsTo = writeEvent->getAccessedMemory();
           if (DEBUG_PTA) {
             if (ptsTo.empty()) {
               llvm::outs() << "Write: ID " << writeEvent->getID();
