@@ -24,8 +24,8 @@ struct TestRace {
   static TestRace fromString(llvm::StringRef s);
 
   // build vector of races from strings
-  static std::vector<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
-  static std::vector<TestRace> fromRaces(std::set<race::Race> races, llvm::StringRef path = "");
+  static std::vector<TestRace> fromStrings(const std::vector<llvm::StringRef>& strings);
+  static std::vector<TestRace> fromRaces(const std::set<race::Race>& races, llvm::StringRef path = "");
 
   // Check if location of TestRace matches the actual race
   // if path is set, strip path from start of each race location

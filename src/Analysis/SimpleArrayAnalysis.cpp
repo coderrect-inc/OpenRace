@@ -11,6 +11,9 @@ limitations under the License.
 
 #include "Analysis/SimpleArrayAnalysis.h"
 
+#include <utility>
+
+
 namespace {
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
@@ -185,7 +188,7 @@ struct ArrayAccess {
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
   ArrayAccess(std::vector<const llvm::GetElementPtrInst *> geps)
-      : geps(geps), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
+      : geps(std::move(geps)), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
