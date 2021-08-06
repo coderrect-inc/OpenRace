@@ -125,15 +125,15 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
         } else if (PthreadModel::isPthreadSpinUnlock(funcName)) {
           summary.push_back(std::make_shared<PthreadSpinUnlock>(callInst));
         } else if (OpenMPModel::isForStaticInit(funcName)) {
-          summary.push_back(std::make_shared<OmpForInit>(callInst));
+          summary.push_back(std::make_shared<OpenMPForInit>(callInst));
         } else if (OpenMPModel::isForStaticFini(funcName)) {
-          summary.push_back(std::make_shared<OmpForFini>(callInst));
+          summary.push_back(std::make_shared<OpenMPForFini>(callInst));
         } else if (OpenMPModel::isForDispatchInit(funcName)) {
-          summary.push_back(std::make_shared<OmpDispatchInit>(callInst));
+          summary.push_back(std::make_shared<OpenMPDispatchInit>(callInst));
         } else if (OpenMPModel::isForDispatchNext(funcName)) {
-          summary.push_back(std::make_shared<OmpDispatchNext>(callInst));
+          summary.push_back(std::make_shared<OpenMPDispatchNext>(callInst));
         } else if (OpenMPModel::isForDispatchFini(funcName)) {
-          summary.push_back(std::make_shared<OmpDispatchFini>(callInst));
+          summary.push_back(std::make_shared<OpenMPDispatchFini>(callInst));
         } else if (OpenMPModel::isSingleStart(funcName)) {
           summary.push_back(std::make_shared<OpenMPSingleStart>(callInst));
         } else if (OpenMPModel::isSingleEnd(funcName)) {

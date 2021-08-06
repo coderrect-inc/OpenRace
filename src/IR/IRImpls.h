@@ -400,7 +400,7 @@ class OpenMPBarrier : public BarrierIR {
 // =================================================================
 
 // CallIRImpl should not be used directly. Instead define using alias.
-// See OmpForInit below as an example.
+// See OpenMPForInit below as an example.
 template <const IR::Type T>
 class CallIRImpl : public CallIR {
  public:
@@ -410,12 +410,12 @@ class CallIRImpl : public CallIR {
   static inline bool classof(const IR *e) { return e->type == T; }
 };
 
-using OmpForInit = CallIRImpl<IR::Type::OpenMPForInit>;
-using OmpForFini = CallIRImpl<IR::Type::OpenMPForFini>;
+using OpenMPForInit = CallIRImpl<IR::Type::OpenMPForInit>;
+using OpenMPForFini = CallIRImpl<IR::Type::OpenMPForFini>;
 
-using OmpDispatchInit = CallIRImpl<IR::Type::OpenMPDispatchInit>;
-using OmpDispatchNext = CallIRImpl<IR::Type::OpenMPDispatchNext>;
-using OmpDispatchFini = CallIRImpl<IR::Type::OpenMPDispatchFini>;
+using OpenMPDispatchInit = CallIRImpl<IR::Type::OpenMPDispatchInit>;
+using OpenMPDispatchNext = CallIRImpl<IR::Type::OpenMPDispatchNext>;
+using OpenMPDispatchFini = CallIRImpl<IR::Type::OpenMPDispatchFini>;
 
 using OpenMPSingleStart = CallIRImpl<IR::Type::OpenMPSingleStart>;
 using OpenMPSingleEnd = CallIRImpl<IR::Type::OpenMPSingleEnd>;
