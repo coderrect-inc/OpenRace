@@ -24,11 +24,11 @@ namespace race {
 // Many events share the same thread/context so to save memory
 // each event impl contains a shared pointer to an EventInfo object
 struct EventInfo {
-  const ThreadTrace &thread;
+  const ThreadTrace *const thread;
   const pta::ctx *context;
 
   EventInfo() = delete;
-  EventInfo(const ThreadTrace &thread, const pta::ctx *context) : thread(thread), context(context) {}
+  EventInfo(const ThreadTrace &thread, const pta::ctx *context) : thread(&thread), context(context) {}
   EventInfo(const EventInfo &) = default;
   EventInfo(EventInfo &&) = default;
   EventInfo &operator=(const EventInfo &) = delete;
@@ -45,12 +45,12 @@ class ReadEventImpl : public ReadEvent {
 
   ReadEventImpl(std::shared_ptr<const ReadIR> read, std::shared_ptr<EventInfo> info, EventID id)
       : info(std::move(info)), read(std::move(read)), id(id), accessedMemory({}) {
-    this->info->thread.program.pta.getPointsTo(this->info->context, this->read->getAccessedValue(), accessedMemory);
+    this->info->thread->program.pta.getPointsTo(this->info->context, this->read->getAccessedValue(), accessedMemory);
   }
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::ReadIR *getIRInst() const override { return read.get(); }
 
   [[nodiscard]] const std::multiset<const pta::ObjTy *> &getAccessedMemory() const override;
@@ -66,12 +66,12 @@ class WriteEventImpl : public WriteEvent {
 
   WriteEventImpl(std::shared_ptr<const WriteIR> write, std::shared_ptr<EventInfo> info, EventID id)
       : info(std::move(info)), write(std::move(write)), id(id), accessedMemory({}) {
-    this->info->thread.program.pta.getPointsTo(this->info->context, this->write->getAccessedValue(), accessedMemory);
+    this->info->thread->program.pta.getPointsTo(this->info->context, this->write->getAccessedValue(), accessedMemory);
   }
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::WriteIR *getIRInst() const override { return write.get(); }
 
   [[nodiscard]] const std::multiset<const pta::ObjTy *> &getAccessedMemory() const override;
@@ -89,7 +89,7 @@ class ForkEventImpl : public ForkEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::ForkIR *getIRInst() const override { return fork.get(); }
 
   [[nodiscard]] std::vector<const pta::ObjTy *> getThreadHandle() const override {
@@ -118,7 +118,7 @@ class JoinEventImpl : public JoinEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::JoinIR *getIRInst() const override { return join.get(); }
 
   [[nodiscard]] std::optional<const ForkEvent *> getForkEvent() const override { return forkEvent; }
@@ -140,7 +140,7 @@ class LockEventImpl : public LockEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::LockIR *getIRInst() const override { return lock.get(); }
 
   [[nodiscard]] std::vector<const pta::ObjTy *> getLockObj() const override {
@@ -161,7 +161,7 @@ class UnlockEventImpl : public UnlockEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::UnlockIR *getIRInst() const override { return unlock.get(); }
 
   [[nodiscard]] std::vector<const pta::ObjTy *> getLockObj() const override {
@@ -182,7 +182,7 @@ class BarrierEventImpl : public BarrierEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::BarrierIR *getIRInst() const override { return barrier.get(); }
 };
 
@@ -198,7 +198,7 @@ class EnterCallEventImpl : public EnterCallEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
 
   [[nodiscard]] const llvm::Function *getCalledFunction() const override { return call->getCalledFunction(); }
@@ -216,7 +216,7 @@ class LeaveCallEventImpl : public LeaveCallEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
 
   [[nodiscard]] const llvm::Function *getCalledFunction() const override { return call->getCalledFunction(); }
@@ -234,7 +234,7 @@ class ExternCallEventImpl : public ExternCallEvent {
 
   [[nodiscard]] inline EventID getID() const override { return id; }
   [[nodiscard]] inline const pta::ctx *getContext() const override { return info->context; }
-  [[nodiscard]] inline const ThreadTrace &getThread() const override { return info->thread; }
+  [[nodiscard]] inline const ThreadTrace &getThread() const override { return *info->thread; }
   [[nodiscard]] inline const race::CallIR *getIRInst() const override { return call.get(); }
 
   [[nodiscard]] const llvm::Function *getCalledFunction() const override {

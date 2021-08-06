@@ -54,6 +54,7 @@ class ThreadTrace {
 
  private:
   std::vector<std::unique_ptr<const Event>> events;
+  std::vector<std::unique_ptr<const ThreadTrace>> childThreads;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const ThreadTrace &thread);

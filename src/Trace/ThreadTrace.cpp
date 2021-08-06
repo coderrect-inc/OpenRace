@@ -118,8 +118,8 @@ bool isOpenMPTeamSpecific(const IR *ir) {
 // events    - list of events to append newly created events to
 // threads   - list of threads to append and newly created threads to
 // state     - used to track data across the construction of the entire program trace
-void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &thread, CallStack &callstack,
-                      const pta::PTA &pta, std::vector<std::unique_ptr<const Event>> &events,
+void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, CallStack &callstack, const pta::PTA &pta,
+                      std::vector<std::unique_ptr<const Event>> &events,
                       std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state) {
   auto func = node->getTargetFun()->getFunction();
   if (callstack.contains(func)) {
@@ -186,7 +186,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
       auto const threadPosition = threads.size();
       // build thread trace for this fork and all sub threads
       auto subThread = std::make_unique<ThreadTrace>(forkEvent, entry, threads, state);
-      threads.insert(threads.begin() + threadPosition, std::move(subThread));
+      // thread.childThreads.push_back(std::move(subThread));
+      // threads.insert(threads.begin() + threadPosition, std::move(subThread));
 
       if (forkIR->type == IR::Type::OpenMPForkTeams) {
         state.openmp.teamsDepth--;
@@ -259,7 +260,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, const ThreadTrace &threa
   callstack.pop();
 }
 
-std::vector<std::unique_ptr<const Event>> buildEventTrace(const ThreadTrace &thread, const pta::CallGraphNodeTy *entry,
+std::vector<std::unique_ptr<const Event>> buildEventTrace(ThreadTrace &thread, const pta::CallGraphNodeTy *entry,
                                                           const pta::PTA &pta,
                                                           std::vector<std::unique_ptr<ThreadTrace>> &threads,
                                                           TraceBuildState &state) {
