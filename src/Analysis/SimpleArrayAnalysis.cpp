@@ -192,10 +192,10 @@ struct ArrayAccess {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
-  bool hasCollapse() const {  // whether this access involves indexes using collapse
+  [[nodiscard]] bool hasCollapse() const {  // whether this access involves indexes using collapse
     return collapseRootIdx.has_value();
   }
-  bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
+  [[nodiscard]] bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -580,7 +580,7 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
       return false;
     }
 
-    bool isDone() const { return Found != nullptr; }
+    [[nodiscard]] bool isDone() const { return Found != nullptr; }
   };
 
   FindClosure FC(Pred);
