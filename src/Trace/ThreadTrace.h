@@ -37,6 +37,8 @@ class ThreadTrace {
 
   [[nodiscard]] const Event *getEvent(EventID id) const { return events.at(id).get(); }
 
+  [[nodiscard]] const std::vector<std::unique_ptr<const ThreadTrace>> &getChildThreads() const { return childThreads; }
+
   // Constructs the main thread.
   // All others should be built from forkEvent constructor
   ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entry, TraceBuildState &state);
@@ -44,8 +46,7 @@ class ThreadTrace {
   // entry specifies the entry point of the spawned thread
   //  and should be one of the entries from the spawningEvent entry list
   // threads should be mutable reference to ProgramTrace's list of threads
-  ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry,
-              std::vector<std::unique_ptr<ThreadTrace>> &threads, TraceBuildState &state);
+  ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, TraceBuildState &state);
   ~ThreadTrace() = default;
   ThreadTrace(const ThreadTrace &) = delete;
   ThreadTrace(ThreadTrace &&other) = delete;
@@ -55,6 +56,8 @@ class ThreadTrace {
  private:
   std::vector<std::unique_ptr<const Event>> events;
   std::vector<std::unique_ptr<const ThreadTrace>> childThreads;
+
+  void buildEventTrace(const pta::CallGraphNodeTy *entry, const pta::PTA &pta, TraceBuildState &state);
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const ThreadTrace &thread);

@@ -62,7 +62,7 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   });
 
   assert(thread != threads.end() && "Some forkEvent in does not correspond to a thread");
-  return thread->get();
+  return *thread;
 }
 
 const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {

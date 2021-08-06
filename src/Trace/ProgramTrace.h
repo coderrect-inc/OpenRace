@@ -82,14 +82,15 @@ struct TraceBuildState {
 
 class ProgramTrace {
   llvm::Module *module;
-  std::vector<std::unique_ptr<ThreadTrace>> threads;
+  std::unique_ptr<ThreadTrace> mainThread;
+  std::vector<const ThreadTrace *> threads;
 
   friend class ThreadTrace;
 
  public:
   pta::PTA pta;
 
-  [[nodiscard]] inline const std::vector<std::unique_ptr<ThreadTrace>> &getThreads() const { return threads; }
+  [[nodiscard]] inline const std::vector<const ThreadTrace *> &getThreads() const { return threads; }
 
   [[nodiscard]] const Event *getEvent(ThreadID tid, EventID eid) { return threads.at(tid)->getEvent(eid); }
 

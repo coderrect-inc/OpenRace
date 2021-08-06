@@ -99,7 +99,7 @@ declare i32 @pthread_join(i64, i8**)
 
     auto const &fork = events.at(0);
     CHECK(fork->type == race::Event::Type::Fork);
-    CHECK(&fork->getThread() == thread.get());
+    CHECK(&fork->getThread() == thread);
     CHECK(&fork->getThread().program == &program);
 
     auto const &join = events.at(2);

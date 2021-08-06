@@ -59,7 +59,7 @@ declare void @__kmpc_fork_call(%struct.ident_t*, i32, void (i32*, i32*, ...)*, .
   REQUIRE(threads.size() == 3);
 
   // Check the omp thread has expected event types
-  auto const ompThread = threads.at(1).get();
+  auto const ompThread = threads.at(1);
   auto const &events = ompThread->getEvents();
   REQUIRE(events.size() == 2);
   CHECK(events.at(0)->type == race::Event::Type::Read);

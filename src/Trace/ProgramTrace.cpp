@@ -27,9 +27,24 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
 
   // build all threads starting from this main func
   auto const mainEntry = pta::GT::getEntryNode(pta.getCallGraph());
-  auto mainThread = std::make_unique<ThreadTrace>(*this, mainEntry, state);
-  // insert at front because main thread is always first
-  threads.insert(threads.begin(), std::move(mainThread));
+  // Program trace needs to hold a unique ptr to the entry thread
+  mainThread = std::make_unique<ThreadTrace>(*this, mainEntry, state);
+
+  // Traverse all child threads and build a flat list of all threads
+  std::deque<const ThreadTrace *> worklist;
+  worklist.push_back(mainThread.get());
+
+  while (!worklist.empty()) {
+    auto const currentThread = worklist.back();
+    worklist.pop_back();
+
+    threads.push_back(currentThread);
+
+    auto const &childThreads = currentThread->getChildThreads();
+    for (auto it = childThreads.rbegin(), end = childThreads.rend(); it != end; ++it) {
+      worklist.push_back(it->get());
+    }
+  }
 }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ProgramTrace &trace) {
