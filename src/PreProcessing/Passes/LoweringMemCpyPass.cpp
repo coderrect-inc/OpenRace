@@ -64,7 +64,7 @@ void lowerMemCpyForType(Type *type, Value *src, Value *dst, SmallVector<Value *,
   }
 }
 
-bool doLoweringMemcpy(llvm::Module &M) {
+auto doLoweringMemcpy(llvm::Module &M) -> bool {
   if (CONFIG_USE_FI_MODE) {
     return false;
   }
@@ -137,7 +137,7 @@ bool doLoweringMemcpy(llvm::Module &M) {
 }
 }  // namespace
 
-llvm::PreservedAnalyses LoweringMemcpyPass::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
+auto LoweringMemcpyPass::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) -> llvm::PreservedAnalyses {
   bool changed = doLoweringMemcpy(M);
   if (changed) {
     return PreservedAnalyses::none();
@@ -145,7 +145,7 @@ llvm::PreservedAnalyses LoweringMemcpyPass::run(llvm::Module &M, llvm::ModuleAna
   return PreservedAnalyses::all();
 }
 
-bool LoweringMemCpyLegacyPass::runOnModule(llvm::Module &M) { return doLoweringMemcpy(M); }
+auto LoweringMemCpyLegacyPass::runOnModule(llvm::Module &M) -> bool { return doLoweringMemcpy(M); }
 
 char LoweringMemCpyLegacyPass::ID = 0;
 static RegisterPass<LoweringMemCpyLegacyPass> LMCPY("", "Lowering MemCpy call", false, /*CFG only*/

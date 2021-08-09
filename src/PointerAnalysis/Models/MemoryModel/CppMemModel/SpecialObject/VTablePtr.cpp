@@ -17,7 +17,7 @@ using namespace llvm;
 
 namespace pta {
 
-bool isVTablePtrType(const llvm::Type *type) {
+auto isVTablePtrType(const llvm::Type *type) -> bool {
   static Type *vtableType = nullptr;
 
   if (vtableType == nullptr) {

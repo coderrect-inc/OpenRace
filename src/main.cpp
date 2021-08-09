@@ -29,7 +29,7 @@ static llvm::cl::opt<std::string> DumpJSON("json", cl::desc("Dump JSON race repo
 
 static llvm::cl::opt<bool> PrintTrace("print-trace", cl::desc("print the program trace to stdout"), cl::init(true));
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   llvm::InitLLVM X(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv);
 

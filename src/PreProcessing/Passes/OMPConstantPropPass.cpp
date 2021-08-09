@@ -45,7 +45,7 @@ namespace {
 // to precisely determine whether GV (counter here) will be overwritten afterwards is complex and expensive,
 // which requires inter-procedural data-flow analysis/forward slicing.
 // TODO: find a solution?
-inline bool hasGlobalOverwritten(GlobalVariable *GV) {
+inline auto hasGlobalOverwritten(GlobalVariable *GV) -> bool {
   for (auto user : GV->users()) {
     if (isa<StoreInst>(user)) {
       return true;
@@ -55,7 +55,7 @@ inline bool hasGlobalOverwritten(GlobalVariable *GV) {
 }
 
 // Try to convert the constant C to type T, return nullptr if unable
-llvm::Constant *convertConstant(llvm::Constant *C, llvm::Type *T) {
+auto convertConstant(llvm::Constant *C, llvm::Type *T) -> llvm::Constant * {
   auto const srcType = C->getType();
 
   if (srcType->isFloatingPointTy() && T->isIntegerTy()) {
@@ -71,7 +71,7 @@ llvm::Constant *convertConstant(llvm::Constant *C, llvm::Type *T) {
   return nullptr;
 }
 
-bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
+auto intraConstantProp(Function &F, const TargetLibraryInfo &TLI) -> bool {
   // based on ConstantPropagation in lib/Transforms/Scalar/ConstantProp.cpp
 
   // Initialize the worklist to all of the instructions ready to process...
@@ -150,7 +150,7 @@ bool intraConstantProp(Function &F, const TargetLibraryInfo &TLI) {
 }
 
 // if there is a single store instruction that dominates I and is a user of V, return it, else return nullptr.
-StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) {
+auto findUniqueDominatedStoreDef(Value *V, const Instruction *I, const DominatorTree &DT) -> StoreInst * {
   StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
     if (auto SI = llvm::dyn_cast<llvm::StoreInst>(user)) {
@@ -171,7 +171,7 @@ StoreInst *findUniqueDominatedStoreDef(Value *V, const Instruction *I, const Dom
 }
 
 // If a function is only ever called with constant value arguments, propogate those constant values into the function
-bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) {
+auto PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const TargetLibraryInfo &TLI) -> bool {
   if (F.arg_empty() || F.use_empty()) return false;  // No arguments? Early exit.
 
   // For each argument, keep track of its constant value and whether it is a
@@ -208,7 +208,7 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
       // Ignore recursive calls passing argument down.
       if (V == &*Arg) continue;
 
-      Constant *C = dyn_cast_or_null<Constant>(V);
+      auto *C = dyn_cast_or_null<Constant>(V);
       if (C == nullptr) {
         // Argument became non-constant.
         // If all arguments are non-constant now, give up on this function.
@@ -319,7 +319,7 @@ bool PropagateConstantsIntoArguments(Function &F, const DominatorTree &DT, const
 
 // we can get a list of function which are users of this function -- if a constant is propagated in a user, we may
 // need to propagate it to used functions, so this method allows us to collect the relevant functions
-std::set<Function *> getUserFunctions(Function &F) {
+auto getUserFunctions(Function &F) -> std::set<Function *> {
   std::set<Function *> userFunctions;
   for (Use &U : F.uses()) {
     User *UR = U.getUser();
@@ -344,8 +344,8 @@ std::set<Function *> getUserFunctions(Function &F) {
 
 // TODO fix constant propagation in libraries where exported functions are called called internally as well, leading to
 // false negatives due to incorrect constant propagation
-bool runOpenMPConstantPropagation(Module &M, const std::function<const TargetLibraryInfo &(Function &)>& GetTLI,
-                                  const std::function<const DominatorTree &(Function &)>& GetDT) {
+auto runOpenMPConstantPropagation(Module &M, const std::function<const TargetLibraryInfo &(Function &)>& GetTLI,
+                                  const std::function<const DominatorTree &(Function &)>& GetDT) -> bool {
   bool Changed = false;
   bool ArgPropagated = true;
   bool FunctionChanged = true;
@@ -412,7 +412,7 @@ bool runOpenMPConstantPropagation(Module &M, const std::function<const TargetLib
 }
 }  // namespace
 
-PreservedAnalyses OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM) {
+auto OMPConstantPropPass::run(Module &M, ModuleAnalysisManager &AM) -> PreservedAnalyses {
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
   auto GetTLI = [&FAM](Function &F) -> const TargetLibraryInfo & { return FAM.getResult<TargetLibraryAnalysis>(F); };
 

@@ -22,7 +22,7 @@ limitations under the License.
 
 using namespace llvm;
 
-static bool expandNestedGEP(Function &F, IRBuilder<NoFolder> &builder) {
+static auto expandNestedGEP(Function &F, IRBuilder<NoFolder> &builder) -> bool {
   bool fixPoint;
   bool changed = false;  // whether we changed IR
 
@@ -52,7 +52,7 @@ static bool expandNestedGEP(Function &F, IRBuilder<NoFolder> &builder) {
   return changed;
 }
 
-static bool splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) {
+static auto splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) -> bool {
   bool changed = false;
   // the queue that stores all the constant indices
   std::vector<Value *> consIndices;
@@ -136,7 +136,7 @@ static bool splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) {
   return changed;
 }
 
-llvm::PreservedAnalyses CanonicalizeGEPPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) {
+auto CanonicalizeGEPPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) -> llvm::PreservedAnalyses {
   IRBuilder<NoFolder> builder(F.getContext());
   bool changed = false;
   // 1st, expanded nested GEP instruction
@@ -151,7 +151,7 @@ llvm::PreservedAnalyses CanonicalizeGEPPass::run(llvm::Function &F, llvm::Functi
 
 // Legacy Pass
 
-bool LegacyCanonicalizeGEPPass::runOnFunction(Function &F) {
+auto LegacyCanonicalizeGEPPass::runOnFunction(Function &F) -> bool {
   IRBuilder<NoFolder> builder(F.getContext());
   bool changed = false;
   // for field sensitive

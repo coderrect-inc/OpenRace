@@ -22,7 +22,7 @@ extern cl::opt<bool> CONFIG_VTABLE_MODE;
 
 namespace pta::cpp {
 
-inline bool isVTableVariable(const llvm::Value *g) {
+inline auto isVTableVariable(const llvm::Value *g) -> bool {
   if (g->hasName()) {
     auto name = getDemangledName(g->getName());
     if (name.find("vtable for") != std::string::npos) {
@@ -32,7 +32,7 @@ inline bool isVTableVariable(const llvm::Value *g) {
   return false;
 }
 
-bool RewriteModeledAPIPass::runOnFunction(llvm::Function &F) {
+auto RewriteModeledAPIPass::runOnFunction(llvm::Function &F) -> bool {
   // for now simple delete all the function body to avoid inline
   // TODO: in the future, different API can be transformed in unified form so
   // that they can get analyzed simpler e.g., std::set::insert() and

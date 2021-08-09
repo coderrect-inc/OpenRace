@@ -26,7 +26,7 @@ using namespace std;
 
 namespace pta {
 
-static size_t indexBetweenArrays(const std::map<size_t, ArrayLayout *> &arrays, size_t &pOffset) {
+static auto indexBetweenArrays(const std::map<size_t, ArrayLayout *> &arrays, size_t &pOffset) -> size_t {
   size_t lOffset = 0;
   size_t curOffset = 0;
   for (auto arrayPair : arrays) {
@@ -107,7 +107,7 @@ static void getPathNameVec(const SmallVector<DIDerivedType *, 8> &members, size_
   return;
 }
 
-size_t MemLayout::indexPhysicalOffset(size_t &pOffset) const {
+auto MemLayout::indexPhysicalOffset(size_t &pOffset) const -> size_t {
   if (!this->hasArray()) {
     // fast path
     // if the memory block does not have array ==> physical offset == layout
@@ -148,7 +148,7 @@ void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, si
 }
 
 // NOTE: this might be expensive! call it with caution
-std::string MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const llvm::StringRef separator) const {
+auto MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const llvm::StringRef separator) const -> std::string {
   if (M == nullptr) {
     return "";
   }
@@ -191,7 +191,7 @@ std::string MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const
   return "";
 }
 
-size_t ArrayLayout::indexPhysicalOffset(size_t &pOffset) const {
+auto ArrayLayout::indexPhysicalOffset(size_t &pOffset) const -> size_t {
   if (this->hasSubArrays()) {
     pOffset = pOffset % this->getElementSize();
     return indexBetweenArrays(this->subArrays, pOffset);

@@ -18,7 +18,7 @@ limitations under the License.
 using namespace llvm;
 using namespace pta;
 
-Type *DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) {
+auto DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) -> Type * {
   // a call instruction
   const Instruction *nextInst = nullptr;
   if (auto call = dyn_cast<CallInst>(allocSite)) {
@@ -66,8 +66,8 @@ Type *DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) {
 
 // the signature of calloc is void *calloc(size_t elementNum, size_t
 // elementSize);
-Type *DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *allocSite, int numArgNo,
-                                        int sizeArgNo) {
+auto DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *allocSite, int numArgNo,
+                                        int sizeArgNo) -> Type * {
   if (auto elemType = getNextBitCastDestType(allocSite)) {
     assert(elemType->isSized());
 
@@ -99,7 +99,7 @@ Type *DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *
 }
 
 // the signature of malloc is void *malloc(size_t elementSize);
-Type *DefaultHeapModel::inferMallocType(const Function *fun, const Instruction *allocSite, int sizeArgNo) {
+auto DefaultHeapModel::inferMallocType(const Function *fun, const Instruction *allocSite, int sizeArgNo) -> Type * {
   if (auto elemType = getNextBitCastDestType(allocSite)) {
     assert(elemType->isSized());
 

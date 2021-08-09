@@ -101,7 +101,7 @@ SharedMemory::SharedMemory(const ProgramTrace &program) {
     }
   }
 }
-std::vector<const pta::ObjTy *> SharedMemory::getSharedObjects() const {
+auto SharedMemory::getSharedObjects() const -> std::vector<const pta::ObjTy *> {
   std::vector<const pta::ObjTy *> sharedObjects;
   for (auto const &[obj, objID] : objIDs) {
     auto const nWriters = numThreadsWrite(objID);
@@ -119,17 +119,17 @@ std::vector<const pta::ObjTy *> SharedMemory::getSharedObjects() const {
   }
   return sharedObjects;
 }
-size_t SharedMemory::numThreadsWrite(ObjID id) const {
+auto SharedMemory::numThreadsWrite(ObjID id) const -> size_t {
   auto it = objWrites.find(id);
   if (it == objWrites.end()) return 0;
   return it->second.size();
 }
-size_t SharedMemory::numThreadsRead(SharedMemory::ObjID id) const {
+auto SharedMemory::numThreadsRead(SharedMemory::ObjID id) const -> size_t {
   auto it = objReads.find(id);
   if (it == objReads.end()) return 0;
   return it->second.size();
 }
-std::map<ThreadID, std::vector<const ReadEvent *>> SharedMemory::getThreadedReads(const pta::ObjTy *obj) const {
+auto SharedMemory::getThreadedReads(const pta::ObjTy *obj) const -> std::map<ThreadID, std::vector<const ReadEvent *>> {
   auto id = objIDs.find(obj);
   if (id == objIDs.end()) return {};
 
@@ -140,7 +140,7 @@ std::map<ThreadID, std::vector<const ReadEvent *>> SharedMemory::getThreadedRead
 
   return {};
 }
-std::map<ThreadID, std::vector<const WriteEvent *>> SharedMemory::getThreadedWrites(const pta::ObjTy *obj) const {
+auto SharedMemory::getThreadedWrites(const pta::ObjTy *obj) const -> std::map<ThreadID, std::vector<const WriteEvent *>> {
   auto id = objIDs.find(obj);
   if (id == objIDs.end()) return {};
 

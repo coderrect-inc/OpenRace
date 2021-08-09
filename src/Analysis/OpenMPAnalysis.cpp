@@ -26,10 +26,10 @@ OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program)
 
 namespace {
 
-bool regionEndLessThan(const race::Region &region1, const race::Region &region2) { return region1.end < region2.end; }
+auto regionEndLessThan(const race::Region &region1, const race::Region &region2) -> bool { return region1.end < region2.end; }
 
 // recursively find the spawn site of the closest/innermost OpenMPFork for this event
-std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
+auto getRootSpawnSite(const Event *event) -> std::optional<const ForkEvent *> {
   auto eSpawn = event->getThread().spawnSite;
   if (!eSpawn) return std::nullopt;
   if (eSpawn.value()->getIRInst()->type == IR::Type::OpenMPTaskFork) {
@@ -46,7 +46,7 @@ std::optional<const ForkEvent *> getRootSpawnSite(const Event *event) {
 
 // return true if both events belong to the same OpenMP team (e.g., under the same #pragma omp parallel)
 // This function is split out so that it can be called from the template functions below (in, inSame, etc)
-bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
+auto _fromSameParallelRegion(const Event *event1, const Event *event2) -> bool {
   // Check both spawn events are OpenMP forks
   auto e1Spawn = getRootSpawnSite(event1);
   if (!e1Spawn || !e1Spawn.value()) return false;
@@ -67,7 +67,7 @@ bool _fromSameParallelRegion(const Event *event1, const Event *event2) {
 // Get list of (non-nested) event regions
 // template definition can be in cpp as long as we dont expose the template outside of this file
 template <IR::Type Start, IR::Type End>
-std::vector<Region> getRegions(const ThreadTrace &thread) {
+auto getRegions(const ThreadTrace &thread) -> std::vector<Region> {
   std::vector<Region> regions;
 
   std::optional<EventID> start;
@@ -97,7 +97,7 @@ auto constexpr _getLoopRegions = getRegions<IR::Type::OpenMPForInit, IR::Type::O
 
 // Get the innermost region that contains event
 template <IR::Type Start, IR::Type End>
-std::optional<Region> getContainingRegion(const Event *event) {
+auto getContainingRegion(const Event *event) -> std::optional<Region> {
   if (!event) return std::nullopt;
 
   auto const &thread = event->getThread();
@@ -130,7 +130,7 @@ std::optional<Region> getContainingRegion(const Event *event) {
 // see getRegions for more detail on regions
 // (event1 is always from Thread1, i.e., the master thread, which has the full thread trace with all IRs)
 template <IR::Type Start, IR::Type End>
-bool inSame(const Event *event1, const Event *event2) {
+auto inSame(const Event *event1, const Event *event2) -> bool {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
   // get omp region contains the event
@@ -153,7 +153,7 @@ auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::Op
 
 }  // namespace
 
-const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(const ThreadTrace &thread) {
+auto OpenMPAnalysis::getOmpForLoops(const ThreadTrace &thread) -> const std::vector<OpenMPAnalysis::LoopRegion> & {
   // Check if result is already computed
   auto it = ompForLoops.find(thread.id);
   if (it != ompForLoops.end()) {
@@ -166,7 +166,7 @@ const std::vector<OpenMPAnalysis::LoopRegion> &OpenMPAnalysis::getOmpForLoops(co
   return ompForLoops.at(thread.id);
 }
 
-bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
+auto OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) -> bool {
   auto loopRegions = getOmpForLoops(event->getThread());
   auto const eid = event->getID();
 
@@ -179,19 +179,19 @@ bool OpenMPAnalysis::inParallelFor(const race::MemAccessEvent *event) {
   return false;
 }
 
-bool OpenMPAnalysis::isNonOverlappingLoopAccess(const MemAccessEvent *event1, const MemAccessEvent *event2) {
+auto OpenMPAnalysis::isNonOverlappingLoopAccess(const MemAccessEvent *event1, const MemAccessEvent *event2) -> bool {
   return arrayAnalysis.isLoopArrayAccess(event1, event2) && !arrayAnalysis.canIndexOverlap(event1, event2);
 }
 
-bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {
+auto OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const -> bool {
   return _fromSameParallelRegion(event1, event2);
 }
 
-bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
+auto OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const -> bool {
   return _inSameSingleBlock(event1, event2);
 }
 
-std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const {
+auto ReduceAnalysis::computeGuardedBlocks(ReduceInst reduce) const -> std::vector<const llvm::BasicBlock *> & {
   assert(reduceBlocks.find(reduce) == reduceBlocks.end() &&
          "Should not call compute if results have already been computed");
 
@@ -265,7 +265,7 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
   return blocks;
 }
 
-const std::vector<const llvm::BasicBlock *> &ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const {
+auto ReduceAnalysis::getReduceBlocks(ReduceInst reduce) const -> const std::vector<const llvm::BasicBlock *> & {
   // Check cache first
   // cppcheck-suppress stlIfFind
   if (auto it = reduceBlocks.find(reduce); it != reduceBlocks.end()) {
@@ -276,12 +276,12 @@ const std::vector<const llvm::BasicBlock *> &ReduceAnalysis::getReduceBlocks(Red
   return computeGuardedBlocks(reduce);
 }
 
-bool ReduceAnalysis::reduceContains(const llvm::Instruction *reduce, const llvm::Instruction *inst) const {
+auto ReduceAnalysis::reduceContains(const llvm::Instruction *reduce, const llvm::Instruction *inst) const -> bool {
   auto const &blocks = getReduceBlocks(reduce);
   return std::find(blocks.begin(), blocks.end(), inst->getParent()) != blocks.end();
 }
 
-bool OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) const {
+auto OpenMPAnalysis::inSameReduce(const Event *event1, const Event *event2) const -> bool {
   // Find reduce events
   for (auto const &event : event1->getThread().getEvents()) {
     // If an event e is inside of a reduce block it must occur *after* the reduce event
@@ -315,7 +315,7 @@ namespace {
 
 // Get any icmp_eq insts that use this value and compare against a constant integer
 // return list of pairs (cmp, c) where cmp is the cmpInst and c is the constant value compared against
-std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const llvm::Value *value) {
+auto getConstCmpEqInsts(const llvm::Value *value) -> std::vector<std::pair<const llvm::CmpInst *, uint64_t>> {
   std::vector<std::pair<const llvm::CmpInst *, uint64_t>> result;
 
   std::vector<const llvm::User *> worklist;
@@ -357,7 +357,7 @@ std::vector<std::pair<const llvm::CmpInst *, uint64_t>> getConstCmpEqInsts(const
 // Start by assuming the target block is guarded
 // Iterate from the target block until we find a block that has an unguarded predecessor
 // Cannot handle loops
-std::set<const llvm::BasicBlock *> getGuardedBlocks(const llvm::BranchInst *branchInst, bool branch = true) {
+auto getGuardedBlocks(const llvm::BranchInst *branchInst, bool branch = true) -> std::set<const llvm::BasicBlock *> {
   // This branch should use a cmp eq instruction
   // Otherwise the true/false blocks below may be wrong
   assert(llvm::isa<llvm::CmpInst>(branchInst->getOperand(0)));
@@ -435,7 +435,7 @@ void SimpleGetThreadNumAnalysis::computeGuardedBlocks(const Event *event) {
   visited.insert(call);
 }
 
-std::optional<u_int64_t> SimpleGetThreadNumAnalysis::getGuardedBy(const Event *event) const {
+auto SimpleGetThreadNumAnalysis::getGuardedBy(const Event *event) const -> std::optional<u_int64_t> {
   // check if this event's block is guarded
   auto guarded = guardedBlocks.find(event->getInst()->getParent());
   if (guarded == guardedBlocks.end()) return std::nullopt;
@@ -452,7 +452,7 @@ SimpleGetThreadNumAnalysis::SimpleGetThreadNumAnalysis(const ProgramTrace &progr
   }
 }
 
-bool SimpleGetThreadNumAnalysis::guardedBySameTid(const Event *event1, const Event *event2) const {
+auto SimpleGetThreadNumAnalysis::guardedBySameTid(const Event *event1, const Event *event2) const -> bool {
   auto tid1 = getGuardedBy(event1);
   if (!tid1.has_value()) return false;
 
@@ -462,7 +462,7 @@ bool SimpleGetThreadNumAnalysis::guardedBySameTid(const Event *event1, const Eve
   return tid1.value() == tid2.value();
 }
 
-std::set<const llvm::BasicBlock *> LastprivateAnalysis::computeLastprivateBlocks(const llvm::Function &func) {
+auto LastprivateAnalysis::computeLastprivateBlocks(const llvm::Function &func) -> std::set<const llvm::BasicBlock *> {
   /* kmpc_static_for_init takes a pointer to an "isLast" flag
      if the parallel loop has a last private member, the flag will be set for the last thread
      and that thread will execute the lastprivate code.
@@ -510,7 +510,7 @@ LastprivateAnalysis::LastprivateAnalysis(const llvm::Module &module) {
   }
 }
 
-bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
+auto OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) -> bool {
   // assertion: threads of the same team are identical
   // assertion: we aren't given events from threads in different parallel sections blocks because those would be
   //            different teams

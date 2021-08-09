@@ -23,8 +23,8 @@ RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
   });
 }
 
-InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
-                                             const llvm::Function *F, const llvm::Instruction *callsite) {
+auto RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
+                                             const llvm::Function *F, const llvm::Instruction *callsite) -> InterceptResult {
   auto funcName = F->getName();
 
   // Skip intrinsic in PTA
@@ -52,8 +52,8 @@ InterceptResult RaceModel::interceptFunction(const ctx * /* callerCtx */, const 
   return {F, InterceptResult::Option::EXPAND_BODY};
 }
 
-bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
-                                  const llvm::Function *originalTarget, const llvm::Instruction *callsite) {
+auto RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunction<ctx> *callee,
+                                  const llvm::Function *originalTarget, const llvm::Instruction *callsite) -> bool {
   assert(originalTarget != nullptr);
   assert(CT::contextEvolve(caller->getContext(), callsite) == callee->getContext());
 
@@ -113,7 +113,7 @@ bool RaceModel::interceptCallSite(const CtxFunction<ctx> *caller, const CtxFunct
   return false;
 }
 
-bool RaceModel::isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) {
+auto RaceModel::isCompatible(const llvm::Instruction *callsite, const llvm::Function *target) -> bool {
   auto call = llvm::cast<llvm::CallBase>(callsite);
   auto threadCreate = call->getCalledFunction();
   assert(threadCreate && "Indirect call should point to a function.");
@@ -191,7 +191,7 @@ void RaceModel::interceptHeapAllocSite(const CtxFunction<ctx> *caller, const Ctx
   }
 }
 
-bool RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) {
+auto RaceModel::isHeapAllocAPI(const llvm::Function *F, const llvm::Instruction * /* callsite */) -> bool {
   if (!F->hasName()) {
     return false;
   }
@@ -206,7 +206,7 @@ const std::set<llvm::StringRef> origins{"pthread_create", "__kmpc_fork_call", "_
                                         "__kmpc_omp_task_alloc", "__kmpc_fork_teams"};
 }  // namespace
 
-bool RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) {
+auto RaceModel::isInvokingAnOrigin(const originCtx * /* prevCtx */, const llvm::Instruction *I) -> bool {
   auto call = llvm::dyn_cast<CallBase>(I);
   if (!call || !call->getCalledFunction() || !call->getCalledFunction()->hasName()) return false;
 

@@ -13,12 +13,12 @@ limitations under the License.
 
 using namespace race;
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event &event) {
+auto race::operator<<(llvm::raw_ostream &os, const Event &event) -> llvm::raw_ostream & {
   os << event.getID() << " " << event.type << "\t" << *event.getInst();
   return os;
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Event::Type &type) {
+auto race::operator<<(llvm::raw_ostream &os, const Event::Type &type) -> llvm::raw_ostream & {
   switch (type) {
     case Event::Type::Read:
       os << "Read";

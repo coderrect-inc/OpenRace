@@ -17,7 +17,7 @@ limitations under the License.
 
 using namespace llvm;
 
-bool InsertGlobalCtorCallPass::runOnModule(llvm::Module &M) {
+auto InsertGlobalCtorCallPass::runOnModule(llvm::Module &M) -> bool {
   // TODO: make main configurable
   auto mainFun = M.getFunction("cr_main");
   if (mainFun == nullptr || mainFun->isDeclaration()) {

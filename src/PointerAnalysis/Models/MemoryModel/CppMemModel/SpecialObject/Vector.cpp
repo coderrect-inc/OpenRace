@@ -57,7 +57,7 @@ void VectorAPI::init(const Function *fun) {
   }
 }
 
-const Type *VectorAPI::resolveVecElemType(const Type *T) {
+auto VectorAPI::resolveVecElemType(const Type *T) -> const Type * {
   auto ST = dyn_cast<StructType>(T);
   if (ST == nullptr) {
     return nullptr;

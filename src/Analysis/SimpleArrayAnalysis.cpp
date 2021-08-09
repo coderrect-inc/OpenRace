@@ -17,7 +17,7 @@ limitations under the License.
 namespace {
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
-const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
+auto getGEP(const race::MemAccessEvent *event) -> const llvm::GetElementPtrInst * {
   return llvm::dyn_cast<llvm::GetElementPtrInst>(event->getIRInst()->getAccessedValue()->stripPointerCasts());
 }
 
@@ -25,10 +25,10 @@ const llvm::GetElementPtrInst *getGEP(const race::MemAccessEvent *event) {
 // isBinaryOp includes standard binary (13-24) and logical (25-30) operators
 // isCast includes cast (38-50) operators (actually we want 38-46)
 // ir can be nullptr
-bool isMathOp(llvm::Instruction *ir) { return ir ? ir->isBinaryOp() || ir->isCast() : false; }
+auto isMathOp(llvm::Instruction *ir) -> bool { return ir ? ir->isBinaryOp() || ir->isCast() : false; }
 
 // return true if this is a math-related operation on the index or the index has no name
-bool isMathOpOrNoName(llvm::Instruction *ir) { return ir ? isMathOp(ir) || !ir->hasName() : false; }
+auto isMathOpOrNoName(llvm::Instruction *ir) -> bool { return ir ? isMathOp(ir) || !ir->hasName() : false; }
 
 enum class IndexType {
   Indvars,      // the name of index var/ptr starts with "indvars.", it is the index variable of loop,
@@ -45,7 +45,7 @@ enum class IndexType {
   Unknown,       // cannot handle or cannot determine for now
 };
 
-IndexType getIndexType(llvm::StringRef name) {
+auto getIndexType(llvm::StringRef name) -> IndexType {
   if (name.startswith("indvars.")) {
     return IndexType::Indvars;
   } else if (name.startswith("indvars.iv.next")) {
@@ -59,7 +59,7 @@ IndexType getIndexType(llvm::StringRef name) {
   return IndexType::Unknown;
 }
 
-IndexType getIndexType(llvm::Value *idx) {
+auto getIndexType(llvm::Value *idx) -> IndexType {
   if (idx->hasName()) {
     const StringRef &name = idx->getName();
     return getIndexType(name);
@@ -70,12 +70,12 @@ IndexType getIndexType(llvm::Value *idx) {
   return IndexType::Unknown;
 }
 
-std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir);
-std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep);
+auto computeIdxName(llvm::Instruction *ir) -> std::optional<llvm::StringRef>;
+auto getInductionVarName(const llvm::GetElementPtrInst *gep) -> std::optional<llvm::StringRef>;
 
 // conduct a simple backward dataflow analysis to retrieve the name of the index that
 // idx can refer to (the name of idx must starts with "idxprom")
-std::optional<llvm::StringRef> getInductionVarNameForIdxprom(Value *idx) {
+auto getInductionVarNameForIdxprom(Value *idx) -> std::optional<llvm::StringRef> {
   assert(getIndexType(idx) == IndexType::Idxprom && "The name of idx must starts with idxprom");
 
   // must be a sext instruction, e.g., %idxprom4.i = sext i32 %19 to i64
@@ -105,19 +105,19 @@ std::optional<llvm::StringRef> getInductionVarNameForIdxprom(Value *idx) {
 }
 
 // return true this index is used within the scope of omp parallel region, used for multi-dimension array
-bool isOmpRelevant(llvm::StringRef idxName) {
+auto isOmpRelevant(llvm::StringRef idxName) -> bool {
   auto typ = getIndexType(idxName);
   return typ == IndexType::Indvars || typ == IndexType::Idxprom || typ == IndexType::StoreMerge;
 }
 
 // return true this index is used within the scope of omp parallel region, used for multi-dimension array
-bool isOmpRelevant(const GetElementPtrInst *idx) {
+auto isOmpRelevant(const GetElementPtrInst *idx) -> bool {
   auto idxName = getInductionVarName(idx);
   return idxName.has_value() ? isOmpRelevant(idxName.value()) : false;
 }
 
 // return the non-constant operand in the ir
-llvm::Value *getNonConstOperand(llvm::Instruction *ir) {
+auto getNonConstOperand(llvm::Instruction *ir) -> llvm::Value * {
   auto nonConst = ir->getOperand(0);
   if (llvm::isa<llvm::Constant>(nonConst) && ir->getNumOperands() > 1) {
     nonConst = ir->getOperand(1);
@@ -131,7 +131,7 @@ llvm::Value *getNonConstOperand(llvm::Instruction *ir) {
 //     %indvars.iv.next23.i = add nsw i64 %indvars.iv22.i, 1, !dbg !61
 //     %17 = mul nsw i64 %indvars.iv.next23.i, 100, !dbg !98
 // 1st op is lhs, 2nd op is the non-constant element on rhs
-std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir) {
+auto computeIdxName(llvm::Instruction *ir) -> std::optional<llvm::StringRef> {
   if (!isMathOp(ir)) return std::nullopt;
 
   while (isMathOp(ir)) {
@@ -156,7 +156,7 @@ std::optional<llvm::StringRef> computeIdxName(llvm::Instruction *ir) {
 
 // return the name of the index variable that the loop (containing gep) will iterate on (or related to this index var),
 // this might not be the index that omp parallel will parallel on
-std::optional<llvm::StringRef> getInductionVarName(const llvm::GetElementPtrInst *gep) {
+auto getInductionVarName(const llvm::GetElementPtrInst *gep) -> std::optional<llvm::StringRef> {
   auto idx = gep->getOperand(gep->getNumOperands() - 1);  // the last operand
   switch (getIndexType(idx)) {
     case IndexType::IndvarsNext:
@@ -192,10 +192,10 @@ struct ArrayAccess {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
-  [[nodiscard]] bool hasCollapse() const {  // whether this access involves indexes using collapse
+  [[nodiscard]] auto hasCollapse() const -> bool {  // whether this access involves indexes using collapse
     return collapseRootIdx.has_value();
   }
-  [[nodiscard]] bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
+  [[nodiscard]] auto isMultiDim() const -> bool { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -213,7 +213,7 @@ struct ArrayAccess {
   //      %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
   // where %.omp.iv.011.i is the root index for %idxprom.i and %idxprom7.i from both gep IRs
   // TODO: if getting more complex in the future, leave this to SCEV
-  std::optional<llvm::StringRef> checkCollapse() {
+  auto checkCollapse() -> std::optional<llvm::StringRef> {
     if (!isMultiDim()) {
       return std::nullopt;
     }
@@ -267,7 +267,7 @@ struct ArrayAccess {
   //    %25 = getelementptr double, double* %22, i64 %indvars.iv.i, !dbg !140
   //    store double %add19.i, double* %25, align 8, !dbg !141, !tbaa !63, !noalias !104
   // we are trying to locate %indvars.iv21.i from %21 in the above example
-  std::optional<llvm::StringRef> computeOuterMostGEPIdxName() {
+  auto computeOuterMostGEPIdxName() -> std::optional<llvm::StringRef> {
     auto getLastOp = [](const llvm::GetElementPtrInst *gep) { return gep->getOperand(gep->getNumOperands() - 1); };
 
     // Find last index that does not have Idxprom type
@@ -297,7 +297,7 @@ struct ArrayAccess {
 //     %16 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* @a, i32 0, i64 %idxprom.i, !dbg !60
 //     %17 = getelementptr [100 x i32], [100 x i32]* %16, i32 0, i64 %idxprom7.i, !dbg !60
 //     %18 = load i32, i32* %17, align 4, !dbg !60, !tbaa !57, !noalias !39
-ArrayAccess getAllGEPIndexes(const llvm::GetElementPtrInst *gep) {
+auto getAllGEPIndexes(const llvm::GetElementPtrInst *gep) -> ArrayAccess {
   std::vector<const llvm::GetElementPtrInst *> geps;
   while (gep != nullptr) {
     geps.push_back(gep);
@@ -315,7 +315,7 @@ enum class BBType {
   Unknown,
 };
 
-BBType getBasicBlockType(const StringRef &bbName) {
+auto getBasicBlockType(const StringRef &bbName) -> BBType {
   if (bbName.startswith("omp.inner.for.body") && bbName.endswith(".i"))
     return BBType::OMPInnerForBody;
   else if (bbName.startswith("for.body") && bbName.endswith(".i"))
@@ -327,7 +327,7 @@ BBType getBasicBlockType(const StringRef &bbName) {
     return BBType::Unknown;
 }
 
-BBType getBasicBlockType(const BasicBlock *bb) {
+auto getBasicBlockType(const BasicBlock *bb) -> BBType {
   const StringRef &bbName = bb->getName();
   return getBasicBlockType(bbName);
 }
@@ -337,7 +337,7 @@ BBType getBasicBlockType(const BasicBlock *bb) {
 //    for (i = 1; i < N-1; i++) { // "i" is the index that omp will parallel on
 //      for (j = 1; j < N-1; j++) { ...
 // TODO: maybe have other cases for other omp directives
-std::optional<llvm::StringRef> getOMPParallelLoopIndex(const llvm::GetElementPtrInst *gep) {
+auto getOMPParallelLoopIndex(const llvm::GetElementPtrInst *gep) -> std::optional<llvm::StringRef> {
   auto const bb = gep->getParent();
 
   switch (getBasicBlockType(bb)) {
@@ -373,7 +373,7 @@ std::optional<llvm::StringRef> getOMPParallelLoopIndex(const llvm::GetElementPtr
 }
 
 // return true if the index of this array access is perfectly aligned without races
-bool isPerfectlyAligned(llvm::StringRef idxName, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) {
+auto isPerfectlyAligned(llvm::StringRef idxName, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) -> bool {
   if (isInnerIdx) {  // the omp parallel loop will parallel on this idx
     return getIndexType(idxName) == IndexType::Indvars;
   } else {  // the omp parallel loop will parallel on this idx
@@ -382,7 +382,7 @@ bool isPerfectlyAligned(llvm::StringRef idxName, std::optional<llvm::StringRef> 
 }
 
 // return true if the index of this array access is perfectly aligned without races
-bool isPerfectlyAligned(const GetElementPtrInst *gep, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) {
+auto isPerfectlyAligned(const GetElementPtrInst *gep, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) -> bool {
   auto idxName = getInductionVarName(gep);
   if (!idxName.has_value() || !parallelIdx.has_value()) return false;  // cannot determine now
   return isPerfectlyAligned(idxName.value(), parallelIdx, isInnerIdx);
@@ -396,7 +396,7 @@ enum class AccessType {
 };
 
 // check each index in this multi-dimension array access, see if every index is perfectly aligned
-AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::StringRef> parallelIdx) {
+auto getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::StringRef> parallelIdx) -> AccessType {
   auto idxes = loopIdxes.geps;
   if (loopIdxes.hasCollapse()) {
     // when using collapse, we need to compare each index using collapse (recorded in collapseRootIdx) with parallelIdx
@@ -468,7 +468,7 @@ AccessType getAccessTypeForMultiDim(ArrayAccess loopIdxes, std::optional<llvm::S
 // but for the index declared outside of loop, this can still overlap since it has a different
 // self-update rule, e.g., DRB018; for the index that is out of omp parallel region, e.g., i, the run will be sequential
 // and should skip its check
-AccessType getAccessTypeFor(const llvm::GetElementPtrInst *gep) {
+auto getAccessTypeFor(const llvm::GetElementPtrInst *gep) -> AccessType {
   auto gepIdxes = getAllGEPIndexes(gep);
   auto parallelLoopIdx = getOMPParallelLoopIndex(gep);
 
@@ -488,17 +488,17 @@ AccessType getAccessTypeFor(const llvm::GetElementPtrInst *gep) {
 // move add operation out the (sext) SCEV
 class BitExtSCEVRewriter : public llvm::SCEVRewriteVisitor<BitExtSCEVRewriter> {
  private:
-  const SCEV *rewriteCastExpr(const SCEVCastExpr *Expr);
+  auto rewriteCastExpr(const SCEVCastExpr *Expr) -> const SCEV *;
 
  public:
   using super = SCEVRewriteVisitor<BitExtSCEVRewriter>;
   explicit BitExtSCEVRewriter(llvm::ScalarEvolution &SE) : super(SE) {}
 
-  const SCEV *visit(const SCEV *S);
+  auto visit(const SCEV *S) -> const SCEV *;
 
-  inline const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) { return rewriteCastExpr(Expr); };
+  inline auto visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) -> const SCEV * { return rewriteCastExpr(Expr); };
 
-  inline const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) { return rewriteCastExpr(Expr); }
+  inline auto visitSignExtendExpr(const SCEVSignExtendExpr *Expr) -> const SCEV * { return rewriteCastExpr(Expr); }
 };
 
 class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
@@ -509,7 +509,7 @@ class SCEVBoundApplier : public llvm::SCEVRewriteVisitor<SCEVBoundApplier> {
  public:
   SCEVBoundApplier(const llvm::Loop *ompLoop, llvm::ScalarEvolution &SE) : super(SE), ompLoop(ompLoop) {}
 
-  const llvm::SCEV *visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr);
+  auto visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) -> const llvm::SCEV *;
 };
 
 class OpenMPLoopManager {
@@ -525,7 +525,7 @@ class OpenMPLoopManager {
 
   void init();
 
-  Optional<int64_t> resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const;
+  auto resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const -> Optional<int64_t>;
 
  public:
   // constructor
@@ -535,17 +535,17 @@ class OpenMPLoopManager {
   }
 
   // getter
-  [[nodiscard]] inline Function *getTargetFunction() const { return F; }
+  [[nodiscard]] inline auto getTargetFunction() const -> Function * { return F; }
 
   // query.
   // TODO: handle dynamic dispatch calls.
-  inline CallBase *getStaticInitCallIfExist(const BasicBlock *block) const {
+  inline auto getStaticInitCallIfExist(const BasicBlock *block) const -> CallBase * {
     auto it = ompStaticInitBlocks.find(block);
     return it == ompStaticInitBlocks.end() ? nullptr : it->second;
   }
 
   // TODO: handle dynamic dispatch for loop
-  inline CallBase *getStaticInitCallIfExist(const Loop *L) const {
+  inline auto getStaticInitCallIfExist(const Loop *L) const -> CallBase * {
     if (L->getLoopPreheader() == nullptr) {
       return nullptr;
     }
@@ -554,33 +554,33 @@ class OpenMPLoopManager {
     return getStaticInitCallIfExist(initBlock);
   }
 
-  std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const Loop *L) const {
+  auto resolveOMPLoopBound(const Loop *L) const -> std::pair<Optional<int64_t>, Optional<int64_t>> {
     return resolveOMPLoopBound(getStaticInitCallIfExist(L));
   }
-  std::pair<Optional<int64_t>, Optional<int64_t>> resolveOMPLoopBound(const CallBase *initForCall) const;
+  auto resolveOMPLoopBound(const CallBase *initForCall) const -> std::pair<Optional<int64_t>, Optional<int64_t>>;
 
-  const SCEVAddRecExpr *getOMPLoopSCEV(const llvm::SCEV *root) const;
+  auto getOMPLoopSCEV(const llvm::SCEV *root) const -> const SCEVAddRecExpr *;
 
   // TODO: handle dynamic dispatch for loop
-  inline bool isOMPForLoop(const Loop *L) const { return this->getStaticInitCallIfExist(L) != nullptr; }
+  inline auto isOMPForLoop(const Loop *L) const -> bool { return this->getStaticInitCallIfExist(L) != nullptr; }
 };
 
 template <typename PredTy>
-const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
+auto findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) -> const SCEV * {
   struct FindClosure {
     const SCEV *Found = nullptr;
     PredTy Pred;
 
     explicit FindClosure(PredTy Pred) : Pred(Pred) {}
 
-    bool follow(const llvm::SCEV *S) {
+    auto follow(const llvm::SCEV *S) -> bool {
       if (!Pred(S)) return true;
 
       Found = S;
       return false;
     }
 
-    [[nodiscard]] bool isDone() const { return Found != nullptr; }
+    [[nodiscard]] auto isDone() const -> bool { return Found != nullptr; }
   };
 
   FindClosure FC(Pred);
@@ -588,11 +588,11 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
   return FC.Found;
 }
 
-inline const SCEV *stripSCEVBaseAddr(const SCEV *root) {
+inline auto stripSCEVBaseAddr(const SCEV *root) -> const SCEV * {
   return findSCEVExpr(root, [](const llvm::SCEV *S) -> bool { return isa<llvm::SCEVAddRecExpr>(S); });
 }
 
-const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
+auto getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) -> const SCEV * {
   auto step = root->getOperand(1);
   return SE.getAddRecExpr(SE.getAddExpr(root->getOperand(0), step), step, root->getLoop(), root->getNoWrapFlags());
 }
@@ -601,7 +601,7 @@ const SCEV *getNextIterSCEV(const SCEVAddRecExpr *root, ScalarEvolution &SE) {
 
 race::SimpleArrayAnalysis::SimpleArrayAnalysis() { PB.registerFunctionAnalyses(FAM); }
 
-const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
+auto BitExtSCEVRewriter::visit(const SCEV *S) -> const SCEV * {
   auto result = super::visit(S);
   // recursively into the sub expression
   while (result != S) {
@@ -611,7 +611,7 @@ const SCEV *BitExtSCEVRewriter::visit(const SCEV *S) {
   return result;
 }
 
-const SCEV *BitExtSCEVRewriter::rewriteCastExpr(const SCEVCastExpr *Expr) {
+auto BitExtSCEVRewriter::rewriteCastExpr(const SCEVCastExpr *Expr) -> const SCEV * {
   auto buildCastExpr = [&](const SCEV *op, Type *type) -> const SCEV * {
     switch (Expr->getSCEVType()) {
       case scSignExtend:
@@ -642,7 +642,7 @@ const SCEV *BitExtSCEVRewriter::rewriteCastExpr(const SCEVCastExpr *Expr) {
   return Operand == Expr->getOperand() ? Expr : buildCastExpr(Operand, Expr->getType());
 }
 
-const llvm::SCEV *SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) {
+auto SCEVBoundApplier::visitAddRecExpr(const llvm::SCEVAddRecExpr *Expr) -> const llvm::SCEV * {
   // stop at the OpenMP Loop
   if (Expr->getLoop() == ompLoop) {
     return Expr;
@@ -679,7 +679,7 @@ void OpenMPLoopManager::init() {
   }
 }
 
-Optional<int64_t> OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const {
+auto OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, const CallBase *initCall) const -> Optional<int64_t> {
   const llvm::StoreInst *storeInst = nullptr;
   for (auto user : V->users()) {
     if (auto SI = llvm::dyn_cast<llvm::StoreInst>(user)) {
@@ -708,8 +708,8 @@ Optional<int64_t> OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, cons
   }
 }
 
-std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoopBound(
-    const CallBase *initForCall) const {
+auto OpenMPLoopManager::resolveOMPLoopBound(
+    const CallBase *initForCall) const -> std::pair<Optional<int64_t>, Optional<int64_t>> {
   Value *ompLB = nullptr, *ompUB = nullptr;  // up bound and lower bound
   if (OpenMPModel::isForStaticInit(initForCall->getCalledFunction()->getName())) {
     ompLB = initForCall->getArgOperand(4);
@@ -734,7 +734,7 @@ std::pair<Optional<int64_t>, Optional<int64_t>> OpenMPLoopManager::resolveOMPLoo
   return std::make_pair(LB, UB);
 }
 
-const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) const {
+auto OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) const -> const SCEVAddRecExpr * {
   // get the outter-most loop (omp loop should always be the outter-most
   // loop within an OpenMP region)
   auto omp = findSCEVExpr(root, [&](const llvm::SCEV *S) -> bool {
@@ -756,7 +756,7 @@ const SCEVAddRecExpr *OpenMPLoopManager::getOMPLoopSCEV(const llvm::SCEV *root) 
 // the ptr %arrayidx4 should come from an getelementptr with array type load ptr
 // HOWEVER, many "arrays" in C/C++ are actually pointers so that we cannot always confirm the array type,
 // e.g., DRB014-outofbounds-orig-yes.ll
-bool race::SimpleArrayAnalysis::isArrayAccess(const llvm::GetElementPtrInst *gep) {
+auto race::SimpleArrayAnalysis::isArrayAccess(const llvm::GetElementPtrInst *gep) -> bool {
   // must be array type
   bool isArray =
       gep->getPointerOperand()->getType()->getPointerElementType()->isArrayTy();  // fixed array size, e.g., int A[100];
@@ -774,8 +774,8 @@ bool race::SimpleArrayAnalysis::isArrayAccess(const llvm::GetElementPtrInst *gep
   return true;
 }
 
-bool race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1,
-                                                  const race::MemAccessEvent *event2) {
+auto race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *event1,
+                                                  const race::MemAccessEvent *event2) -> bool {
   auto gep1 = getGEP(event1);
   if (!gep1) return false;
 
@@ -786,8 +786,8 @@ bool race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *ev
 }
 
 // event1 must be write, event2 can be either read/write
-bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *event1,
-                                                const race::MemAccessEvent *event2) {
+auto race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *event1,
+                                                const race::MemAccessEvent *event2) -> bool {
   auto gep1 = getGEP(event1);
   if (!gep1) return false;
 
@@ -919,7 +919,7 @@ bool race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *even
         // if both bound are resolvable
         // FIXME: why do we need to divide by loopstep?
         assert(std::max(lowerBound, upperBound) >= 0);  // both bounds should be >=0, isn't it?
-        long unsigned int maxBound = static_cast<long unsigned int>(std::max(lowerBound, upperBound));
+        auto maxBound = static_cast<long unsigned int>(std::max(lowerBound, upperBound));
         if (maxBound < (distance / loopStep)) {
           return false;
         }

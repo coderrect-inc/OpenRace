@@ -22,7 +22,7 @@ using namespace llvm;
 
 namespace {
 
-BasicBlock *createUnReachableBB(Function &F) {
+auto createUnReachableBB(Function &F) -> BasicBlock * {
   auto BB = BasicBlock::Create(F.getContext(), "cr.unreachable", &F);
   IRBuilder<> builder(BB);
   builder.CreateUnreachable();
@@ -31,7 +31,7 @@ BasicBlock *createUnReachableBB(Function &F) {
 }
 
 // return true if the function was changed
-bool removeExceptionHandlers(Function &F) {
+auto removeExceptionHandlers(Function &F) -> bool {
   bool changed = false;
   BasicBlock *unReachableBB = nullptr;
 
@@ -57,7 +57,7 @@ bool removeExceptionHandlers(Function &F) {
 
 }  // namespace
 
-llvm::PreservedAnalyses RemoveExceptionHandlerPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) {
+auto RemoveExceptionHandlerPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM) -> llvm::PreservedAnalyses {
   auto changed = removeExceptionHandlers(F);
 
   if (changed) {
@@ -67,12 +67,12 @@ llvm::PreservedAnalyses RemoveExceptionHandlerPass::run(llvm::Function &F, llvm:
   return PreservedAnalyses::all();
 }
 
-bool RemoveExceptionHandlerLegacyPass::doInitialization(Module &M) {
+auto RemoveExceptionHandlerLegacyPass::doInitialization(Module &M) -> bool {
   LOG_DEBUG("Processing Exception Handlers");
   return false;
 }
 
-bool RemoveExceptionHandlerLegacyPass::runOnFunction(Function &F) { return removeExceptionHandlers(F); }
+auto RemoveExceptionHandlerLegacyPass::runOnFunction(Function &F) -> bool { return removeExceptionHandlers(F); }
 
 char RemoveExceptionHandlerLegacyPass::ID = 0;
 static RegisterPass<RemoveExceptionHandlerLegacyPass> REH("", "Remove Exception Handling Code in IR",

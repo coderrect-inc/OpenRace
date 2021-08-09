@@ -19,7 +19,7 @@ using namespace race;
 
 namespace {
 
-std::optional<SourceLoc> getSourceLoc(const Event *e) {
+auto getSourceLoc(const Event *e) -> std::optional<SourceLoc> {
   auto const &loc = e->getInst()->getDebugLoc();
   if (auto diloc = loc.get()) {
     return SourceLoc(diloc);
@@ -30,7 +30,7 @@ std::optional<SourceLoc> getSourceLoc(const Event *e) {
 
 }  // namespace
 
-bool SourceLoc::operator<(const SourceLoc &other) const {
+auto SourceLoc::operator<(const SourceLoc &other) const -> bool {
   if (filename != other.filename) return filename < other.filename;
   if (line != other.line) return line < other.line;
   return col < other.col;
@@ -40,7 +40,7 @@ void race::to_json(json &j, const SourceLoc &loc) {
   j = json{{"filename", loc.filename}, {"dir", loc.directory}, {"line", loc.line}, {"col", loc.col}};
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc) {
+auto race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc) -> llvm::raw_ostream & {
   os << loc.filename << ":" << loc.line << ":" << loc.col;
   return os;
 }
@@ -59,9 +59,9 @@ void race::to_json(json &j, const RaceAccess &access) {
   }
 }
 
-bool RaceAccess::operator==(const RaceAccess &other) const { return location == other.location && inst == other.inst; }
-bool RaceAccess::operator!=(const RaceAccess &other) const { return !(*this == other); }
-bool RaceAccess::operator<(const RaceAccess &other) const {
+auto RaceAccess::operator==(const RaceAccess &other) const -> bool { return location == other.location && inst == other.inst; }
+auto RaceAccess::operator!=(const RaceAccess &other) const -> bool { return !(*this == other); }
+auto RaceAccess::operator<(const RaceAccess &other) const -> bool {
   if (location != other.location) return location < other.location;
   return inst < other.inst;
 }
@@ -80,7 +80,7 @@ void RaceAccess::updateMisleadingDebugLoc() {
   llvm::errs() << "Cannot correctly udpate misleading debugloc for " << *inst << "\n";
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const std::optional<SourceLoc> &location) {
+auto race::operator<<(llvm::raw_ostream &os, const std::optional<SourceLoc> &location) -> llvm::raw_ostream & {
   if (location.has_value()) {
     os << location.value();
   } else {
@@ -89,7 +89,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const std::optional<S
   return os;
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc) {
+auto race::operator<<(llvm::raw_ostream &os, const RaceAccess &acc) -> llvm::raw_ostream & {
   os << acc.location << "\t";
   if (acc.inst) {
     os << *acc.inst;
@@ -129,9 +129,9 @@ void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) {
   racepairs.emplace_back(std::make_pair(e1, e2));
 }
 
-Report Reporter::getReport() const { return Report(racepairs); }
+auto Reporter::getReport() const -> Report { return Report(racepairs); }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
+auto race::operator<<(llvm::raw_ostream &os, const Race &race) -> llvm::raw_ostream & {
   os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t" << *race.second.inst;
   return os;
 }

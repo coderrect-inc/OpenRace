@@ -35,13 +35,13 @@ void insertTaskJoins(std::vector<std::unique_ptr<const Event>> &events, TraceBui
 }
 
 // return the spawning omp fork if this is an omp thread, else return nullptr
-const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
+auto isOpenMPThread(const ThreadTrace &thread) -> const OpenMPFork * {
   if (!thread.spawnSite) return nullptr;
   return llvm::dyn_cast<OpenMPFork>(thread.spawnSite.value()->getIRInst());
 }
 
 // return true if thread is an OpenMP master thread
-bool isOpenMPMasterThread(const ThreadTrace &thread) {
+auto isOpenMPMasterThread(const ThreadTrace &thread) -> bool {
   auto const ompThread = isOpenMPThread(thread);
   if (!ompThread) return false;
   return ompThread->isForkingMaster();
@@ -49,7 +49,7 @@ bool isOpenMPMasterThread(const ThreadTrace &thread) {
 
 // handle omp single/master events
 // return true if the current instruction should be skipped
-bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) {
+auto handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMasterThread) -> bool {
   switch (callIR->type) {
     // OpenMP master is modeled by only traversing the master region on master omp threads
     // skip the region on non-master threads
@@ -92,7 +92,7 @@ bool handleOMPEvents(const CallIR *callIR, TraceBuildState &state, bool isMaster
 }
 
 // return true if the current instruction should be skipped
-bool shouldSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) {
+auto shouldSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) -> bool {
   if (!state.skipUntil) return false;
 
   // Skip until we reach the target instruction
@@ -104,7 +104,7 @@ bool shouldSkipIR(const std::shared_ptr<const IR> &ir, TraceBuildState &state) {
   return false;
 }
 
-bool isOpenMPTeamSpecific(const IR *ir) {
+auto isOpenMPTeamSpecific(const IR *ir) -> bool {
   auto const type = ir->type;
   return type == IR::Type::OpenMPBarrier || type == IR::Type::OpenMPCriticalStart ||
          type == IR::Type::OpenMPCriticalEnd || type == IR::Type::OpenMPSetLock || type == IR::Type::OpenMPUnsetLock;
@@ -281,7 +281,7 @@ ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNod
   assert(it != entries.end());
 }
 
-std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
+auto ThreadTrace::getForkEvents() const -> std::vector<const ForkEvent *> {
   std::vector<const ForkEvent *> forks;
   for (auto const &event : events) {
     if (auto fork = llvm::dyn_cast<ForkEvent>(event.get())) {
@@ -291,7 +291,7 @@ std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {
   return forks;
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ThreadTrace &thread) {
+auto race::operator<<(llvm::raw_ostream &os, const ThreadTrace &thread) -> llvm::raw_ostream & {
   os << "---Thread" << thread.id;
   if (thread.spawnSite.has_value()) {
     auto const &spawn = thread.spawnSite.value();

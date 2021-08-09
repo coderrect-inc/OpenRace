@@ -24,9 +24,9 @@ limitations under the License.
 using namespace llvm;
 using namespace pta;
 
-static bool isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2);
+static auto isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2) -> bool;
 
-static const Type *stripArrayType(const Type *type) {
+static auto stripArrayType(const Type *type) -> const Type * {
   while (auto AT = llvm::dyn_cast<llvm::ArrayType>(type)) {
     // strip array
     type = AT->getArrayElementType();
@@ -34,7 +34,7 @@ static const Type *stripArrayType(const Type *type) {
   return type;
 }
 
-inline static bool isPtrToEmptyStruct(const llvm::Type *T) {
+inline static auto isPtrToEmptyStruct(const llvm::Type *T) -> bool {
   // {}* ptr
   if (StructType *ST = T->isPointerTy() ? dyn_cast<StructType>(T->getPointerElementType()) : nullptr) {
     if (ST->getNumElements() == 0) {
@@ -45,11 +45,11 @@ inline static bool isPtrToEmptyStruct(const llvm::Type *T) {
   return false;
 }
 
-inline static bool isVoidPtr(const llvm::Type *T) {
+inline static auto isVoidPtr(const llvm::Type *T) -> bool {
   return T == PointerType::get(IntegerType::getInt8Ty(T->getContext()), 0) || isPtrToEmptyStruct(T);
 }
 
-static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2, const DataLayout &DL) {
+static auto isTypeEqual(const llvm::Type *T1, const llvm::Type *T2, const DataLayout &DL) -> bool {
   assert(T1 && T2);
 
   if (T1 == T2) {
@@ -103,7 +103,7 @@ static bool isTypeEqual(const llvm::Type *T1, const llvm::Type *T2, const DataLa
   return false;
 }
 
-bool pta::isZeroOffsetTypeInRootType(const Type *rootType, const Type *elemType, const DataLayout &DL) {
+auto pta::isZeroOffsetTypeInRootType(const Type *rootType, const Type *elemType, const DataLayout &DL) -> bool {
   if (rootType == nullptr || elemType == nullptr) {
     // JEFF: should return false for null??
     return true;
@@ -153,7 +153,7 @@ bool pta::isZeroOffsetTypeInRootType(const Type *rootType, const Type *elemType,
   return isTypeEqual(rootType, elemType, DL);
 }
 
-const Type *pta::getTypeAtOffset(const Type *ctype, size_t offset, const DataLayout &DL, bool stripArray) {
+auto pta::getTypeAtOffset(const Type *ctype, size_t offset, const DataLayout &DL, bool stripArray) -> const Type * {
   if (offset == 0) {
     if (stripArray) {
       return stripArrayType(ctype);
@@ -187,7 +187,7 @@ const Type *pta::getTypeAtOffset(const Type *ctype, size_t offset, const DataLay
 
 // TODO. can llvm names has more than one number post fix?
 // e.g., fun.123.456
-StringRef pta::stripNumberPostFix(StringRef originalName) {
+auto pta::stripNumberPostFix(StringRef originalName) -> StringRef {
   auto splited = originalName.rsplit(".");
   if (!splited.second.empty()) {
     int tmp;
@@ -213,7 +213,7 @@ void pta::prettyFunctionPrinter(const Function *func, raw_ostream &os) {
   os << ")";
 }
 
-std::string pta::getDemangledName(StringRef mangledName) {
+auto pta::getDemangledName(StringRef mangledName) -> std::string {
   //    ItaniumPartialDemangler demangler;
 
   mangledName = stripNumberPostFix(mangledName);
@@ -227,7 +227,7 @@ std::string pta::getDemangledName(StringRef mangledName) {
 }
 
 // i8* is the void* in LLVM
-static bool isVoidPointer(const Type *T) {
+static auto isVoidPointer(const Type *T) -> bool {
   static Type *VoidStarTy = nullptr;
   if (VoidStarTy == nullptr) {
     VoidStarTy = PointerType::getUnqual(IntegerType::get(T->getContext(), 8));
@@ -236,7 +236,7 @@ static bool isVoidPointer(const Type *T) {
   return VoidStarTy == T;
 }
 
-static bool isCompatibleType(const Type *T1, const Type *T2) {
+static auto isCompatibleType(const Type *T1, const Type *T2) -> bool {
   // fast path
   if (T1 == T2) {
     return true;
@@ -309,7 +309,7 @@ static bool isCompatibleType(const Type *T1, const Type *T2) {
   return false;
 }
 
-static bool isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2) {
+static auto isCompatibleFunctionType(const FunctionType *FT1, const FunctionType *FT2) -> bool {
   // fast path, the same type
   if (FT1 == FT2) {
     return true;
@@ -361,7 +361,7 @@ void pta::dumpCGNodeDistribution() {
   llvm::outs() << "*************************************\n";
 }
 
-std::string pta::getSourceDir(const Value *val) {
+auto pta::getSourceDir(const Value *val) -> std::string {
   assert(val != nullptr);
 
   if (auto inst = llvm::dyn_cast<Instruction>(val)) {
@@ -397,7 +397,7 @@ std::string pta::getSourceDir(const Value *val) {
   return "";
 }
 
-static bool isLooslyCompatibleCall(const llvm::CallBase *CS, const llvm::Function *target) {
+static auto isLooslyCompatibleCall(const llvm::CallBase *CS, const llvm::Function *target) -> bool {
   assert(CS->isIndirectCall());
 
   // fast path, the same type
@@ -442,7 +442,7 @@ static bool isLooslyCompatibleCall(const llvm::CallBase *CS, const llvm::Functio
   return true;
 }
 
-llvm::Type *pta::isStructWithFlexibleArray(const llvm::StructType *ST) {
+auto pta::isStructWithFlexibleArray(const llvm::StructType *ST) -> llvm::Type * {
   // C99, only structure type can have flexible array elements
   size_t numElem = ST->getNumElements();
   if (numElem) {
@@ -454,7 +454,7 @@ llvm::Type *pta::isStructWithFlexibleArray(const llvm::StructType *ST) {
   return nullptr;
 }
 
-llvm::StructType *pta::getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexibleArrayElem) {
+auto pta::getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexibleArrayElem) -> llvm::StructType * {
   assert(isStructWithFlexibleArray(ST));
 
   // if this is a structure type with flexible array element at the end
@@ -477,7 +477,7 @@ llvm::StructType *pta::getConvertedFlexibleArrayType(const llvm::StructType *ST,
 
 // simple type check fails when cases like
 // call void (...) %ptr()
-bool pta::isCompatibleCall(const llvm::Instruction *indirectCall, const llvm::Function *target) {
+auto pta::isCompatibleCall(const llvm::Instruction *indirectCall, const llvm::Function *target) -> bool {
   auto call = cast<CallBase>(indirectCall);
 
   return isLooslyCompatibleCall(call, target);

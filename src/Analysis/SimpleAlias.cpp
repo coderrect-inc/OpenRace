@@ -16,7 +16,7 @@ limitations under the License.
 
 using namespace race;
 
-bool SimpleAlias::mustNotAlias(const WriteEvent *write, const MemAccessEvent *other) {
+auto SimpleAlias::mustNotAlias(const WriteEvent *write, const MemAccessEvent *other) -> bool {
   // anallysis requires the instructions are in the same function
   if (write->getFunction() == other->getFunction()) return false;
 

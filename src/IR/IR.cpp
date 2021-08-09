@@ -16,17 +16,17 @@ limitations under the License.
 using namespace race;
 
 namespace {
-llvm::StringRef getValNameHelper(const llvm::Value *val, llvm::StringRef defaultLabel = "UnknownVal") {
+auto getValNameHelper(const llvm::Value *val, llvm::StringRef defaultLabel = "UnknownVal") -> llvm::StringRef {
   return (val && val->hasName()) ? val->getName() : defaultLabel;
 }
 }  // namespace
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR &stmt) {
+auto race::operator<<(llvm::raw_ostream &os, const IR &stmt) -> llvm::raw_ostream & {
   stmt.print(os);
   return os;
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const IR::Type &type) {
+auto race::operator<<(llvm::raw_ostream &os, const IR::Type &type) -> llvm::raw_ostream & {
   switch (type) {
     case IR::Type::Read:
       os << "READ";
@@ -102,7 +102,7 @@ void UnlockIR::print(llvm::raw_ostream &os) const {
 
 void BarrierIR::print(llvm::raw_ostream &os) const { os << "IR " << type << "\n"; }
 
-llvm::StringRef IR::toString() const {
+auto IR::toString() const -> llvm::StringRef {
   std::string s;
   llvm::raw_string_ostream os(s);
   print(os);

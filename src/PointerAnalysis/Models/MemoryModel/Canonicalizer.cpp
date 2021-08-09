@@ -26,7 +26,7 @@ using namespace llvm;
 extern cl::opt<bool> USE_MEMLAYOUT_FILTERING;
 extern cl::opt<bool> CONFIG_USE_FI_MODE;
 
-static const Value *stripNullOrUnDef(const Value *V) {
+static auto stripNullOrUnDef(const Value *V) -> const Value * {
   // a uni ptr
   if (isa<UndefValue>(V)) {
     V = UndefValue::get(llvm::Type::getInt8PtrTy(V->getContext()));
@@ -52,7 +52,7 @@ static const Value *stripNullOrUnDef(const Value *V) {
 }
 
 // modified from llvm::stripPointerCastsAndOffsets
-const Value *FICanonicalizer::stripPointerCastsAndOffsets(const Value *V) {
+auto FICanonicalizer::stripPointerCastsAndOffsets(const Value *V) -> const Value * {
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
   SmallPtrSet<const Value *, 4> Visited;
@@ -88,7 +88,7 @@ const Value *FICanonicalizer::stripPointerCastsAndOffsets(const Value *V) {
   return V;
 }
 
-static const Value *stripPointerCasts(const Value *V) {
+static auto stripPointerCasts(const Value *V) -> const Value * {
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
   SmallPtrSet<const Value *, 4> Visited;
@@ -119,7 +119,7 @@ static const Value *stripPointerCasts(const Value *V) {
   return V;
 }
 
-const Value *FICanonicalizer::canonicalize(const Value *V) {
+auto FICanonicalizer::canonicalize(const Value *V) -> const Value * {
   if (!V->getType()->isPointerTy()) return V;
   V = stripPointerCastsAndOffsets(V);
 
@@ -128,7 +128,7 @@ const Value *FICanonicalizer::canonicalize(const Value *V) {
 
 /// Strip off pointer casts, all-zero GEPs, aliases and invariant group
 /// info.
-const Value *FSCanonicalizer::canonicalize(const llvm::Value *V) {
+auto FSCanonicalizer::canonicalize(const llvm::Value *V) -> const Value * {
   if (CONFIG_USE_FI_MODE) {
     // use the field-insensitive canonicalizer instead
     return FICanonicalizer::canonicalize(V);

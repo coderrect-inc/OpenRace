@@ -22,7 +22,7 @@ limitations under the License.
 
 using namespace race;
 
-Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
+auto race::detectRaces(llvm::Module *module, DetectRaceConfig config) -> Report {
   race::ProgramTrace program(module);
 
   if (config.dumpPreprocessedIR.has_value()) {

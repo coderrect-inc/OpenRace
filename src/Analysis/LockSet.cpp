@@ -15,7 +15,7 @@ limitations under the License.
 
 using namespace race;
 
-std::multiset<const llvm::Value *> LockSet::heldLocks(const Event *targetEvent) {
+auto LockSet::heldLocks(const Event *targetEvent) -> std::multiset<const llvm::Value *> {
   // check if we have it cached
   // cppcheck-suppress stlIfFind
   if (auto it = cache.find(targetEvent); it != cache.end()) {
@@ -69,7 +69,7 @@ std::multiset<const llvm::Value *> LockSet::heldLocks(const Event *targetEvent) 
 
 LockSet::LockSet(const ProgramTrace & /* program */) : cache({}) {}
 
-bool LockSet::sharesLock(const MemAccessEvent *lhs, const MemAccessEvent *rhs) {
+auto LockSet::sharesLock(const MemAccessEvent *lhs, const MemAccessEvent *rhs) -> bool {
   auto const lhsLocks = heldLocks(lhs);
   auto const rhsLocks = heldLocks(rhs);
 

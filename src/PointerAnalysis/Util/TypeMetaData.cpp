@@ -48,12 +48,12 @@ class DICompositeTypeCollector {
 
   void processInstructionMetadata(const Instruction &I, DenseSet<const MDNode *> &mdnSet) {
     // Process metadata used directly by intrinsics.
-    if (const CallInst *CI = dyn_cast<CallInst>(&I))
+    if (const auto *CI = dyn_cast<CallInst>(&I))
       if (Function *F = CI->getCalledFunction())
         if (F->isIntrinsic())
           for (auto &Op : I.operands())
             if (auto *V = dyn_cast_or_null<MetadataAsValue>(Op))
-              if (MDNode *N = dyn_cast<MDNode>(V->getMetadata())) CreateMetadataSlot(N, mdnSet);
+              if (auto *N = dyn_cast<MDNode>(V->getMetadata())) CreateMetadataSlot(N, mdnSet);
 
     // Process metadata attached to this instruction.
     SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
@@ -109,7 +109,7 @@ class DICompositeTypeCollector {
 
   void inline insertPair(const llvm::Type *T, const DICompositeType *DI) { typeDIMap.insert(make_pair(T, DI)); }
 
-  const inline DICompositeType *getIfExist(const llvm::Type *T) {
+  const inline auto getIfExist(const llvm::Type *T) -> DICompositeType * {
     // already cached
     if (auto it = typeDIMap.find(T); it != typeDIMap.end()) {
       return it->second;
@@ -117,7 +117,7 @@ class DICompositeTypeCollector {
     return nullptr;
   }
 
-  const DICompositeType *lookUpMDByName(const StringRef structName, StructType *T, bool useStructName = true) {
+  auto lookUpMDByName(const StringRef structName, StructType *T, bool useStructName = true) -> const DICompositeType * {
     // Structure type always looks like struct.XXX or class.XXX
     // TODO: is the observation always correct? it definitely only applicable to
     // C/C++
@@ -201,7 +201,7 @@ class DICompositeTypeCollector {
   }
 
  public:
-  static bool isEndedWithPadding(const StructType *T) {
+  static auto isEndedWithPadding(const StructType *T) -> bool {
     if (T->getNumElements() == 0) {
       return false;
     }
@@ -225,9 +225,9 @@ class DICompositeTypeCollector {
     processModule();
   }
 
-  inline const DataLayout &getDataLayout() { return this->M->getDataLayout(); }
+  inline auto getDataLayout() -> const DataLayout & { return this->M->getDataLayout(); }
 
-  const DICompositeType *resolveTypeMetaData(const Value *allocSite, AllocKind T, const Type *allocType) {
+  auto resolveTypeMetaData(const Value *allocSite, AllocKind T, const Type *allocType) -> const DICompositeType * {
     allocType = stripArray(allocType);  // strip the array
     auto ST = dyn_cast<StructType>(allocType);
     if (ST == nullptr) {
@@ -328,7 +328,7 @@ class DICompositeTypeCollector {
     return nullptr;
   }
 
-  const DICompositeType *lookUpMDForType(const StructType *ST) {
+  auto lookUpMDForType(const StructType *ST) -> const DICompositeType * {
     assert(M && "Initialize collect");
     auto T = const_cast<StructType *>(ST);
 
@@ -352,14 +352,14 @@ static DICompositeTypeCollector collector;
 
 namespace pta {
 
-DIType *stripTypeDefDI(DIType *DI) {
+auto stripTypeDefDI(DIType *DI) -> DIType * {
   while (DI->getTag() == dwarf::DW_TAG_typedef) {
     DI = cast<DIDerivedType>(DI)->getBaseType();
   }
   return DI;
 }
 
-DIType *stripArrayDI(DIType *DI) {
+auto stripArrayDI(DIType *DI) -> DIType * {
   while (DI->getTag() == dwarf::DW_TAG_array_type) {
     DI = cast<DICompositeType>(DI)->getBaseType();
   }
@@ -367,7 +367,7 @@ DIType *stripArrayDI(DIType *DI) {
   return DI;
 }
 
-DIType *stripArrayAndTypeDefDI(DIType *DI) {
+auto stripArrayAndTypeDefDI(DIType *DI) -> DIType * {
   while (DI->getTag() == dwarf::DW_TAG_array_type || DI->getTag() == dwarf::DW_TAG_typedef) {
     if (DI->getTag() == dwarf::DW_TAG_array_type) {
       DI = cast<DICompositeType>(DI)->getBaseType();
@@ -383,18 +383,18 @@ void TypeMDinit(const llvm::Module *M) { collector.collectMDIfNeeded(M); }
 
 // FIXME: is there any way that I can quickly get the type metadata with 100%
 // accuracy???
-const DICompositeType *getTypeMetaData(const StructType *T) { return collector.lookUpMDForType(T); }
+auto getTypeMetaData(const StructType *T) -> const DICompositeType * { return collector.lookUpMDForType(T); }
 
-const DICompositeType *getTypeMetaData(const Module *M, const StructType *T) {
+auto getTypeMetaData(const Module *M, const StructType *T) -> const DICompositeType * {
   collector.collectMDIfNeeded(M);
   return collector.lookUpMDForType(T);
 }
 
-const DICompositeType *getTypeMetaData(const Value *allocSite, AllocKind T, const Type *allocType) {
+auto getTypeMetaData(const Value *allocSite, AllocKind T, const Type *allocType) -> const DICompositeType * {
   return collector.resolveTypeMetaData(allocSite, T, allocType);
 }
 
-SmallVector<DIDerivedType *, 8> getNonStaticDataMember(const DICompositeType *DI) {
+auto getNonStaticDataMember(const DICompositeType *DI) -> SmallVector<DIDerivedType *, 8> {
   SmallVector<DIDerivedType *, 8> result;
 
   for (auto element : DI->getElements()) {
@@ -466,7 +466,7 @@ void getFieldAccessPath(const DICompositeType *DI, size_t offsetInByte, SmallVec
   result.clear();
 }
 
-std::size_t getDISize(llvm::DIDerivedType *T) {
+auto getDISize(llvm::DIDerivedType *T) -> std::size_t {
   size_t size = T->getSizeInBits();
   if (size == 0 && T->getTag() == dwarf::DW_TAG_inheritance) {
     // parent class, the size can be retrieve from the parent type

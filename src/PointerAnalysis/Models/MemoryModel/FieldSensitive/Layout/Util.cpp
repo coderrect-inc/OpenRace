@@ -26,7 +26,7 @@ namespace pta {
 
 // get the step size of the getelementptr (which uses variable index)
 // return MAX_size_t when it can not be resolved
-size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
+auto getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) -> size_t {
   assert(!GEP->hasAllConstantIndices());
   // since we canonicalized the getelementptr instruction before, the
   // getelementptr that uses variable to index object can only two different
@@ -54,7 +54,7 @@ size_t getGEPStepSize(const GetElementPtrInst *GEP, const DataLayout &DL) {
   llvm_unreachable("bad gep format");
 }
 
-bool isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize) {
+auto isArrayExistAtOffset(const std::map<size_t, ArrayLayout *> &arrayMap, size_t pOffset, size_t elementSize) -> bool {
   if (arrayMap.empty()) {
     return false;
   }

@@ -13,7 +13,7 @@ limitations under the License.
 
 using namespace race;
 
-bool ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const MemAccessEvent *other) {
+auto ThreadLocalAnalysis::isThreadLocalAccess(const MemAccessEvent *write, const MemAccessEvent *other) -> bool {
   // Get the intersection of the pts to set and
   // check that each obj in the intersection is a thread local value
 

@@ -21,7 +21,7 @@ limitations under the License.
 using namespace pta;
 using namespace llvm;
 
-const Function* pta::CallSite::resolveTargetFunction(const Value* calledValue) {
+auto pta::CallSite::resolveTargetFunction(const Value* calledValue) -> const Function* {
   // TODO: In this case, a constant expression/global aliases, which can be
   // resolved directly
   if (auto bitcast = dyn_cast<BitCastOperator>(calledValue)) {

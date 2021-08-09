@@ -27,7 +27,7 @@ extern llvm::cl::opt<bool> DEBUG_PTA;
 namespace {
 
 // return true if the operand of inst must be a thread local object
-bool hasThreadLocalOperand(const llvm::Instruction *inst) {
+auto hasThreadLocalOperand(const llvm::Instruction *inst) -> bool {
   // this is just a lightweight check during IR phase
   // the full check is done at analysis time by ThreadLocalAnalysis
   auto ptr = getPointerOperand(inst);
@@ -39,14 +39,14 @@ bool hasThreadLocalOperand(const llvm::Instruction *inst) {
 }
 
 // Get the next inst if it is call, else return nullptr
-const llvm::CallBase *getNextCall(const llvm::CallBase *call) {
+auto getNextCall(const llvm::CallBase *call) -> const llvm::CallBase * {
   auto const next = call->getNextNode();
   if (!next) return nullptr;
   return llvm::dyn_cast<llvm::CallBase>(next);
 }
 
 // this returns the duplicated omp fork or null if the next inst is not a omp fork call
-std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
+auto getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) -> std::shared_ptr<OpenMPFork> {
   auto const twinForkInst = getNextCall(fork->getInst());
   if (!twinForkInst) return nullptr;
   if (!OpenMPModel::isFork(twinForkInst)) return nullptr;
@@ -54,7 +54,7 @@ std::shared_ptr<OpenMPFork> getTwinOmpFork(std::shared_ptr<OpenMPFork> &fork) {
   return std::make_shared<OpenMPFork>(twinForkInst);
 }
 
-std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) {
+auto getTwinOmpForkTeams(std::shared_ptr<OpenMPForkTeams> &fork) -> std::shared_ptr<OpenMPForkTeams> {
   auto const twinForkInst = getNextCall(fork->getInst());
   if (!twinForkInst) return nullptr;
   // Only difference between this function and the base omp fork one is this line
@@ -66,9 +66,9 @@ std::shared_ptr<OpenMPForkTeams> getTwinOmpForkTeams(std::shared_ptr<OpenMPForkT
 }
 
 // TODO: need different system for storing and organizing these "recognizers"
-bool isPrintf(const llvm::StringRef &funcName) { return funcName.equals("printf"); }
+auto isPrintf(const llvm::StringRef &funcName) -> bool { return funcName.equals("printf"); }
 
-std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Function &func) {
+auto generateFunctionSummary(const llvm::Function &func) -> std::shared_ptr<const FunctionSummary> {
   FunctionSummary summary;
 
   for (auto const &basicblock : func.getBasicBlockList()) {
@@ -230,7 +230,7 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
 }
 }  // namespace
 
-std::shared_ptr<const FunctionSummary> FunctionSummaryBuilder::getFunctionSummary(const llvm::Function *func) {
+auto FunctionSummaryBuilder::getFunctionSummary(const llvm::Function *func) -> std::shared_ptr<const FunctionSummary> {
   assert(func != nullptr);
 
   // Check the cache

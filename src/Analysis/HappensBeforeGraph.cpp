@@ -55,7 +55,7 @@ This shrinks the graph that needs to be searched.
 using namespace race;
 
 namespace {
-const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &program) {
+auto getForkedThread(const ForkEvent *fork, const ProgramTrace &program) -> const ThreadTrace * {
   auto const &threads = program.getThreads();
   auto thread = std::find_if(threads.begin(), threads.end(), [&fork](auto const &thread) {
     return thread->spawnSite.has_value() && thread->spawnSite.value() == fork;
@@ -65,7 +65,7 @@ const ThreadTrace *getForkedThread(const ForkEvent *fork, const ProgramTrace &pr
   return *thread;
 }
 
-const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) {
+auto getForkWithHandle(const llvm::Value *handle, const ThreadTrace &thread) -> const ForkEvent * {
   auto const &events = thread.getForkEvents();
   auto it = std::find_if(events.begin(), events.end(),
                          [&handle](auto forkEvent) { return forkEvent->getIRInst()->getThreadHandle() == handle; });
@@ -73,7 +73,7 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ThreadTrace 
   return (it != events.end()) ? *it : nullptr;
 }
 
-const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) {
+auto getForkWithHandle(const llvm::Value *handle, const ProgramTrace &program) -> const ForkEvent * {
   for (auto const &thread : program.getThreads()) {
     auto fork = getForkWithHandle(handle, *thread);
     if (fork != nullptr) {
@@ -83,7 +83,7 @@ const ForkEvent *getForkWithHandle(const llvm::Value *handle, const ProgramTrace
   return nullptr;
 }
 
-const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) {
+auto getCorrespondingFork(const JoinEvent *join, const ProgramTrace &program) -> const ForkEvent * {
   // if fork has been explicitly set, use it.
   // now we only store the corresponding fork for OpenMPTaskJoin
   if (auto const fork = join->getForkEvent()) return fork.value();
@@ -144,7 +144,7 @@ const ForkEvent *getCorrespondingFork(const JoinEvent *join, const ProgramTrace 
   return nullptr;
 }
 
-const ThreadTrace *getJoinedThread(const JoinEvent *join, const ProgramTrace &program) {
+auto getJoinedThread(const JoinEvent *join, const ProgramTrace &program) -> const ThreadTrace * {
   auto fork = getCorrespondingFork(join, program);
   if (fork != nullptr) {
     return getForkedThread(fork, program);
@@ -305,7 +305,7 @@ void HappensBeforeGraph::addSyncEdge(const Event *src, const Event *dst) {
   addSync(dst);
 }
 
-bool HappensBeforeGraph::canReach(const Event *src, const Event *dst) const {
+auto HappensBeforeGraph::canReach(const Event *src, const Event *dst) const -> bool {
   auto srcSync = findNextSync(src);
   if (!srcSync.has_value()) {
     return false;
@@ -323,7 +323,7 @@ bool HappensBeforeGraph::canReach(const Event *src, const Event *dst) const {
   return isReachable(srcSync.value(), dstSync.value());
 }
 
-bool HappensBeforeGraph::isReachable(EventPID src, EventPID dst) const {
+auto HappensBeforeGraph::isReachable(EventPID src, EventPID dst) const -> bool {
   // cppcheck-suppress stlIfFind
   if (auto const reachable = syncReachable.find(src); reachable != syncReachable.end()) {
     return reachable->second.find(dst) != reachable->second.end();
@@ -331,7 +331,7 @@ bool HappensBeforeGraph::isReachable(EventPID src, EventPID dst) const {
   return false;
 }
 
-bool HappensBeforeGraph::hasEdge(HappensBeforeGraph::EventPID src, HappensBeforeGraph::EventPID dst) const {
+auto HappensBeforeGraph::hasEdge(HappensBeforeGraph::EventPID src, HappensBeforeGraph::EventPID dst) const -> bool {
   if (src == dst) return true;
 
   auto it = syncEdges.find(src);
@@ -342,7 +342,7 @@ bool HappensBeforeGraph::hasEdge(HappensBeforeGraph::EventPID src, HappensBefore
   return destinations.find(dst) != destinations.end();
 }
 
-std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findNextSyncAfter(EventPID node) const {
+auto HappensBeforeGraph::findNextSyncAfter(EventPID node) const -> std::optional<HappensBeforeGraph::EventPID> {
   auto it = threadSyncs.find(node.tid);
   if (it == threadSyncs.end()) {
     return std::nullopt;
@@ -357,7 +357,7 @@ std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findNextSyncAfte
   return *syncIt;
 }
 
-std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findNextSync(HappensBeforeGraph::EventPID node) const {
+auto HappensBeforeGraph::findNextSync(HappensBeforeGraph::EventPID node) const -> std::optional<HappensBeforeGraph::EventPID> {
   auto it = threadSyncs.find(node.tid);
   if (it == threadSyncs.end()) {
     return std::nullopt;
@@ -370,11 +370,11 @@ std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findNextSync(Hap
   }
   return *syncIt;
 }
-std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findNextSync(const Event *e) const {
+auto HappensBeforeGraph::findNextSync(const Event *e) const -> std::optional<HappensBeforeGraph::EventPID> {
   return findNextSync(EventPID(e));
 }
 
-std::optional<HappensBeforeGraph::EventPID> HappensBeforeGraph::findPrevSync(const Event *e) const {
+auto HappensBeforeGraph::findPrevSync(const Event *e) const -> std::optional<HappensBeforeGraph::EventPID> {
   EventPID node(e);
 
   auto it = threadSyncs.find(node.tid);
