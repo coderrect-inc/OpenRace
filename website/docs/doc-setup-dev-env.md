@@ -196,3 +196,13 @@ Or on the entire project directory (careful to run this from within this project
 cd OpenRace/
 find . -iname *.h -o -iname *.cpp | xargs clang-format -i -style=file
 ```
+
+### VSCode
+
+VSCode can be configured to automatically run clang format each time a file is saved if the [C/C++ extension](https://code.visualstudio.com/docs/languages/cpp) installed.
+
+In VSCode's preferences/settings, make sure the following two are set:
+ 1. Text Editor -> Formatting -> Format on Save (should be checked)
+ 2. Extensions -> C/C++ -> clang_format_path (needs to be set to the path of clang format)
+
+This should ensure clang format is run automatically each time a file is saved.
