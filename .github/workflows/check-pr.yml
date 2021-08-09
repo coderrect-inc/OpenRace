@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - develop
+      - CodeQL
     paths:
       - 'src/**'
       - 'tests/**'
