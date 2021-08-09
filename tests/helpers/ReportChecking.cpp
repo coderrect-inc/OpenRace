@@ -114,8 +114,8 @@ bool reportContains(const race::Report &report, std::vector<TestRace> expectedRa
   return expectedRaces.empty();
 }
 
-Oracle::Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races) : filename(filename) {
-  expectedRaces = TestRace::fromStrings(std::move(races));
+Oracle::Oracle(llvm::StringRef filename, const std::vector<llvm::StringRef>& races) : filename(filename) {
+  expectedRaces = TestRace::fromStrings(races);
 }
 
 void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_list<llvm::StringRef> expected) {

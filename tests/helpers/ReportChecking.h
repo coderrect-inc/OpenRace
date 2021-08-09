@@ -55,7 +55,7 @@ struct Oracle {
   std::vector<TestRace> expectedRaces;
 
   // races are converted to TestRace using TestRace::fromString
-  Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races);
+  Oracle(llvm::StringRef filename, const std::vector<llvm::StringRef>& races);
 
   // Remove path from beggining of each SourceLoc in expectedRaces
   void stripPath(llvm::StringRef path);
