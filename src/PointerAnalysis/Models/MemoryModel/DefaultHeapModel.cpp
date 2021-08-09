@@ -66,8 +66,8 @@ auto DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) -> T
 
 // the signature of calloc is void *calloc(size_t elementNum, size_t
 // elementSize);
-auto DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *allocSite, int numArgNo,
-                                        int sizeArgNo) -> Type * {
+auto DefaultHeapModel::inferCallocType(const Function *fun, const Instruction *allocSite, int numArgNo, int sizeArgNo)
+    -> Type * {
   if (auto elemType = getNextBitCastDestType(allocSite)) {
     assert(elemType->isSized());
 

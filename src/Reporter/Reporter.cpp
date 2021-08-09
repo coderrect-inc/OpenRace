@@ -59,7 +59,9 @@ void race::to_json(json &j, const RaceAccess &access) {
   }
 }
 
-auto RaceAccess::operator==(const RaceAccess &other) const -> bool { return location == other.location && inst == other.inst; }
+auto RaceAccess::operator==(const RaceAccess &other) const -> bool {
+  return location == other.location && inst == other.inst;
+}
 auto RaceAccess::operator!=(const RaceAccess &other) const -> bool { return !(*this == other); }
 auto RaceAccess::operator<(const RaceAccess &other) const -> bool {
   if (location != other.location) return location < other.location;

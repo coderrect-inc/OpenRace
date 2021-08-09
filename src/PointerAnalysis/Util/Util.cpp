@@ -355,7 +355,7 @@ void pta::recordCGNode(const llvm::Value *val) {
 
 void pta::dumpCGNodeDistribution() {
   llvm::outs() << "*************************************\n";
-  for (auto & it : NodeDistribution) {
+  for (auto &it : NodeDistribution) {
     llvm::outs() << it.first << ": " << it.second << "\n";
   }
   llvm::outs() << "*************************************\n";
@@ -454,7 +454,8 @@ auto pta::isStructWithFlexibleArray(const llvm::StructType *ST) -> llvm::Type * 
   return nullptr;
 }
 
-auto pta::getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexibleArrayElem) -> llvm::StructType * {
+auto pta::getConvertedFlexibleArrayType(const llvm::StructType *ST, llvm::Type *flexibleArrayElem)
+    -> llvm::StructType * {
   assert(isStructWithFlexibleArray(ST));
 
   // if this is a structure type with flexible array element at the end

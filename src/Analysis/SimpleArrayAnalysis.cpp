@@ -13,7 +13,6 @@ limitations under the License.
 
 #include <utility>
 
-
 namespace {
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
@@ -195,7 +194,9 @@ struct ArrayAccess {
   [[nodiscard]] auto hasCollapse() const -> bool {  // whether this access involves indexes using collapse
     return collapseRootIdx.has_value();
   }
-  [[nodiscard]] auto isMultiDim() const -> bool { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
+  [[nodiscard]] auto isMultiDim() const -> bool {
+    return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1;
+  }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -382,7 +383,8 @@ auto isPerfectlyAligned(llvm::StringRef idxName, std::optional<llvm::StringRef> 
 }
 
 // return true if the index of this array access is perfectly aligned without races
-auto isPerfectlyAligned(const GetElementPtrInst *gep, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx) -> bool {
+auto isPerfectlyAligned(const GetElementPtrInst *gep, std::optional<llvm::StringRef> parallelIdx, bool isInnerIdx)
+    -> bool {
   auto idxName = getInductionVarName(gep);
   if (!idxName.has_value() || !parallelIdx.has_value()) return false;  // cannot determine now
   return isPerfectlyAligned(idxName.value(), parallelIdx, isInnerIdx);
@@ -708,8 +710,8 @@ auto OpenMPLoopManager::resolveBoundValue(const AllocaInst *V, const CallBase *i
   }
 }
 
-auto OpenMPLoopManager::resolveOMPLoopBound(
-    const CallBase *initForCall) const -> std::pair<Optional<int64_t>, Optional<int64_t>> {
+auto OpenMPLoopManager::resolveOMPLoopBound(const CallBase *initForCall) const
+    -> std::pair<Optional<int64_t>, Optional<int64_t>> {
   Value *ompLB = nullptr, *ompUB = nullptr;  // up bound and lower bound
   if (OpenMPModel::isForStaticInit(initForCall->getCalledFunction()->getName())) {
     ompLB = initForCall->getArgOperand(4);
@@ -786,8 +788,8 @@ auto race::SimpleArrayAnalysis::isLoopArrayAccess(const race::MemAccessEvent *ev
 }
 
 // event1 must be write, event2 can be either read/write
-auto race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *event1,
-                                                const race::MemAccessEvent *event2) -> bool {
+auto race::SimpleArrayAnalysis::canIndexOverlap(const race::MemAccessEvent *event1, const race::MemAccessEvent *event2)
+    -> bool {
   auto gep1 = getGEP(event1);
   if (!gep1) return false;
 

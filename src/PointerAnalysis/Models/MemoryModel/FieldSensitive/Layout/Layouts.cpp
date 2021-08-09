@@ -148,7 +148,8 @@ void MemLayout::mergeMemoryLayout(const MemLayout *subLayout, size_t pOffset, si
 }
 
 // NOTE: this might be expensive! call it with caution
-auto MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const llvm::StringRef separator) const -> std::string {
+auto MemLayout::getFieldAccessPath(const Module *M, size_t pOffset, const llvm::StringRef separator) const
+    -> std::string {
   if (M == nullptr) {
     return "";
   }

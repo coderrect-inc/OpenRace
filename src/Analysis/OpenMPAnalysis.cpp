@@ -26,7 +26,9 @@ OpenMPAnalysis::OpenMPAnalysis(const ProgramTrace &program)
 
 namespace {
 
-auto regionEndLessThan(const race::Region &region1, const race::Region &region2) -> bool { return region1.end < region2.end; }
+auto regionEndLessThan(const race::Region &region1, const race::Region &region2) -> bool {
+  return region1.end < region2.end;
+}
 
 // recursively find the spawn site of the closest/innermost OpenMPFork for this event
 auto getRootSpawnSite(const Event *event) -> std::optional<const ForkEvent *> {

@@ -23,8 +23,8 @@ RaceModel::RaceModel(llvm::Module *M, llvm::StringRef entry) : Super(M, entry) {
   });
 }
 
-auto RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */,
-                                             const llvm::Function *F, const llvm::Instruction *callsite) -> InterceptResult {
+auto RaceModel::interceptFunction(const ctx * /* callerCtx */, const ctx * /* calleeCtx */, const llvm::Function *F,
+                                  const llvm::Instruction *callsite) -> InterceptResult {
   auto funcName = F->getName();
 
   // Skip intrinsic in PTA

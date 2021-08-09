@@ -357,7 +357,8 @@ auto HappensBeforeGraph::findNextSyncAfter(EventPID node) const -> std::optional
   return *syncIt;
 }
 
-auto HappensBeforeGraph::findNextSync(HappensBeforeGraph::EventPID node) const -> std::optional<HappensBeforeGraph::EventPID> {
+auto HappensBeforeGraph::findNextSync(HappensBeforeGraph::EventPID node) const
+    -> std::optional<HappensBeforeGraph::EventPID> {
   auto it = threadSyncs.find(node.tid);
   if (it == threadSyncs.end()) {
     return std::nullopt;
