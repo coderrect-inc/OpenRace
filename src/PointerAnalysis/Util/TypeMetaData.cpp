@@ -109,7 +109,7 @@ class DICompositeTypeCollector {
 
   void inline insertPair(const llvm::Type *T, const DICompositeType *DI) { typeDIMap.insert(make_pair(T, DI)); }
 
-  const inline auto getIfExist(const llvm::Type *T) -> DICompositeType * {
+  const inline DICompositeType *getIfExist(const llvm::Type *T) {
     // already cached
     if (auto it = typeDIMap.find(T); it != typeDIMap.end()) {
       return it->second;
