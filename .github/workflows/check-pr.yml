@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - develop
+      - clang-tidying
     paths:
       - 'src/**'
       - 'tests/**'
@@ -26,7 +27,7 @@ jobs:
     steps:  
       - uses: actions/checkout@v2
 
-      - name: Build test
+      - name: Build
         run: |
           mkdir build && cd build
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
