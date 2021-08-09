@@ -24,8 +24,8 @@ struct TestRace {
   static TestRace fromString(llvm::StringRef s);
 
   // build vector of races from strings
-  static std::vector<TestRace> fromStrings(const std::vector<llvm::StringRef>& strings);
-  static std::vector<TestRace> fromRaces(const std::set<race::Race>& races, llvm::StringRef path = "");
+  static std::vector<TestRace> fromStrings(std::vector<llvm::StringRef> strings);
+  static std::vector<TestRace> fromRaces(std::set<race::Race> races, llvm::StringRef path = "");
 
   // Check if location of TestRace matches the actual race
   // if path is set, strip path from start of each race location
@@ -55,7 +55,7 @@ struct Oracle {
   std::vector<TestRace> expectedRaces;
 
   // races are converted to TestRace using TestRace::fromString
-  Oracle(llvm::StringRef filename, const std::vector<llvm::StringRef>& races);
+  Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races);
 
   // Remove path from beggining of each SourceLoc in expectedRaces
   void stripPath(llvm::StringRef path);
