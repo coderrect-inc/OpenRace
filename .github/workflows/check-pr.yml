@@ -26,7 +26,7 @@ jobs:
     steps:  
       - uses: actions/checkout@v2
 
-      - name: Build
+      - name: Build change
         run: |
           mkdir build && cd build
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DLLVM_INSTALL=/usr/local ..
