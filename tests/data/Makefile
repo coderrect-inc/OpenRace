@@ -1,12 +1,12 @@
 # If you set LLVM_INSTALL with CMake, these are set to clang 10.0.1 automatically by cmake
 # CC=clang
 # CXX=clang++
-# FLAGS=-g -O0 -fprofile-arcs -ftest-coverage -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm 
-CXXFLAGS="-g -O0 -Wall -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm  -W -Wshadow -Wunused-variable \
- -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers \
- -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
-CFLAGS="-g -O0 -Wall -W -fprofile-arcs -ftest-coverage"
-LDFLAGS="-fprofile-arcs -ftest-coverage"
+FLAGS=-g -O0 -fprofile-arcs -ftest-coverage -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm 
+# CXXFLAGS="-g -O0 -Wall -mllvm -disable-llvm-optzns -fno-discard-value-names -fopenmp -S -emit-llvm  -W -Wshadow -Wunused-variable \
+# -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers \
+# -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
+# CFLAGS="-g -O0 -Wall -W -fprofile-arcs -ftest-coverage"
+# LDFLAGS="-fprofile-arcs -ftest-coverage"
 
 # Check that we are compiling with clang 10.0.1
 ifeq ("", "$(shell $(CC) -dumpversion | grep -E '10.0.1')")
