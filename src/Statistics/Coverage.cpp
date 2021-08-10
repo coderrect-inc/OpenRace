@@ -21,7 +21,7 @@ namespace {
 
 // a function signature = return val type (param type(s)) function name
 // cannot find a better way to compute signature of fn without transferring between std::string and llvm::StringRef
-llvm::StringRef getSignature(const Function *fn) {
+std::string getSignature(const Function *fn) {
   llvm::FunctionType *typ = fn->getFunctionType();
   std::string s;
   llvm::raw_string_ostream os(s);
@@ -29,14 +29,11 @@ llvm::StringRef getSignature(const Function *fn) {
   os << " " << fn->getName();
   os.str();
 
-  llvm::outs() << "-" << llvm::StringRef(s) << "\n";
-
-  return llvm::StringRef(s);
+  return s;
 }
 
-void recordFn(std::map<llvm::StringRef, const llvm::Function *> &map, const llvm::Function *fn) {
-  llvm::StringRef sig = getSignature(fn);
-  llvm::outs() << "+" << sig << "\n";
+void recordFn(std::map<std::string, const llvm::Function *> &map, const llvm::Function *fn) {
+  std::string sig = getSignature(fn);
   auto exist = map.find(sig);
   if (exist == map.end()) {
     map.insert(std::make_pair(sig, fn));
@@ -133,9 +130,10 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) 
   auto data = cvg.data;
   os << "==== Coverage ====\n-> OpenRace Analyzed "
      << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size())) * 100 << "% functions."
-     << "\n#Fn (from .ll/.bc file): " << data.total.size() << "\n#Fn (openrace visited): " << data.analyzed.size()
-     << "\nUnvisited Functions:\n";
+     << "\n#Fn (from .ll/.bc file): " << data.total.size() << "\n#Fn (openrace visited): " << data.analyzed.size();
+
   if (!data.unAnalyzed.empty()) {
+    os << "\nUnvisited Functions:\n";
     for (auto unVisit : data.unAnalyzed) {
       os << "\t" << unVisit << "\n";
     }
@@ -143,7 +141,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) 
 
   os << "\nVisited Functions:\n";
   for (auto visit : data.analyzed) {
-    os << "\t" << visit.first.str() << "\n";
+    os << "\t" << visit.first << "\n";
   }
 
   return os;

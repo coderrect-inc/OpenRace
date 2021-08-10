@@ -20,13 +20,13 @@ namespace race {
 
 struct CoverageData {
   // a map of fn signature with fn from module
-  std::map<llvm::StringRef, const llvm::Function *> total;
+  std::map<std::string, const llvm::Function *> total;
 
   // a map of fn signature with fn from program
-  std::map<llvm::StringRef, const llvm::Function *> analyzed;
+  std::map<std::string, const llvm::Function *> analyzed;
 
   // a set of fn that openrace does not analyze
-  std::vector<llvm::StringRef> unAnalyzed;
+  std::vector<std::string> unAnalyzed;
 };
 
 class Coverage {
