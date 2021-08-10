@@ -11,8 +11,6 @@ limitations under the License.
 
 #include "Coverage.h"
 
-#include <llvm/ADT/StringRef.h>
-
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
@@ -37,7 +35,6 @@ void recordFn(std::map<std::string, const llvm::Function *> &map, const llvm::Fu
   auto exist = map.find(sig);
   if (exist == map.end()) {
     map.insert(std::make_pair(sig, fn));
-    llvm::outs() << "+" << fn->getName() << "\n";
   }
 }
 
@@ -49,16 +46,13 @@ void Coverage::summarize() {
   if (!data.analyzed.empty() || !data.total.empty()) return;  // already computed
 
   // collect fns in module
-  llvm::outs() << "From module: \n";
   for (auto const &func : module.getFunctionList()) {
     auto name = func.getName();
-    if (name.startswith("llvm.")) continue;  // e.g., llvm.dbg.declare, llvm.lifetime.start.p0i8
     auto fn = module.getFunction(name);
     recordFn(data.total, fn);
   }
 
   // collect fns in program
-  llvm::outs() << "\nFrom program : \n";
   for (auto const &thread : program.getThreads()) {
     for (auto const &event : thread->getEvents()) {
       auto eventFn = event->getFunction();
@@ -118,8 +112,18 @@ void Coverage::computeFnCoverage() {
   for (auto it = data.total.begin(); it != data.total.end(); it++) {
     auto sig = it->first;
     auto found = data.analyzed.find(sig);
-    if (found == data.analyzed.end()) {  // not analyzed by openrace
-      data.unAnalyzed.insert(data.unAnalyzed.begin(), sig);
+    bool isExternal = it->second->isDeclaration() || it->second->isIntrinsic();  // whether the function is “external”
+    if (found == data.analyzed.end()) {                                          // not analyzed by openrace
+      auto record = data.unAnalyzed.find(sig);
+      if (record == data.unAnalyzed.end()) {
+        data.unAnalyzed.insert(std::make_pair(sig, isExternal));
+        if (isExternal) {
+          data.unAnalyzedExternal++;
+        }
+      }
+    }
+    if (isExternal) {
+      data.external++;
     }
   }
 }
@@ -128,20 +132,26 @@ void Coverage::computeMemAccessCoverage() {}
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) {
   auto data = cvg.data;
-  os << "==== Coverage ====\n-> OpenRace Analyzed "
-     << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size())) * 100 << "% functions."
-     << "\n#Fn (from .ll/.bc file): " << data.total.size() << "\n#Fn (openrace visited): " << data.analyzed.size();
+  os << "==== Coverage ====\n-> OpenRace Analyzed " << data.analyzed.size() << " out of " << data.total.size()
+     << " functions (" << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size())) * 100
+     << "%).";
+  os << "\n-> OpenRace Analyzed (exclude external functions) " << data.analyzed.size() << " out of "
+     << (data.total.size() - data.unAnalyzedExternal) << " functions ("
+     << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size() - data.external)) * 100
+     << "%)."
+     << "\n#func (openrace visited): " << data.analyzed.size()
+     << "\n#func (openrace unvisited): " << data.unAnalyzed.size()
+     << "\n#func (external from .ll/.bc file): " << data.external
+     << "\n#func (total from .ll/.bc file): " << data.total.size();
 
-  if (!data.unAnalyzed.empty()) {
-    os << "\nUnvisited Functions:\n";
-    for (auto unVisit : data.unAnalyzed) {
-      os << "\t" << unVisit << "\n";
-    }
-  }
+  if (data.unAnalyzed.empty()) return os;
 
-  os << "\nVisited Functions:\n";
-  for (auto visit : data.analyzed) {
-    os << "\t" << visit.first << "\n";
+  os << "\n\n-> " << data.unAnalyzedExternal << " out of " << data.unAnalyzed.size()
+     << " unvisited functions are external functions ("
+     << (static_cast<float>(data.unAnalyzedExternal) / static_cast<float>(data.unAnalyzed.size())) * 100 << "%).";
+  os << "\nUnvisited Functions include:\n";
+  for (auto unVisit : data.unAnalyzed) {
+    os << "\t" << unVisit.first << " : " << (unVisit.second ? "external" : "app") << "\n";
   }
 
   return os;
