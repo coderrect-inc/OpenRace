@@ -22,7 +22,7 @@ limitations under the License.
 #include "RaceDetect.h"
 
 namespace {
-unsigned int stringToUnsigned(llvm::StringRef s) {
+auto stringToUnsigned(llvm::StringRef s) -> unsigned int {
   std::istringstream read(s);
   unsigned int val = 0;
   read >> val;
@@ -30,7 +30,7 @@ unsigned int stringToUnsigned(llvm::StringRef s) {
 }
 
 // assumes s is in format "file:line:col"
-race::SourceLoc locFromString(llvm::StringRef s) {
+auto locFromString(llvm::StringRef s) -> race::SourceLoc {
   auto parts = s.split(":");
   auto file = parts.first;
   parts = parts.second.split(":");
@@ -40,7 +40,7 @@ race::SourceLoc locFromString(llvm::StringRef s) {
   return race::SourceLoc{file, line, col};
 }
 
-race::SourceLoc trimPath(const race::SourceLoc &original, llvm::StringRef path) {
+auto trimPath(const race::SourceLoc &original, llvm::StringRef path) -> race::SourceLoc {
   if (path.empty() || !original.filename.startswith(path)) return original;
 
   race::SourceLoc trimmedLoc(original);
@@ -50,7 +50,7 @@ race::SourceLoc trimPath(const race::SourceLoc &original, llvm::StringRef path) 
 
 }  // namespace
 
-TestRace TestRace::fromString(llvm::StringRef s) {
+auto TestRace::fromString(llvm::StringRef s) -> TestRace {
   auto parts = s.split(" ");
   auto loc1 = locFromString(parts.first);
   auto loc2 = locFromString(parts.second);
@@ -59,7 +59,7 @@ TestRace TestRace::fromString(llvm::StringRef s) {
 }
 
 // build set of races from strings
-std::vector<TestRace> TestRace::fromStrings(const std::vector<llvm::StringRef>& strings) {
+auto TestRace::fromStrings(const std::vector<llvm::StringRef>& strings) -> std::vector<TestRace> {
   std::vector<TestRace> out;
 
   out.reserve(strings.size());
@@ -71,7 +71,7 @@ for (auto const &s : strings) {
   return out;
 }
 
-std::vector<TestRace> TestRace::fromRaces(const std::set<race::Race>& races, llvm::StringRef path) {
+auto TestRace::fromRaces(const std::set<race::Race>& races, llvm::StringRef path) -> std::vector<TestRace> {
   std::vector<TestRace> out;
 
   for (auto const &race : races) {
@@ -84,12 +84,12 @@ std::vector<TestRace> TestRace::fromRaces(const std::set<race::Race>& races, llv
   return out;
 }
 
-llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const TestRace &race) {
+auto operator<<(llvm::raw_ostream &os, const TestRace &race) -> llvm::raw_ostream & {
   os << race.first << " " << race.second;
   return os;
 }
 
-bool TestRace::equals(const race::Race &race, llvm::StringRef path) const {
+auto TestRace::equals(const race::Race &race, llvm::StringRef path) const -> bool {
   if (race.missingLocation()) return false;
 
   auto const expectedFirst = trimPath(race.first.location.value(), path);
@@ -100,7 +100,7 @@ bool TestRace::equals(const race::Race &race, llvm::StringRef path) const {
 
 // Check that report contains each expected race
 // if path is set, strip path from all sourceloc in race report
-bool reportContains(const race::Report &report, std::vector<TestRace> expectedRaces, llvm::StringRef path = "") {
+auto reportContains(const race::Report &report, std::vector<TestRace> expectedRaces, llvm::StringRef path = "") -> bool {
   // loop over report, removing any matched races from the list of test races
   for (auto const &reportRace : report.races) {
     auto it = std::find_if(expectedRaces.begin(), expectedRaces.end(),

@@ -45,7 +45,7 @@ class PTAVerificationPass : public llvm::ModulePass {
     AU.setPreservesAll();  // does not transform the LLVM module
   }
 
-  bool runOnModule(llvm::Module &module) override {
+  auto runOnModule(llvm::Module &module) -> bool override {
     this->getAnalysis<PointerAnalysisPass<Solver>>().analyze(&module, "main");
     auto &pta = *(this->getAnalysis<PointerAnalysisPass<Solver>>().getPTA());
 
