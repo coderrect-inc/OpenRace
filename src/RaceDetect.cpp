@@ -18,6 +18,7 @@ limitations under the License.
 #include "Analysis/SimpleAlias.h"
 #include "Analysis/ThreadLocalAnalysis.h"
 #include "LanguageModel/RaceModel.h"
+#include "Statistics/Coverage.h"
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
@@ -150,6 +151,14 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
   if (DEBUG_PTA) {
     happensbefore.debugDump(llvm::outs());
+  }
+
+  if (config.doCoverage) {
+    race::Coverage coverage(program);
+    coverage.computeFnCoverage();
+    coverage.computeMemAccessCoverage();
+
+    llvm::outs() << coverage << "\n";
   }
 
   return reporter.getReport();

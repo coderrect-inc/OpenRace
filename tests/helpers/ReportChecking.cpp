@@ -130,6 +130,7 @@ void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_li
   // Generate the report
   auto report = race::detectRaces(module.get(), race::DetectRaceConfig{
                                                     .printTrace = false,
+                                                    .doCoverage = false,
                                                 });
 
   // Get actual/expected test races

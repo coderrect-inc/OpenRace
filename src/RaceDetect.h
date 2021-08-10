@@ -21,6 +21,9 @@ struct DetectRaceConfig {
 
   // Print the ProgramTrace when true
   bool printTrace = false;
+
+  // Compute and print the coverage (= analyzed source code/all source code)
+  bool doCoverage = false;
 };
 
 Report detectRaces(llvm::Module *module, DetectRaceConfig config = DetectRaceConfig());
