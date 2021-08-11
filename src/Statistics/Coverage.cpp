@@ -57,6 +57,14 @@ void Coverage::summarize() {
     recordFn(data.total, fn);
   }
 
+  auto const recordCallee = [this](const llvm::Instruction *ir) {
+    if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
+      if (auto callee = call->getCalledFunction()) {
+        recordFn(data.analyzed, callee);
+      }
+    }
+  };
+
   // collect fns in program
   for (auto const &thread : program.getThreads()) {
     for (auto const &event : thread->getEvents()) {
@@ -66,24 +74,22 @@ void Coverage::summarize() {
       switch (event->type) {
         case Event::Type::Lock: {
           auto lock = llvm::cast<LockEvent>(event.get());
-          auto ir = lock->getInst();
-          if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
-            auto fn = call->getCalledFunction();
-            if (fn) {
-              recordFn(data.analyzed, fn);
-            }
-          }
+          recordCallee(lock->getInst());
           break;
         }
         case Event::Type::Unlock: {
           auto unlock = llvm::cast<UnlockEvent>(event.get());
-          auto ir = unlock->getInst();
-          if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
-            auto fn = call->getCalledFunction();
-            if (fn) {
-              recordFn(data.analyzed, fn);
-            }
-          }
+          recordCallee(unlock->getInst());
+          break;
+        }
+        case Event::Type::Fork: {
+          auto fork = llvm::cast<ForkEvent>(event.get());
+          recordCallee(fork->getInst());
+          break;
+        }
+        case Event::Type::Join: {
+          auto join = llvm::cast<JoinEvent>(event.get());
+          recordCallee(join->getInst());
           break;
         }
         case Event::Type::Call: {
@@ -98,19 +104,9 @@ void Coverage::summarize() {
           recordFn(data.analyzed, exFn);
           break;
         }
-        case Event::Type::Fork: {
-          auto fork = llvm::cast<ForkEvent>(event.get());
-          auto forkCall = llvm::cast<llvm::CallBase>(fork->getInst());
-          recordFn(data.analyzed, forkCall->getCalledFunction());
-          break;
-        }
-        case Event::Type::Join: {
-          auto join = llvm::cast<JoinEvent>(event.get());
-          auto joinCall = llvm::cast<llvm::CallBase>(join->getInst());
-          if (joinCall) {
-            recordFn(data.analyzed, joinCall->getCalledFunction());
-          }
-          break;
+        case Event::Type::Barrier: {
+          auto barrier = llvm::cast<BarrierEvent>(event.get());
+          recordCallee(barrier->getInst());
         }
         default:
           break;
@@ -155,6 +151,7 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) 
      << " functions (" << asPctStr(data.analyzed.size(), nonExternTotal) << ")."
      << "\n#func (openrace visited): " << data.analyzed.size()
      << "\n#func (openrace unvisited): " << data.unAnalyzed.size()
+     << "\n#func (openmp-related external): " << (data.external - data.unAnalyzed.size())
      << "\n#func (external from .ll/.bc file): " << data.external
      << "\n#func (total from .ll/.bc file): " << data.total.size();
 
