@@ -29,5 +29,6 @@ class FunctionSummaryBuilder {
 
  public:
   std::shared_ptr<const FunctionSummary> getFunctionSummary(const llvm::Function *func);
+  static llvm::Function *resolveTargetFunction(const llvm::CallBase *callInst);
 };
 }  // namespace race
