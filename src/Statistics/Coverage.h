@@ -44,9 +44,6 @@ class Coverage {
   // compute coverage = (#function analyzed in openrace/#function in the whole program IR)
   void computeFnCoverage();
 
-  // compute coverage = (#read and write analyzed in openrace/#read and write in the whole program IR)
-  void computeMemAccessCoverage();
-
  private:
   // compute necessary information in CoverageData
   void summarize();

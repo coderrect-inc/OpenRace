@@ -155,9 +155,6 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
   if (config.doCoverage) {
     race::Coverage coverage(program);
-    coverage.computeFnCoverage();
-    coverage.computeMemAccessCoverage();
-
     llvm::outs() << coverage << "\n";
   }
 

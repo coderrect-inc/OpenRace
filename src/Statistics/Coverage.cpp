@@ -11,6 +11,8 @@ limitations under the License.
 
 #include "Coverage.h"
 
+#include <llvm/Support/FormatVariadic.h>
+
 #include "Trace/ProgramTrace.h"
 
 using namespace race;
@@ -40,7 +42,10 @@ void recordFn(std::map<std::string, const llvm::Function *> &map, const llvm::Fu
 
 }  // namespace
 
-Coverage::Coverage(const ProgramTrace &program) : program(program), module(program.getModule()) { summarize(); }
+Coverage::Coverage(const ProgramTrace &program) : program(program), module(program.getModule()) {
+  summarize();
+  computeFnCoverage();
+}
 
 void Coverage::summarize() {
   if (!data.analyzed.empty() || !data.total.empty()) return;  // already computed
@@ -61,17 +66,23 @@ void Coverage::summarize() {
       switch (event->type) {
         case Event::Type::Lock: {
           auto lock = llvm::cast<LockEvent>(event.get());
-          auto fn = lock->getFunction();
-          if (fn) {
-            recordFn(data.analyzed, fn);
+          auto ir = lock->getInst();
+          if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
+            auto fn = call->getCalledFunction();
+            if (fn) {
+              recordFn(data.analyzed, fn);
+            }
           }
           break;
         }
         case Event::Type::Unlock: {
           auto unlock = llvm::cast<UnlockEvent>(event.get());
-          auto fn = unlock->getFunction();
-          if (fn) {
-            recordFn(data.analyzed, fn);
+          auto ir = unlock->getInst();
+          if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
+            auto fn = call->getCalledFunction();
+            if (fn) {
+              recordFn(data.analyzed, fn);
+            }
           }
           break;
         }
@@ -128,8 +139,6 @@ void Coverage::computeFnCoverage() {
   }
 }
 
-void Coverage::computeMemAccessCoverage() {}
-
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) {
   auto data = cvg.data;
 
@@ -160,5 +169,4 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) 
   }
 
   return os;
-}
 }
