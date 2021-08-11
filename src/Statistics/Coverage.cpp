@@ -132,13 +132,18 @@ void Coverage::computeMemAccessCoverage() {}
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) {
   auto data = cvg.data;
+
+  auto const nonExternTotal = data.total.size() - data.unAnalyzedExternal;
+
+  auto asPctStr = [](size_t x, size_t total) -> std::string {
+    auto const pct = static_cast<float>(x) / static_cast<float>(total);
+    return llvm::formatv("{0:P}", pct);
+  };
+
   os << "==== Coverage ====\n-> OpenRace Analyzed " << data.analyzed.size() << " out of " << data.total.size()
-     << " functions (" << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size())) * 100
-     << "%).";
-  os << "\n-> OpenRace Analyzed (exclude external functions) " << data.analyzed.size() << " out of "
-     << (data.total.size() - data.unAnalyzedExternal) << " functions ("
-     << (static_cast<float>(data.analyzed.size()) / static_cast<float>(data.total.size() - data.external)) * 100
-     << "%)."
+     << " functions (" << asPctStr(data.analyzed.size(), data.total.size()) << ").";
+  os << "\n-> OpenRace Analyzed (exclude external functions) " << data.analyzed.size() << " out of " << nonExternTotal
+     << " functions (" << asPctStr(data.analyzed.size(), nonExternTotal) << ")."
      << "\n#func (openrace visited): " << data.analyzed.size()
      << "\n#func (openrace unvisited): " << data.unAnalyzed.size()
      << "\n#func (external from .ll/.bc file): " << data.external
@@ -147,12 +152,13 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) 
   if (data.unAnalyzed.empty()) return os;
 
   os << "\n\n-> " << data.unAnalyzedExternal << " out of " << data.unAnalyzed.size()
-     << " unvisited functions are external functions ("
-     << (static_cast<float>(data.unAnalyzedExternal) / static_cast<float>(data.unAnalyzed.size())) * 100 << "%).";
+     << " unvisited functions are external functions (" << asPctStr(data.unAnalyzedExternal, data.unAnalyzed.size())
+     << "%).";
   os << "\nUnvisited Functions include:\n";
   for (auto unVisit : data.unAnalyzed) {
     os << "\t" << unVisit.first << " : " << (unVisit.second ? "external" : "app") << "\n";
   }
 
   return os;
+}
 }
