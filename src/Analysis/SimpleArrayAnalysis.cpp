@@ -186,7 +186,7 @@ struct ArrayAccess {
   unsigned int collapseLevel = 0;                  // the param in collapse clause
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
-  ArrayAccess(std::vector<const llvm::GetElementPtrInst *> geps)
+  explicit ArrayAccess(std::vector<const llvm::GetElementPtrInst *> geps)
       : geps(std::move(geps)), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
@@ -570,7 +570,7 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
     const SCEV *Found = nullptr;
     PredTy Pred;
 
-    FindClosure(PredTy Pred) : Pred(Pred) {}
+    explicit FindClosure(PredTy Pred) : Pred(Pred) {}
 
     bool follow(const llvm::SCEV *S) {
       if (!Pred(S)) return true;

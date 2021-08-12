@@ -238,7 +238,6 @@ std::vector<const llvm::BasicBlock *> &ReduceAnalysis::computeGuardedBlocks(Redu
 
   std::vector<const llvm::BasicBlock *> worklist;
   std::set<const llvm::BasicBlock *> visited;
-  auto const notVisited = [&visited](const llvm::BasicBlock *block) { return visited.find(block) == visited.end(); };
 
   // Add switch successors to worklist
   std::copy(succ_begin(switchInst), succ_end(switchInst), std::back_inserter(worklist));
