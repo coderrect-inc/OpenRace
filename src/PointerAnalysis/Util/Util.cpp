@@ -355,7 +355,7 @@ void pta::recordCGNode(const llvm::Value *val) {
 
 void pta::dumpCGNodeDistribution() {
   llvm::outs() << "*************************************\n";
-  for (auto & it : NodeDistribution) {
+  for (auto &it : NodeDistribution) {
     llvm::outs() << it.first << ": " << it.second << "\n";
   }
   llvm::outs() << "*************************************\n";

@@ -13,7 +13,6 @@ limitations under the License.
 
 #include <utility>
 
-
 namespace {
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
