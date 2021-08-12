@@ -226,7 +226,9 @@ class CallIR : public IR {
 
   [[nodiscard]] inline bool isIndirect() const { return inst->isIndirectCall(); }
 
-  [[nodiscard]] virtual const llvm::Function *getCalledFunction() const { return getInst()->getCalledFunction(); }
+  [[nodiscard]] virtual const llvm::Function *getCalledFunction() const { return resolveTargetFunction(getInst()); }
+
+  static llvm::Function *resolveTargetFunction(const llvm::CallBase *callInst);
 
   // Used for llvm style RTTI (isa, dyn_cast, etc.)
   static bool classof(const IR *e) { return e->type >= Type::Call && e->type < Type::END_Call; }

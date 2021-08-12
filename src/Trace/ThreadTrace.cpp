@@ -224,8 +224,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, Cal
       }
 
       auto directContext = pta::CT::contextEvolve(context, ir->getInst());
-      auto callee = FunctionSummaryBuilder::resolveTargetFunction(call->getInst());
-      if (callee == nullptr) {
+      auto callee = CallIR::resolveTargetFunction(call->getInst());
+      if (callee == nullptr || callee->isIntrinsic() || callee->isDebugInfoForProfiling()) {
         continue;
       }
 

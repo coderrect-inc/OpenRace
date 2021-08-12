@@ -25,44 +25,6 @@ using namespace race;
 
 extern llvm::cl::opt<bool> DEBUG_PTA;
 
-// callInst might call a function with alias/cast, the same as pta::CallSite::resolveTargetFunction but no const
-// e.g., @_ZN6DomainD1Ev = dso_local unnamed_addr alias void (%class.Domain*), void (%class.Domain*)* @_ZN6DomainD2Ev
-// refer to https://llvm.org/docs/LangRef.html#aliases
-llvm::Function *FunctionSummaryBuilder::resolveTargetFunction(const llvm::CallBase *callInst) {
-  auto calledFunc = callInst->getCalledFunction();
-  if (calledFunc) {
-    if (!calledFunc->hasName()) {
-      llvm::errs() << "could not find called func without name: " << *callInst << "\n";
-      return nullptr;
-    }
-    return calledFunc;
-  }
-
-  llvm::Value *calledValue = callInst->getCalledOperand();
-  if (auto bitcast = llvm::dyn_cast<llvm::BitCastOperator>(calledValue)) {
-    if (auto function = llvm::dyn_cast<llvm::Function>(bitcast->getOperand(0))) {
-      return function;
-    }
-    llvm::errs() << "resolveTargetFunction matched bitcast but symbol was not Function: " << *callInst << "\n";
-  }
-
-  if (auto globalAlias = llvm::dyn_cast<llvm::GlobalAlias>(calledValue)) {
-    auto globalSymbol = globalAlias->getIndirectSymbol()->stripPointerCasts();
-    if (auto function = llvm::dyn_cast<llvm::Function>(globalSymbol)) {
-      return function;
-    }
-    llvm::errs() << "resolveTargetFunction matched globalAlias but symbol was not Function: " << *callInst << "\n";
-  }
-
-  if (llvm::isa<llvm::UndefValue>(calledValue)) {
-    llvm::errs() << "resolveTargetFunction encounter undefvalue: " << *callInst << "\n";
-    return nullptr;
-  }
-
-  llvm::errs() << "Unable to resolveTargetFunction from calledValue: " << *callInst << "\n";
-  return nullptr;
-}
-
 namespace {
 
 // return true if the operand of inst must be a thread local object
@@ -140,10 +102,8 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
           continue;
         }
 
-        auto calledFunc = FunctionSummaryBuilder::resolveTargetFunction(callInst);
-        if (calledFunc == nullptr) {
-          continue;
-        } else if (calledFunc->isIntrinsic() || calledFunc->isDebugInfoForProfiling()) {
+        auto calledFunc = CallIR::resolveTargetFunction(callInst);
+        if (calledFunc == nullptr || calledFunc->isIntrinsic() || calledFunc->isDebugInfoForProfiling()) {
           continue;
         }
 
