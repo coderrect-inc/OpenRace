@@ -24,12 +24,12 @@ struct CoverageData {
   // a map of fn signature with fn from program
   std::map<std::string, const llvm::Function *> analyzed;
 
-  // a map of fn that openrace does not analyze, and whether it is external
-  std::map<std::string, bool> unAnalyzed;
+  // a set of fn that openrace does not analyze
+  std::set<std::string> unAnalyzed;
 
-  // TODO: are external and unAnalyzedExternal always the same? should be
-  unsigned int external = 0;            // the size of external functions from .bc/.ll
-  unsigned int unAnalyzedExternal = 0;  // the size of unanalyzed external functions
+  // the number of visited __kmpc_fork_call
+  // TODO: simd is a special case which has no omp calls
+  unsigned int numOpenMPRegions = 0;
 };
 
 class Coverage {

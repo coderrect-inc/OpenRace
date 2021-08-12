@@ -19,6 +19,9 @@ using namespace race;
 
 namespace {
 
+// return true if the function is “external”
+bool isExternal(const llvm::Function *fn) { return fn->isDeclaration() || fn->isIntrinsic(); }
+
 // a function signature = return val type (param type(s)) function name
 // cannot find a better way to compute signature of fn without transferring between std::string and llvm::StringRef
 std::string getSignature(const Function *fn) {
@@ -33,6 +36,7 @@ std::string getSignature(const Function *fn) {
 }
 
 void recordFn(std::map<std::string, const llvm::Function *> &map, const llvm::Function *fn) {
+  if (fn == nullptr || isExternal(fn)) return;
   std::string sig = getSignature(fn);
   auto exist = map.find(sig);
   if (exist == map.end()) {
@@ -57,56 +61,25 @@ void Coverage::summarize() {
     recordFn(data.total, fn);
   }
 
-  auto const recordCallee = [this](const llvm::Instruction *ir) {
-    if (auto call = llvm::dyn_cast<llvm::CallBase>(ir)) {
-      if (auto callee = call->getCalledFunction()) {
-        recordFn(data.analyzed, callee);
-      }
-    }
-  };
-
   // collect fns in program
   for (auto const &thread : program.getThreads()) {
-    for (auto const &event : thread->getEvents()) {
-      auto eventFn = event->getFunction();
-      recordFn(data.analyzed, eventFn);
+    auto _1stEvent = thread->getEvents().front().get();
+    recordFn(data.analyzed, _1stEvent->getFunction());
 
+    for (auto const &event : thread->getEvents()) {
       switch (event->type) {
-        case Event::Type::Lock: {
-          auto lock = llvm::cast<LockEvent>(event.get());
-          recordCallee(lock->getInst());
-          break;
-        }
-        case Event::Type::Unlock: {
-          auto unlock = llvm::cast<UnlockEvent>(event.get());
-          recordCallee(unlock->getInst());
-          break;
-        }
-        case Event::Type::Fork: {
-          auto fork = llvm::cast<ForkEvent>(event.get());
-          recordCallee(fork->getInst());
-          break;
-        }
-        case Event::Type::Join: {
-          auto join = llvm::cast<JoinEvent>(event.get());
-          recordCallee(join->getInst());
-          break;
-        }
         case Event::Type::Call: {
           auto call = llvm::cast<EnterCallEvent>(event.get());
           auto fn = call->getCalledFunction();
           recordFn(data.analyzed, fn);
           break;
         }
-        case Event::Type::ExternCall: {
-          auto exCall = llvm::cast<ExternCallEvent>(event.get());
-          auto exFn = exCall->getCalledFunction();
-          recordFn(data.analyzed, exFn);
-          break;
-        }
-        case Event::Type::Barrier: {
-          auto barrier = llvm::cast<BarrierEvent>(event.get());
-          recordCallee(barrier->getInst());
+        case Event::Type::Fork: {
+          auto fork = llvm::cast<ForkEvent>(event.get());
+          auto call = llvm::cast<llvm::CallBase>(fork->getInst());
+          if (OpenMPModel::isFork(call)) {
+            data.numOpenMPRegions++;
+          }
         }
         default:
           break;
@@ -119,18 +92,8 @@ void Coverage::computeFnCoverage() {
   for (auto it = data.total.begin(); it != data.total.end(); it++) {
     auto sig = it->first;
     auto found = data.analyzed.find(sig);
-    bool isExternal = it->second->isDeclaration() || it->second->isIntrinsic();  // whether the function is “external”
-    if (found == data.analyzed.end()) {                                          // not analyzed by openrace
-      auto record = data.unAnalyzed.find(sig);
-      if (record == data.unAnalyzed.end()) {
-        data.unAnalyzed.insert(std::make_pair(sig, isExternal));
-        if (isExternal) {
-          data.unAnalyzedExternal++;
-        }
-      }
-    }
-    if (isExternal) {
-      data.external++;
+    if (found == data.analyzed.end()) {  // not analyzed by openrace
+      data.unAnalyzed.insert(sig);
     }
   }
 }
@@ -138,31 +101,23 @@ void Coverage::computeFnCoverage() {
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Coverage &cvg) {
   auto data = cvg.data;
 
-  auto const nonExternTotal = data.total.size() - data.unAnalyzedExternal;
-
   auto asPctStr = [](size_t x, size_t total) -> std::string {
     auto const pct = static_cast<float>(x) / static_cast<float>(total);
     return llvm::formatv("{0:P}", pct);
   };
 
   os << "==== Coverage ====\n-> OpenRace Analyzed " << data.analyzed.size() << " out of " << data.total.size()
-     << " functions (" << asPctStr(data.analyzed.size(), data.total.size()) << ").";
-  os << "\n-> OpenRace Analyzed (exclude external functions) " << data.analyzed.size() << " out of " << nonExternTotal
-     << " functions (" << asPctStr(data.analyzed.size(), nonExternTotal) << ")."
+     << " functions (" << asPctStr(data.analyzed.size(), data.total.size()) << " after excluding external functions)."
      << "\n#func (openrace visited): " << data.analyzed.size()
      << "\n#func (openrace unvisited): " << data.unAnalyzed.size()
-     << "\n#func (openmp-related external): " << (data.external - data.unAnalyzed.size())
-     << "\n#func (external from .ll/.bc file): " << data.external
-     << "\n#func (total from .ll/.bc file): " << data.total.size();
+     << "\n#func (total from .ll/.bc file): " << data.total.size()
+     << "\n#visited openmp parallel regions: " << data.numOpenMPRegions / 2 << "\n";
 
   if (data.unAnalyzed.empty()) return os;
 
-  os << "\n\n-> " << data.unAnalyzedExternal << " out of " << data.unAnalyzed.size()
-     << " unvisited functions are external functions (" << asPctStr(data.unAnalyzedExternal, data.unAnalyzed.size())
-     << "%).";
-  os << "\nUnvisited Functions include:\n";
+  os << "Unvisited Functions include:\n";
   for (auto unVisit : data.unAnalyzed) {
-    os << "\t" << unVisit.first << " : " << (unVisit.second ? "external" : "app") << "\n";
+    os << "\t" << unVisit << "\n";
   }
 
   return os;
