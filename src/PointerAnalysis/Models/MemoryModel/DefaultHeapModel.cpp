@@ -28,7 +28,7 @@ Type *DefaultHeapModel::getNextBitCastDestType(const Instruction *allocSite) {
     nextInst = invoke->getNormalDest()->getFirstNonPHIOrDbgOrLifetime();
   }
 
-  if (nextInst && isa<BitCastInst>(nextInst)) {
+  if (isa_and_nonnull<BitCastInst>(nextInst)) {
     Type *destTy = cast<BitCastInst>(nextInst)->getDestTy()->getPointerElementType();
     if (destTy->isSized()) {
       // only when the dest type is sized

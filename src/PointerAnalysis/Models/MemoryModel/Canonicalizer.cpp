@@ -141,7 +141,7 @@ const Value *FSCanonicalizer::canonicalize(const llvm::Value *V) {
     V = V->stripPointerCastsAndInvariantGroups();
     if (auto gep = dyn_cast<GetElementPtrInst>(V)) {
       if (gep->getNumIndices() == 1 && gep->hasAllConstantIndices()) {
-        if (auto idx = cast<ConstantInt>(gep->getOperand(1))) {
+        if (auto idx = dyn_cast<ConstantInt>(gep->getOperand(1))) {
           if (idx->isNegative()) {
             V = canonicalize(gep->getOperand(0));
           }

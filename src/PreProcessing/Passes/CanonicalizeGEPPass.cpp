@@ -78,7 +78,7 @@ static bool splitVariableGEP(Function &F, IRBuilder<NoFolder> &builder) {
           // since we skip the first index, we now start from gep 0,
           consIndices.push_back(zero);
           GTI++;
-        } else if (auto *idx = cast<Constant>(GTI.getOperand()); !idx->isZeroValue()) {
+        } else if (auto *idx = dyn_cast<Constant>(GTI.getOperand()); !idx->isZeroValue()) {
           // the first index is constant, but is not a zero
           // getelementptr %ptr, 4, %idx1, ...
           lastBasePtr = builder.CreateGEP(lastBasePtr, idx);
