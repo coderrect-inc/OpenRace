@@ -17,6 +17,7 @@ limitations under the License.
 #include <llvm/Support/SourceMgr.h>
 
 #include <catch2/catch.hpp>
+#include <utility>
 
 #include "RaceDetect.h"
 
@@ -58,8 +59,10 @@ TestRace TestRace::fromString(llvm::StringRef s) {
 }
 
 // build set of races from strings
-std::vector<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings) {
+std::vector<TestRace> TestRace::fromStrings(const std::vector<llvm::StringRef>& strings) {
   std::vector<TestRace> out;
+
+  out.reserve(strings.size());
 
   for (auto const &s : strings) {
     out.push_back(TestRace::fromString(s));
@@ -68,7 +71,7 @@ std::vector<TestRace> TestRace::fromStrings(std::vector<llvm::StringRef> strings
   return out;
 }
 
-std::vector<TestRace> TestRace::fromRaces(std::set<race::Race> races, llvm::StringRef path) {
+std::vector<TestRace> TestRace::fromRaces(const std::set<race::Race>& races, llvm::StringRef path) {
   std::vector<TestRace> out;
 
   for (auto const &race : races) {
@@ -112,7 +115,7 @@ bool reportContains(const race::Report &report, std::vector<TestRace> expectedRa
 }
 
 Oracle::Oracle(llvm::StringRef filename, std::vector<llvm::StringRef> races) : filename(filename) {
-  expectedRaces = TestRace::fromStrings(races);
+  expectedRaces = TestRace::fromStrings(std::move(races));
 }
 
 void checkTest(llvm::StringRef file, llvm::StringRef llPath, std::initializer_list<llvm::StringRef> expected) {

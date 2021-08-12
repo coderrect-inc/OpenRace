@@ -11,6 +11,9 @@ limitations under the License.
 
 #include "Analysis/SimpleArrayAnalysis.h"
 
+#include <utility>
+
+
 namespace {
 
 // this is more like "get def"/"get getelementptr", not all getelementptr is array-related
@@ -185,14 +188,14 @@ struct ArrayAccess {
   std::optional<llvm::StringRef> collapseRootIdx;  // the root index that the collapse indexes originated from
 
   ArrayAccess(std::vector<const llvm::GetElementPtrInst *> geps)
-      : geps(geps), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
+      : geps(std::move(geps)), outerMostIdxName(computeOuterMostGEPIdxName()), collapseRootIdx(checkCollapse()) {
     if (!hasCollapse()) removeOMPIrrelevantGEP();
   }
 
-  bool hasCollapse() const {  // whether this access involves indexes using collapse
+  [[nodiscard]] bool hasCollapse() const {  // whether this access involves indexes using collapse
     return collapseRootIdx.has_value();
   }
-  bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
+  [[nodiscard]] bool isMultiDim() const { return outerMostIdxName.has_value() ? geps.size() > 0 : geps.size() > 1; }
 
  private:
   // this handles a special case when using collapse, e.g., DRB093:
@@ -577,7 +580,7 @@ const SCEV *findSCEVExpr(const llvm::SCEV *Root, PredTy Pred) {
       return false;
     }
 
-    bool isDone() const { return Found != nullptr; }
+    [[nodiscard]] bool isDone() const { return Found != nullptr; }
   };
 
   FindClosure FC(Pred);
