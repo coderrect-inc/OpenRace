@@ -186,7 +186,6 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, Cal
       // TODO: log if entries contained more than one possible entry
       auto entry = entries.front();
 
-      auto const threadPosition = static_cast<long int>(threads.size());
       // build thread trace for this fork and all sub threads
       auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state);
       threads.push_back(std::move(childThread));
