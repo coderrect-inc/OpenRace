@@ -173,10 +173,12 @@ bool haveSameTID(const Event *event1, const Event *event2) {
     return getGuardedTID(r, r.start) == getGuardedTID(r, r.end);
   };
 
+  assert(sameGuardedTID(region1.value()) && "the region guarded by omp_get_thread_num should have the same TID");
+  assert(sameGuardedTID(region2.value()) && "the region guarded by omp_get_thread_num should have the same TID");
+
   // regions do not need to be the same (i.e., sameAs), but must have the same guarded TID passed as the only parameter
   // to four call to omp_get_thread_num_guard_start and omp_get_thread_num_guard_end from two regions
-  if (sameGuardedTID(region1.value()) && sameGuardedTID(region2.value()) &&
-      getGuardedTID(region1.value(), region1.value().start) == getGuardedTID(region2.value(), region2.value().start)) {
+  if (getGuardedTID(region1.value(), region1.value().start) == getGuardedTID(region2.value(), region2.value().start)) {
     return true;
   }
 
@@ -228,7 +230,7 @@ bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2)
   return _inSameSingleBlock(event1, event2);
 }
 
-bool OpenMPAnalysis::inSameGuardedTID(const Event *event1, const Event *event2) const {
+bool OpenMPAnalysis::guardedBySameTID(const Event *event1, const Event *event2) const {
   return _inSameGuardedTID(event1, event2);
 }
 

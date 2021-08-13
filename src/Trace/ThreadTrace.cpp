@@ -11,7 +11,6 @@ limitations under the License.
 
 #include "Trace/ThreadTrace.h"
 
-#include "Analysis/OpenMP/OpenMP.h"
 #include "EventImpl.h"
 #include "IR/IRImpls.h"
 #include "Trace/CallStack.h"
@@ -138,9 +137,7 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, Cal
   auto const context = node->getContext();
   auto einfo = std::make_shared<EventInfo>(thread, context);
 
-  for (unsigned int i = 0; i < summary.size(); i++) {
-    auto const &ir = summary.at(i);
-
+  for (auto const &ir : summary) {
     if (shouldSkipIR(ir, state)) {
       continue;
     }

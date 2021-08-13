@@ -111,8 +111,8 @@ inline bool isDebugOutlined(const llvm::StringRef& funcName) { return funcName.s
 inline bool isGetThreadNum(const llvm::StringRef& funcName) { return funcName.equals("omp_get_thread_num"); }
 
 // Custom named functions we insert during pre-processing to mark guarded regions
-const std::string OpenMPThreadGuardStart{"omp_get_thread_num_guard_start"};
-const std::string OpenMPThreadGuardEnd{"omp_get_thread_num_guard_end"};
+static const std::string OpenMPThreadGuardStart{"omp_get_thread_num_guard_start"};
+static const std::string OpenMPThreadGuardEnd{"omp_get_thread_num_guard_end"};
 
 inline bool isGetThreadNumGuardStart(const llvm::StringRef& funcName) {
   return funcName.equals(OpenMPThreadGuardStart);

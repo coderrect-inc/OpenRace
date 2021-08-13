@@ -102,9 +102,9 @@ class OpenMPAnalysis {
   // Call assumes the events are on different threads but in the same team
   bool inSameSingleBlock(const Event* event1, const Event* event2) const;
 
-  // return true if both events are gauranteed to execute on the same thread
+  // return true if both events are guaranteed to execute on the same thread
   // by a check against omp_get_thread_num
-  bool inSameGuardedTID(const Event* event1, const Event* event2) const;
+  bool guardedBySameTID(const Event* event1, const Event* event2) const;
 
   // return true if both events are inside of the same reduce region
   // we do not distinguise between reduce and reduce_nowait
