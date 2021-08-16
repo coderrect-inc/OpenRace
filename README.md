@@ -15,6 +15,8 @@ OpenRace is an open source implementation of the [Coderrect Scanner][CS] which i
 
 [![check-pr](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml/badge.svg?branch=develop)](https://github.com/coderrect-inc/OpenRace/actions/workflows/check-pr.yml)
 
+[![codecov](https://codecov.io/gh/coderrect-inc/OpenRace/branch/develop/graph/badge.svg?token=I2I3KP418F)](https://codecov.io/gh/coderrect-inc/OpenRace)
+
 ## Guiding Principles
 
 When making design or implementation decisions, we should try to prioritize the following three goals.
