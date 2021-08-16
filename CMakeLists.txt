@@ -84,6 +84,24 @@ llvm_map_components_to_libnames(llvm_libs
 
 include(cmake/CompilerWarnings.cmake)
 
+if(CODE_COVERAGE)
+    if(CMAKE_COMPILER_IS_GNUCXX)
+        message("Building with lcov Code Coverage Tools")
+
+        # Warning/Error messages
+        if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+            message(WARNING "Code coverage results with an optimized (non-Debug) build may be misleading")
+        endif()
+
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+    else()
+        message(FATAL_ERROR "Code coverage requires GCC. Aborting.")
+    endif()
+endif()
+
+
+
 add_subdirectory(src)
 
 include(CTest)
