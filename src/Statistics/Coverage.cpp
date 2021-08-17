@@ -63,6 +63,12 @@ void Coverage::summarize() {
 
   // collect fns in program
   for (auto const &thread : program.getThreads()) {
+    if (thread->getEvents().empty()) {  // a thread with an empty trace, e.g., atomic
+      auto entry = thread->spawnSite.value()->getIRInst()->getThreadEntry();
+      if (auto fn = llvm::dyn_cast<llvm::Function>(entry)) recordFn(data.analyzed, fn);
+      continue;
+    }
+
     auto _1stEvent = thread->getEvents().front().get();
     recordFn(data.analyzed, _1stEvent->getFunction());
 
