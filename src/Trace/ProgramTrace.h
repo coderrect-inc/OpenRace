@@ -78,6 +78,21 @@ struct TraceBuildState {
 
   // Track state specific to OpenMP
   OpenMPState openmp;
+
+  // a set of traversed cgnodes which fork threads
+  std::set<const pta::CallGraphNodeTy *> traversedForkCGNodes;
+
+  // return true if this node has already been traversed
+  bool skipThisCallGraphNode(const pta::CallGraphNodeTy *node) {
+    if (traversedForkCGNodes.find(node) == traversedForkCGNodes.end()) {
+      traversedForkCGNodes.insert(node);
+      return false;
+    }
+    return true;
+  }
+
+  // return true if we already skip the corresponding fork traversal for this join
+  bool skipThisJoin() {}
 };
 
 class ProgramTrace {
