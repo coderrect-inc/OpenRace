@@ -82,17 +82,49 @@ struct TraceBuildState {
   // a set of traversed cgnodes which fork threads
   std::set<const pta::CallGraphNodeTy *> traversedForkCGNodes;
 
+  // maintain a list of skipped fork IRs
+  std::vector<const ForkIR *> skippedForkIRs;
+
   // return true if this node has already been traversed
-  bool skipThisCallGraphNode(const pta::CallGraphNodeTy *node) {
+  // here the fork IR should only be pthread and omp fork for now
+  bool skipThisDuplicateFork(const pta::CallGraphNodeTy *node, const ForkIR *forkIR) {
+    if (forkIR->type != IR::Type::PthreadCreate && forkIR->type != IR::Type::OpenMPFork) {
+      return false;
+    }
     if (traversedForkCGNodes.find(node) == traversedForkCGNodes.end()) {
       traversedForkCGNodes.insert(node);
       return false;
     }
+    skippedForkIRs.push_back(forkIR);
+    forkIR->getThreadHandle()->print(llvm::outs(), true);
+    llvm::outs() << "\n";
     return true;
   }
 
   // return true if we already skip the corresponding fork traversal for this join
-  bool skipThisJoin() {}
+  // by checking the value of getThreadHandle()
+  // here the fork IR should only be pthread and omp fork for now
+  bool skipThisDuplicateJoin(const JoinIR *joinIR) {
+    auto joinHandle = joinIR->getThreadHandle();
+    if (auto load = llvm::dyn_cast<llvm::LoadInst>(joinHandle)) {
+      // this actually matches, not the one in const llvm::Value *PthreadJoin::getThreadHandle()
+      joinHandle = load->getOperand(0)->stripPointerCasts();
+    }
+
+    int skippedIdx = -1;
+    for (long unsigned int i = 0; i < skippedForkIRs.size(); i++) {
+      auto const forkIR = skippedForkIRs.at(i);
+      if (forkIR->getThreadHandle() == joinHandle) {
+        skippedIdx = i;
+        break;
+      }
+    }
+    if (skippedIdx < 0) return false;
+
+    // avoid to skip the joins with the same thread handle
+    skippedForkIRs.erase(skippedForkIRs.begin() + skippedIdx);
+    return true;
+  }
 };
 
 class ProgramTrace {

@@ -183,7 +183,10 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, Cal
       // TODO: log if entries contained more than one possible entry
       auto entry = entries.front();
 
-      if (state.skipThisCallGraphNode(entry)) continue;
+      if (state.skipThisDuplicateFork(entry, forkIR)) {
+        events.pop_back();  // remove the already pushed fork event
+        continue;
+      }
 
       // build thread trace for this fork and all sub threads
       auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state);
@@ -194,6 +197,8 @@ void traverseCallNode(const pta::CallGraphNodeTy *node, ThreadTrace &thread, Cal
       }
 
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
+      if (state.skipThisDuplicateJoin(joinIR)) continue;
+
       // insert task joins for state.unjoinedTasks before the end of this omp parallel region
       if (joinIR->type == IR::Type::OpenMPJoin) {
         insertTaskJoins(events, state, einfo);

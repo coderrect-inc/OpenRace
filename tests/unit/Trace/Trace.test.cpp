@@ -239,3 +239,59 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
   auto const &unlock = events.at(1);
   CHECK(unlock->type == race::Event::Type::Unlock);
 }
+
+TEST_CASE("Avoid Redundant Pthread ThreadTrace", "[unit][event]") {
+  const char *ModuleString = R"(
+%union.pthread_attr_t = type { i64, [48 x i8] }
+
+define i8* @entryOuter(i8*) {
+  %p_sub_thread = alloca i64
+  %2 = call i32 @pthread_create(i64* %p_sub_thread, %union.pthread_attr_t* null, i8* (i8*)* @entryOuter, i8* null)
+  %sub_thread = load i64, i64* %p_sub_thread
+  %result = alloca i8*
+  %3 = call i32 @pthread_join(i64 %sub_thread, i8** %result)
+  ret i8* null
+}
+
+define i32 @main() {
+  %p_thread = alloca i64
+  %1 = call i32 @pthread_create(i64* %p_thread, %union.pthread_attr_t* null, i8* (i8*)* @entryOuter, i8* null)
+  %thread = load i64, i64* %p_thread
+  %2 = call i32 @pthread_join(i64 %thread, i8** null)
+  ret i32 0
+}
+
+declare i32 @pthread_create(i64*, %union.pthread_attr_t*, i8* (i8*)*, i8*)
+declare i32 @pthread_join(i64, i8**)
+)";
+
+  llvm::LLVMContext Ctx;
+  llvm::SMDiagnostic Err;
+  auto module = llvm::parseAssemblyString(ModuleString, Err, Ctx);
+  if (!module) {
+    Err.print("error", llvm::errs());
+  }
+
+  race::ProgramTrace program(module.get());
+  auto const &threads = program.getThreads();
+  REQUIRE(threads.size() == 5);
+
+  SECTION("Main ThreadTrace") {
+    auto const &thread = threads.at(0);
+    auto const &events = thread->getEvents();
+    REQUIRE(events.size() == 3);
+
+    auto const &fork = events.at(0);
+    CHECK(fork->type == race::Event::Type::Fork);
+
+    auto const &join = events.at(2);
+    CHECK(join->type == race::Event::Type::Join);
+  }
+
+  SECTION("Final Spawned ThreadTrace") {
+    auto const &thread = threads.at(4);
+    auto const &events = thread->getEvents();
+    REQUIRE(events.size() == 1);
+    CHECK(events.at(0)->type == race::Event::Type::Read);
+  }
+}
