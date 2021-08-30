@@ -36,6 +36,7 @@ TEST_LL("single-message-printer", "single-message-printer.ll",
                  "single-message-printer.c:11:14 single-message-printer.c:11:14",
                  "single-message-printer.c:18:15 single-message-printer.c:18:15",
                  "single-message-printer.c:18:15 single-message-printer.c:18:15"))
+TEST_LL("single-interproc-yes", "single-interproc-yes.ll", NORACE)
 TEST_LL("single-used-after-no", "single-used-after-no.ll", NORACE)
 TEST_LL("thread-sanitizer-falsepos", "thread-sanitizer-falsepos.ll", NORACE)
 TEST_LL("sections-simple-no", "sections-simple-no.ll", NORACE)
