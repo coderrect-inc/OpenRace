@@ -133,20 +133,27 @@ template <IR::Type Start, IR::Type End>
 bool inSame(const Event *event1, const Event *event2) {
   assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
 
-  // get omp region contains the event
-  auto const region1 = getContainingRegion<Start, End>(event1);
-  auto const region2 = getContainingRegion<Start, End>(event2);
+  // We assume that becuase each thread is executing the same parallel region
+  // the number and ordering of regions should be the same on each thread.
+
+  // Count the number of regions and return the index of the region containing the event
+  auto const getRegionID = [](const Event *event) -> std::optional<long> {
+    auto const regions = getRegions<Start, End>(event->getThread());
+    auto region = std::find_if(regions.begin(), regions.end(),
+                               [&event](auto const &region) { return region.contains(event->getID()); });
+    if (region == regions.end()) return std::nullopt;
+    return std::distance(regions.begin(), region);
+  };
+
+  auto const region1 = getRegionID(event1);
+  auto const region2 = getRegionID(event2);
 
   if (!region1 || !region2) {
     return false;
   }
 
-  // Omp threads in same team may or may not have identical traces so we see them separately
-  if (region1.value().sameAs(region2.value())) {
-    return true;
-  }
-
-  return false;
+  // If the index of the regions match, they are in the same region
+  return region1.value() == region2.value();
 }
 
 // return true if both events are inside of the region marked by Start and End

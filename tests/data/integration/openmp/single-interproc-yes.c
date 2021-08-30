@@ -1,9 +1,11 @@
+// The use of nowait and the two calls to inc cause a race on global
+
 #include <stdio.h>
 
 int global;
 
 void inc() {
-#pragma omp single
+#pragma omp single nowait
   { global++; }
 }
 
