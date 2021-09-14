@@ -96,7 +96,7 @@ class ForkEventImpl : public ForkEvent {
     // TODO
     return std::vector<const pta::ObjTy *>();
   }
-  [[nodiscard]] std::vector<const pta::CallGraphNodeTy *> getThreadEntry() const override;
+  [[nodiscard]] const pta::CallGraphNodeTy *getThreadEntry() const override;
 };
 
 class JoinEventImpl : public JoinEvent {

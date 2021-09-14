@@ -17,16 +17,21 @@ const std::multiset<const pta::ObjTy *> &ReadEventImpl::getAccessedMemory() cons
 
 const std::multiset<const pta::ObjTy *> &WriteEventImpl::getAccessedMemory() const { return accessedMemory; }
 
-std::vector<const pta::CallGraphNodeTy *> ForkEventImpl::getThreadEntry() const {
+const pta::CallGraphNodeTy *ForkEventImpl::getThreadEntry() const {
   auto entryVal = fork->getThreadEntry();
   if (auto entryFunc = llvm::dyn_cast<llvm::Function>(entryVal)) {
     auto const newContext = pta::CT::contextEvolve(info->context, fork->getInst());
     auto const entryNode = info->thread->program.pta.getDirectNodeOrNull(newContext, entryFunc);
-    return {entryNode};
+    return entryNode;
   }
 
   // the entry is indirect and we need to figure out where the real function is
   auto callsite = info->thread->program.pta.getInDirectCallSite(info->context, fork->getInst());
   auto const &nodes = callsite->getResolvedNode();
-  return std::vector<const pta::CallGraphNodeTy *>(nodes.begin(), nodes.end());
+
+  // Heuristic: choose first entry if there is more than one
+  if (nodes.size() > 1) {
+    llvm::outs() << "Thread contianed multiple possible entries, choosing first one\n";
+  }
+  return *nodes.begin();
 }

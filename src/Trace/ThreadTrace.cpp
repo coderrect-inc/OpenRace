@@ -36,10 +36,7 @@ ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNod
                          ProgramBuildState &programState)
     : id(++programState.currentTID), program(spawningEvent->getThread().program), spawnSite(spawningEvent) {
   // Sanity Check
-  auto const entries = spawningEvent->getThreadEntry();
-  auto it = std::find(entries.begin(), entries.end(), entry);
-  // entry mut be one of the entries from the spawning event
-  assert(it != entries.end());
+  assert(entry == spawningEvent->getThreadEntry());
 
   // Build the thread trace
   ThreadBuildState state(programState, *this, events, childThreads);

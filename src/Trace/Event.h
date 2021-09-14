@@ -90,7 +90,7 @@ class ForkEvent : public Event {
 
  public:
   [[nodiscard]] virtual std::vector<const pta::ObjTy *> getThreadHandle() const = 0;
-  [[nodiscard]] virtual std::vector<const pta::CallGraphNodeTy *> getThreadEntry() const = 0;
+  [[nodiscard]] virtual const pta::CallGraphNodeTy *getThreadEntry() const = 0;
 
   [[nodiscard]] inline const race::ForkIR *getIRInst() const override = 0;
 

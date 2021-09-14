@@ -28,6 +28,21 @@ bool shouldSkipIR(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) 
   state.skipUntil = nullptr;
   return false;
 }
+
+// Check if currentThread is trying to create a recursive thread spawn at childEntry, by checking if the current thread
+// or any parent thread's entry is childEntry
+bool isRecursiveThreadSpawn(const ThreadTrace &currentThread, const pta::CallGraphNodeTy *childEntry) {
+  auto parentFork = currentThread.spawnSite;
+  // iterate untile we hit mian thread, which does not have a spawnsite
+  while (parentFork.has_value()) {
+    auto const threadEntry = parentFork.value()->getThreadEntry();
+    if (threadEntry == childEntry) {
+      return true;
+    }
+    parentFork = parentFork.value()->getThread().spawnSite;
+  }
+  return false;
+}
 }  // namespace
 
 void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state) {
@@ -62,25 +77,26 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       state.events.push_back(std::make_unique<const WriteEventImpl>(write, state.einfo, state.events.size()));
     } else if (auto forkIR = llvm::dyn_cast<ForkIR>(ir.get())) {
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
-      state.events.push_back(std::make_unique<const ForkEventImpl>(fork, state.einfo, state.events.size()));
+      auto forkEventImpl = std::make_unique<const ForkEventImpl>(fork, state.einfo, state.events.size());
 
-      // traverse this fork
-      auto const event = state.events.back().get();
-      auto const forkEvent = llvm::cast<ForkEvent>(event);
+      auto const entry = forkEventImpl->getThreadEntry();
+      assert(entry && "Thread has no entry");
+
+      // Check for recursive thread creation
+      if (isRecursiveThreadSpawn(state.thread, entry)) {
+        llvm::outs() << "Skipping recursive thread creation: " << entry->getTargetFun()->getName() << "\n";
+        continue;
+      }
+      // Now we can push the event since we are sure we are going to crate a new thread
+      state.events.push_back(std::move(forkEventImpl));
+      // Note forkEventmpl has been moved and should not be accessed anymore
+      auto const &event = state.events.back();
+      auto const forkEvent = llvm::cast<ForkEvent>(event.get());
 
       // Notify runtime models we are about to start traversing new thread
       for (auto const &model : state.programState.runtimeModels) {
         model->preFork(fork, forkEvent);
       }
-
-      auto const entries = forkEvent->getThreadEntry();
-      assert(!entries.empty() && "Thread has no entry");
-
-      // Heuristic: choose first entry if there is more than one
-      if (entries.size() > 1) {
-        llvm::outs() << "Thread contianed multiple possible entries, choosing first one\n";
-      }
-      auto const entry = entries.front();
 
       // build thread trace for this fork and all sub threads
       auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state.programState);
