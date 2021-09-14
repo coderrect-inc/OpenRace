@@ -64,10 +64,15 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
     }
 
     // Check with runtime models before doing anything with this ir
+    bool skipThisIR = false;
     for (auto const &model : state.programState.runtimeModels) {
       if (model->preVisit(ir, state)) {
-        continue;
+        skipThisIR = true;
+        break;
       }
+    }
+    if (skipThisIR) {
+      continue;
     }
 
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {

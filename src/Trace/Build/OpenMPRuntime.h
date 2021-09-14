@@ -20,7 +20,6 @@ class OpenMPRuntime : public Runtime {
   bool inTeamsregion = false;
   bool inSingleRegion = false;
 
-  bool onMasterThread = false;
   std::map<const llvm::Instruction *, const llvm::Instruction *> masterRegions;
   const llvm::Instruction *currentMasterStart = nullptr;
   void markMasterStart(const llvm::Instruction *start) {

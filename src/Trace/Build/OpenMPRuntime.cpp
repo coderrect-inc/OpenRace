@@ -19,6 +19,19 @@ bool isOpenMPTeamSpecific(const IR *ir) {
   return type == IR::Type::OpenMPBarrier || type == IR::Type::OpenMPCriticalStart ||
          type == IR::Type::OpenMPCriticalEnd || type == IR::Type::OpenMPSetLock || type == IR::Type::OpenMPUnsetLock;
 }
+
+// return the spawning omp fork if this is an omp thread, else return nullptr
+const OpenMPFork *isOpenMPThread(const ThreadTrace &thread) {
+  if (!thread.spawnSite) return nullptr;
+  return llvm::dyn_cast<OpenMPFork>(thread.spawnSite.value()->getIRInst());
+}
+
+// return true if thread is an OpenMP master thread
+bool isOpenMPMasterThread(const ThreadTrace &thread) {
+  auto const ompThread = isOpenMPThread(thread);
+  if (!ompThread) return false;
+  return ompThread->isForkingMaster();
+}
 }  // namespace
 
 bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) {
@@ -29,7 +42,7 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
   }
 
   // If task is spawned in single region, only put spawn on master thread
-  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !onMasterThread) {
+  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !isOpenMPMasterThread(state.thread)) {
     // Skip this ir
     return true;
   }
@@ -55,7 +68,7 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
   }
 
   if (ir->type == IR::Type::OpenMPMasterStart) {
-    if (!onMasterThread) {
+    if (!isOpenMPMasterThread(state.thread)) {
       // skip on non-master threads
       auto end = getMasterRegionEnd(ir->getInst());
       assert(end && "encountered master start without end");
@@ -66,7 +79,7 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
   }
 
   if (ir->type == IR::Type::OpenMPMasterEnd) {
-    if (onMasterThread) {
+    if (isOpenMPMasterThread(state.thread)) {
       markMasterEnd(ir->getInst());
     }
     return false;
