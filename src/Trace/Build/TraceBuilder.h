@@ -18,6 +18,7 @@ limitations under the License.
 #include "IR/Builder.h"
 #include "LanguageModel/RaceModel.h"
 #include "Trace/Build/CallStack.h"
+#include "Trace/Build/RuntimeModel.h"
 #include "Trace/Event.h"
 #include "Trace/EventImpl.h"
 #include "Trace/ThreadTrace.h"
@@ -34,6 +35,8 @@ struct ProgramBuildState {
 
   // Pointer Analysis
   const pta::PTA &pta;
+
+  std::vector<std::unique_ptr<Runtime>> runtimeModels;
 
   // Constructor
   ProgramBuildState(const pta::PTA &pta) : pta(pta) {}

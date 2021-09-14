@@ -12,10 +12,11 @@ limitations under the License.
 #pragma once
 
 #include "Trace/Build/RuntimeModel.h"
+#include "Trace/Build/TraceBuilder.h"
 
 namespace race {
 
-class OpenMPRuntime : Runtime {
+class OpenMPRuntime : public Runtime {
   bool inTeamsregion = false;
   bool inSingleRegion = false;
 

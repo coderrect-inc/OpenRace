@@ -38,8 +38,6 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
   }
   state.callstack.push(func);
 
-  OpenMPRuntime omprt;
-
   // Update  einfo
   state.einfo = std::make_shared<EventInfo>(state.thread, node->getContext());
 
@@ -49,9 +47,11 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       continue;
     }
 
-    // TODO: Check runtime models
-    if (omprt.preVisit(ir, state)) {
-      continue;
+    // Check with runtime models before doing anything with this ir
+    for (auto const &model : state.programState.runtimeModels) {
+      if (model->preVisit(ir, state)) {
+        continue;
+      }
     }
 
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
@@ -68,8 +68,10 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       auto const event = state.events.back().get();
       auto const forkEvent = llvm::cast<ForkEvent>(event);
 
-      // TODO: runtime prefork check
-      omprt.preFork(fork, forkEvent);
+      // Notify runtime models we are about to start traversing new thread
+      for (auto const &model : state.programState.runtimeModels) {
+        model->preFork(fork, forkEvent);
+      }
 
       auto const entries = forkEvent->getThreadEntry();
       assert(!entries.empty() && "Thread has no entry");
@@ -84,8 +86,10 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state.programState);
       state.childThreads.push_back(std::move(childThread));
 
-      // TODO: runtime postFork check
-      omprt.postFork(fork, forkEvent);
+      // Notify runtime models we are returning from traversing new thread
+      for (auto const &model : state.programState.runtimeModels) {
+        model->postFork(fork, forkEvent);
+      }
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
       state.events.push_back(std::make_unique<const JoinEventImpl>(join, state.einfo, state.events.size()));

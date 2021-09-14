@@ -17,10 +17,11 @@ limitations under the License.
 #include <variant>
 
 #include "IR/IRImpls.h"
-#include "Trace/Build/TraceBuilder.h"
 #include "Trace/Event.h"
 
 namespace race {
+
+class ThreadBuildState;
 
 class Runtime {
  public:

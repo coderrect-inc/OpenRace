@@ -11,6 +11,7 @@ limitations under the License.
 
 #include "Trace/ThreadTrace.h"
 
+#include "Trace/Build/OpenMPRuntime.h"
 #include "Trace/Build/TraceBuilder.h"
 #include "Trace/ProgramTrace.h"
 
@@ -20,6 +21,9 @@ ThreadTrace::ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entr
     : id(0), program(program), spawnSite(std::nullopt) {
   // Construct the ProgramState used to build the entire program trace
   ProgramBuildState programState(program.pta);
+  // TODO: hard coding this for now
+  //  but we should have system for customizing which models are added if we have more in the future
+  programState.runtimeModels.push_back(std::make_unique<OpenMPRuntime>());
 
   // Construct the state used to build just this main thread
   ThreadBuildState state(programState, *this, events, childThreads);
