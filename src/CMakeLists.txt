@@ -56,6 +56,7 @@ set(racedetect-lib-sources
     Trace/ProgramTrace.cpp
     Trace/ThreadTrace.cpp
     Trace/Build/TraceBuilder.cpp
+    Trace/Build/OpenMPRuntime.cpp
     Reporter/Reporter.cpp
     Statistics/Coverage.cpp
     RaceDetect.cpp)

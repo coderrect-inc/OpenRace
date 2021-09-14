@@ -11,7 +11,7 @@ limitations under the License.
 
 #include "TraceBuilder.h"
 
-#include "Trace/Build/RuntimeModel.h"
+#include "Trace/Build/OpenMPRuntime.h"
 
 using namespace race;
 

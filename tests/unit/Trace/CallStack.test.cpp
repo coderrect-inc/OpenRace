@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-#include "Trace/CallStack.h"
+#include "Trace/Build/CallStack.h"
 
 TEST_CASE("Callstack", "[unit]") {
   llvm::LLVMContext ctx;
