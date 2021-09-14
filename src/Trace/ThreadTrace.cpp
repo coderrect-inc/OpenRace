@@ -15,6 +15,7 @@ limitations under the License.
 #include "IR/IRImpls.h"
 #include "Trace/CallStack.h"
 #include "Trace/ProgramTrace.h"
+#include "Trace/TraceBuilder.h"
 
 using namespace race;
 
@@ -270,9 +271,13 @@ void ThreadTrace::buildEventTrace(const pta::CallGraphNodeTy *entry, const pta::
   traverseCallNode(entry, *this, callstack, pta, events, childThreads, state);
 }
 
-ThreadTrace::ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entry, TraceBuildState &state)
+ThreadTrace::ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entry)
     : id(0), program(program), spawnSite(std::nullopt) {
-  buildEventTrace(entry, program.pta, state);
+  // TraceBuildState state;
+  // buildEventTrace(entry, program.pta, state);
+  ProgramBuildState programState(program.pta);
+  ThreadBuildState state(programState, *this, events, childThreads);
+  buildTrace(entry, state);
 }
 
 ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry, TraceBuildState &state)
@@ -283,6 +288,20 @@ ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNod
   auto it = std::find(entries.begin(), entries.end(), entry);
   // entry mut be one of the entries from the spawning event
   assert(it != entries.end());
+}
+
+ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry,
+                         ProgramBuildState &programState)
+    : id(++programState.currentTID), program(spawningEvent->getThread().program), spawnSite(spawningEvent) {
+  // Sanity Check
+  auto const entries = spawningEvent->getThreadEntry();
+  auto it = std::find(entries.begin(), entries.end(), entry);
+  // entry mut be one of the entries from the spawning event
+  assert(it != entries.end());
+
+  // Build the thread trace
+  ThreadBuildState state(programState, *this, events, childThreads);
+  buildTrace(entry, state);
 }
 
 std::vector<const ForkEvent *> ThreadTrace::getForkEvents() const {

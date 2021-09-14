@@ -23,12 +23,10 @@ ProgramTrace::ProgramTrace(llvm::Module *module, llvm::StringRef entryName) : mo
   // Run pointer analysis
   pta.analyze(module, entryName);
 
-  TraceBuildState state;
-
   // build all threads starting from this main func
   auto const mainEntry = pta::GT::getEntryNode(pta.getCallGraph());
   // Program trace needs to hold a unique ptr to the entry thread
-  mainThread = std::make_unique<ThreadTrace>(*this, mainEntry, state);
+  mainThread = std::make_unique<ThreadTrace>(*this, mainEntry);
 
   // Traverse all child threads and build a flat list of all threads
   std::deque<const ThreadTrace *> worklist;
