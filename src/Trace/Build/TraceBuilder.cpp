@@ -30,7 +30,7 @@ bool shouldSkipIR(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) 
 }
 
 // Check if currentThread is trying to create a recursive thread spawn at childEntry, by checking if the current thread
-// or any parent thread's entry is childEntry
+// or any parent thread's entry functions are the same as childEntry's
 bool isRecursiveThreadSpawn(const ThreadTrace &currentThread, const pta::CallGraphNodeTy *childEntry) {
   auto const entryFunc = childEntry->getTargetFun()->getFunction();
   auto parentFork = currentThread.spawnSite;
@@ -42,7 +42,6 @@ bool isRecursiveThreadSpawn(const ThreadTrace &currentThread, const pta::CallGra
     }
     parentFork = parentFork.value()->getThread().spawnSite;
   }
-  llvm::outs() << "no spawnsite, return false\n";
   return false;
 }
 }  // namespace
