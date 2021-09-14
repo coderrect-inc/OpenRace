@@ -1,5 +1,7 @@
 #include "TraceBuilder.h"
 
+#include "Trace/RuntimeModel.h"
+
 using namespace race;
 
 namespace {
@@ -25,6 +27,8 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
   }
   state.callstack.push(func);
 
+  OpenMPRuntime omprt;
+
   // Update  einfo
   state.einfo = std::make_shared<EventInfo>(state.thread, node->getContext());
 
@@ -35,6 +39,9 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
     }
 
     // TODO: Check runtime models
+    if (omprt.preVisit(ir, state)) {
+      continue;
+    }
 
     if (auto readIR = llvm::dyn_cast<ReadIR>(ir.get())) {
       std::shared_ptr<const ReadIR> read(ir, readIR);
@@ -46,11 +53,13 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       std::shared_ptr<const ForkIR> fork(ir, forkIR);
       state.events.push_back(std::make_unique<const ForkEventImpl>(fork, state.einfo, state.events.size()));
 
-      // TODO: runtime postFork check
-
       // traverse this fork
       auto const event = state.events.back().get();
       auto const forkEvent = llvm::cast<ForkEvent>(event);
+
+      // TODO: runtime prefork check
+      omprt.preFork(fork, forkEvent);
+
       auto const entries = forkEvent->getThreadEntry();
       assert(!entries.empty() && "Thread has no entry");
 
@@ -65,6 +74,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       state.childThreads.push_back(std::move(childThread));
 
       // TODO: runtime postFork check
+      omprt.postFork(fork, forkEvent);
     } else if (auto joinIR = llvm::dyn_cast<JoinIR>(ir.get())) {
       std::shared_ptr<const JoinIR> join(ir, joinIR);
       state.events.push_back(std::make_unique<const JoinEventImpl>(join, state.einfo, state.events.size()));

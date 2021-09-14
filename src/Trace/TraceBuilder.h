@@ -24,9 +24,6 @@ struct ProgramBuildState {
   // Pointer Analysis
   const pta::PTA &pta;
 
-  // List of threads being constructed
-  // std::vector<std::unique_ptr<const ThreadTrace>> &threads;
-
   // Constructor
   ProgramBuildState(const pta::PTA &pta) : pta(pta) {}
 };
