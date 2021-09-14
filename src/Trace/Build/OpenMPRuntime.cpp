@@ -72,6 +72,7 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
       // skip on non-master threads
       auto end = getMasterRegionEnd(ir->getInst());
       assert(end && "encountered master start without end");
+      state.skipUntil = end;
       return true;
     }
     markMasterStart(ir->getInst());
