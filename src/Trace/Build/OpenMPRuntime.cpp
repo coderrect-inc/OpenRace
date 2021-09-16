@@ -67,29 +67,17 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
   // at taskwait, join all child tasks of the current thread
   if (ir->type == IR::Type::OpenMPTaskWait) {
     // Join all tasks spawned by this thread and tasks spawned by any of its child threads
+    for (auto const &childThread : state.thread.getChildThreads()) {
+      // Check if this is an unjoined task thread
+      if (!isOpenMPTaskThread(*childThread)) continue;
+      auto forkEvent = childThread->spawnSite.value();
+      auto it = std::find_if(unjoinedTasks.begin(), unjoinedTasks.end(),
+                             [&forkEvent](auto const &unjoinedTask) { return unjoinedTask.forkEvent == forkEvent; });
+      if (it == unjoinedTasks.end()) continue;
 
-    std::vector<const ThreadTrace *> worklist;
-    worklist.push_back(&state.thread);
-
-    while (!worklist.empty()) {
-      auto const thread = worklist.back();
-      worklist.pop_back();
-
-      for (auto const &childThread : thread->getChildThreads()) {
-        // Add the thread to the worklist to be processed
-        // worklist.push_back(childThread.get());
-
-        // Check if this is an unjoined task thread
-        if (!isOpenMPTaskThread(*childThread)) continue;
-        auto forkEvent = childThread->spawnSite.value();
-        auto it = std::find_if(unjoinedTasks.begin(), unjoinedTasks.end(),
-                               [&forkEvent](auto const &unjoinedTask) { return unjoinedTask.forkEvent == forkEvent; });
-        if (it == unjoinedTasks.end()) continue;
-
-        // If so, join it
-        addJoinEvent(*it, state);
-        unjoinedTasks.erase(it);
-      }
+      // If so, join it
+      addJoinEvent(*it, state);
+      unjoinedTasks.erase(it);
     }
 
     return false;
