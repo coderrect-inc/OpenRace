@@ -50,13 +50,6 @@ Report race::detectRaces(llvm::Module *module, DetectRaceConfig config) {
 
   race::Reporter reporter;
 
-  llvm::PassBuilder PB;
-  llvm::FunctionAnalysisManager FAM;
-  PB.registerFunctionAnalyses(FAM);
-  // contains default AA pipeline (type + scoped + global)
-  // but i do not know how to register it properly now
-  // FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
-
   // Adds to report if race is detected between write and other
   auto checkRace = [&](const race::WriteEvent *write, const race::MemAccessEvent *other) {
     if (DEBUG_PTA) {
