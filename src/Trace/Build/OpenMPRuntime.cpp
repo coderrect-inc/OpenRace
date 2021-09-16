@@ -32,7 +32,18 @@ bool isOpenMPMasterThread(const ThreadTrace &thread) {
   if (!ompThread) return false;
   return ompThread->isForkingMaster();
 }
+
+bool isOpenMPTaskThread(const ThreadTrace &thread) {
+  return thread.spawnSite.has_value() && thread.spawnSite.value()->getIRType() == IR::Type::OpenMPTaskFork;
+}
+
 }  // namespace
+
+void OpenMPRuntime::addJoinEvent(const UnjoinedTask &task, ThreadBuildState &state) {
+  auto taskJoin = std::make_shared<OpenMPTaskJoin>(task.forkIR);
+  std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
+  state.events.push_back(std::make_unique<const JoinEventImpl>(join, state.einfo, state.events.size(), task.forkEvent));
+}
 
 bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) {
   // Some OpenMP features (e.g. locks) do not work across GPU teams, and so cannot prevent data races
@@ -41,8 +52,9 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
     return true;
   }
 
-  // If task is spawned in single region, only put spawn on master thread
-  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !isOpenMPMasterThread(state.thread)) {
+  // If task is spawned in single region, only put spawn on master thread, or other task threads
+  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !isOpenMPMasterThread(state.thread) &&
+      !isOpenMPTaskThread(state.thread)) {
     // Skip this ir
     return true;
   }
@@ -52,13 +64,29 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
     return false;
   }
 
-  // if omp join IR, omp barrier, or taskwait,  check for tasks that need to be joined
-  if (ir->type == IR::Type::OpenMPBarrier || ir->type == IR::Type::OpenMPTaskWait || ir->type == IR::Type::OpenMPJoin) {
+  // at taskwait, join all child tasks of the current thread
+  if (ir->type == IR::Type::OpenMPTaskWait) {
+    // Join all tasks spawned by this thread and tasks spawned by any of its child threads
+    for (auto const &childThread : state.thread.getChildThreads()) {
+      // Check if this is an unjoined task thread
+      if (!isOpenMPTaskThread(*childThread)) continue;
+      auto forkEvent = childThread->spawnSite.value();
+      auto it = std::find_if(unjoinedTasks.begin(), unjoinedTasks.end(),
+                             [&forkEvent](auto const &unjoinedTask) { return unjoinedTask.forkEvent == forkEvent; });
+      if (it == unjoinedTasks.end()) continue;
+
+      // If so, join it
+      addJoinEvent(*it, state);
+      unjoinedTasks.erase(it);
+    }
+
+    return false;
+  }
+
+  // If at barrier or end of parallel region, join all unjoined tasks
+  if (ir->type == IR::Type::OpenMPBarrier || ir->type == IR::Type::OpenMPJoin) {
     for (auto const &task : unjoinedTasks) {
-      auto taskJoin = std::make_shared<OpenMPTaskJoin>(task.forkIR);
-      std::shared_ptr<const JoinIR> join(taskJoin, llvm::cast<JoinIR>(taskJoin.get()));
-      state.events.push_back(
-          std::make_unique<const JoinEventImpl>(join, state.einfo, state.events.size(), task.forkEvent));
+      addJoinEvent(task, state);
     }
     unjoinedTasks.clear();
 

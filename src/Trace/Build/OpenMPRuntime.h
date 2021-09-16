@@ -46,6 +46,9 @@ class OpenMPRuntime : public Runtime {
   // List of unjoined OpenMP task threads
   std::vector<UnjoinedTask> unjoinedTasks;
 
+  // Add join event to the thread trace for the specified task fork
+  void addJoinEvent(const UnjoinedTask &task, ThreadBuildState &state);
+
  public:
   bool preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) override;
   void preFork(const std::shared_ptr<const ForkIR> &forkIR, const ForkEvent *forkEvent) override;
