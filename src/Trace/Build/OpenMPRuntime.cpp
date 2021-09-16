@@ -52,8 +52,9 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
     return true;
   }
 
-  // If task is spawned in single region, only put spawn on master thread
-  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !isOpenMPMasterThread(state.thread)) {
+  // If task is spawned in single region, only put spawn on master thread, or other task threads
+  if (ir->type == IR::Type::OpenMPTaskFork && inSingleRegion && !isOpenMPMasterThread(state.thread) &&
+      !isOpenMPTaskThread(state.thread)) {
     // Skip this ir
     return true;
   }
@@ -63,8 +64,8 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
     return false;
   }
 
-  // if omp barrier or taskwait, check for tasks that need to be joined
-  if (ir->type == IR::Type::OpenMPBarrier || ir->type == IR::Type::OpenMPTaskWait) {
+  // at taskwait, join all child tasks of the current thread
+  if (ir->type == IR::Type::OpenMPTaskWait) {
     // Join all tasks spawned by this thread and tasks spawned by any of its child threads
 
     std::vector<const ThreadTrace *> worklist;
@@ -76,7 +77,7 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
 
       for (auto const &childThread : thread->getChildThreads()) {
         // Add the thread to the worklist to be processed
-        worklist.push_back(childThread.get());
+        // worklist.push_back(childThread.get());
 
         // Check if this is an unjoined task thread
         if (!isOpenMPTaskThread(*childThread)) continue;
@@ -94,8 +95,8 @@ bool OpenMPRuntime::preVisit(const std::shared_ptr<const IR> &ir, ThreadBuildSta
     return false;
   }
 
-  // If the parallel region is ending, join all unjoined omp tasks
-  if (ir->type == IR::Type::OpenMPJoin) {
+  // If at barrier or end of parallel region, join all unjoined tasks
+  if (ir->type == IR::Type::OpenMPBarrier || ir->type == IR::Type::OpenMPJoin) {
     for (auto const &task : unjoinedTasks) {
       addJoinEvent(task, state);
     }
