@@ -11,7 +11,9 @@ limitations under the License.
 
 #include "Reporter.h"
 
+#include <filesystem>
 #include <fstream>
+namespace fs = std::filesystem;
 
 #include "llvm/IR/DebugInfoMetadata.h"
 
@@ -186,15 +188,77 @@ void Reporter::collect(const WriteEvent *e1, const MemAccessEvent *e2) {
 
 Report Reporter::getReport() const { return Report(racepairs); }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
-  os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t" << *race.second.inst;
-  os << "\n--Callstack1";
-  for (auto const &call : race.first.callstack) {
-    os << "\n\t" << call;
+namespace {
+std::optional<std::string> tryReadSourceLine(const std::optional<SourceLoc> &loc) {
+  if (!loc) return std::nullopt;
+
+  auto const dir = loc.value().directory.str();
+  auto const filename = loc.value().filename.str();
+  auto const line = loc.value().line;
+
+  auto const sourcePath = fs::path(dir) / fs::path(filename);
+  std::ifstream sourceFile(sourcePath, std::ios::binary);
+  if (!sourceFile) {
+    return std::nullopt;
   }
-  os << "\n--Callstack2";
+
+  std::string sourceLine;
+
+  // read file up to the target line
+  int count = 0;
+  while (count < line - 1) {
+    std::getline(sourceFile, sourceLine);
+    count++;
+  }
+
+  // read target line
+  std::getline(sourceFile, sourceLine);
+  sourceFile.close();
+
+  return sourceLine;
+}
+}  // namespace
+
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
+  std::string firstLine = "(-)";
+  if (auto const source = tryReadSourceLine(race.first.location)) {
+    firstLine = source.value();
+  }
+
+  std::string secondLine = "(-)";
+  if (auto const source = tryReadSourceLine(race.second.location)) {
+    secondLine = source.value();
+  }
+
+  // os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t\t" << firstLine
+  //    << "\n\t" << *race.second.inst << "\n\t\t" << secondLine;
+
+  // Print Location of race
+  os << race.first.location << " " << race.second.location;
+
+  // Try to print code snippets
+  os << "\n\t---Source Code---";
+  auto source1 = tryReadSourceLine(race.first.location);
+  auto source2 = tryReadSourceLine(race.second.location);
+  if (source1 && source2) {
+    os << "\n\t" << race.first.location.value().line << "| " << source1.value();
+    os << "\n\t" << race.second.location.value().line << "| " << source2.value();
+  } else {
+    os << "\n\t(Unable to read source file)";
+  }
+
+  // Print IR
+  os << "\n\t---LLVM IR---";
+  os << "\n\t" << *race.first.inst;
+  os << "\n\t" << *race.second.inst;
+
+  os << "\n\t---Callstacks---";
+  for (auto const &call : race.first.callstack) {
+    os << "\n\t> " << call;
+  }
+  os << "\n\t====";
   for (auto const &call : race.second.callstack) {
-    os << "\n\t" << call;
+    os << "\n\t> " << call;
   }
   return os;
 }
