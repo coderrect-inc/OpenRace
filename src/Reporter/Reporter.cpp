@@ -19,14 +19,16 @@ using namespace race;
 
 namespace {
 
-std::optional<SourceLoc> getSourceLoc(const Event *e) {
-  auto const &loc = e->getInst()->getDebugLoc();
+std::optional<SourceLoc> getSourceLoc(const llvm::Instruction *inst) {
+  auto const &loc = inst->getDebugLoc();
   if (auto diloc = loc.get()) {
     return SourceLoc(diloc);
   }
 
   return std::nullopt;
 }
+
+std::optional<SourceLoc> getSourceLoc(const Event *e) { return getSourceLoc(e->getInst()); }
 
 }  // namespace
 
@@ -45,8 +47,45 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
   return os;
 }
 
+ReportCall::ReportCall(const llvm::CallBase *callBase) : call(std::nullopt), loc(getSourceLoc(callBase)) {
+  if (callBase->getCalledFunction()->hasName()) {
+    call = callBase->getCalledFunction()->getName();
+  }
+}
+
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ReportCall &call) {
+  os << (call.call ? call.call.value() : "UnamedFunc") << " (";
+  if (call.loc) {
+    os << call.loc;
+  } else {
+    os << "UnknownLoc";
+  }
+  os << ")";
+  return os;
+}
+
+namespace {
+std::vector<ReportCall> computeCallstack(const MemAccessEvent *targetEvent) {
+  std::vector<ReportCall> callstack;
+
+  auto const &events = targetEvent->getThread().getEvents();
+  for (auto const &event : events) {
+    if (event->getID() >= targetEvent->getID()) break;
+
+    if (auto const callEvent = llvm::dyn_cast<EnterCallEvent>(event.get())) {
+      auto call = llvm::cast<llvm::CallBase>(callEvent->getInst());
+      callstack.emplace_back(call);
+    } else if (event->type == Event::Type::CallEnd) {
+      callstack.pop_back();
+    }
+  }
+
+  return callstack;
+}
+}  // namespace
+
 RaceAccess::RaceAccess(const MemAccessEvent *event)
-    : location(getSourceLoc(event)), type(event->type), inst(event->getInst()) {
+    : location(getSourceLoc(event)), type(event->type), inst(event->getInst()), callstack(computeCallstack(event)) {
   updateMisleadingDebugLoc();
 }
 
@@ -133,5 +172,13 @@ Report Reporter::getReport() const { return Report(racepairs); }
 
 llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const Race &race) {
   os << race.first.location << " " << race.second.location << "\n\t" << *race.first.inst << "\n\t" << *race.second.inst;
+  os << "\n--Callstack1";
+  for (auto const &call : race.first.callstack) {
+    os << "\n\t" << call;
+  }
+  os << "\n--Callstack2";
+  for (auto const &call : race.second.callstack) {
+    os << "\n\t" << call;
+  }
   return os;
 }
