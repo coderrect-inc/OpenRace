@@ -65,12 +65,22 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ReportCall &cal
 }
 
 namespace {
-std::vector<ReportCall> computeCallstack(const MemAccessEvent *targetEvent) {
+std::vector<ReportCall> computeCallstack(const Event *targetEvent) {
   std::vector<ReportCall> callstack;
 
-  auto const &events = targetEvent->getThread().getEvents();
+  auto const &thread = targetEvent->getThread();
+  auto const &events = thread.getEvents();
+
+  // Compute parent thread callstack and add it to the final callstack
+  auto const spawnSite = targetEvent->getThread().spawnSite;
+  if (spawnSite) {
+    callstack = computeCallstack(spawnSite.value());
+  }
+
   for (auto const &event : events) {
-    if (event->getID() >= targetEvent->getID()) break;
+    // quit when past the target event
+    // if the targetEvent is a call it will also be added to the callstack
+    if (event->getID() > targetEvent->getID()) break;
 
     if (auto const callEvent = llvm::dyn_cast<EnterCallEvent>(event.get())) {
       auto call = llvm::cast<llvm::CallBase>(callEvent->getInst());
@@ -78,6 +88,12 @@ std::vector<ReportCall> computeCallstack(const MemAccessEvent *targetEvent) {
     } else if (event->type == Event::Type::CallEnd) {
       callstack.pop_back();
     }
+  }
+
+  // Check if targetEvent is a fork, if so add it to the call stack
+  if (auto fork = llvm::dyn_cast<ForkEvent>(targetEvent)) {
+    auto call = llvm::cast<llvm::CallBase>(fork->getInst());
+    callstack.emplace_back(call);
   }
 
   return callstack;
