@@ -9,22 +9,15 @@ Support for OpenMP features is being added and improved over time.
 
 The table below gives a high level overview of the status on some key features, and detailed descriptions on partially and not supported features are given below.
 
-|   Feature    | Support |
-|--------------|---------|
-| omp for loops|   full  |
-| barrier  |   full  |
-| master   |   full  |
-| single   |   full  |
-| reduction|   full  |
-| atomic   |   full  |
-| critical |   full  |
-| threadprivate |   full  |
-| sections |   full  |
-| offloading |   partial  |
-| tasks |   partial  |
-| simd |   none  |
-| ordered  |   none  |
-| depend |   none  |
+|   Feature    | Support |  Feature | Support |
+|--------------|---------|----------|---------|
+| **omp for loops**|   full  | **threadprivate** |   full  |
+| **barrier**      |   full  | **sections** |   full  |
+| **master**       |   full  | **offloading** |   partial  |
+| **single**       |   full  | **tasks** |   partial  |
+| **reduction**    |   full  | **simd** |   none  |
+| **atomic**       |   full  | **ordered**  |   none  |
+| **critical**     |   full  | **depend** |   none  |
 
 
 ## Remaining OpenMP Features
