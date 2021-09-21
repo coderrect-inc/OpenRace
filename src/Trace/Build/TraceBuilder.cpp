@@ -63,6 +63,12 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       continue;
     }
 
+    // Events befire the first thread is spawned cannot race and can be skipped
+    // still need to traverse calls as they may contain the first fork
+    if (!state.programState.inParallel && !llvm::isa<ForkIR>(ir.get()) && !llvm::isa<CallIR>(ir.get())) {
+      continue;
+    }
+
     // Check with runtime models before doing anything with this ir
     bool skipThisIR = false;
     for (auto const &model : state.programState.runtimeModels) {
@@ -95,6 +101,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       }
       // Now we can push the event since we are sure we are going to crate a new thread
       state.events.push_back(std::move(forkEventImpl));
+      state.programState.inParallel = true;
       // Note forkEventmpl has been moved and should not be accessed anymore
       auto const &event = state.events.back();
       auto const forkEvent = llvm::cast<ForkEvent>(event.get());

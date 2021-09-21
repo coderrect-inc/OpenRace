@@ -33,6 +33,9 @@ struct ProgramBuildState {
   // Counter to set the ThreadID as they are constructed
   ThreadID currentTID = 0;
 
+  // Track if the program has spawned a thread yet
+  bool inParallel = false;
+
   // Pointer Analysis
   const pta::PTA &pta;
 
