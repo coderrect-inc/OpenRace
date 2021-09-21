@@ -18,6 +18,7 @@ limitations under the License.
 // TODO: really need way to construct and eval trace for testing, not reading IR
 TEST_CASE("Simple lockset test", "[unit][lockset]") {
   const char *ModuleString = R"(
+%union.pthread_attr_t = type { i64, [48 x i8] }
 %union.pthread_mutex_t = type { %struct.__pthread_mutex_s }
 %struct.__pthread_mutex_s = type { i32, i32, i32, i32, i32, i16, i16, %struct.__pthread_internal_list }
 %struct.__pthread_internal_list = type { %struct.__pthread_internal_list*, %struct.__pthread_internal_list* }
@@ -29,7 +30,7 @@ define dso_local void @foo(i32 * %z) {
   ret void
 }
 
-define dso_local i32 @main() #0 {
+define i8* @entry(i8* %0) #0 {
   %mutex = alloca %union.pthread_mutex_t, align 8
   %x = alloca i32
   %y = alloca i32
@@ -40,18 +41,24 @@ define dso_local i32 @main() #0 {
   %call = call i32 @pthread_mutex_lock(%union.pthread_mutex_t* nonnull %mutex) ; 2
 
   call void @foo(i32* nonnull %y) ; 3-6
-  %1 = load i32, i32* %x          ; 7
-  %dec = add nsw i32 %1, -1
+  %2 = load i32, i32* %x          ; 7
+  %dec = add nsw i32 %2, -1
   store i32 %dec, i32* %x         ; 8
   
   %call1 = call i32 @pthread_mutex_unlock(%union.pthread_mutex_t* nonnull %mutex) ; 9
   
   call void @foo(i32* nonnull %x) ; 10-13
-  ret i32 0
+  ret i8* null
+}
+
+define i32 @main() {
+    %1 = call i32 @pthread_create(i64* null, %union.pthread_attr_t* null, i8* (i8*)* @entry, i8* null)
+    ret i32 0
 }
 
 declare i32 @pthread_mutex_lock(%union.pthread_mutex_t*) #1
 declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
+declare i32 @pthread_create(i64*, %union.pthread_attr_t*, i8* (i8*)*, i8*)
 )";
 
   llvm::LLVMContext Ctx;
@@ -64,9 +71,9 @@ declare i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) #1
   race::ProgramTrace program(module.get());
 
   auto const &threads = program.getThreads();
-  REQUIRE(threads.size() == 1);
+  REQUIRE(threads.size() == 2);
 
-  auto const &thread = threads.at(0);
+  auto const &thread = threads.at(1);
   auto const &events = thread->getEvents();
   REQUIRE(events.size() == 14);
 
