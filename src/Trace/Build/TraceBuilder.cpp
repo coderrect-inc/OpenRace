@@ -95,7 +95,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       }
       // Now we can push the event since we are sure we are going to crate a new thread
       state.events.push_back(std::move(forkEventImpl));
-      // Note forkEventmpl has been moved and should not be accessed anymore
+      // NOTE: forkEventmpl has been moved and should not be accessed anymore
       auto const &event = state.events.back();
       auto const forkEvent = llvm::cast<ForkEvent>(event.get());
 
@@ -105,7 +105,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       }
 
       // build thread trace for this fork and all sub threads
-      auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state.programState);
+      auto childThread = std::make_unique<ThreadTrace>(forkEvent, state.programState);
       state.childThreads.push_back(std::move(childThread));
 
       // Notify runtime models we are returning from traversing new thread
