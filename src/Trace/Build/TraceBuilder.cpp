@@ -29,16 +29,25 @@ bool shouldSkipIR(const std::shared_ptr<const IR> &ir, ThreadBuildState &state) 
   return false;
 }
 
-// Check if currentThread is trying to create a recursive thread spawn at childEntry, by checking if the current thread
-// or any parent thread's entry functions are the same as childEntry's
-bool isRecursiveThreadSpawn(const ThreadTrace &currentThread, const pta::CallGraphNodeTy *childEntry) {
+// Check if currentThread is trying to create a recursive thread spawn at childEntry,
+// by checking if the current thread or any parent thread's entry functions are the same as childEntry's.
+// Only allow n recursive thread entries
+bool isRecursiveThreadSpawn(const ThreadTrace &currentThread, const pta::CallGraphNodeTy *childEntry, size_t n) {
   auto const entryFunc = childEntry->getTargetFun()->getFunction();
   auto parentFork = currentThread.spawnSite;
+
+  // Track how many occurnces of entry have been encountered
+  // Start at 1 because childEntry is 1
+  size_t count = 1;
+
   // iterate until we hit main thread, which does not have a spawnsite
   while (parentFork.has_value()) {
     auto const threadEntry = parentFork.value()->getThreadEntry();
     if (threadEntry->getTargetFun()->getFunction() == entryFunc) {
-      return true;
+      count++;
+      if (count >= n) {
+        return true;
+      }
     }
     parentFork = parentFork.value()->getThread().spawnSite;
   }
@@ -95,14 +104,16 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       assert(entry && "Thread has no entry");
 
       // Check for recursive thread creation
-      if (isRecursiveThreadSpawn(state.thread, entry)) {
+      // Allow the same entry twice in one thread stack (similar to unrolling loops)
+      if (isRecursiveThreadSpawn(state.thread, entry, 2)) {
         llvm::outs() << "Skipping recursive thread creation: " << entry->getTargetFun()->getName() << "\n";
         continue;
       }
       // Now we can push the event since we are sure we are going to crate a new thread
       state.events.push_back(std::move(forkEventImpl));
       state.programState.inParallel = true;
-      // Note forkEventmpl has been moved and should not be accessed anymore
+      
+      // NOTE: forkEventmpl has been moved and should not be accessed anymore
       auto const &event = state.events.back();
       auto const forkEvent = llvm::cast<ForkEvent>(event.get());
 
@@ -112,7 +123,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       }
 
       // build thread trace for this fork and all sub threads
-      auto childThread = std::make_unique<ThreadTrace>(forkEvent, entry, state.programState);
+      auto childThread = std::make_unique<ThreadTrace>(forkEvent, state.programState);
       state.childThreads.push_back(std::move(childThread));
 
       // Notify runtime models we are returning from traversing new thread

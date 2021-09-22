@@ -32,11 +32,9 @@ ThreadTrace::ThreadTrace(ProgramTrace &program, const pta::CallGraphNodeTy *entr
   buildTrace(entry, state);
 }
 
-ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, const pta::CallGraphNodeTy *entry,
-                         ProgramBuildState &programState)
+ThreadTrace::ThreadTrace(const ForkEvent *spawningEvent, ProgramBuildState &programState)
     : id(++programState.currentTID), program(spawningEvent->getThread().program), spawnSite(spawningEvent) {
-  // Sanity Check
-  assert(entry == spawningEvent->getThreadEntry());
+  auto const entry = spawningEvent->getThreadEntry();
 
   // Build the thread trace
   ThreadBuildState state(programState, *this, events, childThreads);

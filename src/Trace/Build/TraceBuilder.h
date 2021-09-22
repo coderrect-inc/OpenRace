@@ -25,7 +25,7 @@ limitations under the License.
 
 namespace race {
 
-// State needed to build the ProgramTrace
+// Program (glabal) state needed to build the entire ProgramTrace
 struct ProgramBuildState {
   // Cached function summaries
   FunctionSummaryBuilder builder;
@@ -45,7 +45,7 @@ struct ProgramBuildState {
   ProgramBuildState(const pta::PTA &pta) : pta(pta) {}
 };
 
-// State needed to build a ThreadTrace
+// Thread (local) state needed to build a single ThreadTrace
 struct ThreadBuildState {
   ProgramBuildState &programState;
 
