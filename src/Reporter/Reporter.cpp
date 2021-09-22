@@ -49,13 +49,13 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const SourceLoc &loc)
   return os;
 }
 
-ReportCall::ReportCall(const llvm::CallBase *callBase) : call(std::nullopt), loc(getSourceLoc(callBase)) {
+CallSignature::CallSignature(const llvm::CallBase *callBase) : call(std::nullopt), loc(getSourceLoc(callBase)) {
   if (callBase->getCalledFunction()->hasName()) {
     call = callBase->getCalledFunction()->getName();
   }
 }
 
-llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ReportCall &call) {
+llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const CallSignature &call) {
   os << (call.call ? call.call.value() : "UnamedFunc") << " (";
   if (call.loc) {
     os << call.loc;
@@ -67,8 +67,8 @@ llvm::raw_ostream &race::operator<<(llvm::raw_ostream &os, const ReportCall &cal
 }
 
 namespace {
-std::vector<ReportCall> computeCallstack(const Event *targetEvent) {
-  std::vector<ReportCall> callstack;
+std::vector<CallSignature> computeCallstack(const Event *targetEvent) {
+  std::vector<CallSignature> callstack;
 
   auto const &thread = targetEvent->getThread();
   auto const &events = thread.getEvents();
