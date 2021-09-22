@@ -46,6 +46,8 @@ class CallSite {
     return false;
   }
 
+  [[nodiscard]] inline bool isInlineAsm() const { return CB->isInlineAsm(); }
+
   [[nodiscard]] inline const llvm::Value* getCalledValue() const { return CB->getCalledOperand(); }
 
   [[nodiscard]] inline const llvm::Function* getCalledFunction() const {
