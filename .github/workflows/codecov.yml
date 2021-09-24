@@ -21,10 +21,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      -name: install gcc-10
+        run: |
+          apt-get -y update
+          apt-get install -y g++-10
+
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DCODE_COVERAGE=On -DLLVM_INSTALL=/usr/local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-10 -DCODE_COVERAGE=On -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
       
       - name: Run Tests
