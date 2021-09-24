@@ -216,6 +216,9 @@ class CtxModule {
             auto targetNode = visitInDirectCallSite(&inst, context, onNewInDirect);
             createEdge(node, targetNode, nullptr, &inst, onNewEdge);
             // node->insertEdge(targetNode, CallEdge(&inst));
+          } else if (cs.isInlineAsm()) {
+            // Nothing we can do
+            continue;
           } else {
             // evolve the context upon new call site
             const ctx *calledCtx = CT::contextEvolve(context, &inst);
