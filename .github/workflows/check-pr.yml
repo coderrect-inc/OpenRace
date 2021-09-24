@@ -47,27 +47,8 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DCODE_COVERAGE=On -DLLVM_INSTALL=/usr/local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DLLVM_INSTALL=/usr/local ..
           cmake --build . --parallel
-      
-      - name: Test
-        run: |
-          cd build
-          ctest --parallel $(nproc)
-
-      - name: Generate Coverage Report
-        run: |
-          apt-get -y update
-          apt-get install -y lcov
-          cd build
-          lcov --directory . --capture --output-file my_prog1.info
-          lcov --remove my_prog1.info "*/tests/*" -o my_prog.info
-
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v2
-        with:
-          files: ./build/my_prog.info 
-          verbose: true
   
   formatting-check:
     name: Formatting Check
