@@ -112,7 +112,7 @@ void race::buildTrace(const pta::CallGraphNodeTy *node, ThreadBuildState &state)
       // Now we can push the event since we are sure we are going to crate a new thread
       state.events.push_back(std::move(forkEventImpl));
       state.programState.inParallel = true;
-      
+
       // NOTE: forkEventmpl has been moved and should not be accessed anymore
       auto const &event = state.events.back();
       auto const forkEvent = llvm::cast<ForkEvent>(event.get());
