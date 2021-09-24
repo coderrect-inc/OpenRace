@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      -name: install gcc-10
+      - name: install gcc-10
         run: |
           apt-get -y update
           apt-get install -y g++-10
