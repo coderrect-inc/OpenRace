@@ -192,10 +192,48 @@ bool haveSameTID(const Event *event1, const Event *event2) {
   return false;
 }
 
+// return true if both events are inside of the region marked by Start and End
+// AND they share the same section signature
+template <IR::Type Start, IR::Type End>
+bool haveSameSectionSig(const Event *event1, const Event *event2) {
+  assert(_fromSameParallelRegion(event1, event2) && "events must be from same omp parallel region");
+
+  // get omp region contains the event
+  auto const region1 = getContainingRegion<Start, End>(event1);
+  auto const region2 = getContainingRegion<Start, End>(event2);
+
+  if (!region1 || !region2) {
+    return false;
+  }
+
+  auto const getSectionSig = [](Region r, EventID id) {
+    auto sectionCall = llvm::cast<llvm::CallInst>(r.thread.getEvent(id)->getInst());
+    return sectionCall->getArgOperand(0)->stripPointerCasts();  // this is the section sig we stored by preprocessing
+  };
+
+  auto const sameSectionSig = [&getSectionSig](Region r) {
+    return getSectionSig(r, r.start) == getSectionSig(r, r.end);
+  };
+
+  assert(sameSectionSig(region1.value()) && "the section start/end should have the same section signature");
+  assert(sameSectionSig(region2.value()) && "the section start/end should have the same section signature");
+
+  // regions need to be the same (i.e., sameAs), and must have the same section signature passed as the only parameter
+  // to four call to omp_section_start and omp_section_end from two regions
+  if (region1.value().sameAs(region2.value()) &&
+      getSectionSig(region1.value(), region1.value().start) == getSectionSig(region2.value(), region2.value().start)) {
+    return true;
+  }
+
+  return false;
+}
+
 auto const _inSameSingleBlock = inSame<IR::Type::OpenMPSingleStart, IR::Type::OpenMPSingleEnd>;
 
 auto const _inSameGuardedTID =
     haveSameTID<IR::Type::OpenMPGetThreadNumGuardStart, IR::Type::OpenMPGetThreadNumGuardEnd>;
+
+auto const _inSameSection = haveSameSectionSig<IR::Type::OpenMPSectionStart, IR::Type::OpenMPSectionEnd>;
 
 }  // namespace
 
@@ -231,6 +269,10 @@ bool OpenMPAnalysis::isNonOverlappingLoopAccess(const MemAccessEvent *event1, co
 
 bool OpenMPAnalysis::fromSameParallelRegion(const Event *event1, const Event *event2) const {
   return _fromSameParallelRegion(event1, event2);
+}
+
+bool OpenMPAnalysis::inSameSection(const Event *event1, const Event *event2) const {
+  return _inSameSection(event1, event2);
 }
 
 bool OpenMPAnalysis::inSameSingleBlock(const Event *event1, const Event *event2) const {
@@ -404,62 +446,62 @@ LastprivateAnalysis::LastprivateAnalysis(const llvm::Module &module) {
   }
 }
 
-bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
-  // assertion: threads of the same team are identical
-  // assertion: we aren't given events from threads in different parallel sections blocks because those would be
-  //            different teams
-
-  // observation: we only enter a section if any event in the queue passes through a section case
-  // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
-  std::vector<const Event *> sections;
-  auto lastID = std::max(event1->getID(), event2->getID());
-  for (auto &event : event1->getThread().getEvents()) {
-    auto ir = event->getInst();
-    if (!ir) continue;
-    auto block = ir->getParent();
-    if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&
-        block->getName().startswith(".omp.sections.case")) {  // add for body check
-      sections.push_back(event.get());
-    }
-    // this is our end event; anything beyond this is not worth capturing
-    if (event->getID() > lastID) {
-      break;
-    }
-  }
-
-  if (sections.empty()) {
-    return false;
-  }
-
-  std::vector<const Event *> events;
-  events.reserve(event1->getThread().getEvents().size());
-  std::transform(event1->getThread().getEvents().begin(), event1->getThread().getEvents().end(),
-                 std::back_inserter(events), [&](const auto &event) { return event.get(); });
-
-  const Event *ev1sec = nullptr;
-  const Event *ev2sec = nullptr;
-
-  auto currSecEv = sections.begin();
-  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv); (*currEvent)->getID() <= lastID;
-       ++currSecEv) {
-    do {
-      if (event1->getID() == (*currEvent)->getID()) {
-        ev1sec = *currSecEv;
-      }
-      if (event2->getID() == (*currEvent)->getID()) {
-        ev2sec = *currSecEv;
-      }
-
-      if (ev1sec != nullptr && ev2sec != nullptr) {
-        if (ev1sec == ev2sec) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-      ++currEvent;
-    } while (std::find(sections.begin(), sections.end(), *currEvent) == sections.end());
-  }
-
-  return false;
-}
+// bool OpenMPAnalysis::insideCompatibleSections(const Event *event1, const Event *event2) {
+//  // assertion: threads of the same team are identical
+//  // assertion: we aren't given events from threads in different parallel sections blocks because those would be
+//  //            different teams
+//
+//  // observation: we only enter a section if any event in the queue passes through a section case
+//  // assertion: this vector is distinct but ordered because a given section isn't a descendent of another section
+//  std::vector<const Event *> sections;
+//  auto lastID = std::max(event1->getID(), event2->getID());
+//  for (auto &event : event1->getThread().getEvents()) {
+//    auto ir = event->getInst();
+//    if (!ir) continue;
+//    auto block = ir->getParent();
+//    if ((sections.empty() || block != sections.back()->getInst()->getParent()) && block->hasName() &&
+//        block->getName().startswith(".omp.sections.case")) {  // add for body check
+//      sections.push_back(event.get());
+//    }
+//    // this is our end event; anything beyond this is not worth capturing
+//    if (event->getID() > lastID) {
+//      break;
+//    }
+//  }
+//
+//  if (sections.empty()) {
+//    return false;
+//  }
+//
+//  std::vector<const Event *> events;
+//  events.reserve(event1->getThread().getEvents().size());
+//  std::transform(event1->getThread().getEvents().begin(), event1->getThread().getEvents().end(),
+//                 std::back_inserter(events), [&](const auto &event) { return event.get(); });
+//
+//  const Event *ev1sec = nullptr;
+//  const Event *ev2sec = nullptr;
+//
+//  auto currSecEv = sections.begin();
+//  for (auto currEvent = std::find(events.begin(), events.end(), *currSecEv); (*currEvent)->getID() <= lastID;
+//       ++currSecEv) {
+//    do {
+//      if (event1->getID() == (*currEvent)->getID()) {
+//        ev1sec = *currSecEv;
+//      }
+//      if (event2->getID() == (*currEvent)->getID()) {
+//        ev2sec = *currSecEv;
+//      }
+//
+//      if (ev1sec != nullptr && ev2sec != nullptr) {
+//        if (ev1sec == ev2sec) {
+//          return true;
+//        } else {
+//          return false;
+//        }
+//      }
+//      ++currEvent;
+//    } while (std::find(sections.begin(), sections.end(), *currEvent) == sections.end());
+//  }
+//
+//  return false;
+//}

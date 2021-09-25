@@ -111,7 +111,7 @@ class OpenMPAnalysis {
   bool inSameReduce(const Event* event1, const Event* event2) const;
 
   // return true if both events are in compatible sections
-  static bool insideCompatibleSections(const Event* event1, const Event* event2);
+  bool inSameSection(const Event* event1, const Event* event2) const;
 
   bool isInLastprivate(const Event* event) const { return lastprivate.isGuarded(event->getInst()->getParent()); }
 

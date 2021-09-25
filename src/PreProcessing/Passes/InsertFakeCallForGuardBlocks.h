@@ -13,5 +13,5 @@ limitations under the License.
 
 #include <llvm/IR/Module.h>
 
-// insert fake external calls for the guarded blocks by omp_get_thread_num
+// insert fake external calls for the guarded blocks by omp_get_thread_num and section
 void insertFakeCallForGuardBlocks(llvm::Module &module);

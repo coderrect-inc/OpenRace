@@ -114,9 +114,15 @@ inline bool isGetThreadNum(const llvm::StringRef& funcName) { return funcName.eq
 static const std::string OpenMPThreadGuardStart{"omp_get_thread_num_guard_start"};
 static const std::string OpenMPThreadGuardEnd{"omp_get_thread_num_guard_end"};
 
+static const std::string OpenMPSectionStart{"omp_section_start"};
+static const std::string OpenMPSectionEnd{"omp_section_end"};
+
 inline bool isGetThreadNumGuardStart(const llvm::StringRef& funcName) {
   return funcName.equals(OpenMPThreadGuardStart);
 }
 inline bool isGetThreadNumGuardEnd(const llvm::StringRef& funcName) { return funcName.equals(OpenMPThreadGuardEnd); }
+
+inline bool isSectionGuardStart(const llvm::StringRef& funcName) { return funcName.equals(OpenMPSectionStart); }
+inline bool isSectionGuardEnd(const llvm::StringRef& funcName) { return funcName.equals(OpenMPSectionEnd); }
 
 }  // namespace OpenMPModel

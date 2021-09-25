@@ -43,6 +43,12 @@ TEST_LL("single-used-after-no", "single-used-after-no.ll", NORACE)
 TEST_LL("thread-sanitizer-falsepos", "thread-sanitizer-falsepos.ll", NORACE)
 TEST_LL("sections-simple-no", "sections-simple-no.ll", NORACE)
 TEST_LL("sections-interproc-no", "sections-interproc-no.ll", NORACE)
+TEST_LL("sections-get-thread-num-no", "sections-get-thread-num-no.ll", NORACE)
+TEST_LL("sections-get-thread-num-yes", "sections-get-thread-num-yes.ll",
+        EXPECTED("sections-get-thread-num-yes.c:30:17 sections-get-thread-num-yes.c:34:17",
+                 "sections-get-thread-num-yes.c:34:17 sections-get-thread-num-yes.c:30:17"))
+TEST_LL("sections-simple-nowait-no", "sections-simple-nowait-no.ll", NORACE)  // llvm IR cannot tell nowait
+TEST_LL("sections-two-no", "sections-two-no.ll", NORACE)
 // We report FP on the called function, PTA K-callsite limit
 // TEST_LL("sections-interproc-no-deep", "sections-interproc-no-deep.ll", NORACE)
 TEST_LL("sections-interproc-yes", "sections-interproc-yes.ll",

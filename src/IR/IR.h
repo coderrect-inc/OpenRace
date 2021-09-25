@@ -73,6 +73,8 @@ class IR {
     OpenMPTaskWait,
     OpenMPGetThreadNumGuardStart,
     OpenMPGetThreadNumGuardEnd,
+    OpenMPSectionStart,
+    OpenMPSectionEnd,
     END_Call,
   } type;
   [[nodiscard]] virtual const llvm::Instruction *getInst() const = 0;

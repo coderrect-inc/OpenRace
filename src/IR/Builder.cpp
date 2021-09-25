@@ -164,6 +164,10 @@ std::shared_ptr<const FunctionSummary> generateFunctionSummary(const llvm::Funct
           summary.push_back(std::make_shared<OpenMPGetThreadNumGuardStart>(callInst));
         } else if (OpenMPModel::isGetThreadNumGuardEnd(funcName)) {
           summary.push_back(std::make_shared<OpenMPGetThreadNumGuardEnd>(callInst));
+        } else if (OpenMPModel::isSectionGuardStart(funcName)) {
+          summary.push_back(std::make_shared<OpenMPSectionStart>(callInst));
+        } else if (OpenMPModel::isSectionGuardEnd(funcName)) {
+          summary.push_back(std::make_shared<OpenMPSectionEnd>(callInst));
         } else if (OpenMPModel::isOrderedStart(funcName)) {
           summary.push_back(std::make_shared<OpenMPOrderedStart>(callInst));
         } else if (OpenMPModel::isOrderedEnd(funcName)) {

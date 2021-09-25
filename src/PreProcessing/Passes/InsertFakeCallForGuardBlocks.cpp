@@ -74,7 +74,7 @@ struct GuardBlockState {
   // and https://freecompilercamp.org/llvm-ir-func1/
   llvm::Function *generateFakeFn(std::string fnName, llvm::LLVMContext &context, llvm::Module &module) {
     // Make the function type: void(i32)
-    std::vector<llvm::Type *> Params(1, Type::getInt32Ty(context));
+    std::vector<llvm::Type *> Params(1, llvm::Type::getInt32Ty(context));
     llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getVoidTy(context), Params, false);
 
     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, fnName, module);
@@ -95,8 +95,8 @@ struct GuardBlockState {
 
 // we insert the call start at the beginning of each guarded block (for now, since only one block guarded
 // by each call), and insert the call end at the end of the block
-void insertFakeCall(llvm::LLVMContext &context, llvm::Module &module, std::set<llvm::BasicBlock *> &guardedBlocks,
-                    GuardBlockState &state) {
+void insertFakeCallForOpenMPGetThreadNum(llvm::LLVMContext &context, llvm::Module &module,
+                                         std::set<llvm::BasicBlock *> &guardedBlocks, GuardBlockState &state) {
   std::map<const BasicBlock *, size_t> &block2TID = state.block2TID;
   for (auto guardedBlock : guardedBlocks) {
     // pass the guarded TID as a constant to the only parameter of the fake function
@@ -127,7 +127,7 @@ void insertFakeCall(llvm::LLVMContext &context, llvm::Module &module, std::set<l
 
 }  // namespace
 
-void insertFakeCallForGuardBlocks(llvm::Module &module) {
+void insertForOpenMPGetThreadNum(llvm::Module &module) {
   GuardBlockState state;
   // find if exists any guarded block
   for (auto &function : module.getFunctionList()) {
@@ -152,6 +152,179 @@ void insertFakeCallForGuardBlocks(llvm::Module &module) {
     if (!state.guardStartFn && !state.guardEndFn) {  // create fake function declarations, only once
       state.createFakeGuardFn(call->getContext(), module);
     }
-    insertFakeCall(call->getContext(), module, blocks, state);
+    insertFakeCallForOpenMPGetThreadNum(call->getContext(), module, blocks, state);
   }
+}
+
+namespace {
+
+struct SectionBlock {
+  std::string sectionSig;
+  llvm::SwitchInst *switchInst;
+  std::vector<llvm::BasicBlock *> blocks;  // record all included sections in an omp sections region
+
+  SectionBlock(std::string sig, llvm::SwitchInst *switchInst) : sectionSig(sig), switchInst(switchInst) {}
+};
+
+struct SectionGuardState {
+  // record the omp parallel sections
+  std::vector<SectionBlock> sections;
+
+  // the fake function declarations of the guard start and end
+  llvm::Function *guardStartFn = nullptr;
+  llvm::Function *guardEndFn = nullptr;
+
+  // create a function declaration
+  // the following code is from https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html
+  // and https://freecompilercamp.org/llvm-ir-func1/
+  llvm::Function *generateFakeFn(std::string fnName, llvm::LLVMContext &context, llvm::Module &module) {
+    // Make the function type: i32(i8*)
+    std::vector<llvm::Type *> Params(1, llvm::Type::getInt8PtrTy(context));
+    llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getInt32Ty(context), Params, false);
+
+    llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, fnName, module);
+    assert(F);
+
+    llvm::Value *guardSig = F->arg_begin();
+    guardSig->setName("sectionSig");  // to match the param in the call
+
+    return F;
+  }
+
+  // create the fake functions, once
+  void createFakeGuardFn(llvm::LLVMContext &context, llvm::Module &module) {
+    guardStartFn = generateFakeFn(OpenMPModel::OpenMPSectionStart, context, module);
+    guardEndFn = generateFakeFn(OpenMPModel::OpenMPSectionEnd, context, module);
+  }
+};
+
+// get the number of global constant string var of which name starts with ".str.xxx"
+int getNumOfGlobalStr(llvm::Module &module) {
+  int size = 0;
+  for (auto it = module.getGlobalList().begin(); it != module.getGlobalList().end(); it++) {
+    if (it->getName().startswith(".str")) size++;
+  }
+  return size;
+}
+
+// the following code is from: https://stackoverflow.com/questions/51809274/llvm-defining-strings-and-arrays-via-c-api
+llvm::Value *insertStringAsGlobalVar(std::string str, llvm::LLVMContext &context, llvm::Module &module) {
+  // 0. Defs
+  auto charType = llvm::IntegerType::get(context, 8);
+
+  // 1. Initialize chars vector
+  std::vector<llvm::Constant *> chars(str.length());
+  for (unsigned int i = 0; i < str.size(); i++) {
+    chars[i] = llvm::ConstantInt::get(charType, str[i]);
+  }
+
+  // 1b. add a zero terminator too
+  chars.push_back(llvm::ConstantInt::get(charType, 0));
+
+  // 2. Initialize the string from the characters
+  auto stringType = llvm::ArrayType::get(charType, chars.size());
+
+  // 3. Create the declaration statement
+  int size = getNumOfGlobalStr(module);
+  std::string name = ".str." + std::to_string(size);
+  auto globalDeclaration = (llvm::GlobalVariable *)module.getOrInsertGlobal(name, stringType);
+  globalDeclaration->setInitializer(llvm::ConstantArray::get(stringType, chars));
+  globalDeclaration->setConstant(true);
+  globalDeclaration->setLinkage(llvm::GlobalValue::LinkageTypes::PrivateLinkage);
+  globalDeclaration->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+  // 4. Return a cast to an i8*
+  return llvm::ConstantExpr::getBitCast(globalDeclaration, charType->getPointerTo());
+}
+
+// we insert the call start at the beginning of each guarded block
+// and insert the call end at the end of the block
+void insertFakeCallForSections(SectionBlock &sections, llvm::Module &module, SectionGuardState &state) {
+  llvm::LLVMContext &context = sections.switchInst->getContext();
+  std::string sectionSig = sections.sectionSig;
+
+  llvm::Value *globalStr = insertStringAsGlobalVar(sectionSig, context, module);
+
+  for (auto block : sections.blocks) {
+    // pass the section sig as a string pointer to the only parameter of the fake function,
+    // which is used to identify whether two sections are from the same omp parallel sections region
+    // NOTE: this parameter will be a GEP in the call, do not need to canonicalize it.
+    std::vector<llvm::Value *> arg_list;
+    arg_list.push_back(globalStr);
+
+    // insert the call start
+    llvm::Instruction *startcall = llvm::CallInst::Create(state.guardStartFn, arg_list);
+    auto firstInst = block->begin();
+    startcall->insertBefore(&(*firstInst));
+
+    // insert the call end
+    llvm::Instruction *endcall = llvm::CallInst::Create(state.guardEndFn, arg_list);
+    llvm::Instruction *nonBranch = nullptr;
+    for (auto it = block->rbegin(); it != block->rend(); it++) {
+      if (llvm::isa<llvm::BranchInst>(*it)) continue;
+      nonBranch = &(*it);
+      break;
+    }
+    endcall->insertAfter(&(*nonBranch));
+  }
+}
+
+}  // namespace
+
+void insertForSections(llvm::Module &module) {
+  SectionGuardState state;
+
+  // find if exists any omp sections, the pattern in IR for sections with section is like: e.g., DRB023
+  // omp.inner.for.body.i:
+  //  %.omp.sections.iv..04.i = phi i32 [ %inc.i, %omp.inner.for.inc.i ], [ %15, %omp.inner.for.body.preheader.i ]
+  //  switch i32 %.omp.sections.iv..04.i, label %omp.inner.for.inc.i [
+  //    i32 0, label %.omp.sections.case.i
+  //    i32 1, label %.omp.sections.case1.i
+  //  ], !dbg !51
+  //
+  //.omp.sections.case.i:
+  //  ...
+  //.omp.sections.case1.i:
+  //  ...
+  for (auto &function : module.getFunctionList()) {
+    for (auto &basicblock : function.getBasicBlockList()) {
+      if (basicblock.getName().equals("omp.inner.for.body.i")) {
+        for (auto &inst : basicblock.getInstList()) {
+          auto _switch = llvm::dyn_cast<llvm::SwitchInst>(&inst);
+          if (!_switch) continue;
+          llvm::Value *op = _switch->getOperand(0);
+          if (op->hasName() && op->getName().startswith(".omp.sections.iv..")) {
+            // this is the IR for omp sections:
+            // each omp parallel sections should be included in one function (which name starting with
+            // ".omp_outlined.xxx") in IR
+            std::string sectionSig = function.getName().str() + " " + op->getName().str();
+
+            SectionBlock section = SectionBlock(sectionSig, _switch);
+            for (auto it = _switch->case_begin(); it != _switch->case_end(); it++) {
+              // this is the basicblock for each section inside omp sections
+              llvm::BasicBlock *bb = it->getCaseSuccessor();
+              section.blocks.push_back(bb);
+            }
+            state.sections.push_back(section);
+          }
+        }
+      }
+    }
+  }
+
+  if (state.sections.empty()) return;
+
+  // insert fake calls for each omp parallel sections region
+  for (auto sections : state.sections) {
+    llvm::SwitchInst *switchInst = sections.switchInst;
+    if (!state.guardStartFn && !state.guardEndFn) {  // create fake function declarations, only once
+      state.createFakeGuardFn(switchInst->getContext(), module);
+    }
+    insertFakeCallForSections(sections, module, state);
+  }
+}
+
+void insertFakeCallForGuardBlocks(llvm::Module &module) {
+  insertForOpenMPGetThreadNum(module);
+  insertForSections(module);
 }
